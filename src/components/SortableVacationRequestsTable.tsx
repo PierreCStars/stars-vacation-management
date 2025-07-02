@@ -49,6 +49,13 @@ export default function SortableVacationRequestsTable({ requests, type }: Sortab
 
   const exportToGoogleSheets = async () => {
     try {
+      console.log('Exporting CSV for', type, 'requests:', sortedRequests.length);
+      
+      if (sortedRequests.length === 0) {
+        alert('No data to export.');
+        return;
+      }
+      
       const headers = type === 'reviewed' 
         ? ['Employee', 'Company', 'Type', 'Start Date', 'End Date', 'Status', 'Reviewed By', 'Review Date', 'Comment']
         : ['Employee', 'Company', 'Type', 'Start Date', 'End Date', 'Status', 'Comment'];
@@ -57,16 +64,16 @@ export default function SortableVacationRequestsTable({ requests, type }: Sortab
         headers.join(','),
         ...sortedRequests.map(req => {
           const baseRow = [
-            `"${req.userName}"`,
-            `"${req.company}"`,
+            `"${req.userName || ''}"`,
+            `"${req.company || ''}"`,
             `"${req.type === 'PAID_VACATION' ? 'Paid Vacation' :
                req.type === 'UNPAID_VACATION' ? 'Unpaid Vacation' :
                req.type === 'SICK_LEAVE' ? 'Sick Leave' :
                req.type === 'OTHER' ? 'Other' : 
                req.type || 'Not specified'}"`,
-            `"${new Date(req.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' })}"`,
-            `"${new Date(req.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' })}"`,
-            `"${req.status}"`,
+            `"${req.startDate ? new Date(req.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }) : ''}"`,
+            `"${req.endDate ? new Date(req.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }) : ''}"`,
+            `"${req.status || ''}"`,
           ];
           
           if (type === 'reviewed') {
@@ -81,18 +88,57 @@ export default function SortableVacationRequestsTable({ requests, type }: Sortab
           return baseRow.join(',');
         })
       ].join('\n');
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      link.setAttribute('href', url);
-      link.setAttribute('download', `vacation-requests-${type}-${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      
+      console.log('CSV content generated:', csvContent.substring(0, 200) + '...');
+      
+      // Create blob with BOM for Excel compatibility
+      const BOM = '\uFEFF';
+      const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+      
+      // Method 1: Try download attribute
+      try {
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `vacation-requests-${type}-${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        console.log('CSV export completed successfully');
+        return;
+      } catch (error) {
+        console.warn('Download method 1 failed:', error);
+      }
+      
+      // Method 2: Try window.open
+      try {
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        setTimeout(() => URL.revokeObjectURL(url), 1000);
+        console.log('CSV export opened in new window');
+        return;
+      } catch (error) {
+        console.warn('Download method 2 failed:', error);
+      }
+      
+      // Method 3: Copy to clipboard (fallback)
+      try {
+        await navigator.clipboard.writeText(csvContent);
+        alert('CSV data copied to clipboard. Please paste it into a text file and save with .csv extension.');
+        console.log('CSV data copied to clipboard');
+        return;
+      } catch (error) {
+        console.warn('Clipboard method failed:', error);
+      }
+      
+      // Final fallback: Show data in alert
+      alert('Download failed. CSV data:\n\n' + csvContent.substring(0, 500) + '...');
+      
     } catch (error) {
       console.error('Error exporting to CSV:', error);
-      alert('Error exporting data. Please try again.');
+      alert('Error exporting data: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
@@ -233,14 +279,39 @@ export default function SortableVacationRequestsTable({ requests, type }: Sortab
         </table>
       </div>
       {/* Export Button for Reviewed Requests */}
-      {type === 'reviewed' && sortedRequests.length > 0 && (
+      {type === 'reviewed' && (
         <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
           <button
             onClick={exportToGoogleSheets}
-            style={{ display: 'inline-flex', alignItems: 'center', padding: '10px 24px', background: 'linear-gradient(90deg, #22c55e 0%, #059669 100%)', color: '#fff', fontSize: 14, fontWeight: 600, borderRadius: 12, border: 'none', boxShadow: '0 4px 12px rgba(0,0,0,0.10)', cursor: 'pointer', transition: 'background 0.2s, box-shadow 0.2s', margin: 0 }}
+            style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              padding: '10px 24px', 
+              background: sortedRequests.length > 0 ? 'linear-gradient(90deg, #22c55e 0%, #059669 100%)' : '#9ca3af', 
+              color: '#fff', 
+              fontSize: 14, 
+              fontWeight: 600, 
+              borderRadius: 12, 
+              border: 'none', 
+              boxShadow: '0 4px 12px rgba(0,0,0,0.10)', 
+              cursor: sortedRequests.length > 0 ? 'pointer' : 'not-allowed', 
+              transition: 'background 0.2s, box-shadow 0.2s', 
+              margin: 0 
+            }}
+            onMouseOver={e => {
+              if (sortedRequests.length > 0) {
+                e.currentTarget.style.background = 'linear-gradient(90deg, #16a34a 0%, #047857 100%)';
+              }
+            }}
+            onMouseOut={e => {
+              if (sortedRequests.length > 0) {
+                e.currentTarget.style.background = 'linear-gradient(90deg, #22c55e 0%, #059669 100%)';
+              }
+            }}
+            disabled={sortedRequests.length === 0}
           >
             <span style={{ fontSize: 18, marginRight: 8 }}>📥</span>
-            Export to CSV
+            Export to CSV ({sortedRequests.length} requests)
           </button>
         </div>
       )}

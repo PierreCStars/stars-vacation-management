@@ -6,9 +6,10 @@ import { loadVacationRequests, saveVacationRequests } from '@/lib/vacation-reque
 
 // Email recipients configuration - only pierre@stars.mc for now
 const EMAIL_RECIPIENTS = {
-  STARS: ['pierre@stars.mc'],
-  STARS_MC: ['pierre@stars.mc'],
-  STARS_VACATIONS: ['pierre@stars.mc']
+  STARS: ['pierre@stars.mc', 'johnny@stars.mc', 'daniel@stars.mc'],
+  STARS_MC: ['pierre@stars.mc', 'johnny@stars.mc', 'daniel@stars.mc'],
+  STARS_VACATIONS: ['pierre@stars.mc', 'johnny@stars.mc', 'daniel@stars.mc']
+
 };
 
 // Initialize Resend

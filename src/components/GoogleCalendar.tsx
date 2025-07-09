@@ -12,6 +12,9 @@ const COMPANY_COLORS = {
   'STARS_AVIATION': { id: '6', name: 'Purple', hex: '#0B77BD', displayName: 'Stars Aviation' },
 };
 
+// Specific calendar ID for the Stars vacation calendar
+const STARS_VACATION_CALENDAR_ID = 'c_e98f5350bf743174f87e1a786038cb9d103c306b7246c6200684f81c37a6a764@group.calendar.google.com';
+
 interface GoogleCalendarProps {
   calendarId?: string;
   height?: string;
@@ -20,9 +23,9 @@ interface GoogleCalendarProps {
 }
 
 export default function GoogleCalendar({ 
-  calendarId = 'primary', 
+  calendarId = STARS_VACATION_CALENDAR_ID, 
   height = '400px',
-  title = 'Team Calendar',
+  title = 'Stars Vacation Calendar',
   userEmail
 }: GoogleCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
@@ -50,8 +53,8 @@ export default function GoogleCalendar({
   };
 
   const getCalendarUrl = () => {
-    // Use the exact same format as the working public URL
-    return `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(calendarId)}&ctz=Europe%2FMonaco`;
+    // Use the specific Stars vacation calendar URL
+    return `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(STARS_VACATION_CALENDAR_ID)}&ctz=Europe%2FMonaco`;
   };
 
   const getDisplayText = () => {
@@ -68,7 +71,7 @@ export default function GoogleCalendar({
   };
 
   const openCalendarInNewTab = () => {
-    const url = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(calendarId)}`;
+    const url = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(STARS_VACATION_CALENDAR_ID)}`;
     window.open(url, '_blank');
   };
 

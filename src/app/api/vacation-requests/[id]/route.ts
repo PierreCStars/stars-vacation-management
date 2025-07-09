@@ -86,27 +86,221 @@ export async function PATCH(
       
       // Email to employee
       const employeeEmailBody = `
-<h2>Vacation Request ${status}</h2>
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vacation Request ${status}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #D8B11B 0%, #21254B 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 10px;
+        }
+        .status-approved {
+            background-color: #10b981;
+            color: white;
+        }
+        .status-rejected {
+            background-color: #ef4444;
+            color: white;
+        }
+        .content {
+            padding: 30px;
+        }
+        .greeting {
+            font-size: 18px;
+            margin-bottom: 20px;
+            color: #374151;
+        }
+        .status-message {
+            font-size: 16px;
+            margin-bottom: 25px;
+            padding: 15px;
+            border-radius: 8px;
+            background-color: ${status === 'APPROVED' ? '#f0fdf4' : '#fef2f2'};
+            border-left: 4px solid ${status === 'APPROVED' ? '#10b981' : '#ef4444'};
+        }
+        .details-section {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .details-section h3 {
+            margin: 0 0 15px 0;
+            color: #1f2937;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #6b7280;
+            min-width: 120px;
+        }
+        .detail-value {
+            color: #1f2937;
+            text-align: right;
+        }
+        .admin-comment {
+            background-color: #fef3c7;
+            border: 1px solid #f59e0b;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 20px 0;
+        }
+        .admin-comment h3 {
+            margin: 0 0 10px 0;
+            color: #92400e;
+            font-size: 16px;
+        }
+        .admin-comment p {
+            margin: 0;
+            color: #78350f;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 30px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+        }
+        .action-button {
+            display: inline-block;
+            background-color: #D8B11B;
+            color: white;
+            text-decoration: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 10px 0;
+            transition: background-color 0.2s;
+        }
+        .action-button:hover {
+            background-color: #c19b1a;
+        }
+        .company-info {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>Vacation Request Update</h1>
+            <div class="status-badge status-${status.toLowerCase()}">${status}</div>
+        </div>
+        
+        <div class="content">
+            <div class="greeting">Dear ${updatedRequest.userName},</div>
+            
+            <div class="status-message">
+                ${status === 'APPROVED' 
+                    ? '🎉 Great news! Your vacation request has been approved. You can now plan your time off with confidence.<br>(Approval subject to a sufficient balance of available vacation days.)' 
+                    : 'We regret to inform you that your vacation request could not be approved at this time.'
+                }
+            </div>
+            
+            <div class="details-section">
+                <h3>📋 Request Details</h3>
+                <div class="detail-row">
+                    <span class="detail-label">Employee:</span>
+                    <span class="detail-value">${updatedRequest.userName}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Company:</span>
+                    <span class="detail-value">${updatedRequest.company}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Type:</span>
+                    <span class="detail-value">${updatedRequest.type}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Start Date:</span>
+                    <span class="detail-value">${new Date(updatedRequest.startDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">End Date:</span>
+                    <span class="detail-value">${new Date(updatedRequest.endDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Reviewed By:</span>
+                    <span class="detail-value">${session.user.name || session.user.email}</span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Review Date:</span>
+                    <span class="detail-value">${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                </div>
+            </div>
 
-<p>Hello ${updatedRequest.userName},</p>
+            ${comment ? `
+            <div class="admin-comment">
+                <h3>💬 Additional Comments</h3>
+                <p>${comment}</p>
+            </div>
+            ` : ''}
 
-<p>Your vacation request has been <strong>${status.toLowerCase()}</strong>.</p>
-
-<h3>Request Details:</h3>
-<ul>
-  <li><strong>Employee:</strong> ${updatedRequest.userName}</li>
-  <li><strong>Company:</strong> ${updatedRequest.company}</li>
-  <li><strong>Type:</strong> ${updatedRequest.type}</li>
-  <li><strong>Start Date:</strong> ${new Date(updatedRequest.startDate).toLocaleDateString()}</li>
-  <li><strong>End Date:</strong> ${new Date(updatedRequest.endDate).toLocaleDateString()}</li>
-  <li><strong>Status:</strong> ${status}</li>
-  <li><strong>Reviewed By:</strong> ${session.user.name || session.user.email}</li>
-  <li><strong>Review Date:</strong> ${new Date().toLocaleDateString()}</li>
-</ul>
-
-${comment ? `<h3>Admin Comment:</h3><p>${comment}</p>` : ''}
-
-<p>View your request at: <a href="${baseUrl}/vacation-request">${baseUrl}/vacation-request</a></p>
+            ${status === 'APPROVED' ? `
+            <div style="background-color: #f0fdf4; border: 1px solid #10b981; border-radius: 8px; padding: 15px; margin: 20px 0;">
+                <h3 style="margin: 0 0 10px 0; color: #065f46; font-size: 16px;">✅ Next Steps</h3>
+                <p style="margin: 0; color: #047857;">Your vacation has been automatically added to the company calendar. Please ensure your team is aware of your absence and that all pending tasks are properly delegated.</p>
+            </div>
+            ` : ''}
+        </div>
+        
+        <div class="footer">
+            <a href="${baseUrl}/vacation-request" class="action-button">View My Requests</a>
+            <div class="company-info">
+                <strong>Stars Group</strong><br>
+                Vacation Management System<br>
+                ${baseUrl}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
       `.trim();
 
       await sendEmailWithFallbacks([updatedRequest.userEmail], emailSubject, employeeEmailBody);
@@ -114,20 +308,142 @@ ${comment ? `<h3>Admin Comment:</h3><p>${comment}</p>` : ''}
 
       // Email to admin team
       const adminEmailBody = `
-Vacation request ${status.toLowerCase()} by ${session.user.name || session.user.email}.
-
-Details:
-- Employee: ${updatedRequest.userName} (${updatedRequest.userId})
-- Company: ${updatedRequest.company}
-- Type: ${updatedRequest.type}
-- Start Date: ${new Date(updatedRequest.startDate).toLocaleDateString()}
-- End Date: ${new Date(updatedRequest.endDate).toLocaleDateString()}
-- Status: ${status}
-- Reviewed By: ${session.user.name || session.user.email}
-- Review Date: ${new Date().toLocaleDateString()}
-${comment ? `- Comment: ${comment}` : ''}
-
-View all requests at: ${baseUrl}/admin/vacation-requests
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vacation Request ${status}</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8f9fa;
+        }
+        .email-container {
+            background-color: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        .header {
+            background: linear-gradient(135deg, #D8B11B 0%, #21254B 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            font-weight: 600;
+        }
+        .content {
+            padding: 25px;
+        }
+        .summary {
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .summary h3 {
+            margin: 0 0 15px 0;
+            color: #1f2937;
+            font-size: 18px;
+        }
+        .detail-item {
+            padding: 8px 0;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .detail-item:last-child {
+            border-bottom: none;
+        }
+        .detail-label {
+            font-weight: 600;
+            color: #6b7280;
+            display: inline-block;
+            width: 120px;
+        }
+        .footer {
+            background-color: #f8f9fa;
+            padding: 20px 25px;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+        }
+        .action-button {
+            display: inline-block;
+            background-color: #D8B11B;
+            color: white;
+            text-decoration: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-weight: 600;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <h1>Vacation Request ${status}</h1>
+        </div>
+        
+        <div class="content">
+            <p><strong>${session.user.name || session.user.email}</strong> has ${status.toLowerCase()} a vacation request.</p>
+            
+            <div class="summary">
+                <h3>📋 Request Summary</h3>
+                <div class="detail-item">
+                    <span class="detail-label">Employee:</span>
+                    <span>${updatedRequest.userName} (${updatedRequest.userId})</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Company:</span>
+                    <span>${updatedRequest.company}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Type:</span>
+                    <span>${updatedRequest.type}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Start Date:</span>
+                    <span>${new Date(updatedRequest.startDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">End Date:</span>
+                    <span>${new Date(updatedRequest.endDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Status:</span>
+                    <span><strong>${status}</strong></span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Reviewed By:</span>
+                    <span>${session.user.name || session.user.email}</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Review Date:</span>
+                    <span>${new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                </div>
+                ${comment ? `
+                <div class="detail-item">
+                    <span class="detail-label">Comment:</span>
+                    <span>${comment}</span>
+                </div>
+                ` : ''}
+            </div>
+        </div>
+        
+        <div class="footer">
+            <a href="${baseUrl}/admin/vacation-requests" class="action-button">View All Requests</a>
+        </div>
+    </div>
+</body>
+</html>
       `.trim();
 
       await sendEmailWithFallbacks(['pierre@stars.mc', 'johnny@stars.mc', 'daniel@stars.mc', 'compta@stars.mc'], emailSubject, adminEmailBody);

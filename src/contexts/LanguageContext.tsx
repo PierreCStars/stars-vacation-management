@@ -25,42 +25,38 @@ const defaultContextValue: LanguageContextType = {
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>('en');
   const [isClient, setIsClient] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    try {
-      setIsClient(true);
-      // Load language from localStorage on mount (only on client side)
-      if (typeof window !== 'undefined' && window.localStorage) {
-        const savedLanguage = localStorage.getItem('stars-vacation-language') as Language;
+    setIsClient(true);
+    
+    // Only try to access localStorage on the client side
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const savedLanguage = window.localStorage.getItem('language') as Language;
         if (savedLanguage && ['en', 'fr', 'it'].includes(savedLanguage)) {
           setLanguageState(savedLanguage);
         }
+      } catch (error) {
+        console.warn('Failed to load language from localStorage:', error);
       }
-      setIsInitialized(true);
-    } catch (error) {
-      console.error('Error initializing LanguageProvider:', error);
-      // Fallback to default language
-      setLanguageState('en');
-      setIsInitialized(true);
     }
   }, []);
 
   const setLanguage = (newLanguage: Language) => {
-    try {
-      setLanguageState(newLanguage);
-      if (typeof window !== 'undefined' && window.localStorage) {
-        localStorage.setItem('stars-vacation-language', newLanguage);
+    setLanguageState(newLanguage);
+    
+    // Only try to save to localStorage on the client side
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        window.localStorage.setItem('language', newLanguage);
+      } catch (error) {
+        console.warn('Failed to save language to localStorage:', error);
       }
-    } catch (error) {
-      console.error('Error setting language:', error);
-      // Continue with the state change even if localStorage fails
-      setLanguageState(newLanguage);
     }
   };
 
-  // Always provide a valid context value, even during initialization
-  const value: LanguageContextType = {
+  // Always provide a valid context value, even during SSR
+  const contextValue: LanguageContextType = {
     language,
     setLanguage,
     t: getTranslations(language),
@@ -69,18 +65,20 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <LanguageContext.Provider value={value}>
+    <LanguageContext.Provider value={contextValue}>
       {children}
     </LanguageContext.Provider>
   );
 }
 
-export function useLanguage() {
+export function useLanguage(): LanguageContextType {
   const context = useContext(LanguageContext);
+  
+  // Return default context if not found (prevents crashes during SSR)
   if (context === undefined) {
-    // Return default context instead of throwing error
     console.warn('useLanguage must be used within a LanguageProvider, using default context');
     return defaultContextValue;
   }
+  
   return context;
 } 

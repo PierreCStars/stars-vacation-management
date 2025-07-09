@@ -66,6 +66,7 @@ export function VacationRequestForm() {
   const watchedCompany = watch('company');
 
   const onSubmit = async (data: VacationRequestFormData) => {
+    console.log('Form data being submitted:', data);
     setIsSubmitting(true);
     setSubmitStatus('idle');
     setErrorMessage('');
@@ -237,14 +238,18 @@ export function VacationRequestForm() {
                   fontWeight: '500'
                 }}
               />
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
                 <input
                   type="checkbox"
                   id="included"
                   {...register('included')}
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  className="w-5 h-5 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 focus:border-blue-500"
+                  style={{ 
+                    accentColor: '#2563eb',
+                    transform: 'scale(1.2)'
+                  }}
                 />
-                <label htmlFor="included" className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                <label htmlFor="included" className="text-sm font-semibold text-gray-700 whitespace-nowrap cursor-pointer">
                   Included
                 </label>
               </div>
@@ -259,6 +264,9 @@ export function VacationRequestForm() {
         <div className="text-center">
           <p className="text-sm text-gray-600 italic">
             💡 You can request vacation for a single day by setting the same date for both start and end dates.
+          </p>
+          <p className="text-xs text-blue-600 mt-1">
+            ✅ Same-day requests are supported
           </p>
         </div>
 

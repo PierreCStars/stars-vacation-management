@@ -36,22 +36,6 @@ export default function GoogleCalendar({
     return date.toISOString().split('T')[0];
   };
 
-  const navigateCalendar = (direction: 'prev' | 'next') => {
-    const newDate = new Date(currentDate);
-    
-    if (viewMode === 'WEEK') {
-      newDate.setDate(newDate.getDate() + (direction === 'next' ? 7 : -7));
-    } else {
-      newDate.setMonth(newDate.getMonth() + (direction === 'next' ? 1 : -1));
-    }
-    
-    setCurrentDate(newDate);
-  };
-
-  const goToToday = () => {
-    setCurrentDate(new Date());
-  };
-
   const getCalendarUrl = () => {
     // Use the specific Stars vacation calendar URL
     return `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(STARS_VACATION_CALENDAR_ID)}&ctz=Europe%2FMonaco`;
@@ -278,6 +262,23 @@ export default function GoogleCalendar({
       overflow: 'hidden',
       boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
     }}>
+      {/* Information text above calendar */}
+      <div style={{
+        padding: '12px 20px',
+        background: '#f0f9ff',
+        borderBottom: '1px solid #e2e8f0',
+        textAlign: 'center'
+      }}>
+        <p style={{
+          margin: 0,
+          fontSize: '14px',
+          color: '#1e40af',
+          fontWeight: '500'
+        }}>
+          If the date you want to request vacation for is not displayed, please switch to full mode
+        </p>
+      </div>
+
       <div style={{ 
         padding: '16px 20px', 
         borderBottom: '1px solid #e2e8f0',
@@ -301,7 +302,7 @@ export default function GoogleCalendar({
             color: '#64748b',
             fontStyle: 'italic'
           }}>
-            {showEmbedded ? 'Embedded view (may not work due to security restrictions)' : 'Calendar preview with navigation controls - Events are color-coded by company'}
+            {showEmbedded ? 'Embedded view (may not work due to security restrictions)' : 'Calendar preview - Events are color-coded by company'}
           </p>
         </div>
         
@@ -342,100 +343,35 @@ export default function GoogleCalendar({
             </button>
           </div>
           
-          {/* Navigation Controls */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <button
-              onClick={() => navigateCalendar('prev')}
-              style={{
-                padding: '8px 12px',
-                borderRadius: '6px',
-                border: '1px solid #d1d5db',
-                background: 'white',
-                color: '#374151',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s'
-              }}
-              onMouseOver={(e) => e.currentTarget.style.background = '#f3f4f6'}
-              onMouseOut={(e) => e.currentTarget.style.background = 'white'}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M15 18l-6-6 6-6"/>
-              </svg>
-            </button>
-            
-            <span style={{ 
-              fontSize: '14px', 
-              fontWeight: '500', 
-              color: '#374151',
-              minWidth: '120px',
-              textAlign: 'center'
-            }}>
-              {getDisplayText()}
-            </span>
-            
-            <button
-              onClick={() => navigateCalendar('next')}
-              style={{
-                padding: '8px 12px',
-                borderRadius: '6px',
-                border: '1px solid #d1d5db',
-                background: 'white',
-                color: '#374151',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.2s'
-              }}
-              onMouseOver={(e) => e.currentTarget.style.background = '#f3f4f6'}
-              onMouseOut={(e) => e.currentTarget.style.background = 'white'}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M9 18l6-6-6-6"/>
-              </svg>
-            </button>
-            
-            <button
-              onClick={goToToday}
-              style={{
-                padding: '8px 12px',
-                borderRadius: '6px',
-                border: '1px solid #3b82f6',
-                background: '#3b82f6',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              onMouseOver={(e) => e.currentTarget.style.background = '#2563eb'}
-              onMouseOut={(e) => e.currentTarget.style.background = '#3b82f6'}
-            >
-              Today
-            </button>
+          {/* Current Date Display */}
+          <span style={{ 
+            fontSize: '14px', 
+            fontWeight: '500', 
+            color: '#374151',
+            minWidth: '120px',
+            textAlign: 'center'
+          }}>
+            {getDisplayText()}
+          </span>
 
-            <button
-              onClick={openCalendarInNewTab}
-              style={{
-                padding: '8px 12px',
-                borderRadius: '6px',
-                border: '1px solid #10b981',
-                background: '#10b981',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: '500',
-                cursor: 'pointer',
-                transition: 'all 0.2s'
-              }}
-              onMouseOver={(e) => e.currentTarget.style.background = '#059669'}
-              onMouseOut={(e) => e.currentTarget.style.background = '#10b981'}
-            >
-              Open Full
-            </button>
-          </div>
+          <button
+            onClick={openCalendarInNewTab}
+            style={{
+              padding: '8px 12px',
+              borderRadius: '6px',
+              border: '1px solid #10b981',
+              background: '#10b981',
+              color: 'white',
+              fontSize: '14px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'all 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.background = '#059669'}
+            onMouseOut={(e) => e.currentTarget.style.background = '#10b981'}
+          >
+            Open Full
+          </button>
         </div>
       </div>
       

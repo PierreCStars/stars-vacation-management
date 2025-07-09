@@ -1,8 +1,18 @@
 import { AuthOptions, SessionStrategy } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
+// Ensure we have a valid secret
+const getSecret = () => {
+  const secret = process.env.NEXTAUTH_SECRET;
+  if (!secret) {
+    console.warn("NEXTAUTH_SECRET not set, using fallback secret");
+    return "fallback-secret-for-development-only";
+  }
+  return secret;
+};
+
 export const authOptions: AuthOptions = {
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: getSecret(),
   session: {
     strategy: "jwt",
     maxAge: 30 * 24 * 60 * 60, // 30 days

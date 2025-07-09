@@ -1,0 +1,185 @@
+import nodemailer from 'nodemailer';
+
+// Simple email service using Nodemailer
+export async function sendSimpleEmail(to: string[], subject: string, body: string) {
+  try {
+    console.log('📧 Attempting to send email via Ethereal (test service)...');
+    console.log('📧 To:', to);
+    console.log('📧 Subject:', subject);
+    
+    // Create a test account (for development)
+    const testAccount = await nodemailer.createTestAccount();
+
+    // Create transporter
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.ethereal.email',
+      port: 587,
+      secure: false,
+      auth: {
+        user: testAccount.user,
+        pass: testAccount.pass,
+      },
+    });
+
+    // Send email
+    const info = await transporter.sendMail({
+      from: '"Vacation Management" <noreply@stars.mc>',
+      to: to.join(', '),
+      subject: subject,
+      html: body,
+    });
+
+    console.log('✅ Simple email sent successfully');
+    console.log('📧 Message ID:', info.messageId);
+    console.log('📧 Preview URL:', nodemailer.getTestMessageUrl(info));
+    
+    return { success: true, messageId: info.messageId, previewUrl: nodemailer.getTestMessageUrl(info) };
+  } catch (error) {
+    console.error('❌ Simple email failed:', error);
+    return { success: false, error };
+  }
+}
+
+// Alternative: Use Gmail SMTP (if you have Gmail credentials)
+export async function sendGmailSMTP(to: string[], subject: string, body: string) {
+  try {
+    console.log('📧 Attempting to send email via Gmail SMTP...');
+    console.log('📧 To:', to);
+    console.log('📧 Subject:', subject);
+    console.log('📧 Gmail User:', process.env.GMAIL_USER ? 'Set' : 'NOT SET');
+    console.log('📧 SMTP Password:', process.env.SMTP_PASSWORD ? 'Set' : 'NOT SET');
+    console.log('📧 SMTP User:', process.env.SMTP_USER ? 'Set' : 'NOT SET');
+    console.log('📧 SMTP From:', process.env.SMTP_FROM ? 'Set' : 'NOT SET');
+    
+    // Try different environment variable combinations
+    const gmailUser = process.env.GMAIL_USER || process.env.SMTP_USER;
+    const smtpPassword = process.env.SMTP_PASSWORD || process.env.GMAIL_APP_PASSWORD;
+    
+    if (!gmailUser || !smtpPassword) {
+      console.error('❌ Gmail credentials not configured');
+      console.error('❌ Gmail User:', gmailUser ? 'Set' : 'NOT SET');
+      console.error('❌ SMTP Password:', smtpPassword ? 'Set' : 'NOT SET');
+      throw new Error('Gmail credentials not configured');
+    }
+
+    const transporter = nodemailer.createTransport({
+      service: 'gmail',
+      auth: {
+        user: gmailUser,
+        pass: smtpPassword,
+      },
+    });
+
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM || gmailUser,
+      to: to.join(', '),
+      subject: subject,
+      html: body,
+    });
+
+    console.log('✅ Gmail SMTP email sent successfully');
+    console.log('📧 Message ID:', info.messageId);
+    
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('❌ Gmail SMTP failed:', error);
+    return { success: false, error };
+  }
+}
+
+// Alternative: Use Resend (more reliable)
+export async function sendResendEmail(to: string[], subject: string, body: string) {
+  try {
+    console.log('📧 Attempting to send email via Resend...');
+    console.log('📧 To:', to);
+    console.log('📧 Subject:', subject);
+    
+    if (!process.env.RESEND_API_KEY) {
+      console.error('❌ Resend API key not configured');
+      throw new Error('Resend API key not configured');
+    }
+
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'Vacation Management <onboarding@resend.dev>',
+        to: to,
+        subject: subject,
+        html: body,
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Resend API error: ${error}`);
+    }
+
+    const result = await response.json();
+    console.log('✅ Resend email sent successfully');
+    console.log('📧 Message ID:', result.id);
+    
+    return { success: true, messageId: result.id };
+  } catch (error) {
+    console.error('❌ Resend email failed:', error);
+    return { success: false, error };
+  }
+}
+
+// Enhanced email service with multiple fallbacks
+export async function sendEmailWithFallbacks(to: string[], subject: string, body: string) {
+  console.log('📧 Starting email send with fallbacks...');
+  console.log('📧 To:', to);
+  console.log('📧 Subject:', subject);
+  
+  // Try Resend first (most reliable)
+  try {
+    const resendResult = await sendResendEmail(to, subject, body);
+    if (resendResult.success) {
+      console.log('✅ Email sent successfully via Resend');
+      return resendResult;
+    }
+  } catch (error) {
+    console.log('⚠️ Resend failed, trying Gmail SMTP...');
+  }
+
+  // Try Gmail SMTP second
+  try {
+    const gmailResult = await sendGmailSMTP(to, subject, body);
+    if (gmailResult.success) {
+      console.log('✅ Email sent successfully via Gmail SMTP');
+      return gmailResult;
+    }
+  } catch (error) {
+    console.log('⚠️ Gmail SMTP failed, trying Ethereal...');
+  }
+
+  // Try Ethereal (test service) as fallback
+  try {
+    const etherealResult = await sendSimpleEmail(to, subject, body);
+    if (etherealResult.success) {
+      console.log('✅ Email sent successfully via Ethereal (test service)');
+      console.log('📧 Preview URL:', etherealResult.previewUrl);
+      return etherealResult;
+    }
+  } catch (error) {
+    console.log('⚠️ Ethereal failed...');
+  }
+
+  // Final fallback: console log
+  console.log('❌ All email services failed, logging to console:');
+  console.log('=== EMAIL NOTIFICATION ===');
+  console.log('To:', to.join(', '));
+  console.log('Subject:', subject);
+  console.log('Body:', body);
+  console.log('========================');
+  
+  return { 
+    success: false, 
+    error: 'All email services failed',
+    fallback: 'Logged to console'
+  };
+} 

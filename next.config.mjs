@@ -3,6 +3,7 @@ const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
@@ -11,6 +12,10 @@ const nextConfig = {
         pathname: '/**',
       },
     ],
+  },
+  // Firebase Hosting + Cloud Functions configuration
+  experimental: {
+    serverComponentsExternalPackages: ['@google-cloud/firestore'],
   },
 };
 

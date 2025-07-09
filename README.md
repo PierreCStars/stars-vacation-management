@@ -1,37 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Stars Vacation Management System
 
-## Getting Started
+A comprehensive vacation request management system built with Next.js, Firebase, and Google Calendar integration.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **User Authentication**: Google OAuth integration with @stars.mc domain restriction
+- **Vacation Request Management**: Submit, review, and track vacation requests
+- **Admin Dashboard**: Comprehensive admin interface for managing requests
+- **Email Notifications**: Automatic email notifications for new requests and status updates
+- **Google Calendar Integration**: Automatic calendar event creation for approved requests
+- **Monthly CSV Export**: Automated monthly reports sent to compta@stars.mc
+
+## Monthly CSV Export Feature
+
+The system automatically exports reviewed vacation requests to CSV format and sends them to `compta@stars.mc` on the last day of each month.
+
+### How it works:
+
+1. **Automatic Trigger**: The system checks daily if it's the last day of the month
+2. **Data Collection**: Gathers all reviewed requests (APPROVED/REJECTED) for the current month
+3. **CSV Generation**: Creates a comprehensive CSV file with all request details
+4. **Email Delivery**: Sends the report to `compta@stars.mc` with subject "{Month Name} Vacations"
+
+### Manual Export:
+
+Admins can also manually trigger CSV exports:
+- Go to the Admin Dashboard
+- Click the "📄 Export CSV" button
+- The current month's data will be sent to `compta@stars.mc`
+
+### CSV Content:
+
+The exported CSV includes:
+- Employee details (ID, email, name)
+- Request details (dates, reason, type, company)
+- Status information (approved/rejected)
+- Admin review details (reviewer, review date, comments)
+
+### Cron Job Setup:
+
+To enable automatic monthly exports, set up a cron job to call:
+```
+GET /api/cron/monthly-csv
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Example cron job (runs daily at 9 AM):
+```bash
+0 9 * * * curl -X GET https://your-domain.com/api/cron/monthly-csv
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Admin Access
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+The following users have admin access:
+- `pierre@stars.mc`
+- `johnny@stars.mc`
+- `daniel@stars.mc`
+- `compta@stars.mc`
 
-## Learn More
+## Email Notifications
 
-To learn more about Next.js, take a look at the following resources:
+All admins receive notifications for:
+- New vacation requests
+- Status updates (approved/rejected)
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+`compta@stars.mc` additionally receives:
+- Monthly CSV reports
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Installation
 
-## Deploy on Vercel
+1. Clone the repository
+2. Install dependencies: `npm install`
+3. Set up environment variables (see `.env.example`)
+4. Run the development server: `npm run dev`
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Environment Variables
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
-# Vercel deployment test
+Required environment variables:
+- `NEXTAUTH_SECRET`
+- `GOOGLE_ID`
+- `GOOGLE_SECRET`
+- Firebase configuration
+- Email service configuration
+
+## Deployment
+
+The application is deployed on Vercel and automatically updates on git push.
+
+## Support
+
+For issues or questions, contact the development team.

@@ -27,6 +27,7 @@ interface SortableVacationRequestsTableProps {
 export default function SortableVacationRequestsTable({ requests, type }: SortableVacationRequestsTableProps) {
   const [sortField, setSortField] = useState<'userName' | 'company'>('userName');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [processingRequests, setProcessingRequests] = useState<Set<string>>(new Set());
 
   const handleSort = (field: 'userName' | 'company') => {
     if (sortField === field) {
@@ -66,9 +67,9 @@ export default function SortableVacationRequestsTable({ requests, type }: Sortab
           const baseRow = [
             `"${req.userName || ''}"`,
             `"${req.company || ''}"`,
-            `"${req.type === 'PAID_VACATION' ? 'Paid Vacation' :
-               req.type === 'UNPAID_VACATION' ? 'Unpaid Vacation' :
-               req.type === 'SICK_LEAVE' ? 'Sick Leave' :
+          `"${req.type === 'PAID_VACATION' ? 'Paid Vacation' :
+             req.type === 'UNPAID_VACATION' ? 'Unpaid Vacation' :
+             req.type === 'SICK_LEAVE' ? 'Sick Leave' :
                req.type === 'OTHER' ? 'Other' : 
                req.type || 'Not specified'}"`,
             `"${req.startDate ? new Date(req.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }) : ''}"`,
@@ -88,7 +89,7 @@ export default function SortableVacationRequestsTable({ requests, type }: Sortab
           return baseRow.join(',');
         })
       ].join('\n');
-      
+
       console.log('CSV content generated:', csvContent.substring(0, 200) + '...');
       
       // Create blob with BOM for Excel compatibility
@@ -97,14 +98,14 @@ export default function SortableVacationRequestsTable({ requests, type }: Sortab
       
       // Method 1: Try download attribute
       try {
-        const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.setAttribute('href', url);
-        link.setAttribute('download', `vacation-requests-${type}-${new Date().toISOString().split('T')[0]}.csv`);
-        link.style.visibility = 'hidden';
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      link.setAttribute('href', url);
+      link.setAttribute('download', `vacation-requests-${type}-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
         URL.revokeObjectURL(url);
         console.log('CSV export completed successfully');
         return;
@@ -155,6 +156,48 @@ export default function SortableVacationRequestsTable({ requests, type }: Sortab
     );
   };
 
+  const handleApproveReject = async (requestId: string, status: 'APPROVED' | 'REJECTED') => {
+    if (processingRequests.has(requestId)) return;
+    
+    setProcessingRequests(prev => new Set(prev).add(requestId));
+    
+    try {
+      const comment = prompt(`Please enter a comment for ${status.toLowerCase()} this request (optional):`);
+      
+      const response = await fetch(`/api/vacation-requests/${requestId}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status,
+          comment: comment || ''
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+      }
+
+      const result = await response.json();
+      alert(`Request ${status.toLowerCase()} successfully!`);
+      
+      // Refresh the page to show updated data
+      window.location.reload();
+      
+    } catch (error) {
+      console.error(`Error ${status.toLowerCase()}ing request:`, error);
+      alert(`Error ${status.toLowerCase()}ing request: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    } finally {
+      setProcessingRequests(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(requestId);
+        return newSet;
+      });
+    }
+  };
+
   if (sortedRequests.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: 48 }}>
@@ -168,30 +211,30 @@ export default function SortableVacationRequestsTable({ requests, type }: Sortab
   }
 
   return (
-    <div style={{ width: '100%', maxWidth: 900, margin: '0 auto', padding: 24, background: '#fff', borderRadius: 24, boxShadow: '0 4px 32px rgba(0,0,0,0.08)', border: '1px solid #eee' }}>
+    <div style={{ width: '100%', maxWidth: '100%', margin: '0 auto', padding: 24, background: '#fff', borderRadius: 24, boxShadow: '0 4px 32px rgba(0,0,0,0.08)', border: '1px solid #eee' }}>
       <div style={{ overflowX: 'auto', borderRadius: 16 }}>
-        <table style={{ width: '100%', minWidth: 800, borderCollapse: 'collapse', fontSize: 14, border: '1px solid #000' }}>
+        <table style={{ width: '100%', minWidth: 1200, borderCollapse: 'collapse', fontSize: 14, border: '1px solid #000' }}>
           <thead style={{ background: '#f9fafb', position: 'sticky', top: 0, zIndex: 10, boxShadow: '0 2px 4px rgba(0,0,0,0.03)' }}>
             <tr style={{ borderBottom: '1px solid #000' }}>
               <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: 1, background: '#f9fafb', position: 'sticky', top: 0, zIndex: 20 }}>Action</th>
-              <th
+                <th 
                 style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: 1, cursor: 'pointer', background: '#f9fafb', position: 'sticky', top: 0, zIndex: 20 }}
-                onClick={() => handleSort('userName')}
-              >
+                  onClick={() => handleSort('userName')}
+                >
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <span>Employee</span>
-                  {getSortIcon('userName')}
-                </div>
-              </th>
-              <th
+                    <span>Employee</span>
+                      {getSortIcon('userName')}
+                  </div>
+                </th>
+                <th 
                 style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: 1, cursor: 'pointer', background: '#f9fafb', position: 'sticky', top: 0, zIndex: 20 }}
-                onClick={() => handleSort('company')}
-              >
+                  onClick={() => handleSort('company')}
+                >
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <span>Company</span>
-                  {getSortIcon('company')}
-                </div>
-              </th>
+                    <span>Company</span>
+                      {getSortIcon('company')}
+                  </div>
+                </th>
               <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: 1, background: '#f9fafb', position: 'sticky', top: 0, zIndex: 20 }}>Type</th>
               <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: 1, background: '#f9fafb', position: 'sticky', top: 0, zIndex: 20 }}>Start</th>
               <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: 1, background: '#f9fafb', position: 'sticky', top: 0, zIndex: 20 }}>End</th>
@@ -200,12 +243,12 @@ export default function SortableVacationRequestsTable({ requests, type }: Sortab
                 <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: 1, background: '#f9fafb', position: 'sticky', top: 0, zIndex: 20 }}>Reviewed By</th>
               )}
               <th style={{ padding: '16px 24px', textAlign: 'left', fontSize: 12, fontWeight: 700, color: '#374151', textTransform: 'uppercase', letterSpacing: 1, background: '#f9fafb', position: 'sticky', top: 0, zIndex: 20 }}>Comment</th>
-            </tr>
-          </thead>
+              </tr>
+            </thead>
           <tbody>
-            {sortedRequests.map((req, index) => (
-              <tr
-                key={req.id}
+              {sortedRequests.map((req, index) => (
+                <tr 
+                  key={req.id} 
                 style={{
                   borderBottom: '1px solid #000',
                   background: index % 2 === 0 ? '#fff' : '#d3d3d3',
@@ -216,41 +259,124 @@ export default function SortableVacationRequestsTable({ requests, type }: Sortab
                 onMouseOut={e => (e.currentTarget.style.background = index % 2 === 0 ? '#fff' : '#d3d3d3')}
               >
                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap' }}>
-                  <button
-                    onClick={() => window.location.href = `/admin/vacation-requests/${req.id}`}
-                    style={{ display: 'inline-flex', alignItems: 'center', padding: '8px 20px', border: 'none', fontSize: 14, fontWeight: 600, borderRadius: 12, boxShadow: '0 4px 12px rgba(0,0,0,0.10)', cursor: 'pointer', background: type === 'pending' ? 'linear-gradient(90deg, #3b82f6 0%, #6366f1 100%)' : '#f3f4f6', color: type === 'pending' ? '#fff' : '#374151', transition: 'background 0.2s, box-shadow 0.2s', margin: 0 }}
-                  >
-                    {type === 'pending' ? 'Review' : 'View'}
-                  </button>
+                  {type === 'pending' ? (
+                    <div style={{ display: 'flex', gap: 8, flexDirection: 'column' }}>
+                      <button
+                        onClick={() => window.location.href = `/admin/vacation-requests/${req.id}`}
+                        style={{ 
+                          display: 'inline-flex', 
+                          alignItems: 'center', 
+                          padding: '6px 16px', 
+                          border: 'none', 
+                          fontSize: 12, 
+                          fontWeight: 600, 
+                          borderRadius: 8, 
+                          boxShadow: '0 2px 8px rgba(0,0,0,0.10)', 
+                          cursor: 'pointer', 
+                          background: 'linear-gradient(90deg, #3b82f6 0%, #6366f1 100%)', 
+                          color: '#fff', 
+                          transition: 'background 0.2s, box-shadow 0.2s', 
+                          margin: 0 
+                        }}
+                      >
+                        Review
+                      </button>
+                      <div style={{ display: 'flex', gap: 4 }}>
+                        <button
+                          onClick={() => handleApproveReject(req.id, 'APPROVED')}
+                          disabled={processingRequests.has(req.id)}
+                          style={{ 
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            padding: '4px 8px', 
+                            border: 'none', 
+                            fontSize: 11, 
+                            fontWeight: 600, 
+                            borderRadius: 6, 
+                            cursor: processingRequests.has(req.id) ? 'not-allowed' : 'pointer', 
+                            background: processingRequests.has(req.id) ? '#9ca3af' : 'linear-gradient(90deg, #22c55e 0%, #059669 100%)', 
+                            color: '#fff', 
+                            transition: 'background 0.2s', 
+                            margin: 0,
+                            opacity: processingRequests.has(req.id) ? 0.6 : 1
+                          }}
+                        >
+                          {processingRequests.has(req.id) ? '...' : '✓'}
+                        </button>
+                        <button
+                          onClick={() => handleApproveReject(req.id, 'REJECTED')}
+                          disabled={processingRequests.has(req.id)}
+                          style={{ 
+                            display: 'inline-flex', 
+                            alignItems: 'center', 
+                            padding: '4px 8px', 
+                            border: 'none', 
+                            fontSize: 11, 
+                            fontWeight: 600, 
+                            borderRadius: 6, 
+                            cursor: processingRequests.has(req.id) ? 'not-allowed' : 'pointer', 
+                            background: processingRequests.has(req.id) ? '#9ca3af' : 'linear-gradient(90deg, #ef4444 0%, #dc2626 100%)', 
+                            color: '#fff', 
+                            transition: 'background 0.2s', 
+                            margin: 0,
+                            opacity: processingRequests.has(req.id) ? 0.6 : 1
+                          }}
+                        >
+                          {processingRequests.has(req.id) ? '...' : '✗'}
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => window.location.href = `/admin/vacation-requests/${req.id}`}
+                      style={{ 
+                        display: 'inline-flex', 
+                        alignItems: 'center', 
+                        padding: '8px 20px', 
+                        border: 'none', 
+                        fontSize: 14, 
+                        fontWeight: 600, 
+                        borderRadius: 12, 
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.10)', 
+                        cursor: 'pointer', 
+                        background: '#f3f4f6', 
+                        color: '#374151', 
+                        transition: 'background 0.2s, box-shadow 0.2s', 
+                        margin: 0 
+                      }}
+                    >
+                      View
+                    </button>
+                  )}
                 </td>
                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap' }}>
-                  <div>
+                    <div>
                     <div style={{ fontSize: 16, fontWeight: 600, color: '#111827' }}>{req.userName}</div>
                     <div style={{ fontSize: 12, color: '#9ca3af', display: 'none' }}>{req.userId}</div>
-                  </div>
-                </td>
+                    </div>
+                  </td>
                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap' }}>
                   <div style={{ fontSize: 16, color: '#111827', fontWeight: 500 }}>{req.company}</div>
-                </td>
+                  </td>
                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap' }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: 12, fontSize: 12, fontWeight: 500, background: '#dbeafe', color: '#1e40af' }}>
-                    {req.type === 'PAID_VACATION' ? 'Paid Vacation' :
-                     req.type === 'UNPAID_VACATION' ? 'Unpaid Vacation' :
-                     req.type === 'SICK_LEAVE' ? 'Sick Leave' :
+                      {req.type === 'PAID_VACATION' ? 'Paid Vacation' :
+                       req.type === 'UNPAID_VACATION' ? 'Unpaid Vacation' :
+                       req.type === 'SICK_LEAVE' ? 'Sick Leave' :
                      req.type === 'OTHER' ? 'Other' : 
                      req.type || 'Not specified'}
-                  </span>
-                </td>
+                    </span>
+                  </td>
                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap', fontSize: 14, color: '#111827' }}>
                   {new Date(req.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' })}
-                </td>
+                  </td>
                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap', fontSize: 14, color: '#111827' }}>
                   {new Date(req.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' })}
-                </td>
+                  </td>
                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap' }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: 12, fontSize: 12, fontWeight: 700, background: req.status === 'APPROVED' ? '#d1fae5' : req.status === 'REJECTED' ? '#fee2e2' : '#fef3c7', color: req.status === 'APPROVED' ? '#065f46' : req.status === 'REJECTED' ? '#991b1b' : '#92400e' }}>
-                    {req.status}
-                  </span>
+                      {req.status}
+                    </span>
                 </td>
                 {type === 'reviewed' && (
                   <td style={{ padding: '16px 24px', whiteSpace: 'nowrap' }}>
@@ -268,16 +394,16 @@ export default function SortableVacationRequestsTable({ requests, type }: Sortab
                   {req.comment || req.reason ? (
                     <span title={req.comment || req.reason} style={{ cursor: 'help' }}>
                       {(req.comment || req.reason || '').length > 30 ? `${(req.comment || req.reason || '').substring(0, 30)}...` : (req.comment || req.reason || '')}
-                    </span>
-                  ) : (
+                      </span>
+                    ) : (
                     <span style={{ color: '#d1d5db' }}>-</span>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       {/* Export Button for Reviewed Requests */}
       {type === 'reviewed' && (
         <div style={{ marginTop: 24, display: 'flex', justifyContent: 'center' }}>
@@ -313,7 +439,7 @@ export default function SortableVacationRequestsTable({ requests, type }: Sortab
             <span style={{ fontSize: 18, marginRight: 8 }}>📥</span>
             Export to CSV ({sortedRequests.length} requests)
           </button>
-        </div>
+      </div>
       )}
     </div>
   );

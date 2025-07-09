@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 const CompanyEnum = z.enum([
   'STARS_MC',
@@ -40,6 +40,7 @@ const vacationRequestSchema = z.object({
 type VacationRequestFormData = z.infer<typeof vacationRequestSchema>;
 
 export function VacationRequestForm() {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error' | 'processing'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
@@ -98,9 +99,9 @@ export function VacationRequestForm() {
       const result = await response.json();
       setSubmitStatus('processing');
       reset();
-      // Show processing message for 4 seconds, then sign out
+      // Show processing message for 4 seconds, then redirect to dashboard
       setTimeout(() => {
-        signOut({ callbackUrl: '/' });
+        router.push('/');
       }, 4000);
     } catch (error) {
       console.error('Error submitting vacation request:', error);
@@ -122,63 +123,90 @@ export function VacationRequestForm() {
         Submit Vacation Request
       </h2>
       
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-        {/* Company Selection */}
-        <div>
-          <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-2">
-            Company *
-          </label>
-          <select
-            id="company"
-            {...register('company')}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-base"
-            style={{ fontFamily: 'Montserrat, sans-serif', padding: '5px' }}
-          >
-            <option value="STARS_MC">Stars MC</option>
-            <option value="STARS_YACHTING">Stars Yachting</option>
-            <option value="STARS_AVIATION">Stars Aviation</option>
-            <option value="STARS_REAL_ESTATE">Stars Real Estate</option>
-            <option value="LE_PNEU">Le Pneu</option>
-            <option value="MIDI_PNEU">Midi Pneu</option>
-          </select>
-          {errors.company && (
-            <p className="mt-2 text-sm text-red-600">{errors.company.message}</p>
-          )}
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+        {/* Company and Type on the same line */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Company Selection */}
+          <div>
+            <label htmlFor="company" className="block text-sm font-semibold text-gray-700 mb-3">
+              Company *
+            </label>
+            <select
+              id="company"
+              {...register('company')}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-base transition-all duration-200 hover:border-gray-300"
+              style={{ 
+                fontFamily: 'Montserrat, sans-serif', 
+                padding: '12px 16px',
+                backgroundColor: '#ffffff',
+                borderRadius: '12px',
+                border: '2px solid #e5e7eb',
+                fontSize: '16px',
+                fontWeight: '500'
+              }}
+            >
+              <option value="STARS_MC">Stars MC</option>
+              <option value="STARS_YACHTING">Stars Yachting</option>
+              <option value="STARS_AVIATION">Stars Aviation</option>
+              <option value="STARS_REAL_ESTATE">Stars Real Estate</option>
+              <option value="LE_PNEU">Le Pneu</option>
+              <option value="MIDI_PNEU">Midi Pneu</option>
+            </select>
+            {errors.company && (
+              <p className="mt-2 text-sm text-red-600">{errors.company.message}</p>
+            )}
+          </div>
+
+          {/* Type Selection */}
+          <div>
+            <label htmlFor="type" className="block text-sm font-semibold text-gray-700 mb-3">
+              Type *
+            </label>
+            <select
+              id="type"
+              {...register('type')}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-base transition-all duration-200 hover:border-gray-300"
+              style={{ 
+                fontFamily: 'Montserrat, sans-serif', 
+                padding: '12px 16px',
+                backgroundColor: '#ffffff',
+                borderRadius: '12px',
+                border: '2px solid #e5e7eb',
+                fontSize: '16px',
+                fontWeight: '500'
+              }}
+            >
+              <option value="PAID_VACATION">Paid Vacation</option>
+              <option value="UNPAID_VACATION">Unpaid vacation</option>
+              <option value="SICK_LEAVE">Sick Leave</option>
+              <option value="OTHER">Other (precise in comment)</option>
+            </select>
+            {errors.type && (
+              <p className="mt-2 text-sm text-red-600">{errors.type.message}</p>
+            )}
+          </div>
         </div>
 
-        {/* Type Selection */}
-        <div>
-          <label htmlFor="type" className="block text-sm font-medium text-gray-700 mb-2">
-            Type *
-          </label>
-          <select
-            id="type"
-            {...register('type')}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-base"
-            style={{ fontFamily: 'Montserrat, sans-serif', padding: '5px' }}
-          >
-            <option value="PAID_VACATION">Paid Vacation</option>
-            <option value="UNPAID_VACATION">Unpaid vacation</option>
-            <option value="SICK_LEAVE">Sick Leave</option>
-            <option value="OTHER">Other (precise in comment)</option>
-          </select>
-          {errors.type && (
-            <p className="mt-2 text-sm text-red-600">{errors.type.message}</p>
-          )}
-        </div>
-
-        {/* Date Range */}
+        {/* Start Date and End Date on the same line */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label htmlFor="startDate" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="startDate" className="block text-sm font-semibold text-gray-700 mb-3">
               Start Date *
             </label>
             <input
               type="date"
               id="startDate"
               {...register('startDate')}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-base"
-              style={{ fontFamily: 'Montserrat, sans-serif', padding: '5px' }}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-base transition-all duration-200 hover:border-gray-300"
+              style={{ 
+                fontFamily: 'Montserrat, sans-serif', 
+                padding: '12px 16px',
+                backgroundColor: '#ffffff',
+                borderRadius: '12px',
+                border: '2px solid #e5e7eb',
+                fontSize: '16px',
+                fontWeight: '500'
+              }}
             />
             {errors.startDate && (
               <p className="mt-2 text-sm text-red-600">{errors.startDate.message}</p>
@@ -186,15 +214,23 @@ export function VacationRequestForm() {
           </div>
 
           <div>
-            <label htmlFor="endDate" className="block text-sm font-medium text-gray-700 mb-2">
+            <label htmlFor="endDate" className="block text-sm font-semibold text-gray-700 mb-3">
               End Date *
             </label>
             <input
               type="date"
               id="endDate"
               {...register('endDate')}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-base"
-              style={{ fontFamily: 'Montserrat, sans-serif', padding: '5px' }}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-base transition-all duration-200 hover:border-gray-300"
+              style={{ 
+                fontFamily: 'Montserrat, sans-serif', 
+                padding: '12px 16px',
+                backgroundColor: '#ffffff',
+                borderRadius: '12px',
+                border: '2px solid #e5e7eb',
+                fontSize: '16px',
+                fontWeight: '500'
+              }}
             />
             {errors.endDate && (
               <p className="mt-2 text-sm text-red-600">{errors.endDate.message}</p>
@@ -202,22 +238,35 @@ export function VacationRequestForm() {
           </div>
         </div>
 
-        {/* Reason */}
-        <div>
-          <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-2">
-            Reason (Optional)
-          </label>
-          <textarea
-            id="reason"
-            {...register('reason')}
-            rows={4}
-            className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-base"
-            placeholder="Please provide a reason for your vacation request..."
-            style={{ fontFamily: 'Montserrat, sans-serif', padding: '5px' }}
-          />
-          {errors.reason && (
-            <p className="mt-2 text-sm text-red-600">{errors.reason.message}</p>
-          )}
+        {/* Reason - Positioned Under Label */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label htmlFor="reason" className="block text-sm font-semibold text-gray-700 mb-3">
+              Reason (Optional)
+            </label>
+            <textarea
+              id="reason"
+              {...register('reason')}
+              rows={4}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-base transition-all duration-200 hover:border-gray-300"
+              placeholder="Please provide a reason for your vacation request..."
+              style={{ 
+                fontFamily: 'Montserrat, sans-serif', 
+                padding: '12px 16px',
+                backgroundColor: '#ffffff',
+                borderRadius: '12px',
+                border: '2px solid #e5e7eb',
+                fontSize: '16px',
+                fontWeight: '500',
+                resize: 'vertical',
+                minHeight: '120px'
+              }}
+            />
+            {errors.reason && (
+              <p className="mt-2 text-sm text-red-600">{errors.reason.message}</p>
+            )}
+          </div>
+          <div></div> {/* Empty div to maintain grid layout */}
         </div>
 
         {/* Status Messages */}
@@ -227,7 +276,7 @@ export function VacationRequestForm() {
               <p className="text-sm font-medium text-blue-800">
                 Your request is being processed. You will receive an email soon. Thank you.
                 <br />
-                You will now be logged out. Have a good day!
+                You will be redirected to the dashboard in a few seconds.
               </p>
             </div>
           </div>
@@ -255,7 +304,7 @@ export function VacationRequestForm() {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="inline-flex items-center justify-center border border-transparent text-lg font-bold shadow-lg bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105"
+            className="inline-flex items-center justify-center border border-transparent text-lg font-bold shadow-lg bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-4 focus:ring-red-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-105 hover:-translate-y-0.5"
             style={{ 
               fontFamily: 'Montserrat, sans-serif',
               fontWeight: '700',
@@ -264,14 +313,6 @@ export function VacationRequestForm() {
               borderRadius: '10px',
               padding: '10px',
               boxShadow: '0 10px 15px -3px rgba(220, 38, 38, 0.3), 0 4px 6px -2px rgba(220, 38, 38, 0.1)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px) scale(1.02)';
-              e.currentTarget.style.boxShadow = '0 3px 6px rgba(0, 0, 0, 0.3)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0) scale(1)';
-              e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(220, 38, 38, 0.3), 0 4px 6px -2px rgba(220, 38, 38, 0.1)';
             }}
           >
             {isSubmitting ? (

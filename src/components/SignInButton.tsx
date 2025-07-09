@@ -14,7 +14,7 @@ export default function SignInButton({ callbackUrl = '/' }: SignInButtonProps) {
   return (
     <button
       onClick={handleSignIn}
-      className="btn-primary w-full"
+      className="btn-primary w-full hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200"
       style={{ 
         display: 'inline-flex', 
         alignItems: 'center', 
@@ -32,14 +32,6 @@ export default function SignInButton({ callbackUrl = '/' }: SignInButtonProps) {
         boxShadow: '0 10px 15px -3px rgba(37, 99, 235, 0.3), 0 4px 6px -2px rgba(37, 99, 235, 0.1)',
         transition: 'all 0.2s ease-in-out',
         transform: 'translateY(0)'
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = '0 20px 25px -5px rgba(37, 99, 235, 0.4), 0 10px 10px -5px rgba(37, 99, 235, 0.2)';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(37, 99, 235, 0.3), 0 4px 6px -2px rgba(37, 99, 235, 0.1)';
       }}
     >
       <svg className="w-5 h-5 mr-3" viewBox="0 0 24 24" style={{ width: '1.25rem', height: '1.25rem', marginRight: '0.75rem' }}>

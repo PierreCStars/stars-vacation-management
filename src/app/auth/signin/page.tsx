@@ -38,7 +38,7 @@ export default async function SignIn({
       }}
     >
       <div 
-        className="w-full max-w-md px-6"
+        className="w-full max-w-md"
         style={{ 
           width: '100%', 
           maxWidth: '28rem', 
@@ -54,9 +54,10 @@ export default async function SignIn({
             <Image 
               src="/stars-logo.png" 
               alt="Stars Logo" 
-              width={180} 
-              height={127} 
-              className="mx-auto drop-shadow-lg" 
+              width={180}
+              height={180}
+              style={{ maxWidth: 180, maxHeight: 180, width: 'auto', height: 'auto', display: 'block', margin: '0 auto' }}
+              className="drop-shadow-lg"
               priority 
             />
           </div>

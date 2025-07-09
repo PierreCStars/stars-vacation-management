@@ -6,7 +6,7 @@ export function SignOutButton() {
   return (
     <button
       onClick={() => signOut({ callbackUrl: '/' })}
-      className="btn-secondary"
+      className="btn-secondary hover:-translate-y-0.5 hover:shadow-lg hover:border-gray-400 transition-all duration-200"
       style={{ 
         display: 'inline-flex', 
         alignItems: 'center', 
@@ -23,16 +23,6 @@ export function SignOutButton() {
         boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
         transition: 'all 0.2s ease-in-out',
         transform: 'translateY(0)'
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-1px)';
-        e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)';
-        e.currentTarget.style.borderColor = '#9ca3af';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)';
-        e.currentTarget.style.borderColor = '#d1d5db';
       }}
     >
       Sign Out

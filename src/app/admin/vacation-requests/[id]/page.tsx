@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import GoogleCalendar from '@/components/GoogleCalendar';
+import PersistentCalendar from '@/components/PersistentCalendar';
 
 interface VacationRequest {
   id: string;
@@ -309,6 +310,7 @@ export default function VacationRequestPage({
           </Link>
         </div>
       </div>
+      <PersistentCalendar />
     </div>
   );
 } 

@@ -8,6 +8,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSelector from '@/components/LanguageSelector';
+import PersistentCalendar from '@/components/PersistentCalendar';
 
 export default function VacationRequestPage() {
   const { data: session, status } = useSession();
@@ -561,6 +562,7 @@ export default function VacationRequestPage() {
           )}
         </div>
       </div>
+      <PersistentCalendar />
     </main>
   );
 } 

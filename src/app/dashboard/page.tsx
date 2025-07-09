@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { SignOutButton } from '@/components/SignOutButton';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSelector from '@/components/LanguageSelector';
+import PersistentCalendar from '@/components/PersistentCalendar';
 
 export default function Dashboard() {
   const { data: session, status } = useSession();
@@ -391,29 +392,13 @@ export default function Dashboard() {
                   >
                     {t.dashboard.manageRequests}
                   </Link>
-                  <br />
-                  <Link 
-                    href="/dashboard"
-                    className="inline-block bg-gray-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-700 transition-colors duration-200"
-                    style={{ 
-                      display: 'inline-block',
-                      backgroundColor: '#4b5563',
-                      color: 'white',
-                      padding: '0.5rem 1.5rem',
-                      borderRadius: '0.5rem',
-                      fontWeight: '600',
-                      textDecoration: 'none',
-                      transition: 'background-color 0.2s ease'
-                    }}
-                  >
-                    {t.dashboard.viewCalendar}
-                  </Link>
                 </div>
               </div>
             )}
           </div>
         </div>
       </div>
+      <PersistentCalendar />
     </main>
   );
 } 

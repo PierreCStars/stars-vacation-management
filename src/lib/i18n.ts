@@ -103,6 +103,8 @@ export interface Translations {
     today: string;
     previous: string;
     next: string;
+    expanded: string;
+    collapsed: string;
   };
   
   // Common
@@ -209,7 +211,9 @@ const translations: Record<Language, Translations> = {
       month: 'Month',
       today: 'Today',
       previous: 'Previous',
-      next: 'Next'
+      next: 'Next',
+      expanded: 'Expanded',
+      collapsed: 'Collapsed'
     },
     common: {
       loading: 'Loading...',
@@ -312,7 +316,9 @@ const translations: Record<Language, Translations> = {
       month: 'Mois',
       today: 'Aujourd\'hui',
       previous: 'Précédent',
-      next: 'Suivant'
+      next: 'Suivant',
+      expanded: 'Développé',
+      collapsed: 'Réduit'
     },
     common: {
       loading: 'Chargement...',
@@ -415,7 +421,9 @@ const translations: Record<Language, Translations> = {
       month: 'Mese',
       today: 'Oggi',
       previous: 'Precedente',
-      next: 'Successivo'
+      next: 'Successivo',
+      expanded: 'Espanso',
+      collapsed: 'Compattato'
     },
     common: {
       loading: 'Caricamento...',

@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSelector from '@/components/LanguageSelector';
+import PersistentCalendar from '@/components/PersistentCalendar';
 
 interface VacationRequest {
   id: string;
@@ -917,6 +918,7 @@ export default function AdminVacationRequestsPage() {
           </div>
         </div>
       )}
+      <PersistentCalendar />
     </main>
   );
 } 

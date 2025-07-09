@@ -4,6 +4,7 @@ import './globals.css';
 import { AuthProvider } from '@/components/AuthProvider';
 import { LanguageProvider } from '@/contexts/LanguageContext';
 import type { ReactNode } from 'react';
+import PersistentCalendar from '@/components/PersistentCalendar';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -25,6 +26,7 @@ export default function RootLayout({
             {children}
           </AuthProvider>
         </LanguageProvider>
+        {/* PersistentCalendar will now be rendered in each page after main content */}
       </body>
     </html>
   );

@@ -25,6 +25,8 @@ const TypeEnum = z.enum([
 const vacationRequestSchema = z.object({
   startDate: z.string().min(1, 'Start date is required'),
   endDate: z.string().min(1, 'End date is required'),
+  included: z.boolean().default(false),
+  openDays: z.string().optional(),
   reason: z.string().optional(),
   company: CompanyEnum,
   type: TypeEnum,
@@ -56,6 +58,8 @@ export function VacationRequestForm() {
     defaultValues: {
       company: 'STARS_MC',
       type: 'PAID_VACATION',
+      included: false,
+      openDays: '',
     },
   });
 
@@ -217,21 +221,34 @@ export function VacationRequestForm() {
             <label htmlFor="endDate" className="block text-sm font-semibold text-gray-700 mb-3">
               End Date *
             </label>
-            <input
-              type="date"
-              id="endDate"
-              {...register('endDate')}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-base transition-all duration-200 hover:border-gray-300"
-              style={{ 
-                fontFamily: 'Montserrat, sans-serif', 
-                padding: '12px 16px',
-                backgroundColor: '#ffffff',
-                borderRadius: '12px',
-                border: '2px solid #e5e7eb',
-                fontSize: '16px',
-                fontWeight: '500'
-              }}
-            />
+            <div className="flex items-center space-x-4">
+              <input
+                type="date"
+                id="endDate"
+                {...register('endDate')}
+                className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-base transition-all duration-200 hover:border-gray-300"
+                style={{ 
+                  fontFamily: 'Montserrat, sans-serif', 
+                  padding: '12px 16px',
+                  backgroundColor: '#ffffff',
+                  borderRadius: '12px',
+                  border: '2px solid #e5e7eb',
+                  fontSize: '16px',
+                  fontWeight: '500'
+                }}
+              />
+              <div className="flex items-center space-x-2">
+                <input
+                  type="checkbox"
+                  id="included"
+                  {...register('included')}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                />
+                <label htmlFor="included" className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                  Included
+                </label>
+              </div>
+            </div>
             {errors.endDate && (
               <p className="mt-2 text-sm text-red-600">{errors.endDate.message}</p>
             )}
@@ -245,7 +262,7 @@ export function VacationRequestForm() {
           </p>
         </div>
 
-        {/* Reason - Positioned Under Label */}
+        {/* Reason and Number of Open Days */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <label htmlFor="reason" className="block text-sm font-semibold text-gray-700 mb-3">
@@ -273,7 +290,31 @@ export function VacationRequestForm() {
               <p className="mt-2 text-sm text-red-600">{errors.reason.message}</p>
             )}
           </div>
-          <div></div> {/* Empty div to maintain grid layout */}
+
+          <div>
+            <label htmlFor="openDays" className="block text-sm font-semibold text-gray-700 mb-3">
+              Number of open day(s)
+            </label>
+            <input
+              type="text"
+              id="openDays"
+              {...register('openDays')}
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-base transition-all duration-200 hover:border-gray-300"
+              placeholder="Enter number of open days..."
+              style={{ 
+                fontFamily: 'Montserrat, sans-serif', 
+                padding: '12px 16px',
+                backgroundColor: '#ffffff',
+                borderRadius: '12px',
+                border: '2px solid #e5e7eb',
+                fontSize: '16px',
+                fontWeight: '500'
+              }}
+            />
+            {errors.openDays && (
+              <p className="mt-2 text-sm text-red-600">{errors.openDays.message}</p>
+            )}
+          </div>
         </div>
 
         {/* Status Messages */}

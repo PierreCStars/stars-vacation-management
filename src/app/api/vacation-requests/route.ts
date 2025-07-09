@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { startDate, endDate, reason, company, type } = body;
+    const { startDate, endDate, reason, company, type, included, openDays } = body;
 
     // Validate required fields
     if (!startDate || !endDate || !company || !type) {
@@ -56,6 +56,8 @@ export async function POST(request: NextRequest) {
       reason: reason || '',
       company,
       type,
+      included: included || false,
+      openDays: openDays || '',
       status: 'PENDING',
       createdAt: new Date().toISOString(),
     };

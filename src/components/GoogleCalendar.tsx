@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useLanguage } from '../contexts/LanguageContext';
 
 // Company color mapping for the legend - matches the vacation request form
 const COMPANY_COLORS = {
@@ -28,6 +29,7 @@ export default function GoogleCalendar({
   title = 'Stars Vacation Calendar',
   userEmail
 }: GoogleCalendarProps) {
+  const { t } = useLanguage();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'WEEK' | 'MONTH'>('WEEK');
   const [showEmbedded, setShowEmbedded] = useState(false);
@@ -275,7 +277,7 @@ export default function GoogleCalendar({
           color: '#1e40af',
           fontWeight: '500'
         }}>
-          If the date you want to request vacation for is not displayed, please switch to full mode
+          {t.calendar.switchToFullMode}
         </p>
       </div>
 

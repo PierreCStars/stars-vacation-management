@@ -105,6 +105,7 @@ export interface Translations {
     next: string;
     expanded: string;
     collapsed: string;
+    switchToFullMode: string;
   };
   
   // Common
@@ -214,7 +215,8 @@ const translations: Record<Language, Translations> = {
       previous: 'Previous',
       next: 'Next',
       expanded: 'Expanded',
-      collapsed: 'Collapsed'
+      collapsed: 'Collapsed',
+      switchToFullMode: 'If the date you want to request vacation for is not displayed, please switch to full mode'
     },
     common: {
       loading: 'Loading...',
@@ -320,7 +322,8 @@ const translations: Record<Language, Translations> = {
       previous: 'Précédent',
       next: 'Suivant',
       expanded: 'Développé',
-      collapsed: 'Réduit'
+      collapsed: 'Réduit',
+      switchToFullMode: 'Si la date pour laquelle vous souhaitez demander des congés n\'est pas affichée, veuillez passer en mode complet'
     },
     common: {
       loading: 'Chargement...',
@@ -426,7 +429,8 @@ const translations: Record<Language, Translations> = {
       previous: 'Precedente',
       next: 'Successivo',
       expanded: 'Espanso',
-      collapsed: 'Compattato'
+      collapsed: 'Compattato',
+      switchToFullMode: 'Se la data per cui vuoi richiedere le ferie non è visualizzata, passa alla modalità completa'
     },
     common: {
       loading: 'Caricamento...',

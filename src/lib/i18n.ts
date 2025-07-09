@@ -118,6 +118,7 @@ export interface Translations {
     no: string;
     ok: string;
     cancel: string;
+    optional: string;
   };
 }
 
@@ -224,7 +225,8 @@ const translations: Record<Language, Translations> = {
       yes: 'Yes',
       no: 'No',
       ok: 'OK',
-      cancel: 'Cancel'
+      cancel: 'Cancel',
+      optional: 'Optional'
     }
   },
   fr: {
@@ -329,7 +331,8 @@ const translations: Record<Language, Translations> = {
       yes: 'Oui',
       no: 'Non',
       ok: 'OK',
-      cancel: 'Annuler'
+      cancel: 'Annuler',
+      optional: 'Optionnel'
     }
   },
   it: {
@@ -434,7 +437,8 @@ const translations: Record<Language, Translations> = {
       yes: 'Sì',
       no: 'No',
       ok: 'OK',
-      cancel: 'Annulla'
+      cancel: 'Annulla',
+      optional: 'Opzionale'
     }
   }
 };

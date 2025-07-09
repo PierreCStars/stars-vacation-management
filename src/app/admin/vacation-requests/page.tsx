@@ -543,89 +543,88 @@ export default function AdminVacationRequestsPage() {
                     </div>
                   )}
                   
-                  {editingRequest === request.id ? (
-                    <div className="space-y-4">
-                      <textarea
-                        value={adminComment}
-                        onChange={(e) => setAdminComment(e.target.value)}
-                        placeholder={t.admin.commentPlaceholder}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                  <div className="space-y-4">
+                    {/* Action Buttons - Always Visible */}
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        onClick={() => handleReviewRequest(request.id, 'APPROVED')}
+                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 font-semibold"
                         style={{ 
-                          width: '100%',
-                          padding: '0.5rem 0.75rem',
-                          border: '1px solid #d1d5db',
-                          borderRadius: '0.375rem'
+                          padding: '0.5rem 1rem',
+                          backgroundColor: '#16a34a',
+                          color: 'white',
+                          borderRadius: '0.375rem',
+                          border: 'none',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s ease',
+                          fontWeight: '600'
                         }}
-                        rows={3}
-                      />
-                      <div className="flex space-x-2">
-                        <button
-                          onClick={() => handleReviewRequest(request.id, 'APPROVED')}
-                          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
-                          style={{ 
-                            padding: '0.5rem 1rem',
-                            backgroundColor: '#16a34a',
-                            color: 'white',
-                            borderRadius: '0.375rem',
-                            border: 'none',
-                            cursor: 'pointer',
-                            transition: 'background-color 0.2s ease'
-                          }}
-                        >
-                          {t.admin.approve}
-                        </button>
-                        <button
-                          onClick={() => handleReviewRequest(request.id, 'REJECTED')}
-                          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200"
-                          style={{ 
-                            padding: '0.5rem 1rem',
-                            backgroundColor: '#dc2626',
-                            color: 'white',
-                            borderRadius: '0.375rem',
-                            border: 'none',
-                            cursor: 'pointer',
-                            transition: 'background-color 0.2s ease'
-                          }}
-                        >
-                          {t.admin.reject}
-                        </button>
-                        <button
-                          onClick={() => {
-                            setEditingRequest(null);
-                            setAdminComment('');
-                          }}
-                          className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors duration-200"
-                          style={{ 
-                            padding: '0.5rem 1rem',
-                            backgroundColor: '#d1d5db',
-                            color: '#374151',
-                            borderRadius: '0.375rem',
-                            border: 'none',
-                            cursor: 'pointer',
-                            transition: 'background-color 0.2s ease'
-                          }}
-                        >
-                          {t.common.cancel}
-                        </button>
-                      </div>
+                      >
+                        ✓ {t.admin.approve}
+                      </button>
+                      <button
+                        onClick={() => handleReviewRequest(request.id, 'REJECTED')}
+                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200 font-semibold"
+                        style={{ 
+                          padding: '0.5rem 1rem',
+                          backgroundColor: '#dc2626',
+                          color: 'white',
+                          borderRadius: '0.375rem',
+                          border: 'none',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s ease',
+                          fontWeight: '600'
+                        }}
+                      >
+                        ✗ {t.admin.reject}
+                      </button>
+                      <button
+                        onClick={() => setEditingRequest(editingRequest === request.id ? null : request.id)}
+                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
+                        style={{ 
+                          padding: '0.5rem 1rem',
+                          backgroundColor: '#2563eb',
+                          color: 'white',
+                          borderRadius: '0.375rem',
+                          border: 'none',
+                          cursor: 'pointer',
+                          transition: 'background-color 0.2s ease'
+                        }}
+                      >
+                        {editingRequest === request.id ? t.common.cancel : t.admin.addComment}
+                      </button>
                     </div>
-                  ) : (
-                    <button
-                      onClick={() => setEditingRequest(request.id)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
-                      style={{ 
-                        padding: '0.5rem 1rem',
-                        backgroundColor: '#2563eb',
-                        color: 'white',
-                        borderRadius: '0.375rem',
-                        border: 'none',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.2s ease'
-                      }}
-                    >
-                      {t.admin.addComment}
-                    </button>
-                  )}
+                    
+                    {/* Optional Comment Field */}
+                    {editingRequest === request.id && (
+                      <div className="space-y-2">
+                        <label 
+                          className="block text-sm font-medium text-gray-700"
+                          style={{ 
+                            display: 'block',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            color: '#374151'
+                          }}
+                        >
+                          {t.admin.addComment} ({t.common.optional})
+                        </label>
+                        <textarea
+                          value={adminComment}
+                          onChange={(e) => setAdminComment(e.target.value)}
+                          placeholder={t.admin.commentPlaceholder}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          style={{ 
+                            width: '100%',
+                            padding: '0.5rem 0.75rem',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '0.375rem'
+                          }}
+                          rows={3}
+                        />
+                      </div>
+                    )}
+                  </div>
                 </div>
               ))}
             </div>

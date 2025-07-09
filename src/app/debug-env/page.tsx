@@ -1,7 +1,5 @@
 "use client";
 
-import PersistentCalendar from '@/components/PersistentCalendar';
-
 export default function DebugEnvPage() {
   return (
     <main>
@@ -34,7 +32,6 @@ export default function DebugEnvPage() {
           <a href="/" style={{ color: '#0070f3' }}>← Back to Home</a>
         </div>
       </div>
-      <PersistentCalendar />
     </main>
   );
 } 

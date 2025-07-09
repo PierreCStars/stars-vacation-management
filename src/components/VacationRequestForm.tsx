@@ -33,7 +33,7 @@ const vacationRequestSchema = z.object({
   const endDate = new Date(data.endDate);
   return endDate >= startDate;
 }, {
-  message: "End date must be after or equal to start date",
+  message: "End date must be on or after the start date (single-day requests are allowed)",
   path: ["endDate"],
 });
 
@@ -236,6 +236,13 @@ export function VacationRequestForm() {
               <p className="mt-2 text-sm text-red-600">{errors.endDate.message}</p>
             )}
           </div>
+        </div>
+        
+        {/* Helpful note about single-day requests */}
+        <div className="text-center">
+          <p className="text-sm text-gray-600 italic">
+            💡 You can request vacation for a single day by setting the same date for both start and end dates.
+          </p>
         </div>
 
         {/* Reason - Positioned Under Label */}

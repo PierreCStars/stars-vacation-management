@@ -594,7 +594,6 @@ export default function AdminVacationRequestsPage() {
                         {editingRequest === request.id ? t.common.cancel : t.admin.addComment}
                       </button>
                     </div>
-                    
                     {/* Optional Comment Field */}
                     {editingRequest === request.id && (
                       <div className="space-y-2">

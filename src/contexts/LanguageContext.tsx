@@ -15,19 +15,51 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>('en');
+  const [isClient, setIsClient] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   useEffect(() => {
-    // Load language from localStorage on mount
-    const savedLanguage = localStorage.getItem('stars-vacation-language') as Language;
-    if (savedLanguage && ['en', 'fr', 'it'].includes(savedLanguage)) {
-      setLanguageState(savedLanguage);
+    try {
+      setIsClient(true);
+      // Load language from localStorage on mount (only on client side)
+      if (typeof window !== 'undefined') {
+        const savedLanguage = localStorage.getItem('stars-vacation-language') as Language;
+        if (savedLanguage && ['en', 'fr', 'it'].includes(savedLanguage)) {
+          setLanguageState(savedLanguage);
+        }
+      }
+      setIsInitialized(true);
+    } catch (error) {
+      console.error('Error initializing LanguageProvider:', error);
+      setIsInitialized(true);
     }
   }, []);
 
   const setLanguage = (newLanguage: Language) => {
-    setLanguageState(newLanguage);
-    localStorage.setItem('stars-vacation-language', newLanguage);
+    try {
+      setLanguageState(newLanguage);
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('stars-vacation-language', newLanguage);
+      }
+    } catch (error) {
+      console.error('Error setting language:', error);
+    }
   };
+
+  // Don't render children until initialized to prevent context errors
+  if (!isInitialized) {
+    return (
+      <LanguageContext.Provider value={{
+        language: 'en',
+        setLanguage: () => {},
+        t: getTranslations('en'),
+        getLanguageName,
+        getLanguageFlag,
+      }}>
+        {children}
+      </LanguageContext.Provider>
+    );
+  }
 
   const value: LanguageContextType = {
     language,

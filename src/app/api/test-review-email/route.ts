@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import { sendEmailWithFallbacks } from '@/lib/simple-email-service';
 import { NextRequest } from 'next/server';
 
+// Mark this route as dynamic to avoid static rendering issues
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     console.log('🧪 Testing admin review email functionality...');
@@ -62,6 +65,9 @@ export async function GET(request: NextRequest) {
     
     console.log('📧 Admin review email test result:', result);
     
+    // Get the current URL without using request.url
+    const currentUrl = `${baseUrl}/api/test-review-email`;
+    
     return NextResponse.json({
       success: true,
       emailResult: result,
@@ -71,8 +77,8 @@ export async function GET(request: NextRequest) {
         subject: emailSubject,
         status: mockRequest.status,
         testUrls: {
-          approved: `${request.url}?status=APPROVED`,
-          rejected: `${request.url}?status=REJECTED`
+          approved: `${currentUrl}?status=APPROVED`,
+          rejected: `${currentUrl}?status=REJECTED`
         }
       }
     });

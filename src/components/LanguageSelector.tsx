@@ -15,6 +15,10 @@ export default function LanguageSelector() {
     setIsOpen(false);
   };
 
+  // Fallback values in case translations are not loaded yet
+  const currentLanguageName = getLanguageName ? getLanguageName(language) : 'English';
+  const currentLanguageFlag = getLanguageFlag ? getLanguageFlag(language) : '🇺🇸';
+
   return (
     <div className="relative">
       {/* Current Language Button */}
@@ -41,9 +45,9 @@ export default function LanguageSelector() {
           e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.1)';
         }}
       >
-        <span style={{ fontSize: '1.25rem' }}>{getLanguageFlag(language)}</span>
+        <span style={{ fontSize: '1.25rem' }}>{currentLanguageFlag}</span>
         <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>
-          {getLanguageName(language)}
+          {currentLanguageName}
         </span>
         <svg
           style={{
@@ -77,55 +81,60 @@ export default function LanguageSelector() {
           }}
         >
           <div className="py-1" style={{ padding: '0.25rem 0' }}>
-            {languages.map((lang) => (
-              <button
-                key={lang}
-                onClick={() => handleLanguageChange(lang)}
-                className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors duration-150 flex items-center space-x-3 ${
-                  language === lang ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
-                }`}
-                style={{
-                  width: '100%',
-                  textAlign: 'left',
-                  padding: '0.5rem 1rem',
-                  fontSize: '0.875rem',
-                  transition: 'background-color 0.15s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem',
-                  backgroundColor: language === lang ? '#eff6ff' : 'transparent',
-                  color: language === lang ? '#1d4ed8' : '#374151'
-                }}
-                onMouseEnter={(e) => {
-                  if (language !== lang) {
-                    e.currentTarget.style.backgroundColor = '#f3f4f6';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (language !== lang) {
-                    e.currentTarget.style.backgroundColor = 'transparent';
-                  }
-                }}
-              >
-                <span style={{ fontSize: '1.25rem' }}>{getLanguageFlag(lang)}</span>
-                <span style={{ fontWeight: language === lang ? '600' : '400' }}>
-                  {getLanguageName(lang)}
-                </span>
-                {language === lang && (
-                  <svg
-                    style={{ width: '1rem', height: '1rem', marginLeft: 'auto' }}
-                    fill="currentColor"
-                    viewBox="0 0 20 20"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                )}
-              </button>
-            ))}
+            {languages.map((lang) => {
+              const langName = getLanguageName ? getLanguageName(lang) : lang.toUpperCase();
+              const langFlag = getLanguageFlag ? getLanguageFlag(lang) : '🏳️';
+              
+              return (
+                <button
+                  key={lang}
+                  onClick={() => handleLanguageChange(lang)}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors duration-150 flex items-center space-x-3 ${
+                    language === lang ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                  }`}
+                  style={{
+                    width: '100%',
+                    textAlign: 'left',
+                    padding: '0.5rem 1rem',
+                    fontSize: '0.875rem',
+                    transition: 'background-color 0.15s ease',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    backgroundColor: language === lang ? '#eff6ff' : 'transparent',
+                    color: language === lang ? '#1d4ed8' : '#374151'
+                  }}
+                  onMouseEnter={(e) => {
+                    if (language !== lang) {
+                      e.currentTarget.style.backgroundColor = '#f3f4f6';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (language !== lang) {
+                      e.currentTarget.style.backgroundColor = 'transparent';
+                    }
+                  }}
+                >
+                  <span style={{ fontSize: '1.25rem' }}>{langFlag}</span>
+                  <span style={{ fontWeight: language === lang ? '600' : '400' }}>
+                    {langName}
+                  </span>
+                  {language === lang && (
+                    <svg
+                      style={{ width: '1rem', height: '1rem', marginLeft: 'auto' }}
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

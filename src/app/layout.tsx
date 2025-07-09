@@ -1,19 +1,15 @@
-import "./globals.css";
-import type { Metadata } from "next";
-import { Montserrat } from "next/font/google";
-import { AuthProvider } from "@/components/AuthProvider";
-import type { ReactNode } from "react";
+import type { Metadata } from 'next';
+import { Inter } from 'next/font/google';
+import './globals.css';
+import { AuthProvider } from '@/components/AuthProvider';
+import { LanguageProvider } from '@/contexts/LanguageContext';
+import type { ReactNode } from 'react';
 
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  display: 'swap',
-  weight: ['300', '400', '500', '600', '700', '800'],
-  variable: '--font-montserrat',
-});
+const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: "Stars Vacation Management",
-  description: "Vacation management system for Stars Group companies",
+  title: 'Stars Vacation Management',
+  description: 'Vacation request management system for Stars Group',
 };
 
 export default function RootLayout({
@@ -22,21 +18,13 @@ export default function RootLayout({
   children: ReactNode;
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body 
-        className={`${montserrat.variable} font-montserrat antialiased`} 
-        style={{ 
-          backgroundColor: '#FFFFFF', 
-          margin: 0, 
-          padding: 0,
-          minHeight: '100vh',
-          fontFamily: 'Montserrat, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-          fontWeight: 400,
-          lineHeight: 1.6,
-          color: '#1f2937'
-        }}
-      >
-        <AuthProvider>{children}</AuthProvider>
+    <html lang="en">
+      <body className={inter.className}>
+        <LanguageProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </LanguageProvider>
       </body>
     </html>
   );

@@ -1,26 +1,116 @@
-import Image from 'next/image';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import { redirect } from 'next/navigation';
+'use client';
+
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { SignOutButton } from '@/components/SignOutButton';
-import GoogleCalendar from '@/components/GoogleCalendar';
-import UserGuideCard from '@/components/UserGuideCard';
+import { useLanguage } from '@/contexts/LanguageContext';
+import LanguageSelector from '@/components/LanguageSelector';
 
-export default async function Dashboard() {
-  const session = await getServerSession(authOptions);
-  
-  console.log('Dashboard page - Session:', session);
-  console.log('Dashboard page - Session exists:', !!session);
-  console.log('Dashboard page - User email:', session?.user?.email);
+export default function Dashboard() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const { t } = useLanguage();
 
-  // If user is not authenticated, redirect to login
-  if (!session) {
-    redirect('/');
+  useEffect(() => {
+    if (status === 'loading') return;
+
+    if (!session?.user?.email) {
+      router.push('/auth/signin');
+      return;
+    }
+  }, [session, status, router]);
+
+  if (status === 'loading') {
+    return (
+      <main 
+        className="min-h-screen flex flex-col items-center justify-center py-12"
+        style={{ 
+          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingTop: '3rem',
+          paddingBottom: '3rem'
+        }}
+      >
+        <div 
+          className="w-full max-w-4xl"
+          style={{ 
+            width: '100%', 
+            maxWidth: '896px', 
+            paddingLeft: '1.5rem', 
+            paddingRight: '1.5rem' 
+          }}
+        >
+          <div 
+            className="text-center mb-8"
+            style={{ textAlign: 'center', marginBottom: '2rem' }}
+          >
+            <Link href="/dashboard">
+              <Image 
+                src="/stars-logo.png" 
+                alt="Stars Logo" 
+                width={180}
+                height={180}
+                style={{ maxWidth: 180, maxHeight: 180, width: 'auto', height: 'auto', display: 'block', margin: '0 auto', cursor: 'pointer' }}
+                className="mb-6 drop-shadow-lg"
+                priority 
+              />
+            </Link>
+            <h1 
+              className="text-5xl font-bold tracking-tight mb-6 text-gray-900"
+              style={{ 
+                fontSize: '3rem', 
+                fontWeight: '700', 
+                color: '#111827', 
+                letterSpacing: '-0.025em', 
+                marginBottom: '1.5rem',
+                textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+              }}
+            >
+              {t.dashboard.title}
+            </h1>
+          </div>
+          <div 
+            className="card text-center"
+            style={{ 
+              backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+              borderRadius: '1rem', 
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', 
+              padding: '2rem',
+              textAlign: 'center',
+              backdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)'
+            }}
+          >
+            <div style={{ width: 64, height: 64, border: '4px solid #f3f4f6', borderTop: '4px solid #3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 24px auto' }}></div>
+            <h2 style={{ fontSize: 24, fontWeight: 600, color: '#111827', marginBottom: 8 }}>
+              {t.common.loading}
+            </h2>
+            <p style={{ color: '#6b7280' }}>Please wait while we load your dashboard.</p>
+          </div>
+        </div>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </main>
+    );
+  }
+
+  if (!session?.user) {
+    return null;
   }
 
   // Check if user has admin access
-  const isAdmin = session?.user?.email === 'johnny@stars.mc' || session?.user?.email === 'daniel@stars.mc' || session?.user?.email === 'pierre@stars.mc' || session?.user?.email === 'compta@stars.mc';
+  const isAdmin = session.user.email === 'johnny@stars.mc' || session.user.email === 'daniel@stars.mc' || session.user.email === 'pierre@stars.mc' || session.user.email === 'compta@stars.mc';
 
   return (
     <main 
@@ -45,6 +135,20 @@ export default async function Dashboard() {
           paddingRight: '1.5rem' 
         }}
       >
+        {/* Header with Language Selector */}
+        <div 
+          className="flex justify-between items-center mb-8"
+          style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center', 
+            marginBottom: '2rem' 
+          }}
+        >
+          <div></div> {/* Empty div for spacing */}
+          <LanguageSelector />
+        </div>
+
         <div 
           className="text-center mb-12"
           style={{ textAlign: 'center', marginBottom: '3rem' }}
@@ -73,7 +177,7 @@ export default async function Dashboard() {
               textShadow: '0 2px 4px rgba(0,0,0,0.1)'
             }}
           >
-            Stars Vacation Management
+            {t.dashboard.title}
           </h1>
 
         </div>
@@ -119,7 +223,7 @@ export default async function Dashboard() {
                     color: '#111827' 
                   }}
                 >
-                  Welcome back, {session.user.name}!
+                  {t.dashboard.welcome}, {session.user.name}!
                 </h2>
                 <p 
                   className="text-gray-600"
@@ -184,7 +288,7 @@ export default async function Dashboard() {
                     marginBottom: '1rem' 
                   }}
                 >
-                  Request Vacation
+                  {t.dashboard.requestVacation}
                 </h3>
                 <p 
                   className="text-gray-600 mb-6"
@@ -211,7 +315,7 @@ export default async function Dashboard() {
                   transition: 'background-color 0.2s ease'
                 }}
               >
-                Submit Request
+                {t.dashboard.submitRequest}
               </Link>
             </div>
 
@@ -232,11 +336,11 @@ export default async function Dashboard() {
               >
                 <div className="mb-6">
                   <div 
-                    className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"
+                    className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4"
                     style={{ 
                       width: '4rem', 
                       height: '4rem', 
-                      backgroundColor: '#dcfce7', 
+                      backgroundColor: '#f3e8ff', 
                       borderRadius: '50%', 
                       display: 'flex', 
                       alignItems: 'center', 
@@ -244,7 +348,7 @@ export default async function Dashboard() {
                       margin: '0 auto 1rem auto' 
                     }}
                   >
-                    <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                   </div>
@@ -257,7 +361,7 @@ export default async function Dashboard() {
                       marginBottom: '1rem' 
                     }}
                   >
-                    Administration
+                    {t.dashboard.administration}
                   </h3>
                   <p 
                     className="text-gray-600 mb-6"
@@ -267,63 +371,46 @@ export default async function Dashboard() {
                       lineHeight: 1.6
                     }}
                   >
-                    Review and manage vacation requests
+                    Manage and review vacation requests
                   </p>
                 </div>
-                <Link 
-                  href="/admin/vacation-requests"
-                  className="inline-block bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors duration-200"
-                  style={{ 
-                    display: 'inline-block',
-                    backgroundColor: '#16a34a',
-                    color: 'white',
-                    padding: '0.75rem 2rem',
-                    borderRadius: '0.5rem',
-                    fontWeight: '600',
-                    textDecoration: 'none',
-                    transition: 'background-color 0.2s ease'
-                  }}
-                >
-                  Access Admin
-                </Link>
+                <div className="space-y-3">
+                  <Link 
+                    href="/admin/vacation-requests"
+                    className="inline-block bg-purple-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-purple-700 transition-colors duration-200"
+                    style={{ 
+                      display: 'inline-block',
+                      backgroundColor: '#9333ea',
+                      color: 'white',
+                      padding: '0.5rem 1.5rem',
+                      borderRadius: '0.5rem',
+                      fontWeight: '600',
+                      textDecoration: 'none',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                  >
+                    {t.dashboard.manageRequests}
+                  </Link>
+                  <br />
+                  <Link 
+                    href="/dashboard"
+                    className="inline-block bg-gray-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-gray-700 transition-colors duration-200"
+                    style={{ 
+                      display: 'inline-block',
+                      backgroundColor: '#4b5563',
+                      color: 'white',
+                      padding: '0.5rem 1.5rem',
+                      borderRadius: '0.5rem',
+                      fontWeight: '600',
+                      textDecoration: 'none',
+                      transition: 'background-color 0.2s ease'
+                    }}
+                  >
+                    {t.dashboard.viewCalendar}
+                  </Link>
+                </div>
               </div>
             )}
-
-            {/* User Guide Card */}
-            <UserGuideCard />
-          </div>
-          
-          {/* Google Calendar Section */}
-          <div 
-            className="card"
-            style={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-              borderRadius: '1rem', 
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', 
-              padding: '2rem',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)'
-            }}
-          >
-            <p 
-              className="text-lg font-bold text-gray-800 mb-4 text-center"
-              style={{ 
-                fontSize: '1.125rem', 
-                fontWeight: '700', 
-                color: '#1f2937', 
-                marginBottom: '1rem',
-                textAlign: 'center',
-                lineHeight: 1.6
-              }}
-            >
-              Please check no one in your company is already off at the same time
-            </p>
-            <GoogleCalendar 
-              calendarId="c_e98f5350bf743174f87e1a786038cb9d103c306b7246c6200684f81c37a6a764@group.calendar.google.com"
-              height="500px"
-              title="Team Vacation Calendar"
-              userEmail={session.user.email}
-            />
           </div>
         </div>
       </div>

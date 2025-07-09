@@ -71,6 +71,7 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Updated useLanguage hook that returns default context instead of throwing errors
 export function useLanguage(): LanguageContextType {
   const context = useContext(LanguageContext);
   

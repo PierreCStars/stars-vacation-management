@@ -13,7 +13,7 @@ const nextConfig = {
       },
     ],
   },
-  // Firebase Hosting + Cloud Functions configuration
+  // Firebase Hosting configuration
   experimental: {
     serverComponentsExternalPackages: ['@google-cloud/firestore'],
   },

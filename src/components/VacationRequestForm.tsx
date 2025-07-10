@@ -209,74 +209,72 @@ export function VacationRequestForm() {
           </div>
         </div>
 
-        {/* Start Date and End Date on the same line */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label htmlFor="startDate" className="block text-sm font-semibold text-gray-700 mb-3">
-              Start Date *
-            </label>
+        {/* Start Date */}
+        <div>
+          <label htmlFor="startDate" className="block text-sm font-semibold text-gray-700 mb-3">
+            Start Date *
+          </label>
+          <input
+            type="date"
+            id="startDate"
+            {...register('startDate')}
+            min={new Date().toISOString().split('T')[0]}
+            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-base transition-all duration-200 hover:border-gray-300"
+            style={{ 
+              fontFamily: 'Montserrat, sans-serif', 
+              padding: '12px 16px',
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+              border: '2px solid #e5e7eb',
+              fontSize: '16px',
+              fontWeight: '500'
+            }}
+          />
+          {errors.startDate && (
+            <p className="mt-2 text-sm text-red-600">{errors.startDate.message}</p>
+          )}
+        </div>
+
+        {/* End Date */}
+        <div>
+          <label htmlFor="endDate" className="block text-sm font-semibold text-gray-700 mb-3">
+            End Date *
+          </label>
+          <input
+            type="date"
+            id="endDate"
+            {...register('endDate')}
+            min={new Date().toISOString().split('T')[0]}
+            className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-base transition-all duration-200 hover:border-gray-300"
+            style={{ 
+              fontFamily: 'Montserrat, sans-serif', 
+              padding: '12px 16px',
+              backgroundColor: '#ffffff',
+              borderRadius: '12px',
+              border: '2px solid #e5e7eb',
+              fontSize: '16px',
+              fontWeight: '500'
+            }}
+          />
+          {/* Included Checkbox - now below End Date */}
+          <div className="flex items-center space-x-2 mt-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
             <input
-              type="date"
-              id="startDate"
-              {...register('startDate')}
-              min={new Date().toISOString().split('T')[0]}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-base transition-all duration-200 hover:border-gray-300"
+              type="checkbox"
+              id="included"
+              {...register('included')}
+              className="w-5 h-5 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 focus:border-blue-500"
               style={{ 
-                fontFamily: 'Montserrat, sans-serif', 
-                padding: '12px 16px',
-                backgroundColor: '#ffffff',
-                borderRadius: '12px',
-                border: '2px solid #e5e7eb',
-                fontSize: '16px',
-                fontWeight: '500'
+                accentColor: '#2563eb',
+                transform: 'scale(1.2)'
               }}
             />
-            {errors.startDate && (
-              <p className="mt-2 text-sm text-red-600">{errors.startDate.message}</p>
-            )}
-          </div>
-
-          <div>
-            <label htmlFor="endDate" className="block text-sm font-semibold text-gray-700 mb-3">
-              End Date *
+            <label htmlFor="included" className="text-sm font-semibold text-gray-700 whitespace-nowrap cursor-pointer">
+              Include end date in calculation
             </label>
-            <div className="flex items-center space-x-4">
-              <input
-                type="date"
-                id="endDate"
-                {...register('endDate')}
-                min={new Date().toISOString().split('T')[0]}
-                className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-base transition-all duration-200 hover:border-gray-300"
-                style={{ 
-                  fontFamily: 'Montserrat, sans-serif', 
-                  padding: '12px 16px',
-                  backgroundColor: '#ffffff',
-                  borderRadius: '12px',
-                  border: '2px solid #e5e7eb',
-                  fontSize: '16px',
-                  fontWeight: '500'
-                }}
-              />
-              <div className="flex items-center space-x-2 bg-gray-50 p-2 rounded-lg border border-gray-200">
-                <input
-                  type="checkbox"
-                  id="included"
-                  {...register('included')}
-                  className="w-5 h-5 text-blue-600 bg-white border-2 border-gray-300 rounded focus:ring-blue-500 focus:ring-2 focus:border-blue-500"
-                  style={{ 
-                    accentColor: '#2563eb',
-                    transform: 'scale(1.2)'
-                  }}
-                />
-                <label htmlFor="included" className="text-sm font-semibold text-gray-700 whitespace-nowrap cursor-pointer">
-                  Included
-                </label>
-              </div>
-            </div>
-            {errors.endDate && (
-              <p className="mt-2 text-sm text-red-600">{errors.endDate.message}</p>
-            )}
           </div>
+          {errors.endDate && (
+            <p className="mt-2 text-sm text-red-600">{errors.endDate.message}</p>
+          )}
         </div>
         
         {/* Helpful note about single-day requests */}

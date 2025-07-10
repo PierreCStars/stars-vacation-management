@@ -322,64 +322,6 @@ export default function AdminVacationRequestsPage() {
           </p>
         </div>
 
-        {/* Admin Actions */}
-        <div 
-          className="card mb-8"
-          style={{ 
-            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-            borderRadius: '1rem', 
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', 
-            padding: '1.5rem',
-            marginBottom: '2rem',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)'
-          }}
-        >
-          <div 
-            className="flex flex-wrap gap-4 justify-center"
-            style={{ 
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '1rem',
-              justifyContent: 'center'
-            }}
-          >
-            <button
-              onClick={handleExportCSV}
-              disabled={exportingCSV}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-              style={{ 
-                padding: '0.5rem 1rem',
-                backgroundColor: '#16a34a',
-                color: 'white',
-                borderRadius: '0.5rem',
-                border: 'none',
-                cursor: exportingCSV ? 'not-allowed' : 'pointer',
-                opacity: exportingCSV ? 0.5 : 1,
-                transition: 'background-color 0.2s ease'
-              }}
-            >
-              {exportingCSV ? t.admin.exporting : t.admin.exportCSV}
-            </button>
-            
-            <button
-              onClick={() => setShowClearModal(true)}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
-              style={{ 
-                padding: '0.5rem 1rem',
-                backgroundColor: '#dc2626',
-                color: 'white',
-                borderRadius: '0.5rem',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s ease'
-              }}
-            >
-              {t.admin.clearReviewed}
-            </button>
-          </div>
-        </div>
-
         {/* Pending Requests */}
         <div 
           className="card mb-8"
@@ -628,6 +570,64 @@ export default function AdminVacationRequestsPage() {
               ))}
             </div>
           )}
+        </div>
+
+        {/* Admin Actions */}
+        <div 
+          className="card mb-8"
+          style={{ 
+            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+            borderRadius: '1rem', 
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', 
+            padding: '1.5rem',
+            marginBottom: '2rem',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}
+        >
+          <div 
+            className="flex flex-wrap gap-4 justify-center"
+            style={{ 
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '1rem',
+              justifyContent: 'center'
+            }}
+          >
+            <button
+              onClick={handleExportCSV}
+              disabled={exportingCSV}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              style={{ 
+                padding: '0.5rem 1rem',
+                backgroundColor: '#16a34a',
+                color: 'white',
+                borderRadius: '0.5rem',
+                border: 'none',
+                cursor: exportingCSV ? 'not-allowed' : 'pointer',
+                opacity: exportingCSV ? 0.5 : 1,
+                transition: 'background-color 0.2s ease'
+              }}
+            >
+              {exportingCSV ? t.admin.exporting : t.admin.exportCSV}
+            </button>
+            
+            <button
+              onClick={() => setShowClearModal(true)}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
+              style={{ 
+                padding: '0.5rem 1rem',
+                backgroundColor: '#dc2626',
+                color: 'white',
+                borderRadius: '0.5rem',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease'
+              }}
+            >
+              {t.admin.clearReviewed}
+            </button>
+          </div>
         </div>
 
         {/* Reviewed Requests */}

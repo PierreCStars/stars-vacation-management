@@ -31,8 +31,25 @@ const vacationRequestSchema = z.object({
   company: CompanyEnum,
   type: TypeEnum,
 }).refine((data) => {
-  const startDate = new Date(data.startDate);
-  const endDate = new Date(data.endDate);
+  // First, check if both dates are provided
+  if (!data.startDate || !data.endDate) {
+    return false;
+  }
+
+  // Check for exact same date (string comparison)
+  if (data.startDate === data.endDate) {
+    return true;
+  }
+
+  // Parse dates and validate
+  const startDate = new Date(data.startDate + 'T00:00:00');
+  const endDate = new Date(data.endDate + 'T00:00:00');
+
+  // Check for invalid dates
+  if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+    return false;
+  }
+
   return endDate >= startDate;
 }, {
   message: "End date must be on or after the start date (single-day requests are allowed)",
@@ -202,6 +219,7 @@ export function VacationRequestForm() {
               type="date"
               id="startDate"
               {...register('startDate')}
+              min={new Date().toISOString().split('T')[0]}
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-base transition-all duration-200 hover:border-gray-300"
               style={{ 
                 fontFamily: 'Montserrat, sans-serif', 
@@ -227,6 +245,7 @@ export function VacationRequestForm() {
                 type="date"
                 id="endDate"
                 {...register('endDate')}
+                min={new Date().toISOString().split('T')[0]}
                 className="flex-1 px-4 py-3 border-2 border-gray-200 rounded-xl shadow-sm focus:outline-none focus:ring-4 focus:ring-blue-500/20 focus:border-blue-500 text-base transition-all duration-200 hover:border-gray-300"
                 style={{ 
                   fontFamily: 'Montserrat, sans-serif', 
@@ -261,13 +280,16 @@ export function VacationRequestForm() {
         </div>
         
         {/* Helpful note about single-day requests */}
-        <div className="text-center">
-          <p className="text-sm text-gray-600 italic">
-            💡 You can request vacation for a single day by setting the same date for both start and end dates.
+        <div className="text-center bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <p className="text-sm text-blue-800 font-medium">
+            💡 Date Selection Tips
           </p>
-          <p className="text-xs text-blue-600 mt-1">
-            ✅ Same-day requests are supported
-          </p>
+          <ul className="text-xs text-blue-700 mt-2 space-y-1">
+            <li>• You can use the date picker or type dates manually (YYYY-MM-DD format)</li>
+            <li>• For single-day requests, set the same date for both start and end dates</li>
+            <li>• End date must be on or after the start date</li>
+            <li>• Past dates are not allowed</li>
+          </ul>
         </div>
 
         {/* Reason and Number of Open Days */}

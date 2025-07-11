@@ -1,59 +1,57 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
 import { sendEmailWithFallbacks } from '@/lib/simple-email-service';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    console.log('🧪 Testing email functionality...');
+    console.log('🧪 Testing email service...');
     
-    const result = await sendEmailWithFallbacks(
-      ['pierre@stars.mc'],
-      'Test Email from Vacation Management App',
-      `
-        <h2>Test Email from Vacation Management</h2>
-        <p>This is a test email sent from the vacation management application.</p>
-        <p>Time: ${new Date().toISOString()}</p>
-        <p>If you receive this, the email system is working!</p>
-        <hr>
-        <p><strong>Environment Check:</strong></p>
-        <ul>
-          <li>GMAIL_USER: ${process.env.GMAIL_USER ? 'Set' : 'NOT SET'}</li>
-          <li>SMTP_PASSWORD: ${process.env.SMTP_PASSWORD ? 'Set' : 'NOT SET'}</li>
-          <li>RESEND_API_KEY: ${process.env.RESEND_API_KEY ? 'Set' : 'NOT SET'}</li>
-          <li>NODE_ENV: ${process.env.NODE_ENV}</li>
-        </ul>
-        <p><strong>Email Service Status:</strong></p>
-        <ul>
-          <li>Gmail SMTP: ${process.env.GMAIL_USER && process.env.SMTP_PASSWORD ? 'Configured' : 'Not Configured'}</li>
-          <li>Resend: ${process.env.RESEND_API_KEY ? 'Configured' : 'Not Configured'}</li>
-          <li>Ethereal: Always available as fallback</li>
-        </ul>
-      `
-    );
+    // Check authentication
+    const session = await getServerSession(authOptions);
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check if user is admin
+    const adminEmails = ['pierre@stars.mc', 'johnny@stars.mc', 'daniel@stars.mc', 'compta@stars.mc'];
+    if (!adminEmails.includes(session.user.email)) {
+      return NextResponse.json({ error: 'Admin access required' }, { status: 403 });
+    }
+
+    const testSubject = '🧪 Test Email - Vacation Management System';
+    const testBody = `
+      <html>
+        <body>
+          <h2>Test Email</h2>
+          <p>This is a test email to verify that the email notification system is working correctly.</p>
+          <p><strong>Sent by:</strong> ${session.user.email}</p>
+          <p><strong>Time:</strong> ${new Date().toISOString()}</p>
+          <p>If you receive this email, the notification system is working properly.</p>
+        </body>
+      </html>
+    `;
+
+    console.log('📧 Sending test email to all admins...');
+    console.log('📧 Recipients:', adminEmails);
     
-    console.log('📧 Email test result:', result);
+    const result = await sendEmailWithFallbacks(adminEmails, testSubject, testBody);
     
-    return NextResponse.json({
-      success: true,
-      emailResult: result,
-      message: 'Email test completed. Check the logs and your inbox.',
-      environment: {
-        GMAIL_USER: process.env.GMAIL_USER ? 'Set' : 'NOT SET',
-        SMTP_PASSWORD: process.env.SMTP_PASSWORD ? 'Set' : 'NOT SET',
-        RESEND_API_KEY: process.env.RESEND_API_KEY ? 'Set' : 'NOT SET',
-        NODE_ENV: process.env.NODE_ENV
-      },
-      instructions: {
-        ifEtherealUsed: 'Email sent via Ethereal (test service). Check the preview URL in the logs.',
-        ifGmailFailed: 'Gmail SMTP failed. Update your app password in Vercel environment variables.',
-        ifResendFailed: 'Resend failed. Domain verification required or API key missing.'
-      }
+    console.log('✅ Test email sent successfully');
+    console.log('📧 Email result:', result);
+
+    return NextResponse.json({ 
+      success: true, 
+      message: 'Test email sent to all admins',
+      recipients: adminEmails,
+      result: result
     });
+
   } catch (error) {
-    console.error('❌ Email test failed:', error);
-    return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      message: 'Email test failed. Check the logs for details.'
-    }, { status: 500 });
+    console.error('❌ Error sending test email:', error);
+    return NextResponse.json(
+      { error: 'Failed to send test email', details: error instanceof Error ? error.message : 'Unknown error' },
+      { status: 500 }
+    );
   }
 } 

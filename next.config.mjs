@@ -12,7 +12,6 @@ const nextConfig = {
       },
     ],
   },
-  serverExternalPackages: ['@google-cloud/firestore'],
 };
 
 export default nextConfig;

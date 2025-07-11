@@ -5,10 +5,7 @@ import { updateVacationRequestStatus, getAllVacationRequests, updateVacationRequ
 import { sendEmailWithFallbacks } from '@/lib/simple-email-service';
 import { addVacationToCalendar } from '@/lib/google-calendar';
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: Request, context: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -16,7 +13,7 @@ export async function PATCH(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = params;
+    const { id } = context.params;
     const body = await request.json();
     const { status, comment } = body;
 

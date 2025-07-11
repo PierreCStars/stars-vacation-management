@@ -5,11 +5,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import SignInButton from '@/components/SignInButton';
 
-export default async function SignIn({
-  searchParams,
-}: {
-  searchParams: { callbackUrl?: string };
-}) {
+export default async function SignIn({ searchParams }: { searchParams: Promise<{ callbackUrl?: string }> }) {
+  const { callbackUrl } = await searchParams;
   const session = await getServerSession(authOptions);
   
   console.log('SignIn page - Session:', session);
@@ -19,8 +16,7 @@ export default async function SignIn({
   // Only redirect if we have a valid session with user data
   if (session?.user?.email) {
     console.log('Redirecting to callback URL or home - user is signed in');
-    const callbackUrl = searchParams.callbackUrl || '/';
-    redirect(callbackUrl);
+    redirect(callbackUrl || '/');
   }
 
   return (
@@ -121,7 +117,7 @@ export default async function SignIn({
             </p>
           </div>
           
-          <SignInButton callbackUrl={searchParams.callbackUrl || '/'} />
+          <SignInButton callbackUrl={callbackUrl || '/'} />
           
           <div 
             className="mt-6 text-center"

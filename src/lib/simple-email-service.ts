@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+import * as nodemailer from 'nodemailer';
 
 // Simple email service using Nodemailer
 export async function sendSimpleEmail(to: string[], subject: string, body: string) {
@@ -129,13 +129,61 @@ export async function sendResendEmail(to: string[], subject: string, body: strin
   }
 }
 
+// Custom SMTP (using environment variables)
+export async function sendCustomSMTP(to: string[], subject: string, body: string) {
+  try {
+    console.log('📧 Attempting to send email via Custom SMTP...');
+    console.log('📧 To:', to);
+    console.log('📧 Subject:', subject);
+    console.log('📧 SMTP Host:', process.env.SMTP_HOST);
+    console.log('📧 SMTP Port:', process.env.SMTP_PORT);
+    console.log('📧 SMTP User:', process.env.SMTP_USER ? 'Set' : 'NOT SET');
+    console.log('📧 SMTP From:', process.env.SMTP_FROM ? 'Set' : 'NOT SET');
+
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: Number(process.env.SMTP_PORT),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASSWORD,
+      },
+    });
+
+    const info = await transporter.sendMail({
+      from: process.env.SMTP_FROM,
+      to: to.join(', '),
+      subject,
+      html: body,
+    });
+
+    console.log('✅ Custom SMTP email sent successfully');
+    console.log('📧 Message ID:', info.messageId);
+    return { success: true, messageId: info.messageId };
+  } catch (error) {
+    console.error('❌ Custom SMTP failed:', error);
+    return { success: false, error };
+  }
+}
+
 // Enhanced email service with multiple fallbacks
 export async function sendEmailWithFallbacks(to: string[], subject: string, body: string) {
   console.log('📧 Starting email send with fallbacks...');
   console.log('📧 To:', to);
   console.log('📧 Subject:', subject);
-  
-  // Try Resend first (most reliable)
+
+  // Try Custom SMTP first
+  try {
+    const smtpResult = await sendCustomSMTP(to, subject, body);
+    if (smtpResult.success) {
+      console.log('✅ Email sent successfully via Custom SMTP');
+      return smtpResult;
+    }
+  } catch (error) {
+    console.log('⚠️ Custom SMTP failed, trying Resend...');
+  }
+
+  // Try Resend next (most reliable)
   try {
     const resendResult = await sendResendEmail(to, subject, body);
     if (resendResult.success) {
@@ -146,7 +194,7 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
     console.log('⚠️ Resend failed, trying Gmail SMTP...');
   }
 
-  // Try Gmail SMTP second
+  // Try Gmail SMTP
   try {
     const gmailResult = await sendGmailSMTP(to, subject, body);
     if (gmailResult.success) {
@@ -176,9 +224,9 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
   console.log('Subject:', subject);
   console.log('Body:', body);
   console.log('========================');
-  
-  return { 
-    success: false, 
+
+  return {
+    success: false,
     error: 'All email services failed',
     fallback: 'Logged to console'
   };

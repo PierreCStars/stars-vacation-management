@@ -25,11 +25,7 @@ interface VacationRequest {
   adminComment?: string;
 }
 
-export default function VacationRequestPage({
-  params,
-}: {
-  params: { id: string };
-}) {
+export default function VacationRequestPage({ params }: { params: { id: string } }) {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [request, setRequest] = useState<VacationRequest | null>(null);

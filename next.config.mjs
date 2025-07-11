@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  swcMinify: true,
   images: {
     unoptimized: true,
     remotePatterns: [
@@ -13,10 +12,7 @@ const nextConfig = {
       },
     ],
   },
-  // Firebase Hosting configuration
-  experimental: {
-    serverComponentsExternalPackages: ['@google-cloud/firestore'],
-  },
+  serverExternalPackages: ['@google-cloud/firestore'],
 };
 
 export default nextConfig;

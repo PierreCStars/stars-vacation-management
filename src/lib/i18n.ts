@@ -47,6 +47,7 @@ export interface Translations {
     VACATION: string;
     SICK_LEAVE: string;
     PERSONAL_DAY: string;
+    BUSINESS_TRIP: string;
     OTHER: string;
   };
   
@@ -164,6 +165,7 @@ const translations: Record<Language, Translations> = {
       VACATION: 'Vacation',
       SICK_LEAVE: 'Sick Leave',
       PERSONAL_DAY: 'Personal Day',
+      BUSINESS_TRIP: 'Business Trip',
       OTHER: 'Other'
     },
     status: {
@@ -271,6 +273,7 @@ const translations: Record<Language, Translations> = {
       VACATION: 'Congé',
       SICK_LEAVE: 'Congé Maladie',
       PERSONAL_DAY: 'Jour Personnel',
+      BUSINESS_TRIP: 'Voyage d\'Affaires',
       OTHER: 'Autre'
     },
     status: {
@@ -378,6 +381,7 @@ const translations: Record<Language, Translations> = {
       VACATION: 'Ferie',
       SICK_LEAVE: 'Malattia',
       PERSONAL_DAY: 'Giorno Personale',
+      BUSINESS_TRIP: 'Viaggio di Lavoro',
       OTHER: 'Altro'
     },
     status: {

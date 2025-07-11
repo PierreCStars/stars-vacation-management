@@ -467,6 +467,7 @@ export default function VacationRequestPage() {
                     <option value="VACATION">{t.vacationTypes.VACATION}</option>
                     <option value="SICK_LEAVE">{t.vacationTypes.SICK_LEAVE}</option>
                     <option value="PERSONAL_DAY">{t.vacationTypes.PERSONAL_DAY}</option>
+                    <option value="BUSINESS_TRIP">{t.vacationTypes.BUSINESS_TRIP}</option>
                     <option value="OTHER">{t.vacationTypes.OTHER}</option>
                   </select>
                 </div>

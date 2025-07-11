@@ -82,6 +82,17 @@ export async function PATCH(request: Request, context: { params: { id: string } 
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://stars-vacation-management-dpv42teb7-pierres-projects-bba7ee64.vercel.app';
       
       // Email to employee
+      const statusMessage = status === 'APPROVED' 
+        ? 'Great news! Your vacation request has been approved.' 
+        : 'We regret to inform you that your vacation request could not be approved at this time.';
+      
+      const statusClass = status.toLowerCase();
+      const reviewerName = session.user.name || session.user.email;
+      const startDate = new Date(updatedRequest.startDate).toLocaleDateString();
+      const endDate = new Date(updatedRequest.endDate).toLocaleDateString();
+      const reviewDate = new Date().toLocaleDateString();
+      const commentSection = comment ? `<p><strong>Comment:</strong> ${comment}</p>` : '';
+      
       const employeeEmailBody = `
 <!DOCTYPE html>
 <html>
@@ -108,11 +119,8 @@ export async function PATCH(request: Request, context: { params: { id: string } 
     <div class="content">
         <p>Dear ${updatedRequest.userName},</p>
         
-        <div class="status-${status.toLowerCase()}">
-            ${status === 'APPROVED' 
-                ? 'Great news! Your vacation request has been approved.' 
-                : 'We regret to inform you that your vacation request could not be approved at this time.'
-            }
+        <div class="status-${statusClass}">
+            ${statusMessage}
         </div>
         
         <div class="details">
@@ -120,11 +128,11 @@ export async function PATCH(request: Request, context: { params: { id: string } 
             <p><strong>Employee:</strong> ${updatedRequest.userName}</p>
             <p><strong>Company:</strong> ${updatedRequest.company}</p>
             <p><strong>Type:</strong> ${updatedRequest.type}</p>
-            <p><strong>Start Date:</strong> ${new Date(updatedRequest.startDate).toLocaleDateString()}</p>
-            <p><strong>End Date:</strong> ${new Date(updatedRequest.endDate).toLocaleDateString()}</p>
-            <p><strong>Reviewed By:</strong> ${session.user.name || session.user.email}</p>
-            <p><strong>Review Date:</strong> ${new Date().toLocaleDateString()}</p>
-            ${comment ? `<p><strong>Comment:</strong> ${comment}</p>` : ''}
+            <p><strong>Start Date:</strong> ${startDate}</p>
+            <p><strong>End Date:</strong> ${endDate}</p>
+            <p><strong>Reviewed By:</strong> ${reviewerName}</p>
+            <p><strong>Review Date:</strong> ${reviewDate}</p>
+            ${commentSection}
         </div>
     </div>
     
@@ -160,19 +168,19 @@ export async function PATCH(request: Request, context: { params: { id: string } 
     </div>
     
     <div class="content">
-        <p><strong>${session.user.name || session.user.email}</strong> has ${status.toLowerCase()} a vacation request.</p>
+        <p><strong>${reviewerName}</strong> has ${status.toLowerCase()} a vacation request.</p>
         
         <div class="summary">
             <h3>Request Summary</h3>
             <p><strong>Employee:</strong> ${updatedRequest.userName} (${updatedRequest.userId})</p>
             <p><strong>Company:</strong> ${updatedRequest.company}</p>
             <p><strong>Type:</strong> ${updatedRequest.type}</p>
-            <p><strong>Start Date:</strong> ${new Date(updatedRequest.startDate).toLocaleDateString()}</p>
-            <p><strong>End Date:</strong> ${new Date(updatedRequest.endDate).toLocaleDateString()}</p>
+            <p><strong>Start Date:</strong> ${startDate}</p>
+            <p><strong>End Date:</strong> ${endDate}</p>
             <p><strong>Status:</strong> ${status}</p>
-            <p><strong>Reviewed By:</strong> ${session.user.name || session.user.email}</p>
-            <p><strong>Review Date:</strong> ${new Date().toLocaleDateString()}</p>
-            ${comment ? `<p><strong>Comment:</strong> ${comment}</p>` : ''}
+            <p><strong>Reviewed By:</strong> ${reviewerName}</p>
+            <p><strong>Review Date:</strong> ${reviewDate}</p>
+            ${commentSection}
         </div>
     </div>
     

@@ -2,7 +2,19 @@ import { google } from 'googleapis';
 
 // Initialize Google Calendar API
 const auth = new google.auth.GoogleAuth({
-  credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY || '{}'),
+  credentials: (() => {
+    try {
+      const key = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+      if (!key) {
+        console.warn('⚠️ GOOGLE_SERVICE_ACCOUNT_KEY not set, using empty credentials');
+        return {};
+      }
+      return JSON.parse(key);
+    } catch (error) {
+      console.error('❌ Error parsing GOOGLE_SERVICE_ACCOUNT_KEY:', error);
+      return {};
+    }
+  })(),
   scopes: ['https://www.googleapis.com/auth/calendar'],
 });
 

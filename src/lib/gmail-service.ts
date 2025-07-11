@@ -13,7 +13,12 @@ try {
     // Parse the service account key
     let credentials;
     try {
-      credentials = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
+      const key = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+      if (!key) {
+        console.warn('⚠️ GOOGLE_SERVICE_ACCOUNT_KEY not set');
+        throw new Error('GOOGLE_SERVICE_ACCOUNT_KEY not set');
+      }
+      credentials = JSON.parse(key);
     } catch (parseError) {
       const errorMessage = parseError instanceof Error ? parseError.message : 'Unknown parsing error';
       console.error('❌ Failed to parse GOOGLE_SERVICE_ACCOUNT_KEY:', errorMessage);

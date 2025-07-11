@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
       const endDate = new Date(vacationRequest.endDate).toLocaleDateString();
       
       // Get the correct base URL using environment variable or fallback
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://stars-vacation-management-dpv42teb7-pierres-projects-bba7ee64.vercel.app';
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || 'http://localhost:3000';
       const adminUrl = `${baseUrl}/admin/vacation-requests`;
       
       const emailBody = `

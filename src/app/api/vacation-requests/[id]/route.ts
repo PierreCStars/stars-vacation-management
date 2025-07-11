@@ -80,7 +80,7 @@ export async function PATCH(request: Request, context: { params: { id: string } 
       console.log('📧 Updated request status:', updatedRequest.status);
       
       const emailSubject = 'Vacation Request ' + status + ' - ' + updatedRequest.userName;
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://stars-vacation-management-dpv42teb7-pierres-projects-bba7ee64.vercel.app';
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || 'http://localhost:3000';
       
       // Prepare variables for email templates
       const statusMessage = status === 'APPROVED' 

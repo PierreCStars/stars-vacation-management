@@ -82,7 +82,7 @@ export async function PATCH(
       console.log('📧 Updated request status:', updatedRequest.status);
       
       const emailSubject = `Vacation Request ${status} - ${updatedRequest.userName}`;
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://stars-vacation-management-dpv42teb7-pierres-projects-bba7ee64.vercel.app';
       
       // Email to employee
       const employeeEmailBody = `

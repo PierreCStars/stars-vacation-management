@@ -70,10 +70,8 @@ export async function POST(request: NextRequest) {
       const startDate = new Date(vacationRequest.startDate).toLocaleDateString();
       const endDate = new Date(vacationRequest.endDate).toLocaleDateString();
       
-      // Get the correct base URL from the request
-      const protocol = request.headers.get('x-forwarded-proto') || 'http';
-      const host = request.headers.get('x-forwarded-host') || request.headers.get('host') || 'localhost:3000';
-      const baseUrl = `${protocol}://${host}`;
+      // Get the correct base URL using environment variable or fallback
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://stars-vacation-management-dpv42teb7-pierres-projects-bba7ee64.vercel.app';
       const adminUrl = `${baseUrl}/admin/vacation-requests`;
       
       const emailBody = `

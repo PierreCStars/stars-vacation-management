@@ -75,12 +75,15 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
 // This fix ensures Google Calendar works without language dependencies
 export function useLanguage(): LanguageContextType {
   const context = useContext(LanguageContext);
-  
-  // Return default context if not found (prevents crashes during SSR)
   if (context === undefined) {
-    console.warn('useLanguage must be used within a LanguageProvider, using default context');
-    return defaultContextValue;
+    // Return a default context instead of throwing an error
+    return {
+      language: 'en',
+      setLanguage: () => {},
+      t: getTranslations('en'),
+      getLanguageName,
+      getLanguageFlag,
+    };
   }
-  
   return context;
 } 

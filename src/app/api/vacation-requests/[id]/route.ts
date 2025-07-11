@@ -81,7 +81,7 @@ export async function PATCH(request: Request, context: { params: { id: string } 
       const emailSubject = `Vacation Request ${status} - ${updatedRequest.userName}`;
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://stars-vacation-management-dpv42teb7-pierres-projects-bba7ee64.vercel.app';
       
-      // Email to employee
+      // Prepare variables for email templates
       const statusMessage = status === 'APPROVED' 
         ? 'Great news! Your vacation request has been approved.' 
         : 'We regret to inform you that your vacation request could not be approved at this time.';
@@ -93,13 +93,14 @@ export async function PATCH(request: Request, context: { params: { id: string } 
       const reviewDate = new Date().toLocaleDateString();
       const commentSection = comment ? `<p><strong>Comment:</strong> ${comment}</p>` : '';
       
+      // Email to employee
       const employeeEmailBody = `
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vacation Request ${status}</title>
+    <title>Vacation Request Update</title>
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background: #D8B11B; color: white; padding: 20px; text-align: center; }
@@ -113,26 +114,26 @@ export async function PATCH(request: Request, context: { params: { id: string } 
 <body>
     <div class="header">
         <h1>Vacation Request Update</h1>
-        <h2>${status}</h2>
+        <h2>STATUS_PLACEHOLDER</h2>
     </div>
     
     <div class="content">
-        <p>Dear ${updatedRequest.userName},</p>
+        <p>Dear EMPLOYEE_NAME_PLACEHOLDER,</p>
         
-        <div class="status-${statusClass}">
-            ${statusMessage}
+        <div class="STATUS_CLASS_PLACEHOLDER">
+            STATUS_MESSAGE_PLACEHOLDER
         </div>
         
         <div class="details">
             <h3>Request Details</h3>
-            <p><strong>Employee:</strong> ${updatedRequest.userName}</p>
-            <p><strong>Company:</strong> ${updatedRequest.company}</p>
-            <p><strong>Type:</strong> ${updatedRequest.type}</p>
-            <p><strong>Start Date:</strong> ${startDate}</p>
-            <p><strong>End Date:</strong> ${endDate}</p>
-            <p><strong>Reviewed By:</strong> ${reviewerName}</p>
-            <p><strong>Review Date:</strong> ${reviewDate}</p>
-            ${commentSection}
+            <p><strong>Employee:</strong> EMPLOYEE_NAME_PLACEHOLDER</p>
+            <p><strong>Company:</strong> COMPANY_PLACEHOLDER</p>
+            <p><strong>Type:</strong> TYPE_PLACEHOLDER</p>
+            <p><strong>Start Date:</strong> START_DATE_PLACEHOLDER</p>
+            <p><strong>End Date:</strong> END_DATE_PLACEHOLDER</p>
+            <p><strong>Reviewed By:</strong> REVIEWER_NAME_PLACEHOLDER</p>
+            <p><strong>Review Date:</strong> REVIEW_DATE_PLACEHOLDER</p>
+            COMMENT_SECTION_PLACEHOLDER
         </div>
     </div>
     
@@ -140,10 +141,23 @@ export async function PATCH(request: Request, context: { params: { id: string } 
         <p>Stars Group - Vacation Management System</p>
     </div>
 </body>
-</html>
-      `.trim();
+</html>`.trim();
 
-      await sendEmailWithFallbacks([updatedRequest.userEmail], emailSubject, employeeEmailBody);
+      // Replace placeholders with actual values
+      const finalEmployeeEmailBody = employeeEmailBody
+        .replace(/STATUS_PLACEHOLDER/g, status)
+        .replace(/EMPLOYEE_NAME_PLACEHOLDER/g, updatedRequest.userName)
+        .replace(/STATUS_CLASS_PLACEHOLDER/g, statusClass)
+        .replace(/STATUS_MESSAGE_PLACEHOLDER/g, statusMessage)
+        .replace(/COMPANY_PLACEHOLDER/g, updatedRequest.company)
+        .replace(/TYPE_PLACEHOLDER/g, updatedRequest.type)
+        .replace(/START_DATE_PLACEHOLDER/g, startDate)
+        .replace(/END_DATE_PLACEHOLDER/g, endDate)
+        .replace(/REVIEWER_NAME_PLACEHOLDER/g, reviewerName)
+        .replace(/REVIEW_DATE_PLACEHOLDER/g, reviewDate)
+        .replace(/COMMENT_SECTION_PLACEHOLDER/g, commentSection);
+
+      await sendEmailWithFallbacks([updatedRequest.userEmail], emailSubject, finalEmployeeEmailBody);
       console.log(`✅ Status email sent to employee: ${updatedRequest.userEmail}`);
 
       // Email to admin team
@@ -153,7 +167,7 @@ export async function PATCH(request: Request, context: { params: { id: string } 
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vacation Request ${status}</title>
+    <title>Vacation Request Update</title>
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
         .header { background: #D8B11B; color: white; padding: 20px; text-align: center; }
@@ -164,23 +178,23 @@ export async function PATCH(request: Request, context: { params: { id: string } 
 </head>
 <body>
     <div class="header">
-        <h1>Vacation Request ${status}</h1>
+        <h1>Vacation Request STATUS_PLACEHOLDER</h1>
     </div>
     
     <div class="content">
-        <p><strong>${reviewerName}</strong> has ${status.toLowerCase()} a vacation request.</p>
+        <p><strong>REVIEWER_NAME_PLACEHOLDER</strong> has STATUS_LOWERCASE_PLACEHOLDER a vacation request.</p>
         
         <div class="summary">
             <h3>Request Summary</h3>
-            <p><strong>Employee:</strong> ${updatedRequest.userName} (${updatedRequest.userId})</p>
-            <p><strong>Company:</strong> ${updatedRequest.company}</p>
-            <p><strong>Type:</strong> ${updatedRequest.type}</p>
-            <p><strong>Start Date:</strong> ${startDate}</p>
-            <p><strong>End Date:</strong> ${endDate}</p>
-            <p><strong>Status:</strong> ${status}</p>
-            <p><strong>Reviewed By:</strong> ${reviewerName}</p>
-            <p><strong>Review Date:</strong> ${reviewDate}</p>
-            ${commentSection}
+            <p><strong>Employee:</strong> EMPLOYEE_NAME_PLACEHOLDER (EMPLOYEE_ID_PLACEHOLDER)</p>
+            <p><strong>Company:</strong> COMPANY_PLACEHOLDER</p>
+            <p><strong>Type:</strong> TYPE_PLACEHOLDER</p>
+            <p><strong>Start Date:</strong> START_DATE_PLACEHOLDER</p>
+            <p><strong>End Date:</strong> END_DATE_PLACEHOLDER</p>
+            <p><strong>Status:</strong> STATUS_PLACEHOLDER</p>
+            <p><strong>Reviewed By:</strong> REVIEWER_NAME_PLACEHOLDER</p>
+            <p><strong>Review Date:</strong> REVIEW_DATE_PLACEHOLDER</p>
+            COMMENT_SECTION_PLACEHOLDER
         </div>
     </div>
     
@@ -188,14 +202,27 @@ export async function PATCH(request: Request, context: { params: { id: string } 
         <p>Stars Group - Vacation Management System</p>
     </div>
 </body>
-</html>
-      `.trim();
+</html>`.trim();
+
+      // Replace placeholders with actual values
+      const finalAdminEmailBody = adminEmailBody
+        .replace(/STATUS_PLACEHOLDER/g, status)
+        .replace(/STATUS_LOWERCASE_PLACEHOLDER/g, status.toLowerCase())
+        .replace(/REVIEWER_NAME_PLACEHOLDER/g, reviewerName)
+        .replace(/EMPLOYEE_NAME_PLACEHOLDER/g, updatedRequest.userName)
+        .replace(/EMPLOYEE_ID_PLACEHOLDER/g, updatedRequest.userId)
+        .replace(/COMPANY_PLACEHOLDER/g, updatedRequest.company)
+        .replace(/TYPE_PLACEHOLDER/g, updatedRequest.type)
+        .replace(/START_DATE_PLACEHOLDER/g, startDate)
+        .replace(/END_DATE_PLACEHOLDER/g, endDate)
+        .replace(/REVIEW_DATE_PLACEHOLDER/g, reviewDate)
+        .replace(/COMMENT_SECTION_PLACEHOLDER/g, commentSection);
 
       console.log('📧 Sending admin notification email...');
       console.log('📧 Recipients:', ['pierre@stars.mc', 'johnny@stars.mc', 'daniel@stars.mc', 'compta@stars.mc']);
       console.log('📧 Subject:', emailSubject);
       
-      const adminEmailResult = await sendEmailWithFallbacks(['pierre@stars.mc', 'johnny@stars.mc', 'daniel@stars.mc', 'compta@stars.mc'], emailSubject, adminEmailBody);
+      const adminEmailResult = await sendEmailWithFallbacks(['pierre@stars.mc', 'johnny@stars.mc', 'daniel@stars.mc', 'compta@stars.mc'], emailSubject, finalAdminEmailBody);
       console.log('✅ Status email sent to admin team');
       console.log('📧 Admin email result:', adminEmailResult);
 

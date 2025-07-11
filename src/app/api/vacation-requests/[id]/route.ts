@@ -446,10 +446,15 @@ export async function PATCH(
 </html>
       `.trim();
 
-      await sendEmailWithFallbacks(['pierre@stars.mc', 'johnny@stars.mc', 'daniel@stars.mc', 'compta@stars.mc'], emailSubject, adminEmailBody);
+      console.log('📧 Sending admin notification email...');
+      console.log('📧 Recipients:', ['pierre@stars.mc', 'johnny@stars.mc', 'daniel@stars.mc', 'compta@stars.mc']);
+      console.log('📧 Subject:', emailSubject);
+      
+      const adminEmailResult = await sendEmailWithFallbacks(['pierre@stars.mc', 'johnny@stars.mc', 'daniel@stars.mc', 'compta@stars.mc'], emailSubject, adminEmailBody);
       console.log('✅ Status email sent to admin team');
+      console.log('📧 Admin email result:', adminEmailResult);
 
-      console.log(`✅ Status emails sent via Gmail SMTP for request ${id}: ${status}`);
+      console.log(`✅ Status emails sent for request ${id}: ${status}`);
 
     } catch (emailError) {
       console.error('❌ Error sending status emails:', emailError);

@@ -170,7 +170,8 @@ export default function VacationRequestPage() {
     if (!formData.startDate || !formData.endDate || !formData.company || !formData.type) {
       return false;
     }
-    if (new Date(formData.endDate) <= new Date(formData.startDate)) {
+    // Allow same-day requests (startDate === endDate) but prevent end date before start date
+    if (new Date(formData.endDate) < new Date(formData.startDate)) {
       return false;
     }
     return true;

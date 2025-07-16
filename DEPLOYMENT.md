@@ -1,12 +1,12 @@
-# Firebase Deployment Guide
+# Deployment Guide
 
-This guide explains how to deploy your Next.js vacation management app to Firebase using Hosting + Cloud Functions.
+This guide explains how to deploy your Next.js vacation management app using **Vercel**.
 
 ## ✅ Prerequisites
 
-1. Firebase project created: `stars-vacation-management`
-2. Firebase CLI installed and authenticated
-3. Node.js 18+ installed
+1. Vercel account and project set up (https://vercel.com/)
+2. GitHub repository connected to Vercel
+3. Node.js 18+ installed (for local development)
 4. All build issues resolved ✅
 
 ## Project Structure
@@ -14,44 +14,39 @@ This guide explains how to deploy your Next.js vacation management app to Fireba
 ```
 stars-vacation-management/
 ├── src/                    # Next.js app source
-├── stars-codebase/         # Cloud Functions
-├── firebase.json          # Firebase configuration
-├── .firebaserc           # Firebase project settings
-└── firestore.rules       # Firestore security rules
+├── stars-codebase/         # (Optional) Cloud Functions or scripts
+├── .vercel/                # Vercel project settings
+└── ...
 ```
 
-## 🚀 Deployment Steps
+## 🚀 Deployment Steps (Vercel)
 
-### 1. Build the Next.js App
+### 1. Push to Main Branch
 ```bash
-npm run build
+git add .
+git commit -m "Your changes"
+git push origin main
 ```
 
-### 2. Deploy Cloud Functions
-```bash
-npm run deploy:functions
-```
+### 2. Vercel Auto-Deploys
+- Vercel will automatically build and deploy your app on every push to `main`.
+- You can monitor deployment status at https://vercel.com/
 
-### 3. Deploy Hosting
-```bash
-npm run deploy:hosting
-```
-
-### 4. Deploy Everything
-```bash
-npm run deploy:firebase
-```
+### 3. Production URL
+- Your production app will be available at your Vercel-assigned domain, e.g.:
+  - https://stars-vacation-management-h88osexjl-pierres-projects-bba7ee64.vercel.app
 
 ## 🔧 Environment Variables
 
-Set up your environment variables in the Firebase Console:
+Set up your environment variables in the **Vercel Dashboard**:
 
-1. Go to Firebase Console > Functions > Configuration
-2. Add your environment variables:
+1. Go to your project in Vercel
+2. Navigate to **Settings > Environment Variables**
+3. Add your environment variables:
    - `GOOGLE_CLIENT_ID`
    - `GOOGLE_CLIENT_SECRET`
    - `NEXTAUTH_SECRET`
-   - `NEXTAUTH_URL` (your Firebase hosting URL)
+   - `NEXTAUTH_URL` (your Vercel production URL)
    - `GMAIL_USER`
    - `GMAIL_APP_PASSWORD`
    - `GOOGLE_CALENDAR_ID`
@@ -59,32 +54,24 @@ Set up your environment variables in the Firebase Console:
 
 ## 📝 Important Notes
 
-- ✅ The app uses Cloud Functions for server-side rendering
-- ✅ API routes (`/api/*`) are handled by Cloud Functions
-- ✅ Static assets are served by Firebase Hosting
+- ✅ The app is server-side rendered by Next.js on Vercel
+- ✅ API routes (`/api/*`) are handled by Vercel serverless functions
 - ✅ Firestore is used for data storage
-- ✅ All Tailwind CSS issues resolved
-- ✅ TypeScript errors fixed
+- ✅ All Tailwind CSS and TypeScript issues resolved
 
 ## 🔍 Troubleshooting
 
-1. **Function deployment fails**: Check Node.js version (should be 18)
-2. **Environment variables missing**: Set them in Firebase Console
+1. **Build fails**: Check Node.js version (should be 18+)
+2. **Environment variables missing**: Set them in Vercel dashboard
 3. **Build errors**: All resolved ✅
-
-## 🌐 URLs
-
-- **Production**: https://stars-vacation-management.web.app
-- **Functions**: https://us-central1-stars-vacation-management.cloudfunctions.net
 
 ## 🎉 Ready to Deploy!
 
-Your app is now ready for Firebase deployment. All build issues have been resolved:
+Your app is now ready for Vercel deployment. All build issues have been resolved:
 
 - ✅ Tailwind CSS errors fixed
 - ✅ TypeScript errors resolved
 - ✅ Gmail service constructor updated
-- ✅ Cloud Functions properly configured
 - ✅ Build process working
 
-Run `npm run deploy:firebase` to deploy your app! 
+Just push to `main` and Vercel will handle the rest! 

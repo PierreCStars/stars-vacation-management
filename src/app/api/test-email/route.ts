@@ -22,8 +22,8 @@ export async function GET() {
     `.trim();
 
     const result = await sendEmailWithFallbacks(
-      ['pierre@stars.mc'], 
-      '🧪 Test Email - Stars Vacation Management', 
+      ['compta@stars.mc'], 
+      '🧪 Test Email - compta@stars.mc - Stars Vacation Management', 
       testEmailBody
     );
 

@@ -57,7 +57,7 @@ export async function addVacationToCalendar(vacationEvent: VacationEvent) {
       transparency: 'transparent', // Show as "busy" but transparent
     };
 
-    const calendarId = process.env.GOOGLE_CALENDAR_ID || 'c_e98f5350bf743174f87e1a786038cb9d103c306b7246c6200684f81c37a6a764@group.calendar.google.com';
+    const calendarId = process.env.GOOGLE_CALENDAR_ID || 'primary';
     
     const response = await calendar.events.insert({
       calendarId,
@@ -77,7 +77,7 @@ export async function removeVacationFromCalendar(eventId: string) {
   try {
     console.log('📅 Removing vacation event from Google Calendar...');
     
-    const calendarId = process.env.GOOGLE_CALENDAR_ID || 'c_e98f5350bf743174f87e1a786038cb9d103c306b7246c6200684f81c37a6a764@group.calendar.google.com';
+    const calendarId = process.env.GOOGLE_CALENDAR_ID || 'primary';
     
     await calendar.events.delete({
       calendarId,

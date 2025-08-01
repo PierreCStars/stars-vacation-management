@@ -32,7 +32,9 @@ export default function GoogleCalendar({
   const { t } = useLanguage();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'WEEK' | 'MONTH'>('WEEK');
-  const [showEmbedded, setShowEmbedded] = useState(false);
+  const [showEmbedded, setShowEmbedded] = useState(true);
+
+
 
   const formatDate = (date: Date) => {
     return date.toISOString().split('T')[0];
@@ -427,13 +429,11 @@ export default function GoogleCalendar({
                 width: '100%', 
                 height: height,
                 border: 'none',
-                borderRadius: '8px',
-                backgroundColor: '#ffffff'
+                borderRadius: '8px'
               }}
+              title="Stars Vacation Calendar"
               frameBorder="0"
               scrolling="no"
-              key={`${viewMode}-${currentDate.getTime()}-${calendarId}`}
-              allowFullScreen={true}
             />
           </div>
         ) : (

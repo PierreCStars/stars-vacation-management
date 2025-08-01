@@ -7,7 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useLanguage } from '@/contexts/LanguageContext';
 import LanguageSelector from '@/components/LanguageSelector';
-import PersistentCalendar from '@/components/PersistentCalendar';
+import GoogleCalendar from '@/components/GoogleCalendar';
 
 interface VacationRequest {
   id: string;
@@ -32,6 +32,8 @@ export default function AdminVacationRequestsPage() {
   const router = useRouter();
   const { t } = useLanguage();
   
+
+  
   const [vacationRequests, setVacationRequests] = useState<VacationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [showClearModal, setShowClearModal] = useState(false);
@@ -40,6 +42,7 @@ export default function AdminVacationRequestsPage() {
   const [expandedRequest, setExpandedRequest] = useState<string | null>(null);
   const [editingRequest, setEditingRequest] = useState<string | null>(null);
   const [adminComment, setAdminComment] = useState('');
+  const [isReviewedRequestsCollapsed, setIsReviewedRequestsCollapsed] = useState(false);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -322,6 +325,33 @@ export default function AdminVacationRequestsPage() {
           </p>
         </div>
 
+        {/* Vacation Calendar */}
+        <div 
+          className="card mb-8"
+          style={{ 
+            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+            borderRadius: '1rem', 
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', 
+            padding: '2rem',
+            marginBottom: '2rem',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}
+        >
+          <h2 
+            className="text-2xl font-semibold mb-6 text-gray-900"
+            style={{ 
+              fontSize: '1.5rem', 
+              fontWeight: '600', 
+              color: '#111827', 
+              marginBottom: '1.5rem' 
+            }}
+          >
+            Vacation Calendar
+          </h2>
+          <GoogleCalendar height="600px" />
+        </div>
+
         {/* Pending Requests */}
         <div 
           className="card mb-8"
@@ -485,86 +515,58 @@ export default function AdminVacationRequestsPage() {
                     </div>
                   )}
                   
-                  <div className="space-y-4">
-                    {/* Action Buttons - Always Visible */}
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        onClick={() => handleReviewRequest(request.id, 'APPROVED')}
-                        className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200 font-semibold"
-                        style={{ 
-                          padding: '0.5rem 1rem',
-                          backgroundColor: '#16a34a',
-                          color: 'white',
-                          borderRadius: '0.375rem',
-                          border: 'none',
-                          cursor: 'pointer',
-                          transition: 'background-color 0.2s ease',
-                          fontWeight: '600'
-                        }}
-                      >
-                        ✓ {t.admin.approve}
-                      </button>
-                      <button
-                        onClick={() => handleReviewRequest(request.id, 'REJECTED')}
-                        className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200 font-semibold"
-                        style={{ 
-                          padding: '0.5rem 1rem',
-                          backgroundColor: '#dc2626',
-                          color: 'white',
-                          borderRadius: '0.375rem',
-                          border: 'none',
-                          cursor: 'pointer',
-                          transition: 'background-color 0.2s ease',
-                          fontWeight: '600'
-                        }}
-                      >
-                        ✗ {t.admin.reject}
-                      </button>
-                      <button
-                        onClick={() => setEditingRequest(editingRequest === request.id ? null : request.id)}
-                        className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
-                        style={{ 
-                          padding: '0.5rem 1rem',
-                          backgroundColor: '#2563eb',
-                          color: 'white',
-                          borderRadius: '0.375rem',
-                          border: 'none',
-                          cursor: 'pointer',
-                          transition: 'background-color 0.2s ease'
-                        }}
-                      >
-                        {editingRequest === request.id ? t.common.cancel : t.admin.addComment}
-                      </button>
-                    </div>
-                    {/* Optional Comment Field */}
-                    {editingRequest === request.id && (
-                      <div className="space-y-2">
-                        <label 
-                          className="block text-sm font-medium text-gray-700"
-                          style={{ 
-                            display: 'block',
-                            fontSize: '0.875rem',
-                            fontWeight: '500',
-                            color: '#374151'
-                          }}
-                        >
-                          {t.admin.addComment} ({t.common.optional})
-                        </label>
-                        <textarea
-                          value={adminComment}
-                          onChange={(e) => setAdminComment(e.target.value)}
-                          placeholder={t.admin.commentPlaceholder}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                          style={{ 
-                            width: '100%',
-                            padding: '0.5rem 0.75rem',
-                            border: '1px solid #d1d5db',
-                            borderRadius: '0.375rem'
-                          }}
-                          rows={3}
-                        />
-                      </div>
-                    )}
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      onClick={() => handleReviewRequest(request.id, 'APPROVED')}
+                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
+                      style={{ 
+                        padding: '0.5rem 1rem',
+                        backgroundColor: '#16a34a',
+                        color: 'white',
+                        borderRadius: '0.375rem',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s ease'
+                      }}
+                    >
+                      {t.admin.approve}
+                    </button>
+                    <button
+                      onClick={() => handleReviewRequest(request.id, 'REJECTED')}
+                      className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200"
+                      style={{ 
+                        padding: '0.5rem 1rem',
+                        backgroundColor: '#dc2626',
+                        color: 'white',
+                        borderRadius: '0.375rem',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s ease'
+                      }}
+                    >
+                      {t.admin.reject}
+                    </button>
+                    <button
+                      onClick={() => {
+                        const comment = prompt('Add a comment:');
+                        if (comment !== null) {
+                          setAdminComment(comment);
+                          handleReviewRequest(request.id, 'APPROVED');
+                        }
+                      }}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
+                      style={{ 
+                        padding: '0.5rem 1rem',
+                        backgroundColor: '#2563eb',
+                        color: 'white',
+                        borderRadius: '0.375rem',
+                        border: 'none',
+                        cursor: 'pointer',
+                        transition: 'background-color 0.2s ease'
+                      }}
+                    >
+                      {t.admin.addComment}
+                    </button>
                   </div>
                 </div>
               ))}
@@ -642,31 +644,98 @@ export default function AdminVacationRequestsPage() {
             border: '1px solid rgba(255, 255, 255, 0.2)'
           }}
         >
-          <h2 
-            className="text-2xl font-semibold mb-6 text-gray-900"
+          <div 
             style={{ 
-              fontSize: '1.5rem', 
-              fontWeight: '600', 
-              color: '#111827', 
-              marginBottom: '1.5rem' 
+              display: 'flex', 
+              justifyContent: 'space-between', 
+              alignItems: 'center', 
+              marginBottom: '1.5rem',
+              cursor: 'pointer',
+              userSelect: 'none'
+            }}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              setIsReviewedRequestsCollapsed(!isReviewedRequestsCollapsed);
             }}
           >
-            {t.admin.reviewedRequests} ({reviewedRequests.length})
-          </h2>
-          
-          {reviewedRequests.length === 0 ? (
-            <p 
-              className="text-gray-500 text-center py-8"
+            <h2 
+              className="text-2xl font-semibold text-gray-900"
               style={{ 
-                color: '#6b7280', 
-                textAlign: 'center', 
-                padding: '2rem 0' 
+                fontSize: '1.5rem', 
+                fontWeight: '600', 
+                color: '#111827',
+                margin: 0,
+                pointerEvents: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem'
               }}
             >
-              {t.admin.noReviewedRequests}
-            </p>
-          ) : (
-            <div className="space-y-4">
+              {t.admin.reviewedRequests} ({reviewedRequests.length})
+              <span style={{ fontSize: '0.875rem', color: '#6b7280', fontWeight: '400' }}>
+                (click to {isReviewedRequestsCollapsed ? 'expand' : 'collapse'})
+              </span>
+            </h2>
+            <button
+              type="button"
+              style={{
+                background: 'rgba(107, 114, 128, 0.1)',
+                border: '1px solid rgba(107, 114, 128, 0.2)',
+                fontSize: '1.25rem',
+                color: '#6b7280',
+                cursor: 'pointer',
+                padding: '0.5rem 0.75rem',
+                borderRadius: '0.375rem',
+                transition: 'all 0.2s',
+                pointerEvents: 'auto',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minWidth: '2.5rem',
+                minHeight: '2.5rem'
+              }}
+              onMouseOver={(e) => {
+                e.currentTarget.style.color = '#374151';
+                e.currentTarget.style.background = 'rgba(107, 114, 128, 0.2)';
+                e.currentTarget.style.borderColor = 'rgba(107, 114, 128, 0.4)';
+              }}
+              onMouseOut={(e) => {
+                e.currentTarget.style.color = '#6b7280';
+                e.currentTarget.style.background = 'rgba(107, 114, 128, 0.1)';
+                e.currentTarget.style.borderColor = 'rgba(107, 114, 128, 0.2)';
+              }}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsReviewedRequestsCollapsed(!isReviewedRequestsCollapsed);
+              }}
+              title={isReviewedRequestsCollapsed ? 'Expand Reviewed Requests' : 'Collapse Reviewed Requests'}
+            >
+              {isReviewedRequestsCollapsed ? '▼' : '▲'}
+            </button>
+          </div>
+          
+          <div 
+            style={{
+              overflow: 'hidden',
+              transition: 'max-height 0.3s ease-in-out',
+              maxHeight: isReviewedRequestsCollapsed ? '0px' : '2000px'
+            }}
+          >
+            {reviewedRequests.length === 0 ? (
+              <p 
+                className="text-gray-500 text-center py-8"
+                style={{ 
+                  color: '#6b7280', 
+                  textAlign: 'center', 
+                  padding: '2rem 0' 
+                }}
+              >
+                {t.admin.noReviewedRequests}
+              </p>
+            ) : (
+              <div className="space-y-4">
               {reviewedRequests.map((request) => (
                 <div 
                   key={request.id}
@@ -828,6 +897,7 @@ export default function AdminVacationRequestsPage() {
               ))}
             </div>
           )}
+            </div>
         </div>
       </div>
 
@@ -916,7 +986,6 @@ export default function AdminVacationRequestsPage() {
           </div>
         </div>
       )}
-      <PersistentCalendar />
     </main>
   );
 } 

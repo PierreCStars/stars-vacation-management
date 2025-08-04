@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, writeBatch, query, where } from 'firebase/firestore';
+import { collection, getDocs, writeBatch } from 'firebase/firestore';
 
 export async function POST(request: NextRequest) {
   try {
@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Filter for reviewed requests (status !== 'PENDING')
-    const reviewedRequests = snapshot.docs.filter(doc => {
+    const reviewedRequests = snapshot.docs.filter((doc: any) => {
       const data = doc.data();
       return data.status !== 'PENDING';
     });
@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
 
     // Delete all reviewed requests
     const batch = writeBatch(db);
-    reviewedRequests.forEach(doc => {
+    reviewedRequests.forEach((doc: any) => {
       batch.delete(doc.ref);
     });
 

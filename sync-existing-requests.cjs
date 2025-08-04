@@ -89,7 +89,7 @@ async function syncExistingRequests() {
   try {
     // Fetch vacation requests from the API
     console.log('📋 Fetching vacation requests...');
-    const response = await fetch('http://localhost:3000/api/vacation-requests');
+    const response = await fetch('http://localhost:3001/api/vacation-requests');
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -130,7 +130,7 @@ async function syncExistingRequests() {
         
         // Update the request with the calendar event ID
         try {
-          const updateResponse = await fetch(`http://localhost:3000/api/vacation-requests/${request.id}`, {
+          const updateResponse = await fetch(`http://localhost:3001/api/vacation-requests/${request.id}`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',

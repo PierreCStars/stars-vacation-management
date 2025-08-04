@@ -15,11 +15,18 @@ export async function GET() {
     }
 
     console.log('🔧 Loading vacation requests from Firebase...');
+    
     const requests = await getAllVacationRequests();
     
     return NextResponse.json(requests);
   } catch (error) {
     console.error('❌ Error loading vacation requests:', error);
+    
+    // If it's an authentication error, return 401
+    if (error instanceof Error && (error.message?.includes('Unauthorized') || error.message?.includes('auth'))) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
     return NextResponse.json(
       { error: 'Failed to load vacation requests' },
       { status: 500 }
@@ -63,6 +70,7 @@ export async function POST(request: NextRequest) {
     };
 
     console.log('🔧 Adding vacation request to Firebase...');
+    
     const requestId = await addVacationRequest(vacationRequest);
 
     // Send email notification

@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp } from 'firebase/firestore';
+import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -14,6 +15,38 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
+const auth = getAuth(app);
+
+// Initialize Firebase authentication
+export async function initializeFirebaseAuth() {
+  try {
+    // Check if user is already signed in
+    const user = auth.currentUser;
+    if (!user) {
+      await signInAnonymously(auth);
+      console.log('✅ Firebase anonymous auth initialized');
+    } else {
+      console.log('✅ Firebase auth already initialized');
+    }
+  } catch (error) {
+    console.error('❌ Firebase auth error:', error);
+    throw error;
+  }
+}
+
+// Wait for authentication to be ready
+export async function ensureAuth() {
+  return new Promise((resolve, reject) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      unsubscribe();
+      if (user) {
+        resolve(user);
+      } else {
+        reject(new Error('Authentication failed'));
+      }
+    });
+  });
+}
 
 // Collection names
 const VACATION_REQUESTS_COLLECTION = 'vacationRequests';
@@ -42,6 +75,9 @@ export interface VacationRequest {
 export async function loadVacationRequests(): Promise<VacationRequest[]> {
   try {
     console.log('🔧 Loading vacation requests from Firestore...');
+    
+    // Ensure authentication before database operations
+    await ensureAuth();
     
     const q = query(
       collection(db, VACATION_REQUESTS_COLLECTION),
@@ -84,6 +120,9 @@ export async function loadVacationRequests(): Promise<VacationRequest[]> {
 export async function addVacationRequest(request: Omit<VacationRequest, 'id'>): Promise<string> {
   try {
     console.log('🔧 Adding vacation request to Firestore...');
+    
+    // Ensure authentication before database operations
+    await ensureAuth();
     
     const docRef = await addDoc(collection(db, VACATION_REQUESTS_COLLECTION), {
       ...request,

@@ -72,7 +72,7 @@ export async function getReviewedRequestsForMonth(year: number, month: number): 
     const allRequests = await getAllVacationRequests();
     
     // Filter for reviewed requests (not PENDING) in the specified month
-    const reviewedRequests = allRequests.filter(request => {
+    const reviewedRequests = allRequests.filter((request: any) => {
       if (request.status === 'PENDING') return false;
       
       // Check if the request was reviewed in the specified month
@@ -88,7 +88,7 @@ export async function getReviewedRequestsForMonth(year: number, month: number): 
 
     console.log(`✅ Found ${reviewedRequests.length} reviewed requests for ${year}-${month.toString().padStart(2, '0')}`);
     
-    return reviewedRequests.map(request => ({
+    return reviewedRequests.map((request: any) => ({
       id: request.id || '',
       userId: request.userId,
       userEmail: request.userEmail,

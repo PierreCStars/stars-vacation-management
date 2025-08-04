@@ -43,7 +43,7 @@ export async function PATCH(request: Request, context: { params: { id: string } 
 
     // Get the updated request to send email notifications
     const allRequests = await getAllVacationRequests();
-    const updatedRequest = allRequests.find(req => req.id === id);
+    const updatedRequest = allRequests.find((req: any) => req.id === id);
 
     if (!updatedRequest) {
       return NextResponse.json(

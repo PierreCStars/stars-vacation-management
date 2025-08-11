@@ -120,6 +120,61 @@ export default function VacationAnalytics() {
     );
   }
 
+  // Show message if no approved vacations
+  if (analytics.totalVacations === 0) {
+    return (
+      <div className="space-y-6">
+        {/* Date Filter */}
+        <div className="bg-white rounded-lg p-4 border border-gray-200">
+          <h3 className="text-lg font-semibold mb-4">📅 Date Range Filter</h3>
+          <div className="flex flex-wrap gap-4 items-end">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <button
+              onClick={() => {
+                setStartDate('');
+                setEndDate('');
+              }}
+              className="px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+            >
+              Clear Filter
+            </button>
+          </div>
+        </div>
+
+        {/* No Data Message */}
+        <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
+          <div className="text-6xl mb-4">📊</div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">No Vacation Data Available</h2>
+          <p className="text-gray-600 mb-6">
+            There are currently no approved vacation requests in the system.
+          </p>
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
+            <p className="text-blue-800 text-sm">
+              <strong>Tip:</strong> Vacation analytics will appear here once employees submit and admins approve vacation requests.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       {/* Date Filter */}

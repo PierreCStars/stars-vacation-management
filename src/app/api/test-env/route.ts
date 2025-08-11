@@ -6,7 +6,7 @@ export async function GET() {
     const hasCalendarId = !!process.env.GOOGLE_CALENDAR_ID;
     
     let serviceAccountInfo = null;
-    if (hasServiceAccountKey) {
+    if (hasServiceAccountKey && process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
       try {
         const key = JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY);
         serviceAccountInfo = {

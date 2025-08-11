@@ -352,14 +352,14 @@ export default function AdminVacationRequestsPage() {
         </div>
 
         {/* Simple Test Section */}
-        <div className="bg-blue-100 border border-blue-400 text-blue-800 px-4 py-2 rounded mb-4">
-          <strong>🧪 TEST MODE:</strong> This is a simple test to verify changes are working.
+        <div className="bg-red-500 text-white px-4 py-3 rounded mb-4 text-center">
+          <strong>🚨 URGENT TEST:</strong> This is a very visible test to verify deployment is working!
           <br />
           <button 
             onClick={() => setTestMode(!testMode)}
-            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="mt-2 px-4 py-2 bg-white text-red-600 rounded hover:bg-gray-100 font-bold"
           >
-            {testMode ? 'Hide Test' : 'Show Test'}
+            {testMode ? 'Hide Test' : 'SHOW TEST NOW'}
           </button>
         </div>
 

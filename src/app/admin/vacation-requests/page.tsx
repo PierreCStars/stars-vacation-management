@@ -619,18 +619,18 @@ export default function AdminVacationRequestsPage() {
                   
                   {request.reason && (
                     <div className="mb-4">
-                      <label 
-                        className="block text-sm font-medium text-gray-500 mb-2"
-                        style={{ 
-                          display: 'block',
-                          fontSize: '0.875rem',
-                          fontWeight: '500',
-                          color: '#6b7280',
-                          marginBottom: '0.5rem'
-                        }}
-                      >
-                        {t.admin.reason}
-                      </label>
+                                              <label 
+                          className="block text-sm font-medium text-gray-500 mb-2"
+                          style={{ 
+                            display: 'block',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            color: '#6b7280',
+                            marginBottom: '0.5rem'
+                          }}
+                        >
+                          {t.vacationRequest.reason}
+                        </label>
                       <p className="text-gray-900">{request.reason}</p>
                     </div>
                   )}
@@ -920,7 +920,7 @@ export default function AdminVacationRequestsPage() {
                             marginBottom: '0.5rem'
                           }}
                         >
-                          {t.admin.reason}
+                          {t.vacationRequest.reason}
                         </label>
                         <p className="text-gray-900">{request.reason}</p>
                       </div>

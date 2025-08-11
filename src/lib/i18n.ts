@@ -92,6 +92,7 @@ export interface Translations {
     viewDetails: string;
     expanded: string;
     collapsed: string;
+    adminComment: string;
   };
   
   // Calendar
@@ -205,7 +206,8 @@ const translations: Record<Language, Translations> = {
       actions: 'Actions',
       viewDetails: 'View Details',
       expanded: 'Expanded',
-      collapsed: 'Collapsed'
+      collapsed: 'Collapsed',
+      adminComment: 'Admin Comment'
     },
     calendar: {
       title: 'Stars Vacation Calendar',
@@ -313,7 +315,8 @@ const translations: Record<Language, Translations> = {
       actions: 'Actions',
       viewDetails: 'Voir les Détails',
       expanded: 'Développé',
-      collapsed: 'Réduit'
+      collapsed: 'Réduit',
+      adminComment: 'Commentaire Admin'
     },
     calendar: {
       title: 'Calendrier des Congés Stars',
@@ -421,7 +424,8 @@ const translations: Record<Language, Translations> = {
       actions: 'Azioni',
       viewDetails: 'Visualizza Dettagli',
       expanded: 'Espanso',
-      collapsed: 'Comprimit'
+      collapsed: 'Comprimit',
+      adminComment: 'Commento Admin'
     },
     calendar: {
       title: 'Calendario Ferie Stars',

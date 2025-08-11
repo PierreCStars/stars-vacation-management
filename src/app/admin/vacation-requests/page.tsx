@@ -32,17 +32,17 @@ export default function AdminVacationRequestsPage() {
   const router = useRouter();
   const { t } = useLanguage();
   
-
-  
   const [vacationRequests, setVacationRequests] = useState<VacationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [showClearModal, setShowClearModal] = useState(false);
   const [clearingRequests, setClearingRequests] = useState(false);
   const [exportingCSV, setExportingCSV] = useState(false);
+  const [sendingVacationSummary, setSendingVacationSummary] = useState(false);
   const [expandedRequest, setExpandedRequest] = useState<string | null>(null);
   const [editingRequest, setEditingRequest] = useState<string | null>(null);
   const [adminComment, setAdminComment] = useState('');
   const [isReviewedRequestsCollapsed, setIsReviewedRequestsCollapsed] = useState(false);
+  const [testMode, setTestMode] = useState(false);
 
   useEffect(() => {
     if (status === 'loading') return;
@@ -119,6 +119,32 @@ export default function AdminVacationRequestsPage() {
       alert('Error exporting CSV');
     } finally {
       setExportingCSV(false);
+    }
+  };
+
+  const handleSendVacationSummary = async () => {
+    try {
+      setSendingVacationSummary(true);
+      const response = await fetch('/api/cron/monthly-vacation-summary', {
+        method: 'GET',
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        if (result.count > 0) {
+          alert(`Monthly vacation summary sent successfully to all admins! Found ${result.count} granted vacations.`);
+        } else {
+          alert(`Monthly vacation summary sent successfully to all admins! No vacations were granted this month.`);
+        }
+      } else {
+        const error = await response.json();
+        alert(`Error: ${error.error}`);
+      }
+    } catch (error) {
+      console.error('Error sending vacation summary:', error);
+      alert('Error sending vacation summary');
+    } finally {
+      setSendingVacationSummary(false);
     }
   };
 
@@ -221,7 +247,7 @@ export default function AdminVacationRequestsPage() {
             <h2 style={{ fontSize: 24, fontWeight: 600, color: '#111827', marginBottom: 8 }}>
               {t.common.loading}
             </h2>
-            <p style={{ color: '#6b7280' }}>Please wait while we load the requests.</p>
+            <p style={{ color: '#6b7280' }}>Please wait while we load your dashboard.</p>
           </div>
         </div>
         <style>{`
@@ -325,6 +351,26 @@ export default function AdminVacationRequestsPage() {
           </p>
         </div>
 
+        {/* Simple Test Section */}
+        <div className="bg-blue-100 border border-blue-400 text-blue-800 px-4 py-2 rounded mb-4">
+          <strong>🧪 TEST MODE:</strong> This is a simple test to verify changes are working.
+          <br />
+          <button 
+            onClick={() => setTestMode(!testMode)}
+            className="mt-2 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            {testMode ? 'Hide Test' : 'Show Test'}
+          </button>
+        </div>
+
+        {testMode && (
+          <div className="bg-green-100 border border-green-400 text-green-800 px-4 py-2 rounded mb-4">
+            <strong>✅ TEST CONTENT:</strong> If you can see this, the basic functionality is working!
+            <br />
+            Current time: {new Date().toLocaleString()}
+          </div>
+        )}
+
         {/* Vacation Calendar */}
         <div 
           className="card mb-8"
@@ -350,6 +396,82 @@ export default function AdminVacationRequestsPage() {
             Vacation Calendar
           </h2>
           <GoogleCalendar height="600px" />
+        </div>
+
+        {/* Action Buttons */}
+        <div 
+          className="card mb-8"
+          style={{ 
+            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+            borderRadius: '1rem', 
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', 
+            padding: '1.5rem',
+            marginBottom: '2rem',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)'
+          }}
+        >
+          <div 
+            className="flex flex-wrap gap-4 justify-center"
+            style={{ 
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: '1rem',
+              justifyContent: 'center'
+            }}
+          >
+            <button
+              onClick={handleExportCSV}
+              disabled={exportingCSV}
+              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              style={{ 
+                padding: '0.5rem 1rem',
+                backgroundColor: '#16a34a',
+                color: 'white',
+                borderRadius: '0.5rem',
+                border: 'none',
+                cursor: exportingCSV ? 'not-allowed' : 'pointer',
+                opacity: exportingCSV ? 0.5 : 1,
+                transition: 'background-color 0.2s ease'
+              }}
+            >
+              {exportingCSV ? t.admin.exporting : t.admin.exportCSV}
+            </button>
+            
+            <button
+              onClick={handleSendVacationSummary}
+              disabled={sendingVacationSummary}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              style={{ 
+                padding: '0.5rem 1rem',
+                backgroundColor: '#2563eb',
+                color: 'white',
+                borderRadius: '0.5rem',
+                border: 'none',
+                cursor: sendingVacationSummary ? 'not-allowed' : 'pointer',
+                opacity: sendingVacationSummary ? 0.5 : 1,
+                transition: 'background-color 0.2s ease'
+              }}
+            >
+              {sendingVacationSummary ? '📧 Sending...' : '📅 Send Monthly Summary'}
+            </button>
+            
+            <button
+              onClick={() => setShowClearModal(true)}
+              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
+              style={{ 
+                padding: '0.5rem 1rem',
+                backgroundColor: '#dc2626',
+                color: 'white',
+                borderRadius: '0.5rem',
+                border: 'none',
+                cursor: 'pointer',
+                transition: 'background-color 0.2s ease'
+              }}
+            >
+              {t.admin.clearReviewed}
+            </button>
+          </div>
         </div>
 
         {/* Pending Requests */}
@@ -498,62 +620,24 @@ export default function AdminVacationRequestsPage() {
                   {request.reason && (
                     <div className="mb-4">
                       <label 
-                        className="block text-sm font-medium text-gray-500 mb-1"
+                        className="block text-sm font-medium text-gray-500 mb-2"
                         style={{ 
                           display: 'block',
                           fontSize: '0.875rem',
                           fontWeight: '500',
                           color: '#6b7280',
-                          marginBottom: '0.25rem'
+                          marginBottom: '0.5rem'
                         }}
                       >
-                        {t.vacationRequest.reason}
+                        {t.admin.reason}
                       </label>
-                      <p className="text-gray-900 bg-gray-50 p-3 rounded-md" style={{ backgroundColor: '#f9fafb', padding: '0.75rem', borderRadius: '0.375rem' }}>
-                        {request.reason}
-                      </p>
+                      <p className="text-gray-900">{request.reason}</p>
                     </div>
                   )}
                   
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex justify-end space-x-3">
                     <button
-                      onClick={() => handleReviewRequest(request.id, 'APPROVED')}
-                      className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
-                      style={{ 
-                        padding: '0.5rem 1rem',
-                        backgroundColor: '#16a34a',
-                        color: 'white',
-                        borderRadius: '0.375rem',
-                        border: 'none',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.2s ease'
-                      }}
-                    >
-                      {t.admin.approve}
-                    </button>
-                    <button
-                      onClick={() => handleReviewRequest(request.id, 'REJECTED')}
-                      className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200"
-                      style={{ 
-                        padding: '0.5rem 1rem',
-                        backgroundColor: '#dc2626',
-                        color: 'white',
-                        borderRadius: '0.375rem',
-                        border: 'none',
-                        cursor: 'pointer',
-                        transition: 'background-color 0.2s ease'
-                      }}
-                    >
-                      {t.admin.reject}
-                    </button>
-                    <button
-                      onClick={() => {
-                        const comment = prompt('Add a comment:');
-                        if (comment !== null) {
-                          setAdminComment(comment);
-                          handleReviewRequest(request.id, 'APPROVED');
-                        }
-                      }}
+                      onClick={() => setEditingRequest(request.id)}
                       className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
                       style={{ 
                         padding: '0.5rem 1rem',
@@ -565,71 +649,73 @@ export default function AdminVacationRequestsPage() {
                         transition: 'background-color 0.2s ease'
                       }}
                     >
-                      {t.admin.addComment}
+                      {t.admin.viewDetails}
                     </button>
                   </div>
+                  
+                  {editingRequest === request.id && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                      <h4 className="font-medium text-gray-900 mb-3">{t.admin.addComment}</h4>
+                      <textarea
+                        value={adminComment}
+                        onChange={(e) => setAdminComment(e.target.value)}
+                        placeholder={t.admin.commentPlaceholder}
+                        className="w-full p-2 border border-gray-300 rounded-md mb-3"
+                        rows={3}
+                      />
+                      <div className="flex justify-end space-x-3">
+                        <button
+                          onClick={() => setEditingRequest(null)}
+                          className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors duration-200"
+                          style={{ 
+                            padding: '0.5rem 1rem',
+                            color: '#374151',
+                            backgroundColor: '#e5e7eb',
+                            borderRadius: '0.375rem',
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'background-color 0.2s ease'
+                          }}
+                        >
+                          {t.admin.cancel}
+                        </button>
+                        <button
+                          onClick={() => handleReviewRequest(request.id, 'APPROVED')}
+                          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
+                          style={{ 
+                            padding: '0.5rem 1rem',
+                            backgroundColor: '#16a34a',
+                            color: 'white',
+                            borderRadius: '0.375rem',
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'background-color 0.2s ease'
+                          }}
+                        >
+                          {t.admin.approve}
+                        </button>
+                        <button
+                          onClick={() => handleReviewRequest(request.id, 'REJECTED')}
+                          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200"
+                          style={{ 
+                            padding: '0.5rem 1rem',
+                            backgroundColor: '#dc2626',
+                            color: 'white',
+                            borderRadius: '0.375rem',
+                            border: 'none',
+                            cursor: 'pointer',
+                            transition: 'background-color 0.2s ease'
+                          }}
+                        >
+                          {t.admin.reject}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           )}
-        </div>
-
-        {/* Admin Actions */}
-        <div 
-          className="card mb-8"
-          style={{ 
-            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-            borderRadius: '1rem', 
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', 
-            padding: '1.5rem',
-            marginBottom: '2rem',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)'
-          }}
-        >
-          <div 
-            className="flex flex-wrap gap-4 justify-center"
-            style={{ 
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '1rem',
-              justifyContent: 'center'
-            }}
-          >
-            <button
-              onClick={handleExportCSV}
-              disabled={exportingCSV}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-              style={{ 
-                padding: '0.5rem 1rem',
-                backgroundColor: '#16a34a',
-                color: 'white',
-                borderRadius: '0.5rem',
-                border: 'none',
-                cursor: exportingCSV ? 'not-allowed' : 'pointer',
-                opacity: exportingCSV ? 0.5 : 1,
-                transition: 'background-color 0.2s ease'
-              }}
-            >
-              {exportingCSV ? t.admin.exporting : t.admin.exportCSV}
-            </button>
-            
-            <button
-              onClick={() => setShowClearModal(true)}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
-              style={{ 
-                padding: '0.5rem 1rem',
-                backgroundColor: '#dc2626',
-                color: 'white',
-                borderRadius: '0.5rem',
-                border: 'none',
-                cursor: 'pointer',
-                transition: 'background-color 0.2s ease'
-              }}
-            >
-              {t.admin.clearReviewed}
-            </button>
-          </div>
         </div>
 
         {/* Reviewed Requests */}
@@ -678,48 +764,25 @@ export default function AdminVacationRequestsPage() {
               </span>
             </h2>
             <button
-              type="button"
-              style={{
-                background: 'rgba(107, 114, 128, 0.1)',
-                border: '1px solid rgba(107, 114, 128, 0.2)',
-                fontSize: '1.25rem',
-                color: '#6b7280',
-                cursor: 'pointer',
-                padding: '0.5rem 0.75rem',
-                borderRadius: '0.375rem',
-                transition: 'all 0.2s',
-                pointerEvents: 'auto',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                minWidth: '2.5rem',
-                minHeight: '2.5rem'
-              }}
-              onMouseOver={(e) => {
-                e.currentTarget.style.color = '#374151';
-                e.currentTarget.style.background = 'rgba(107, 114, 128, 0.2)';
-                e.currentTarget.style.borderColor = 'rgba(107, 114, 128, 0.4)';
-              }}
-              onMouseOut={(e) => {
-                e.currentTarget.style.color = '#6b7280';
-                e.currentTarget.style.background = 'rgba(107, 114, 128, 0.1)';
-                e.currentTarget.style.borderColor = 'rgba(107, 114, 128, 0.2)';
-              }}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
                 setIsReviewedRequestsCollapsed(!isReviewedRequestsCollapsed);
               }}
               title={isReviewedRequestsCollapsed ? 'Expand Reviewed Requests' : 'Collapse Reviewed Requests'}
+              className="text-gray-500 hover:text-gray-700"
+              style={{ 
+                color: '#6b7280',
+                cursor: 'pointer'
+              }}
             >
               {isReviewedRequestsCollapsed ? '▼' : '▲'}
             </button>
           </div>
           
           <div 
-            style={{
-              overflow: 'hidden',
-              transition: 'max-height 0.3s ease-in-out',
+            className="overflow-hidden transition-all duration-300 ease-in-out"
+            style={{ 
               maxHeight: isReviewedRequestsCollapsed ? '0px' : '2000px'
             }}
           >
@@ -736,168 +799,164 @@ export default function AdminVacationRequestsPage() {
               </p>
             ) : (
               <div className="space-y-4">
-              {reviewedRequests.map((request) => (
-                <div 
-                  key={request.id}
-                  className="border border-gray-200 rounded-lg p-4"
-                  style={{ 
-                    border: '1px solid #e5e7eb', 
-                    borderRadius: '0.5rem', 
-                    padding: '1rem' 
-                  }}
-                >
-                  <div className="flex justify-between items-start mb-4">
-                    <div>
-                      <h3 
-                        className="font-semibold text-gray-900"
-                        style={{ 
-                          fontWeight: '600', 
-                          color: '#111827' 
-                        }}
-                      >
-                        {request.userName}
-                      </h3>
-                      <p 
-                        className="text-gray-600"
-                        style={{ color: '#4b5563' }}
-                      >
-                        {request.userEmail}
+                {reviewedRequests.map((request) => (
+                  <div 
+                    key={request.id}
+                    className="border border-gray-200 rounded-lg p-4"
+                    style={{ 
+                      border: '1px solid #e5e7eb', 
+                      borderRadius: '0.5rem', 
+                      padding: '1rem' 
+                    }}
+                  >
+                    <div className="flex justify-between items-start mb-4">
+                      <div>
+                        <h3 
+                          className="font-semibold text-gray-900"
+                          style={{ 
+                            fontWeight: '600', 
+                            color: '#111827' 
+                          }}
+                        >
+                          {request.userName}
+                        </h3>
+                        <p 
+                          className="text-gray-600"
+                          style={{ color: '#4b5563' }}
+                        >
+                          {request.userEmail}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <span 
+                          className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
+                            request.status === 'APPROVED' 
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-red-100 text-red-800'
+                          }`}
+                          style={{ 
+                            display: 'inline-block',
+                            padding: '0.25rem 0.5rem',
+                            fontSize: '0.75rem',
+                            fontWeight: '600',
+                            borderRadius: '9999px',
+                            backgroundColor: request.status === 'APPROVED' ? '#dcfce7' : '#fee2e2',
+                            color: request.status === 'APPROVED' ? '#166534' : '#991b1b'
+                          }}
+                        >
+                          {t.status[request.status as keyof typeof t.status]}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                      <div>
+                        <label 
+                          className="block text-sm font-medium text-gray-500"
+                          style={{ 
+                            display: 'block',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            color: '#6b7280'
+                          }}
+                        >
+                          {t.admin.startDate}
+                        </label>
+                        <p className="text-gray-900">{new Date(request.startDate).toLocaleDateString()}</p>
+                      </div>
+                      <div>
+                        <label 
+                          className="block text-sm font-medium text-gray-500"
+                          style={{ 
+                            display: 'block',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            color: '#6b7280'
+                          }}
+                        >
+                          {t.admin.endDate}
+                        </label>
+                        <p className="text-gray-900">{new Date(request.endDate).toLocaleDateString()}</p>
+                      </div>
+                      <div>
+                        <label 
+                          className="block text-sm font-medium text-gray-500"
+                          style={{ 
+                            display: 'block',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            color: '#6b7280'
+                          }}
+                        >
+                          {t.admin.company}
+                        </label>
+                        <p className="text-gray-900">{t.companies[request.company as keyof typeof t.companies] || request.company}</p>
+                      </div>
+                      <div>
+                        <label 
+                          className="block text-sm font-medium text-gray-500"
+                          style={{ 
+                            display: 'block',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            color: '#6b7280'
+                          }}
+                        >
+                          {t.admin.type}
+                        </label>
+                        <p className="text-gray-900">{t.vacationTypes[request.type as keyof typeof t.vacationTypes] || request.type}</p>
+                      </div>
+                    </div>
+                    
+                    {request.reason && (
+                      <div className="mb-4">
+                        <label 
+                          className="block text-sm font-medium text-gray-500 mb-2"
+                          style={{ 
+                            display: 'block',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            color: '#6b7280',
+                            marginBottom: '0.5rem'
+                          }}
+                        >
+                          {t.admin.reason}
+                        </label>
+                        <p className="text-gray-900">{request.reason}</p>
+                      </div>
+                    )}
+                    
+                    {request.adminComment && (
+                      <div className="mb-4">
+                        <label 
+                          className="block text-sm font-medium text-gray-500 mb-2"
+                          style={{ 
+                            display: 'block',
+                            fontSize: '0.875rem',
+                            fontWeight: '500',
+                            color: '#6b7280',
+                            marginBottom: '0.5rem'
+                          }}
+                        >
+                          {t.admin.adminComment}
+                        </label>
+                        <p className="text-gray-900">{request.adminComment}</p>
+                      </div>
+                    )}
+                    
+                    <div className="text-sm text-gray-500">
+                      <p>
+                        {t.admin.reviewedBy}: {request.reviewedBy} ({request.reviewerEmail})
+                      </p>
+                      <p>
+                        {t.admin.reviewDate}: {request.reviewedAt ? new Date(request.reviewedAt).toLocaleString() : 'N/A'}
                       </p>
                     </div>
-                    <div className="text-right">
-                      <span 
-                        className={`inline-block px-2 py-1 text-xs font-semibold rounded-full ${
-                          request.status === 'APPROVED' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-red-100 text-red-800'
-                        }`}
-                        style={{ 
-                          display: 'inline-block',
-                          padding: '0.25rem 0.5rem',
-                          fontSize: '0.75rem',
-                          fontWeight: '600',
-                          borderRadius: '9999px',
-                          backgroundColor: request.status === 'APPROVED' ? '#dcfce7' : '#fee2e2',
-                          color: request.status === 'APPROVED' ? '#166534' : '#991b1b'
-                        }}
-                      >
-                        {t.status[request.status as keyof typeof t.status] || request.status}
-                      </span>
-                    </div>
                   </div>
-                  
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                    <div>
-                      <label 
-                        className="block text-sm font-medium text-gray-500"
-                        style={{ 
-                          display: 'block',
-                          fontSize: '0.875rem',
-                          fontWeight: '500',
-                          color: '#6b7280'
-                        }}
-                      >
-                        {t.admin.startDate}
-                      </label>
-                      <p className="text-gray-900">{new Date(request.startDate).toLocaleDateString()}</p>
-                    </div>
-                    <div>
-                      <label 
-                        className="block text-sm font-medium text-gray-500"
-                        style={{ 
-                          display: 'block',
-                          fontSize: '0.875rem',
-                          fontWeight: '500',
-                          color: '#6b7280'
-                        }}
-                      >
-                        {t.admin.endDate}
-                      </label>
-                      <p className="text-gray-900">{new Date(request.endDate).toLocaleDateString()}</p>
-                    </div>
-                    <div>
-                      <label 
-                        className="block text-sm font-medium text-gray-500"
-                        style={{ 
-                          display: 'block',
-                          fontSize: '0.875rem',
-                          fontWeight: '500',
-                          color: '#6b7280'
-                        }}
-                      >
-                        {t.admin.company}
-                      </label>
-                      <p className="text-gray-900">{t.companies[request.company as keyof typeof t.companies] || request.company}</p>
-                    </div>
-                    <div>
-                      <label 
-                        className="block text-sm font-medium text-gray-500"
-                        style={{ 
-                          display: 'block',
-                          fontSize: '0.875rem',
-                          fontWeight: '500',
-                          color: '#6b7280'
-                        }}
-                      >
-                        {t.admin.type}
-                      </label>
-                      <p className="text-gray-900">{t.vacationTypes[request.type as keyof typeof t.vacationTypes] || request.type}</p>
-                    </div>
-                  </div>
-                  
-                  {request.reason && (
-                    <div className="mb-4">
-                      <label 
-                        className="block text-sm font-medium text-gray-500 mb-1"
-                        style={{ 
-                          display: 'block',
-                          fontSize: '0.875rem',
-                          fontWeight: '500',
-                          color: '#6b7280',
-                          marginBottom: '0.25rem'
-                        }}
-                      >
-                        {t.vacationRequest.reason}
-                      </label>
-                      <p className="text-gray-900 bg-gray-50 p-3 rounded-md" style={{ backgroundColor: '#f9fafb', padding: '0.75rem', borderRadius: '0.375rem' }}>
-                        {request.reason}
-                      </p>
-                    </div>
-                  )}
-                  
-                  {request.adminComment && (
-                    <div className="mb-4">
-                      <label 
-                        className="block text-sm font-medium text-gray-500 mb-1"
-                        style={{ 
-                          display: 'block',
-                          fontSize: '0.875rem',
-                          fontWeight: '500',
-                          color: '#6b7280',
-                          marginBottom: '0.25rem'
-                        }}
-                      >
-                        Admin Comment
-                      </label>
-                      <p className="text-gray-900 bg-blue-50 p-3 rounded-md" style={{ backgroundColor: '#eff6ff', padding: '0.75rem', borderRadius: '0.375rem' }}>
-                        {request.adminComment}
-                      </p>
-                    </div>
-                  )}
-                  
-                  <div className="text-sm text-gray-500">
-                    <p>
-                      {t.admin.reviewedBy}: {request.reviewedBy} ({request.reviewerEmail})
-                    </p>
-                    <p>
-                      {t.admin.reviewDate}: {request.reviewedAt ? new Date(request.reviewedAt).toLocaleString() : 'N/A'}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-            </div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

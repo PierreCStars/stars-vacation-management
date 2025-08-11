@@ -355,6 +355,8 @@ export default function AdminVacationRequestsPage() {
         <div className="bg-red-500 text-white px-4 py-3 rounded mb-4 text-center">
           <strong>🚨 URGENT TEST:</strong> This is a very visible test to verify deployment is working!
           <br />
+          <small>Last updated: {new Date().toISOString()}</small>
+          <br />
           <button 
             onClick={() => setTestMode(!testMode)}
             className="mt-2 px-4 py-2 bg-white text-red-600 rounded hover:bg-gray-100 font-bold"

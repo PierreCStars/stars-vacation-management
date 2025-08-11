@@ -41,12 +41,16 @@ export interface TypeAnalytics {
 
 export async function getVacationAnalytics(): Promise<VacationAnalytics> {
   try {
-    // Try to ensure Firebase auth is ready, but continue if it fails
-    try {
-      const { ensureAuth } = await import('./firebase');
-      await ensureAuth();
-    } catch (authError) {
-      console.log('⚠️  Firebase auth failed, continuing without authentication:', authError);
+    // Check if Firebase is available
+    if (!db) {
+      console.error('Firebase database not available');
+      return {
+        totalVacations: 0,
+        totalDays: 0,
+        byPerson: [],
+        byCompany: [],
+        byType: []
+      };
     }
 
     const vacationRequestsRef = collection(db, 'vacationRequests');
@@ -79,12 +83,16 @@ export async function getVacationAnalytics(): Promise<VacationAnalytics> {
 
 export async function getVacationAnalyticsForPeriod(startDate: string, endDate: string): Promise<VacationAnalytics> {
   try {
-    // Try to ensure Firebase auth is ready, but continue if it fails
-    try {
-      const { ensureAuth } = await import('./firebase');
-      await ensureAuth();
-    } catch (authError) {
-      console.log('⚠️  Firebase auth failed, continuing without authentication:', authError);
+    // Check if Firebase is available
+    if (!db) {
+      console.error('Firebase database not available');
+      return {
+        totalVacations: 0,
+        totalDays: 0,
+        byPerson: [],
+        byCompany: [],
+        byType: []
+      };
     }
 
     const vacationRequestsRef = collection(db, 'vacationRequests');

@@ -49,10 +49,61 @@ export default function VacationAnalytics() {
   const [error, setError] = useState<string | null>(null);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [selectedPeriod, setSelectedPeriod] = useState<string>('all');
 
   useEffect(() => {
     fetchAnalytics();
   }, [startDate, endDate]);
+
+  // Set default date range to show previous months
+  useEffect(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    
+    // Default to showing last 6 months
+    const sixMonthsAgo = new Date(currentYear, currentMonth - 6, 1);
+    setStartDate(sixMonthsAgo.toISOString().split('T')[0]);
+    setEndDate(now.toISOString().split('T')[0]);
+    setSelectedPeriod('custom');
+  }, []);
+
+  const handlePeriodChange = (period: string) => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth();
+    
+    switch (period) {
+      case 'last3months':
+        const threeMonthsAgo = new Date(currentYear, currentMonth - 3, 1);
+        setStartDate(threeMonthsAgo.toISOString().split('T')[0]);
+        setEndDate(now.toISOString().split('T')[0]);
+        break;
+      case 'last6months':
+        const sixMonthsAgo = new Date(currentYear, currentMonth - 6, 1);
+        setStartDate(sixMonthsAgo.toISOString().split('T')[0]);
+        setEndDate(now.toISOString().split('T')[0]);
+        break;
+      case 'lastYear':
+        const lastYear = new Date(currentYear - 1, 0, 1);
+        setStartDate(lastYear.toISOString().split('T')[0]);
+        setEndDate(new Date(currentYear - 1, 11, 31).toISOString().split('T')[0]);
+        break;
+      case 'thisYear':
+        const thisYear = new Date(currentYear, 0, 1);
+        setStartDate(thisYear.toISOString().split('T')[0]);
+        setEndDate(now.toISOString().split('T')[0]);
+        break;
+      case 'all':
+        setStartDate('');
+        setEndDate('');
+        break;
+      case 'custom':
+        // Keep current custom dates
+        break;
+    }
+    setSelectedPeriod(period);
+  };
 
   const fetchAnalytics = async () => {
     try {
@@ -127,8 +178,8 @@ export default function VacationAnalytics() {
         {/* Header Section */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white shadow-xl">
           <div className="text-center">
-            <h1 className="text-3xl font-bold mb-2">📊 Vacation Analytics Dashboard</h1>
-            <p className="text-blue-100 text-lg">Comprehensive insights into your team's vacation patterns</p>
+            <h1 className="text-3xl font-bold mb-2">📊 Historical Vacation Analytics</h1>
+            <p className="text-blue-100 text-lg">Comprehensive insights into your team's vacation patterns over time</p>
           </div>
         </div>
 
@@ -137,35 +188,101 @@ export default function VacationAnalytics() {
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-semibold text-gray-900 flex items-center">
               <span className="text-2xl mr-3">📅</span>
-              Date Range Filter
+              Historical Vacation Analytics
             </h3>
             <button
               onClick={() => {
                 setStartDate('');
                 setEndDate('');
+                setSelectedPeriod('all');
               }}
               className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 flex items-center"
             >
               <span className="mr-2">🔄</span>
-              Clear Filter
+              Show All Time
             </button>
           </div>
+          
+          {/* Quick Period Selectors */}
+          <div className="mb-6">
+            <label className="block text-sm font-semibold text-gray-700 mb-3">Quick Periods:</label>
+            <div className="flex flex-wrap gap-2">
+              <button
+                onClick={() => handlePeriodChange('last3months')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  selectedPeriod === 'last3months'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                📅 Last 3 Months
+              </button>
+              <button
+                onClick={() => handlePeriodChange('last6months')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  selectedPeriod === 'last6months'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                }`}
+              >
+                📅 Last 6 Months
+              </button>
+              <button
+                onClick={() => handlePeriodChange('lastYear')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  selectedPeriod === 'lastYear'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                📅 Last Year
+              </button>
+              <button
+                onClick={() => handlePeriodChange('thisYear')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  selectedPeriod === 'thisYear'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                }`}
+              >
+                📅 This Year
+              </button>
+              <button
+                onClick={() => handlePeriodChange('all')}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                  selectedPeriod === 'all'
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                📅 All Time
+              </button>
+            </div>
+          </div>
+          
+          {/* Custom Date Range */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">Start Date</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">Custom Start Date</label>
               <input
                 type="date"
                 value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setSelectedPeriod('custom');
+                }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-3">End Date</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-3">Custom End Date</label>
               <input
                 type="date"
                 value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setSelectedPeriod('custom');
+                }}
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
               />
             </div>
@@ -206,8 +323,8 @@ export default function VacationAnalytics() {
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white shadow-xl">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-3xl font-bold mb-2">📊 Vacation Analytics Dashboard</h1>
-            <p className="text-blue-100 text-lg">Comprehensive insights into your team's vacation patterns</p>
+            <h1 className="text-3xl font-bold mb-2">📊 Historical Vacation Analytics</h1>
+            <p className="text-blue-100 text-lg">Comprehensive insights into your team's vacation patterns over time</p>
           </div>
           <div className="text-right">
             <div className="text-4xl font-bold">{analytics.totalVacations}</div>
@@ -241,35 +358,100 @@ export default function VacationAnalytics() {
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-gray-900 flex items-center">
             <span className="text-2xl mr-3">📅</span>
-            Date Range Filter
+            Historical Vacation Analytics
           </h3>
           <button
             onClick={() => {
               setStartDate('');
               setEndDate('');
+              setSelectedPeriod('all');
             }}
             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200 flex items-center"
           >
             <span className="mr-2">🔄</span>
-            Clear Filter
+            Show All Time
           </button>
         </div>
+        
+        {/* Quick Period Selectors */}
+        <div className="mb-6">
+          <label className="block text-sm font-semibold text-gray-700 mb-3">Quick Periods:</label>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => handlePeriodChange('last3months')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                selectedPeriod === 'last3months'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              📅 Last 3 Months
+            </button>
+            <button
+              onClick={() => handlePeriodChange('last6months')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                selectedPeriod === 'last6months'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+              }`}
+            >
+              📅 Last 6 Months
+            </button>
+            <button
+              onClick={() => handlePeriodChange('lastYear')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                selectedPeriod === 'lastYear'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              📅 Last Year
+            </button>
+            <button
+              onClick={() => handlePeriodChange('thisYear')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                selectedPeriod === 'thisYear'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+              }`}
+            >
+              📅 This Year
+            </button>
+            <button
+              onClick={() => handlePeriodChange('all')}
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
+                selectedPeriod === 'all'
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              📅 All Time
+            </button>
+          </div>
+        </div>
+        
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">Start Date</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-3">Custom Start Date</label>
             <input
               type="date"
               value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
+              onChange={(e) => {
+                setStartDate(e.target.value);
+                setSelectedPeriod('custom');
+              }}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">End Date</label>
+            <label className="block text-sm font-semibold text-gray-700 mb-3">Custom End Date</label>
             <input
               type="date"
               value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
+              onChange={(e) => {
+                setEndDate(e.target.value);
+                setSelectedPeriod('custom');
+              }}
               className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
             />
           </div>

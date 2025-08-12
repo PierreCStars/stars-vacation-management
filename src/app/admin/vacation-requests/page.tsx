@@ -357,7 +357,7 @@ export default function AdminVacationRequestsPage() {
         {/* Tab Navigation */}
         <div className="bg-white rounded-lg shadow-sm border mb-6">
           <div className="border-b border-gray-200">
-            <nav className="-mb-px flex space-x-8 px-6">
+            <nav className="-mb-px flex justify-center space-x-8 px-6">
               {[
                 { id: 'requests', label: '📋 Vacation Requests', icon: '📋' },
                 { id: 'analytics', label: '📊 Analytics', icon: '📊' }

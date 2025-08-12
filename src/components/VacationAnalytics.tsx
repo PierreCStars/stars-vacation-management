@@ -133,7 +133,7 @@ export default function VacationAnalytics() {
         </div>
 
         {/* Date Filter */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+        <div className="p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-xl font-semibold text-gray-900 flex items-center">
               <span className="text-2xl mr-3">📅</span>
@@ -185,7 +185,7 @@ export default function VacationAnalytics() {
           <p className="text-gray-600 mb-6 text-lg">
             There are currently no approved vacation requests in the system.
           </p>
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 max-w-2xl mx-auto">
+          <div className="bg-blue-50 p-6 max-w-2xl mx-auto">
             <p className="text-blue-800 text-lg">
               <strong>💡 Tip:</strong> Vacation analytics will appear here once employees submit and admins approve vacation requests.
             </p>

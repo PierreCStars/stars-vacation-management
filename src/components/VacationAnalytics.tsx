@@ -179,7 +179,7 @@ export default function VacationAnalytics() {
         </div>
 
         {/* No Data Message */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-12 text-center">
+        <div className="p-12 text-center">
           <div className="text-6xl mb-4">📊</div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">No Vacation Data Available</h2>
           <p className="text-gray-600 mb-6 text-lg">
@@ -237,7 +237,7 @@ export default function VacationAnalytics() {
       </div>
 
       {/* Date Filter */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+      <div className="p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-xl font-semibold text-gray-900 flex items-center">
             <span className="text-2xl mr-3">📅</span>
@@ -283,17 +283,16 @@ export default function VacationAnalytics() {
       </div>
 
       {/* Tab Navigation */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-        <div className="border-b border-gray-100">
-          <nav className="flex">
+      <div className="mb-6">
+        <nav className="flex justify-center">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as any)}
-                className={`flex-1 py-6 px-6 text-center font-semibold text-sm transition-all duration-200 ${
+                className={`py-4 px-8 mx-2 text-center font-semibold text-sm transition-all duration-200 ${
                   activeTab === tab.id
-                    ? 'bg-blue-50 text-blue-700 border-b-2 border-blue-500'
-                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                    ? 'text-blue-700 border-b-2 border-blue-500'
+                    : 'text-gray-600 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
                 }`}
               >
                 <div className="text-2xl mb-2">{tab.icon}</div>
@@ -305,7 +304,7 @@ export default function VacationAnalytics() {
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+      <div className="overflow-hidden">
         {activeTab === 'summary' && (
           <div className="p-8">
             <div className="mb-8">

@@ -5,17 +5,37 @@ import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
 // Firebase configuration
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
+  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.firebaseapp.com`,
   projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
+  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || `${process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID}.appspot.com`,
   messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
+// Validate Firebase configuration
+const requiredFields = ['apiKey', 'projectId', 'messagingSenderId', 'appId'];
+const missingFields = requiredFields.filter(field => !firebaseConfig[field as keyof typeof firebaseConfig]);
+
+if (missingFields.length > 0) {
+  console.error('❌ Missing Firebase configuration fields:', missingFields);
+  console.error('Current config:', firebaseConfig);
+  throw new Error(`Firebase configuration incomplete. Missing: ${missingFields.join(', ')}`);
+}
+
 // Initialize Firebase
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const auth = getAuth(app);
+let app;
+let db;
+let auth;
+
+try {
+  app = initializeApp(firebaseConfig);
+  db = getFirestore(app);
+  auth = getAuth(app);
+  console.log('✅ Firebase initialized successfully');
+} catch (error) {
+  console.error('❌ Firebase initialization failed:', error);
+  throw error;
+}
 
 // Initialize Firebase authentication (with error handling)
 export async function initializeFirebaseAuth() {
@@ -78,6 +98,12 @@ export interface VacationRequest {
 export async function loadVacationRequests(): Promise<VacationRequest[]> {
   try {
     console.log('🔧 Loading vacation requests from Firestore...');
+    
+    // Check if Firebase is available
+    if (!db) {
+      console.error('❌ Firebase database not available');
+      return [];
+    }
     
     // Try to ensure auth, but continue if it fails
     try {

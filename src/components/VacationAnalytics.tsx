@@ -116,6 +116,11 @@ export default function VacationAnalytics() {
       }
       
       const response = await fetch(url);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
       const result = await response.json();
       
       if (result.success) {
@@ -124,7 +129,8 @@ export default function VacationAnalytics() {
         setError(result.error || 'Failed to fetch analytics');
       }
     } catch (err) {
-      setError('Failed to fetch analytics');
+      const errorMessage = err instanceof Error ? err.message : 'Failed to fetch analytics';
+      setError(errorMessage);
       console.error('Error fetching analytics:', err);
     } finally {
       setLoading(false);

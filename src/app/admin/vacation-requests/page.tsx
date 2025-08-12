@@ -43,7 +43,6 @@ export default function AdminVacationRequestsPage() {
   const [editingRequest, setEditingRequest] = useState<string | null>(null);
   const [adminComment, setAdminComment] = useState('');
   const [isReviewedRequestsCollapsed, setIsReviewedRequestsCollapsed] = useState(false);
-  const [testMode, setTestMode] = useState(false);
   const [activeTab, setActiveTab] = useState<'requests' | 'analytics'>('requests');
 
   useEffect(() => {
@@ -353,27 +352,7 @@ export default function AdminVacationRequestsPage() {
           </p>
         </div>
 
-        {/* Simple Test Section */}
-        <div className="bg-red-500 text-white px-4 py-3 rounded mb-4 text-center">
-          <strong>🚨 URGENT TEST:</strong> This is a very visible test to verify deployment is working!
-          <br />
-          <small>Last updated: {new Date().toISOString()}</small>
-          <br />
-          <button 
-            onClick={() => setTestMode(!testMode)}
-            className="mt-2 px-4 py-2 bg-white text-red-600 rounded hover:bg-gray-100 font-bold"
-          >
-            {testMode ? 'Hide Test' : 'SHOW TEST NOW'}
-          </button>
-        </div>
 
-        {testMode && (
-          <div className="bg-green-100 border border-green-400 text-green-800 px-4 py-2 rounded mb-4">
-            <strong>✅ TEST CONTENT:</strong> If you can see this, the basic functionality is working!
-            <br />
-            Current time: {new Date().toLocaleString()}
-          </div>
-        )}
 
         {/* Tab Navigation */}
         <div className="bg-white rounded-lg shadow-sm border mb-6">

@@ -285,22 +285,21 @@ export default function VacationAnalytics() {
       {/* Tab Navigation */}
       <div className="mb-6">
         <nav className="flex justify-center">
-            {tabs.map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
-                className={`py-4 px-8 mx-2 text-center font-semibold text-sm transition-all duration-200 ${
-                  activeTab === tab.id
-                    ? 'text-blue-700 border-b-2 border-blue-500'
-                    : 'text-gray-600 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
-                }`}
-              >
-                <div className="text-2xl mb-2">{tab.icon}</div>
-                {tab.label}
-              </button>
-            ))}
-          </nav>
-        </div>
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id as any)}
+              className={`py-4 px-8 mx-2 text-center font-semibold text-sm transition-all duration-200 ${
+                activeTab === tab.id
+                  ? 'text-blue-700 border-b-2 border-blue-500'
+                  : 'text-gray-600 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
+              }`}
+            >
+              <div className="text-2xl mb-2">{tab.icon}</div>
+              {tab.label}
+            </button>
+          ))}
+        </nav>
       </div>
 
       {/* Tab Content */}

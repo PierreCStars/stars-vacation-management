@@ -2,6 +2,7 @@ import { google } from 'googleapis';
 
 // Utility function to load and parse Google credentials
 // Updated: Fixed newline handling for Google Calendar integration
+// Deployed: Testing environment variable update
 type GoogleCreds = {
   client_email: string;
   private_key: string;

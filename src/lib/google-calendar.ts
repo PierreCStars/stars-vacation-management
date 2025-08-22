@@ -1,17 +1,39 @@
 import { google } from 'googleapis';
 
+// Utility function to load and parse Google credentials
+// Updated: Fixed newline handling for Google Calendar integration
+type GoogleCreds = {
+  client_email: string;
+  private_key: string;
+};
+
+function loadGoogleCreds(): GoogleCreds {
+  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  if (!raw) throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY manquante");
+
+  // 1) Si c'est du JSON (cas recommandé en .env)
+  if (raw.trim().startsWith("{")) {
+    const obj = JSON.parse(raw);
+    if (!obj.client_email || !obj.private_key) {
+      throw new Error("Clé de service Google invalide (champs manquants)");
+    }
+    // Remettre de vrais retours à la ligne
+    obj.private_key = String(obj.private_key).replace(/\\n/g, "\n");
+    return { client_email: obj.client_email, private_key: obj.private_key };
+  }
+
+  // 2) Si quelqu'un a mis directement le PEM dans la variable
+  const pem = raw.includes("\\n") ? raw.replace(/\\n/g, "\n") : raw;
+  return { client_email: process.env.GOOGLE_CLIENT_EMAIL!, private_key: pem };
+}
+
 // Initialize Google Calendar API
 const auth = new google.auth.GoogleAuth({
   credentials: (() => {
     try {
-      const key = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-      if (!key) {
-        console.warn('⚠️ GOOGLE_SERVICE_ACCOUNT_KEY not set, using empty credentials');
-        return {};
-      }
-      return JSON.parse(key);
+      return loadGoogleCreds();
     } catch (error) {
-      console.error('❌ Error parsing GOOGLE_SERVICE_ACCOUNT_KEY:', error);
+      console.error('❌ Error loading Google credentials:', error);
       return {};
     }
   })(),

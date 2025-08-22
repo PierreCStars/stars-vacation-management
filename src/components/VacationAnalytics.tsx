@@ -327,34 +327,37 @@ export default function VacationAnalytics() {
     <div className="max-w-7xl mx-auto space-y-8">
       {/* Header Section */}
       <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white shadow-xl">
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">📊 Historical Vacation Analytics</h1>
-            <p className="text-blue-100 text-lg">Comprehensive insights into your team's vacation patterns over time</p>
-          </div>
-          <div className="text-right">
-            <div className="text-4xl font-bold">{analytics.totalVacations}</div>
-            <div className="text-blue-100">Total Vacations</div>
-          </div>
+        <div className="text-center mb-6">
+          <h1 className="text-3xl font-bold mb-2">📊 Historical Vacation Analytics</h1>
+          <p className="text-blue-100 text-lg">Comprehensive insights into your team's vacation patterns over time</p>
         </div>
         
-        {/* Quick Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold">{analytics.totalDays}</div>
-            <div className="text-blue-100 text-sm">Total Days</div>
+        {/* Quick Stats - 2 rows layout */}
+        <div className="space-y-4">
+          {/* First row - Labels */}
+          <div className="flex justify-center gap-6">
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center min-w-[160px]">
+              <div className="text-blue-100 text-base font-semibold">Total Days</div>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center min-w-[160px]">
+              <div className="text-blue-100 text-base font-semibold">Employees</div>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center min-w-[160px]">
+              <div className="text-blue-100 text-base font-semibold">Vacation Types</div>
+            </div>
           </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold">{analytics.byPerson.length}</div>
-            <div className="text-blue-100 text-sm">Employees</div>
-          </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold">{analytics.byCompany.length}</div>
-            <div className="text-blue-100 text-sm">Companies</div>
-          </div>
-          <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center">
-            <div className="text-2xl font-bold">{analytics.byType.length}</div>
-            <div className="text-blue-100 text-sm">Vacation Types</div>
+          
+          {/* Second row - Figures */}
+          <div className="flex justify-center gap-6">
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center min-w-[160px]">
+              <div className="text-3xl font-bold">{analytics.totalDays}</div>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center min-w-[160px]">
+              <div className="text-3xl font-bold">{analytics.byPerson.length}</div>
+            </div>
+            <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center min-w-[160px]">
+              <div className="text-3xl font-bold">{analytics.byType.length}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -470,24 +473,69 @@ export default function VacationAnalytics() {
         </div>
       </div>
 
-      {/* Tab Navigation */}
-      <div className="mb-6">
-        <nav className="flex justify-center">
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as any)}
-              className={`py-4 px-8 mx-2 text-center font-semibold text-sm transition-all duration-200 ${
-                activeTab === tab.id
-                  ? 'text-blue-700 border-b-2 border-blue-500'
-                  : 'text-gray-600 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
-              }`}
-            >
-              <div className="text-2xl mb-2">{tab.icon}</div>
-              {tab.label}
-            </button>
-          ))}
-        </nav>
+      {/* Analytics Views Menu - Always Visible */}
+      <div className="mb-8">
+        <div className="card text-center hover:shadow-xl transition-shadow duration-300"
+          style={{ 
+            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+            borderRadius: '1rem', 
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', 
+            padding: '2rem',
+            textAlign: 'center',
+            backdropFilter: 'blur(10px)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            transition: 'box-shadow 0.3s ease'
+          }}
+        >
+          <h2 className="text-3xl font-bold text-gray-900 mb-2">Analytics Views</h2>
+          <p className="text-gray-600 mb-6 text-lg">Choose your preferred analytics view</p>
+          
+          {/* Tab Navigation */}
+          <div className="mb-6">
+            <div className="flex flex-wrap justify-center gap-4">
+              {tabs.map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className="px-4 py-2 text-white rounded-[3px] transition-colors duration-200"
+                  style={{
+                    padding: '0.5rem 1rem',
+                    backgroundColor: activeTab === tab.id
+                      ? tab.id === 'summary' 
+                        ? '#16a34a'  // green-600
+                        : tab.id === 'byPerson'
+                        ? '#2563eb'  // blue-600
+                        : tab.id === 'byCompany'
+                        ? '#9333ea'  // purple-600
+                        : '#ea580c'  // orange-600
+                      : tab.id === 'summary'
+                        ? '#dcfce7'  // green-100
+                        : tab.id === 'byPerson'
+                        ? '#dbeafe'  // blue-100
+                        : tab.id === 'byCompany'
+                        ? '#f3e8ff'  // purple-100
+                        : '#fed7aa',  // orange-100
+                    color: activeTab === tab.id
+                      ? '#ffffff'  // white
+                      : tab.id === 'summary'
+                        ? '#15803d'  // green-700
+                        : tab.id === 'byPerson'
+                        ? '#1d4ed8'  // blue-700
+                        : tab.id === 'byCompany'
+                        ? '#7c3aed'  // purple-700
+                        : '#c2410c',  // orange-700
+                    borderRadius: '0.5rem',
+                    border: 'none',
+                    cursor: 'pointer',
+                    transition: 'background-color 0.2s ease'
+                  }}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Tab Content */}
@@ -499,29 +547,67 @@ export default function VacationAnalytics() {
               <p className="text-gray-600">Overview of vacation patterns and key metrics</p>
             </div>
             
-            {/* Key Metrics Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 rounded-2xl p-6 text-center hover:shadow-lg transition-all duration-300">
-                <div className="text-4xl font-bold text-blue-600 mb-2">{analytics.totalVacations}</div>
-                <div className="text-blue-800 font-semibold">Total Vacations</div>
-                <div className="text-blue-600 text-sm mt-1">Approved requests</div>
-              </div>
-              <div className="bg-gradient-to-br from-green-50 to-green-100 border border-green-200 rounded-2xl p-6 text-center hover:shadow-lg transition-all duration-300">
-                <div className="text-4xl font-bold text-green-600 mb-2">{analytics.totalDays}</div>
-                <div className="text-green-800 font-semibold">Total Days</div>
-                <div className="text-green-600 text-sm mt-1">Business days</div>
-              </div>
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 border border-purple-200 rounded-2xl p-6 text-center hover:shadow-lg transition-all duration-300">
-                <div className="text-4xl font-bold text-purple-600 mb-2">{analytics.byPerson.length}</div>
-                <div className="text-purple-800 font-semibold">Employees</div>
-                <div className="text-purple-600 text-sm mt-1">With vacations</div>
-              </div>
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 border border-orange-200 rounded-2xl p-6 text-center hover:shadow-lg transition-all duration-300">
-                <div className="text-4xl font-bold text-orange-600 mb-2">
-                  {analytics.totalVacations > 0 ? Math.round(analytics.totalDays / analytics.totalVacations * 10) / 10 : 0}
+            {/* Key Metrics Table - Dashboard Style */}
+            <div className="mb-8">
+              <div 
+                className="card text-center hover:shadow-xl transition-shadow duration-300"
+                style={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+                  borderRadius: '1rem', 
+                  boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', 
+                  padding: '2.5rem',
+                  textAlign: 'center',
+                  backdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  transition: 'box-shadow 0.3s ease'
+                }}
+              >
+                {/* Table Header */}
+                <div className="mb-6">
+                  <h3 className="text-2xl font-bold text-gray-900 mb-2">Overview of Vacation Patterns and Key Metrics</h3>
+                  <p className="text-gray-600 text-lg">Comprehensive summary of your team's vacation data</p>
                 </div>
-                <div className="text-orange-800 font-semibold">Avg Days</div>
-                <div className="text-orange-600 text-sm mt-1">Per vacation</div>
+                
+                {/* Table Body */}
+                <div className="space-y-4">
+                  {/* Row 1 - Labels */}
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="px-4 py-3 text-center">
+                      <div className="text-sm font-semibold text-gray-700">Total Vacation Approved Requests</div>
+                    </div>
+                    <div className="px-4 py-3 text-center">
+                      <div className="text-sm font-semibold text-gray-700">Total Business Days</div>
+                    </div>
+                    <div className="px-4 py-3 text-center">
+                      <div className="text-sm font-semibold text-gray-700">Employees with Vacations</div>
+                    </div>
+                    <div className="px-4 py-3 text-center">
+                      <div className="text-sm font-semibold text-gray-700">Avg Days Per Vacation</div>
+                    </div>
+                  </div>
+                  
+                  {/* Row 2 - Values */}
+                  <div className="grid grid-cols-4 gap-4">
+                    <div className="px-4 py-3 text-center">
+                      <div className="text-4xl font-bold text-blue-600 mb-1">{analytics.totalVacations}</div>
+                      <div className="text-blue-600 text-sm">requests</div>
+                    </div>
+                    <div className="px-4 py-3 text-center">
+                      <div className="text-4xl font-bold text-green-600 mb-1">{analytics.totalDays}</div>
+                      <div className="text-green-600 text-sm">days</div>
+                    </div>
+                    <div className="px-4 py-3 text-center">
+                      <div className="text-4xl font-bold text-purple-600 mb-1">{analytics.byPerson.length}</div>
+                      <div className="text-purple-600 text-sm">employees</div>
+                    </div>
+                    <div className="px-4 py-3 text-center">
+                      <div className="text-4xl font-bold text-orange-600 mb-1">
+                        {analytics.totalVacations > 0 ? Math.round(analytics.totalDays / analytics.totalVacations * 10) / 10 : 0}
+                      </div>
+                      <div className="text-orange-600 text-sm">days avg</div>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 

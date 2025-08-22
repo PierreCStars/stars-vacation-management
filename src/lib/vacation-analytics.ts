@@ -53,20 +53,42 @@ export async function getVacationAnalytics(): Promise<VacationAnalytics> {
       };
     }
 
+    // Import and ensure Firebase auth is initialized
+    const { initializeFirebaseAuth } = await import('./firebase');
+    await initializeFirebaseAuth();
+
+    console.log('🔍 Fetching all approved vacation requests for analytics...');
+    
     const vacationRequestsRef = collection(db, 'vacationRequests');
     const q = query(
       vacationRequestsRef,
-      where('status', '==', 'APPROVED'),
-      orderBy('startDate', 'desc')
+      where('status', '==', 'APPROVED')
     );
     
     const querySnapshot = await getDocs(q);
-    const approvedRequests = querySnapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }));
+    console.log(`📊 Found ${querySnapshot.docs.length} approved vacation requests`);
+    
+    // Log all the data to debug
+    querySnapshot.docs.forEach((doc, index) => {
+      const data = doc.data();
+      console.log(`📋 Request ${index + 1}: ${doc.id} - ${data.userName} (${data.userEmail}) - ${data.company} - ${data.type} - Status: ${data.status}`);
+    });
+    
+    const approvedRequests = querySnapshot.docs.map(doc => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data
+      };
+    }) as any[];
 
-    return processVacationData(approvedRequests);
+    // Sort in memory to avoid Firestore index requirements
+    approvedRequests.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime());
+
+    const result = processVacationData(approvedRequests);
+    console.log(`✅ Analytics processed: ${result.totalVacations} vacations, ${result.totalDays} days, ${result.byPerson.length} people`);
+    
+    return result;
   } catch (error) {
     console.error('Error fetching vacation analytics:', error);
     
@@ -95,22 +117,31 @@ export async function getVacationAnalyticsForPeriod(startDate: string, endDate: 
       };
     }
 
+    // Get all approved requests and filter in memory to avoid complex Firestore queries
     const vacationRequestsRef = collection(db, 'vacationRequests');
     const q = query(
       vacationRequestsRef,
-      where('status', '==', 'APPROVED'),
-      where('startDate', '>=', startDate),
-      where('endDate', '<=', endDate),
-      orderBy('startDate', 'desc')
+      where('status', '==', 'APPROVED')
     );
     
     const querySnapshot = await getDocs(q);
-    const approvedRequests = querySnapshot.docs.map(doc => ({
+    const allApprovedRequests = querySnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }));
+    })) as any[];
 
-    return processVacationData(approvedRequests);
+    // Filter by date range in memory
+    const filteredRequests = allApprovedRequests.filter(request => {
+      const requestStart = new Date(request.startDate);
+      const requestEnd = new Date(request.endDate);
+      const filterStart = new Date(startDate);
+      const filterEnd = new Date(endDate);
+      
+      // Check if the vacation overlaps with the filter period
+      return requestStart <= filterEnd && requestEnd >= filterStart;
+    });
+
+    return processVacationData(filteredRequests);
   } catch (error) {
     console.error('Error fetching vacation analytics for period:', error);
     

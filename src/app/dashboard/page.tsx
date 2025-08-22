@@ -390,7 +390,7 @@ export default function Dashboard() {
                       transition: 'background-color 0.2s ease'
                     }}
                   >
-                    {t.dashboard.manageRequests}
+                    Management & Analytics
                   </Link>
                 </div>
               </div>

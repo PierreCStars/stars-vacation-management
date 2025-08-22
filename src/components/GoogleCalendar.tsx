@@ -32,17 +32,9 @@ export default function GoogleCalendar({
   const { t } = useLanguage();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'WEEK' | 'MONTH'>('WEEK');
-  const [showEmbedded, setShowEmbedded] = useState(true);
-
-
 
   const formatDate = (date: Date) => {
     return date.toISOString().split('T')[0];
-  };
-
-  const getCalendarUrl = () => {
-    // Use the specific Stars vacation calendar URL
-    return `https://calendar.google.com/calendar/embed?src=${encodeURIComponent(STARS_VACATION_CALENDAR_ID)}&ctz=Europe%2FMonaco`;
   };
 
   const getDisplayText = () => {
@@ -61,10 +53,6 @@ export default function GoogleCalendar({
   const openCalendarInNewTab = () => {
     const url = `https://calendar.google.com/calendar/u/0/r?cid=${encodeURIComponent(STARS_VACATION_CALENDAR_ID)}`;
     window.open(url, '_blank');
-  };
-
-  const tryEmbeddedView = () => {
-    setShowEmbedded(true);
   };
 
   const getCalendarName = () => {
@@ -197,10 +185,10 @@ export default function GoogleCalendar({
           justifyContent: 'center'
         }}>
           <button
-            onClick={tryEmbeddedView}
+            onClick={openCalendarInNewTab}
             style={{
               padding: '10px 20px',
-              borderRadius: '6px',
+              borderRadius: '3px',
               border: '1px solid #3b82f6',
               background: '#3b82f6',
               color: 'white',
@@ -211,25 +199,6 @@ export default function GoogleCalendar({
             }}
             onMouseOver={(e) => e.currentTarget.style.background = '#2563eb'}
             onMouseOut={(e) => e.currentTarget.style.background = '#3b82f6'}
-          >
-            Try Embedded View
-          </button>
-          
-          <button
-            onClick={openCalendarInNewTab}
-            style={{
-              padding: '10px 20px',
-              borderRadius: '6px',
-              border: '1px solid #10b981',
-              background: '#10b981',
-              color: 'white',
-              fontSize: '14px',
-              fontWeight: '500',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.background = '#059669'}
-            onMouseOut={(e) => e.currentTarget.style.background = '#10b981'}
           >
             Open Full Calendar
           </button>
@@ -245,10 +214,10 @@ export default function GoogleCalendar({
             <strong>Team Vacation Calendar</strong> - Week of {getDisplayText()}
           </p>
           <p style={{ margin: '0 0 8px 0' }}>
-            Calendar embedding may be restricted due to security settings.
+            Click "Open Full Calendar" to view in Google Calendar directly.
           </p>
           <p style={{ margin: 0 }}>
-            Use "Open Full Calendar" to view in Google Calendar directly.
+            This provides the best experience and full functionality.
           </p>
         </div>
 
@@ -306,7 +275,7 @@ export default function GoogleCalendar({
             color: '#64748b',
             fontStyle: 'italic'
           }}>
-            {showEmbedded ? 'Embedded view (may not work due to security restrictions)' : 'Calendar preview - Events are color-coded by company'}
+            Calendar preview - Events are color-coded by company
           </p>
         </div>
         
@@ -317,7 +286,7 @@ export default function GoogleCalendar({
               onClick={() => setViewMode('WEEK')}
               style={{
                 padding: '6px 12px',
-                borderRadius: '4px',
+                borderRadius: '3px',
                 border: 'none',
                 background: viewMode === 'WEEK' ? '#3b82f6' : 'transparent',
                 color: viewMode === 'WEEK' ? 'white' : '#64748b',
@@ -333,7 +302,7 @@ export default function GoogleCalendar({
               onClick={() => setViewMode('MONTH')}
               style={{
                 padding: '6px 12px',
-                borderRadius: '4px',
+                borderRadius: '3px',
                 border: 'none',
                 background: viewMode === 'MONTH' ? '#3b82f6' : 'transparent',
                 color: viewMode === 'MONTH' ? 'white' : '#64748b',
@@ -362,7 +331,7 @@ export default function GoogleCalendar({
             onClick={openCalendarInNewTab}
             style={{
               padding: '8px 12px',
-              borderRadius: '6px',
+              borderRadius: '3px',
               border: '1px solid #10b981',
               background: '#10b981',
               color: 'white',
@@ -380,65 +349,7 @@ export default function GoogleCalendar({
       </div>
       
       <div style={{ padding: '16px' }}>
-        {showEmbedded ? (
-          <div>
-            {/* Company Color Legend for Embedded View */}
-            <div style={{
-              marginBottom: '16px',
-              padding: '12px',
-              background: '#f8fafc',
-              borderRadius: '6px',
-              border: '1px solid #e2e8f0'
-            }}>
-              <h4 style={{
-                margin: '0 0 8px 0',
-                fontSize: '14px',
-                fontWeight: '600',
-                color: '#374151'
-              }}>
-                Company Color Legend
-              </h4>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                gap: '8px'
-              }}>
-                {Object.entries(COMPANY_COLORS).map(([company, color]) => (
-                  <div key={company} style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    fontSize: '12px'
-                  }}>
-                    <div style={{
-                      width: '12px',
-                      height: '12px',
-                      borderRadius: '2px',
-                      backgroundColor: color.hex,
-                      border: '1px solid #d1d5db'
-                    }} />
-                    <span style={{ color: '#64748b' }}>{color.displayName}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-            
-            <iframe
-              src={getCalendarUrl()}
-              style={{ 
-                width: '100%', 
-                height: height,
-                border: 'none',
-                borderRadius: '8px'
-              }}
-              title="Stars Vacation Calendar"
-              frameBorder="0"
-              scrolling="no"
-            />
-          </div>
-        ) : (
-          renderCalendarPlaceholder()
-        )}
+        {renderCalendarPlaceholder()}
       </div>
     </div>
   );

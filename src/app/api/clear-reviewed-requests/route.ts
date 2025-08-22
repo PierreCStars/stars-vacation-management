@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { db } from '@/lib/firebase';
+import { db, isFirebaseAvailable } from '@/lib/firebase';
 import { collection, getDocs, writeBatch } from 'firebase/firestore';
 
 export async function POST(request: NextRequest) {
@@ -15,6 +15,12 @@ export async function POST(request: NextRequest) {
     // Check if user is admin (pierre@stars.mc, compta@stars.mc)
     if (session.user.email !== 'pierre@stars.mc' && session.user.email !== 'compta@stars.mc') {
       return NextResponse.json({ error: 'Access denied. Admin privileges required.' }, { status: 403 });
+    }
+
+    // Check if Firebase db is available
+    if (!isFirebaseAvailable() || !db) {
+      console.error('❌ Firebase database not available');
+      return NextResponse.json({ error: 'Database not available' }, { status: 500 });
     }
 
     console.log('🗑️ Clearing reviewed vacation requests...');

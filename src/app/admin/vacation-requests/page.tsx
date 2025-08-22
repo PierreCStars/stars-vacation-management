@@ -42,7 +42,7 @@ export default function AdminVacationRequestsPage() {
   const [expandedRequest, setExpandedRequest] = useState<string | null>(null);
   const [editingRequest, setEditingRequest] = useState<string | null>(null);
   const [adminComment, setAdminComment] = useState('');
-  const [isReviewedRequestsCollapsed, setIsReviewedRequestsCollapsed] = useState(false);
+  const [isReviewedRequestsCollapsed, setIsReviewedRequestsCollapsed] = useState(true);
   const [activeTab, setActiveTab] = useState<'requests' | 'analytics'>('requests');
 
   useEffect(() => {
@@ -68,6 +68,11 @@ export default function AdminVacationRequestsPage() {
       const response = await fetch('/api/vacation-requests');
       if (response.ok) {
         const data = await response.json();
+        console.log('📊 Loaded vacation requests:', data.length);
+        console.log('📋 Status breakdown:', data.reduce((acc: Record<string, number>, req: VacationRequest) => {
+          acc[req.status] = (acc[req.status] || 0) + 1;
+          return acc;
+        }, {}));
         setVacationRequests(data);
       }
     } catch (error) {
@@ -358,17 +363,32 @@ export default function AdminVacationRequestsPage() {
         <div className="mb-6">
           <nav className="flex justify-center space-x-8">
             {[
-              { id: 'requests', label: '📋 Vacation Requests', icon: '📋' },
-              { id: 'analytics', label: '📊 Analytics', icon: '📊' }
+              { id: 'requests', label: 'Vacation Requests', icon: '📋' },
+              { id: 'analytics', label: 'Analytics', icon: '📊' }
             ].map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as 'requests' | 'analytics')}
-                className={`py-4 px-6 font-medium text-lg transition-all duration-200 ${
-                  activeTab === tab.id
-                    ? 'text-blue-600 border-b-2 border-blue-500'
-                    : 'text-gray-500 hover:text-gray-700 hover:border-b-2 hover:border-gray-300'
-                }`}
+                className="px-4 py-2 text-white rounded-[3px] transition-colors duration-200"
+                style={{
+                  padding: '0.5rem 1rem',
+                  backgroundColor: activeTab === tab.id
+                    ? tab.id === 'requests' 
+                      ? '#9333ea'  // purple-600
+                      : '#2563eb'  // blue-600
+                    : tab.id === 'requests'
+                      ? '#f3e8ff'  // purple-100
+                      : '#dbeafe',  // blue-100
+                  color: activeTab === tab.id
+                    ? '#ffffff'  // white
+                    : tab.id === 'requests'
+                      ? '#7c3aed'  // purple-700
+                      : '#1d4ed8',  // blue-700
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'background-color 0.2s ease'
+                }}
               >
                 {tab.label}
               </button>
@@ -431,7 +451,7 @@ export default function AdminVacationRequestsPage() {
             <button
               onClick={handleExportCSV}
               disabled={exportingCSV}
-              className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              className="px-4 py-2 bg-green-600 text-white rounded-[3px] hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
               style={{ 
                 padding: '0.5rem 1rem',
                 backgroundColor: '#16a34a',
@@ -449,7 +469,7 @@ export default function AdminVacationRequestsPage() {
             <button
               onClick={handleSendVacationSummary}
               disabled={sendingVacationSummary}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+              className="px-4 py-2 bg-blue-600 text-white rounded-[3px] hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
               style={{ 
                 padding: '0.5rem 1rem',
                 backgroundColor: '#2563eb',
@@ -466,7 +486,7 @@ export default function AdminVacationRequestsPage() {
             
             <button
               onClick={() => setShowClearModal(true)}
-              className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors duration-200"
+              className="px-4 py-2 bg-red-600 text-white rounded-[3px] hover:bg-red-700 transition-colors duration-200"
               style={{ 
                 padding: '0.5rem 1rem',
                 backgroundColor: '#dc2626',
@@ -646,7 +666,7 @@ export default function AdminVacationRequestsPage() {
                   <div className="flex justify-end space-x-3">
                     <button
                       onClick={() => setEditingRequest(request.id)}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
+                      className="px-4 py-2 bg-blue-600 text-white rounded-[3px] hover:bg-blue-700 transition-colors duration-200"
                       style={{ 
                         padding: '0.5rem 1rem',
                         backgroundColor: '#2563eb',
@@ -674,12 +694,12 @@ export default function AdminVacationRequestsPage() {
                       <div className="flex justify-end space-x-3">
                         <button
                           onClick={() => setEditingRequest(null)}
-                          className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors duration-200"
+                          className="px-4 py-2 text-gray-700 bg-gray-200 rounded-[3px] hover:bg-gray-300 transition-colors duration-200"
                           style={{ 
                             padding: '0.5rem 1rem',
                             color: '#374151',
                             backgroundColor: '#e5e7eb',
-                            borderRadius: '0.375rem',
+                            borderRadius: '3px',
                             border: 'none',
                             cursor: 'pointer',
                             transition: 'background-color 0.2s ease'
@@ -689,12 +709,12 @@ export default function AdminVacationRequestsPage() {
                         </button>
                         <button
                           onClick={() => handleReviewRequest(request.id, 'APPROVED')}
-                          className="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
+                          className="px-4 py-2 bg-green-600 text-white rounded-[3px] hover:bg-green-700 transition-colors duration-200"
                           style={{ 
                             padding: '0.5rem 1rem',
                             backgroundColor: '#16a34a',
                             color: 'white',
-                            borderRadius: '0.375rem',
+                            borderRadius: '3px',
                             border: 'none',
                             cursor: 'pointer',
                             transition: 'background-color 0.2s ease'
@@ -704,12 +724,12 @@ export default function AdminVacationRequestsPage() {
                         </button>
                         <button
                           onClick={() => handleReviewRequest(request.id, 'REJECTED')}
-                          className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200"
+                          className="px-4 py-2 bg-red-600 text-white rounded-[3px] hover:bg-red-700 transition-colors duration-200"
                           style={{ 
                             padding: '0.5rem 1rem',
                             backgroundColor: '#dc2626',
                             color: 'white',
-                            borderRadius: '0.375rem',
+                            borderRadius: '3px',
                             border: 'none',
                             cursor: 'pointer',
                             transition: 'background-color 0.2s ease'
@@ -754,13 +774,12 @@ export default function AdminVacationRequestsPage() {
             }}
           >
             <h2 
-              className="text-2xl font-semibold text-gray-900"
+              className="text-2xl font-semibold text-gray-900 cursor-pointer hover:text-blue-600 transition-colors duration-200"
               style={{ 
                 fontSize: '1.5rem', 
                 fontWeight: '600', 
                 color: '#111827',
                 margin: 0,
-                pointerEvents: 'none',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem'
@@ -770,6 +789,11 @@ export default function AdminVacationRequestsPage() {
               <span style={{ fontSize: '0.875rem', color: '#6b7280', fontWeight: '400' }}>
                 (click to {isReviewedRequestsCollapsed ? 'expand' : 'collapse'})
               </span>
+              {reviewedRequests.length > 10 && (
+                <span style={{ fontSize: '0.875rem', color: '#3b82f6', fontWeight: '500', marginLeft: '0.5rem' }}>
+                  📜 Scroll to see all
+                </span>
+              )}
             </h2>
             <button
               onClick={(e) => {
@@ -789,9 +813,10 @@ export default function AdminVacationRequestsPage() {
           </div>
           
           <div 
-            className="overflow-hidden transition-all duration-300 ease-in-out"
+            className="transition-all duration-300 ease-in-out"
             style={{ 
-              maxHeight: isReviewedRequestsCollapsed ? '0px' : '2000px'
+              maxHeight: isReviewedRequestsCollapsed ? '0px' : 'none',
+              overflow: isReviewedRequestsCollapsed ? 'hidden' : 'visible'
             }}
           >
             {reviewedRequests.length === 0 ? (
@@ -806,7 +831,7 @@ export default function AdminVacationRequestsPage() {
                 {t.admin.noReviewedRequests}
               </p>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 pb-8">
                 {reviewedRequests.map((request) => (
                   <div 
                     key={request.id}
@@ -1023,12 +1048,12 @@ export default function AdminVacationRequestsPage() {
             <div className="flex justify-end space-x-3">
               <button
                 onClick={() => setShowClearModal(false)}
-                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-md hover:bg-gray-300 transition-colors duration-200"
+                className="px-4 py-2 text-gray-700 bg-gray-200 rounded-[3px] hover:bg-gray-300 transition-colors duration-200"
                 style={{ 
                   padding: '0.5rem 1rem',
                   color: '#374151',
                   backgroundColor: '#e5e7eb',
-                  borderRadius: '0.375rem',
+                  borderRadius: '3px',
                   border: 'none',
                   cursor: 'pointer',
                   transition: 'background-color 0.2s ease'
@@ -1039,12 +1064,12 @@ export default function AdminVacationRequestsPage() {
               <button
                 onClick={handleClearReviewedRequests}
                 disabled={clearingRequests}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+                className="px-4 py-2 bg-red-600 text-white rounded-[3px] hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
                 style={{ 
                   padding: '0.5rem 1rem',
                   backgroundColor: '#dc2626',
                   color: 'white',
-                  borderRadius: '0.375rem',
+                  borderRadius: '3px',
                   border: 'none',
                   cursor: clearingRequests ? 'not-allowed' : 'pointer',
                   opacity: clearingRequests ? 0.5 : 1,

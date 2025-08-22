@@ -1,6 +1,6 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp } from 'firebase/firestore';
-import { getAuth, signInAnonymously, onAuthStateChanged } from 'firebase/auth';
+import { initializeApp, FirebaseApp } from 'firebase/app';
+import { getFirestore, collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, where, orderBy, serverTimestamp, Firestore } from 'firebase/firestore';
+import { getAuth, signInAnonymously, onAuthStateChanged, Auth } from 'firebase/auth';
 
 // Firebase configuration
 const firebaseConfig = {
@@ -23,42 +23,55 @@ if (missingFields.length > 0) {
 }
 
 // Initialize Firebase
-let app;
-let db;
-let auth;
+let app: FirebaseApp | undefined;
+let db: Firestore | undefined;
+let auth: Auth | undefined;
 
 try {
-  app = initializeApp(firebaseConfig);
-  db = getFirestore(app);
-  auth = getAuth(app);
-  console.log('✅ Firebase initialized successfully');
+  // Only initialize if we have the required configuration
+  if (firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.messagingSenderId && firebaseConfig.appId) {
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    auth = getAuth(app);
+    console.log('✅ Firebase initialized successfully');
+  } else {
+    console.warn('⚠️ Firebase configuration incomplete, skipping initialization');
+  }
 } catch (error) {
   console.error('❌ Firebase initialization failed:', error);
-  throw error;
+  // Don't throw error - let the app continue without Firebase
+  console.log('⚠️  Continuing without Firebase');
 }
 
 // Initialize Firebase authentication (with error handling)
 export async function initializeFirebaseAuth() {
   try {
     // Check if user is already signed in
-    const user = auth.currentUser;
+    const user = auth?.currentUser;
     if (!user) {
-      await signInAnonymously(auth);
+      console.log('🔐 No current Firebase user, signing in anonymously...');
+      await signInAnonymously(auth!);
       console.log('✅ Firebase anonymous auth initialized');
     } else {
-      console.log('✅ Firebase auth already initialized');
+      console.log('✅ Firebase auth already initialized with user:', user.uid);
     }
+    
+    // Wait a moment for auth to be fully ready
+    await new Promise(resolve => setTimeout(resolve, 100));
+    
+    return auth?.currentUser;
   } catch (error) {
     console.error('❌ Firebase auth error:', error);
     // Don't throw error - let the app continue without auth for now
     console.log('⚠️  Continuing without Firebase authentication');
+    return null;
   }
 }
 
 // Wait for authentication to be ready (with fallback)
 export async function ensureAuth() {
   return new Promise((resolve, reject) => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth!, (user) => {
       unsubscribe();
       if (user) {
         resolve(user);
@@ -161,7 +174,7 @@ export async function addVacationRequest(request: Omit<VacationRequest, 'id'>): 
       console.log('⚠️  Auth failed, continuing without authentication');
     }
     
-    const docRef = await addDoc(collection(db, VACATION_REQUESTS_COLLECTION), {
+    const docRef = await addDoc(collection(db!, VACATION_REQUESTS_COLLECTION), {
       ...request,
       createdAt: serverTimestamp(),
     });
@@ -179,7 +192,7 @@ export async function updateVacationRequest(id: string, updates: Partial<Vacatio
   try {
     console.log(`🔧 Updating vacation request ${id} in Firestore...`);
     
-    const docRef = doc(db, VACATION_REQUESTS_COLLECTION, id);
+    const docRef = doc(db!, VACATION_REQUESTS_COLLECTION, id);
     await updateDoc(docRef, {
       ...updates,
       ...(updates.status === 'APPROVED' || updates.status === 'REJECTED' ? {
@@ -227,7 +240,7 @@ export async function getUserVacationRequests(userId: string): Promise<VacationR
     console.log(`🔧 Loading vacation requests for user ${userId} from Firestore...`);
     
     const q = query(
-      collection(db, VACATION_REQUESTS_COLLECTION),
+      collection(db!, VACATION_REQUESTS_COLLECTION),
       where('userId', '==', userId),
       orderBy('createdAt', 'desc')
     );
@@ -269,7 +282,7 @@ export async function deleteVacationRequest(id: string): Promise<void> {
   try {
     console.log(`🔧 Deleting vacation request ${id} from Firestore...`);
     
-    const docRef = doc(db, VACATION_REQUESTS_COLLECTION, id);
+    const docRef = doc(db!, VACATION_REQUESTS_COLLECTION, id);
     await deleteDoc(docRef);
     
     console.log(`✅ Vacation request ${id} deleted from Firestore`);
@@ -279,4 +292,10 @@ export async function deleteVacationRequest(id: string): Promise<void> {
   }
 }
 
-export { db }; 
+// Safe export of Firebase instances (only if initialized)
+export { db, auth, app };
+
+// Helper function to check if Firebase is available
+export function isFirebaseAvailable(): boolean {
+  return !!(db && auth && app);
+} 

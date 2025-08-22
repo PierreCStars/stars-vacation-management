@@ -73,7 +73,7 @@ export async function sendEmail(to: string[], subject: string, body: string) {
       return true;
     }
 
-    // Create email message - use service account email directly
+    // Create email message - use service account email directly but display hr@stars.mc as sender
     const fromEmail = 'vacation-db@holiday-461710.iam.gserviceaccount.com';
     const message = createEmailMessage(fromEmail, to, subject, body);
 
@@ -114,7 +114,7 @@ export async function sendEmail(to: string[], subject: string, body: string) {
 // Helper function to create email message in base64 format
 function createEmailMessage(from: string, to: string[], subject: string, body: string): string {
   const emailLines = [
-    `From: ${from}`,
+    `From: "hr@stars.mc" <${from}>`,
     `To: ${to.join(', ')}`,
     `Subject: ${subject}`,
     'MIME-Version: 1.0',

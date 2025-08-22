@@ -23,7 +23,7 @@ export async function sendSimpleEmail(to: string[], subject: string, body: strin
 
     // Send email
     const info = await transporter.sendMail({
-      from: '"Vacation Management" <noreply@stars.mc>',
+      from: '"hr@stars.mc" <noreply@stars.mc>',
       to: to.join(', '),
       subject: subject,
       html: body,
@@ -71,7 +71,7 @@ export async function sendGmailSMTP(to: string[], subject: string, body: string)
     });
 
     const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || gmailUser,
+      from: `"hr@stars.mc" <${process.env.SMTP_FROM || gmailUser}>`,
       to: to.join(', '),
       subject: subject,
       html: body,
@@ -106,7 +106,7 @@ export async function sendResendEmail(to: string[], subject: string, body: strin
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'Vacation Management <onboarding@resend.dev>',
+        from: 'hr@stars.mc <onboarding@resend.dev>',
         to: to,
         subject: subject,
         html: body,
@@ -151,7 +151,7 @@ export async function sendCustomSMTP(to: string[], subject: string, body: string
     });
 
     const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM,
+      from: `"hr@stars.mc" <${process.env.SMTP_FROM}>`,
       to: to.join(', '),
       subject,
       html: body,

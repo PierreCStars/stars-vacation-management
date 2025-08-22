@@ -12,9 +12,43 @@ if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY || !process.env.GOOGLE_CALENDAR_ID) 
   process.exit(1);
 }
 
+// Utility function to load and parse Google credentials
+function loadGoogleCreds() {
+  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  if (!raw) throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY manquante");
+
+  // 1) Si c'est du JSON (cas recommandé en .env)
+  if (raw.trim().startsWith("{")) {
+    const obj = JSON.parse(raw);
+    if (!obj.client_email || !obj.private_key) {
+      throw new Error("Clé de service Google invalide (champs manquants)");
+    }
+    // Remettre de vrais retours à la ligne
+    obj.private_key = String(obj.private_key).replace(/\\n/g, "\n");
+    return { client_email: obj.client_email, private_key: obj.private_key };
+  }
+
+  // 2) Si quelqu'un a mis directement le PEM dans la variable
+  const pem = raw.includes("\\n") ? raw.replace(/\\n/g, "\n") : raw;
+  return { client_email: process.env.GOOGLE_CLIENT_EMAIL, private_key: pem };
+}
+
 // Initialize Google Calendar API
 const auth = new google.auth.GoogleAuth({
-  credentials: JSON.parse(process.env.GOOGLE_SERVICE_ACCOUNT_KEY),
+  credentials: (() => {
+    try {
+      const creds = loadGoogleCreds();
+      console.log('🔍 Loaded credentials:');
+      console.log('  - Client email:', creds.client_email);
+      console.log('  - Private key length:', creds.private_key.length);
+      console.log('  - Private key starts with:', creds.private_key.substring(0, 50));
+      console.log('  - Private key ends with:', creds.private_key.substring(creds.private_key.length - 50));
+      return creds;
+    } catch (error) {
+      console.error('❌ Error loading Google credentials:', error);
+      return {};
+    }
+  })(),
   scopes: ['https://www.googleapis.com/auth/calendar'],
 });
 

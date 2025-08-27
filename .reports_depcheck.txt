@@ -1,0 +1,18 @@
+
+> stars-vacation-management@0.1.0 depcheck
+> depcheck --skip-missing=true
+
+Unused dependencies
+* @google-cloud/local-auth
+* @headlessui/react
+* @heroicons/react
+* @hookform/resolvers
+* @tailwindcss/forms
+* date-fns
+* react-hook-form
+Unused devDependencies
+* @types/react-dom
+* autoprefixer
+* postcss
+* tailwindcss
+* ts-node

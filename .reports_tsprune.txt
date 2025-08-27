@@ -1,0 +1,120 @@
+
+> stars-vacation-management@0.1.0 tsprune
+> ts-prune -p tsconfig.json
+
+.next/types/routes.d.ts:53 - ParamsOf
+.next/types/routes.d.ts:60 - PageRoutes (used in module)
+.next/types/routes.d.ts:60 - RedirectRoutes (used in module)
+.next/types/routes.d.ts:60 - RewriteRoutes (used in module)
+src/app/error.tsx:3 - default
+src/app/global-error.tsx:2 - default
+src/components/CalendarPreview.tsx:5 - default
+src/components/CollapsibleSection.tsx:12 - default
+src/components/ConflictSummary.tsx:16 - default
+src/components/MiniVacationCalendar.tsx:11 - default
+src/components/SimpleMiniCalendar.tsx:11 - default
+src/components/SortableVacationRequestsTable.tsx:28 - default
+src/components/TestCalendar.tsx:3 - default
+src/components/UltraSimpleCalendar.tsx:1 - default
+src/components/UserGuideCard.tsx:6 - default
+src/components/VacationAnalytics.tsx:44 - default
+src/lib/calendar-external-events.ts:20 - getExternalEventsForCalendar (used in module)
+src/lib/calendar-external-events.ts:47 - hasConflictWithInternal (used in module)
+src/lib/calendar-external-events.ts:76 - getNonConflictingExternalEvents
+src/lib/calendar-external-events.ts:4 - CalendarExternalEvent (used in module)
+src/lib/calendar-sync.ts:40 - upsertVacationEvent
+src/lib/calendar-sync.ts:89 - deleteVacationEventByExternalId
+src/lib/calendar.ts:20 - createVacationCalendarEvent
+src/lib/company-colors.ts:55 - getAllCompanyColors
+src/lib/company-colors.ts:65 - getCompanyHexColor
+src/lib/company-colors.ts:70 - CompanyCode
+src/lib/csv-export.ts:3 - CSVRow (used in module)
+src/lib/env-guards.ts:1 - isCI (used in module)
+src/lib/env-guards.ts:2 - isProd
+src/lib/env-guards.ts:3 - isDev
+src/lib/env-guards.ts:4 - allowDangerousSideEffects
+src/lib/gmail-service.ts:58 - sendEmail
+src/lib/google-calendar.ts:117 - removeVacationFromCalendar
+src/lib/google-calendar.ts:157 - getCompanyColors
+src/lib/google-calendar.ts:64 - VacationEvent (used in module)
+src/lib/i18n.ts:462 - getLanguageFromLocale
+src/lib/i18n.ts:3 - Translations (used in module)
+src/lib/import-calendar-b.ts:32 - importCalendarBIncremental
+src/lib/simple-email-service.ts:4 - sendSimpleEmail (used in module)
+src/lib/simple-email-service.ts:44 - sendGmailSMTP (used in module)
+src/lib/simple-email-service.ts:91 - sendResendEmail (used in module)
+src/lib/simple-email-service.ts:133 - sendCustomSMTP (used in module)
+src/lib/vacation-analytics.ts:247 - calculateVacationDays (used in module)
+src/lib/vacation-analytics.ts:265 - formatDate
+src/lib/vacation-analytics.ts:4 - VacationAnalytics (used in module)
+src/lib/vacation-analytics.ts:12 - VacationDetail (used in module)
+src/lib/vacation-analytics.ts:28 - CompanyAnalytics (used in module)
+src/lib/vacation-analytics.ts:35 - TypeAnalytics (used in module)
+src/types/vacation.ts:1 - HalfDayType (used in module)
+.next/types/app/layout.ts:54 - PageProps
+.next/types/app/layout.ts:58 - LayoutProps (used in module)
+.next/types/app/page.ts:54 - PageProps (used in module)
+.next/types/app/page.ts:58 - LayoutProps
+src/app/admin/page.tsx:4 - default
+src/app/cookie-test/page.tsx:5 - default
+src/app/debug-auth/page.tsx:5 - default
+src/app/debug-env/page.tsx:3 - default
+src/app/test-deployment/page.tsx:3 - default
+src/app/test-session/page.tsx:5 - default
+src/app/test-simple/page.tsx:1 - default
+src/components/ui/ActionCard.tsx:3 - default
+src/components/ui/StatCard.tsx:16 - default
+src/lib/db/calendar-sync.store.ts:90 - getRecentSyncLogs
+src/lib/google/calendar-client.ts:31 - getOAuthClientForUser (used in module)
+src/lib/google/calendar-client.ts:58 - getPrimaryCalendarId (used in module)
+src/lib/google/calendar-client.ts:73 - listCalendars
+src/lib/google/calendar-client.ts:92 - freeBusy (used in module)
+src/lib/google/calendar-client.ts:137 - listEvents (used in module)
+src/lib/google/calendar-client.ts:22 - FreeBusyResponse (used in module)
+.next/types/app/dashboard/page.ts:54 - PageProps (used in module)
+.next/types/app/dashboard/page.ts:58 - LayoutProps
+.next/types/app/vacation-request/page.ts:54 - PageProps (used in module)
+.next/types/app/vacation-request/page.ts:58 - LayoutProps
+src/app/admin/calendar-sync/page.tsx:25 - default
+src/app/api/calendar-events/route.ts:28 - GET
+src/app/api/calendar-events/route.ts:1 - dynamic
+src/app/api/calendar-events/route.ts:2 - revalidate
+src/app/api/clear-reviewed-requests/route.ts:7 - POST
+src/app/api/fix-existing-requests/route.ts:4 - GET
+src/app/api/health/route.ts:3 - GET
+src/app/api/monthly-csv-export/route.ts:12 - POST
+src/app/api/monthly-csv-export/route.ts:122 - GET
+src/app/api/test-calendar/route.ts:4 - GET
+src/app/api/test-compta-email/route.ts:4 - GET
+src/app/api/test-email/route.ts:4 - GET
+src/app/api/test-env/route.ts:3 - GET
+src/app/api/test-firebase/route.ts:4 - GET
+src/app/api/vacation-analytics/route.ts:4 - GET
+src/app/auth/error/page.tsx:36 - default
+.next/types/app/admin/vacation-requests/page.ts:54 - PageProps (used in module)
+.next/types/app/admin/vacation-requests/page.ts:58 - LayoutProps
+.next/types/app/api/avatar/route.ts:313 - PageProps
+.next/types/app/api/avatar/route.ts:317 - LayoutProps
+.next/types/app/api/vacation-requests/route.ts:313 - PageProps
+.next/types/app/api/vacation-requests/route.ts:317 - LayoutProps
+.next/types/app/auth/signin/page.ts:54 - PageProps (used in module)
+.next/types/app/auth/signin/page.ts:58 - LayoutProps
+src/app/api/calendar/freebusy/route.ts:9 - POST
+src/app/api/calendar/freebusy/route.ts:116 - GET
+src/app/api/calendar/freebusy/route.ts:7 - runtime
+src/app/api/cron/monthly-csv/route.ts:10 - GET
+src/app/api/cron/monthly-vacation-summary/route.ts:5 - GET
+src/app/api/sync/import-remote/route.ts:8 - GET
+src/app/api/sync/import-remote/route.ts:1 - dynamic
+src/app/api/sync/import-remote/route.ts:2 - revalidate
+src/app/api/vacation-requests/[id]/route.ts:9 - PATCH
+.next/types/app/admin/vacation-requests/[id]/page.ts:54 - PageProps (used in module)
+.next/types/app/admin/vacation-requests/[id]/page.ts:58 - LayoutProps
+.next/types/app/api/auth/[...nextauth]/route.ts:313 - PageProps
+.next/types/app/api/auth/[...nextauth]/route.ts:317 - LayoutProps
+src/app/api/admin/calendar-sync/logs/route.ts:7 - GET
+src/app/api/admin/calendar-sync/logs/route.ts:1 - dynamic
+src/app/api/admin/calendar-sync/logs/route.ts:2 - revalidate
+src/app/api/admin/calendar-sync/state/route.ts:7 - GET
+src/app/api/admin/calendar-sync/state/route.ts:1 - dynamic
+src/app/api/admin/calendar-sync/state/route.ts:2 - revalidate

@@ -1,0 +1,36 @@
+
+> stars-vacation-management@0.1.0 knip
+> knip
+
+Unused dependencies (9)
+@google-cloud/local-auth  package.json:25:6
+@headlessui/react         package.json:26:6
+@heroicons/react          package.json:27:6
+@hookform/resolvers       package.json:28:6
+@tailwindcss/forms        package.json:29:6
+date-fns                  package.json:31:6
+dotenv                    package.json:32:6
+react-hook-form           package.json:40:6
+zod                       package.json:41:6
+Unused devDependencies (1)
+ts-node  package.json:57:6
+Unresolved imports (4)
+@/src/lib/db/calendar-sync.store  src/app/api/admin/calendar-sync/logs/route.ts:5:9 
+@/src/lib/db/calendar-sync.store  src/app/api/admin/calendar-sync/state/route.ts:5:9
+@/src/lib/import-calendar-b       src/app/api/sync/import-remote/route.ts:5:9       
+@/src/lib/calendar-sync           src/app/api/vacation-requests/[id]/route.ts:59:16 
+Configuration hints (14)
+firebase-admin                  .knip.json  Remove from ignoreDependencies     
+googleapis                      .knip.json  Remove from ignoreDependencies     
+next                            .knip.json  Remove from ignoreDependencies     
+react                           .knip.json  Remove from ignoreDependencies     
+react-dom                       .knip.json  Remove from ignoreDependencies     
+firebase                        .knip.json  Remove from ignoreDependencies     
+next-auth                       .knip.json  Remove from ignoreDependencies     
+tailwindcss                     .knip.json  Remove from ignoreDependencies     
+postcss                         .knip.json  Remove from ignoreDependencies     
+autoprefixer                    .knip.json  Remove from ignoreDependencies     
+src/app/**/template.{ts,tsx}    .knip.json  Refine entry pattern (no matches)  
+src/app/**/loading.{ts,tsx}     .knip.json  Refine entry pattern (no matches)  
+src/middleware.{ts,js}          .knip.json  Refine entry pattern (no matches)  
+.                               .knip.json  Refine project pattern (no matches)

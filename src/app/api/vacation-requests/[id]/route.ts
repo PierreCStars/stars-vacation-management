@@ -5,7 +5,7 @@ import { updateVacationRequestStatus, getAllVacationRequests } from '@/lib/fireb
 import { sendEmailWithFallbacks } from '@/lib/simple-email-service';
 import { getEmployeeEmailTemplate, getAdminEmailTemplate } from '@/lib/email-templates';
 
-export async function PATCH(request: Request, context: { params: { id: string } }) {
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
     
@@ -13,7 +13,7 @@ export async function PATCH(request: Request, context: { params: { id: string } 
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id } = context.params;
+    const { id } = params;
     const body = await request.json();
     const { status, comment } = body;
 
@@ -55,7 +55,7 @@ export async function PATCH(request: Request, context: { params: { id: string } 
     if (status === 'APPROVED') {
       try {
         // Use the new calendar sync functionality
-        const { upsertVacationEvent } = await import('@/src/lib/calendar-sync');
+        const { upsertVacationEvent } = await import('@/lib/calendar-sync');
         
         await upsertVacationEvent({
           externalId: id,
@@ -76,7 +76,7 @@ export async function PATCH(request: Request, context: { params: { id: string } 
     } else if (status === 'REJECTED' || status === 'CANCELLED') {
       try {
         // Remove from Calendar A if rejected/cancelled
-        const { deleteVacationEventByExternalId } = await import('@/src/lib/calendar-sync');
+        const { deleteVacationEventByExternalId } = await import('@/lib/calendar-sync');
         await deleteVacationEventByExternalId(id);
         console.log('✅ Vacation event removed from Calendar A');
       } catch (calendarError) {

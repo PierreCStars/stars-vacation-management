@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { NextResponse } from "next/server";
-import { importCalendarBIncremental } from "@/src/lib/import-calendar-b";
+import { importCalendarBIncremental } from "@/lib/import-calendar-b";
 
 // TODO: add your auth/role check (admin only)
 export async function GET() {

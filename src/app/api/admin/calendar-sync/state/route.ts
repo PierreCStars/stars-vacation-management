@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 import { NextResponse } from "next/server";
-import { getSyncState } from "@/src/lib/db/calendar-sync.store";
+import { getSyncState } from "@/lib/db/calendar-sync.store";
 
 export async function GET() {
   try {

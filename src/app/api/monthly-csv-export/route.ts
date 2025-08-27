@@ -119,7 +119,7 @@ ${csvContent}
   }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Check if it's the last day of the month
     if (!isLastDayOfMonth()) {

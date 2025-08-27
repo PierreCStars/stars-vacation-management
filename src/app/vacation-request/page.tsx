@@ -115,7 +115,7 @@ export default function VacationRequestPage() {
         setErrorMessage(error.error || 'Failed to submit request');
         setSubmitStatus('error');
       }
-    } catch (error) {
+    } catch (_error) {
       setErrorMessage('Network error occurred');
       setSubmitStatus('error');
     } finally {

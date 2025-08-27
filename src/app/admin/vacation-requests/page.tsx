@@ -49,7 +49,7 @@ export default function AdminVacationRequestsPage() {
       } else {
         setError('Failed to fetch vacation requests');
       }
-    } catch (error) {
+    } catch (_error) {
       setError('Error fetching vacation requests');
     } finally {
       setLoading(false);

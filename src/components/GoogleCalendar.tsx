@@ -21,7 +21,7 @@ export default function GoogleCalendar({
   _userEmail
 }: GoogleCalendarProps) {
   const { t } = useLanguage();
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'WEEK' | 'MONTH'>('WEEK');
 
 

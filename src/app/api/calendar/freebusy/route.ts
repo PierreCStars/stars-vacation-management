@@ -113,7 +113,7 @@ export async function POST(request: NextRequest) {
 }
 
 // GET method for testing
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   return NextResponse.json({
     message: 'Calendar FreeBusy API',
     method: 'POST',

@@ -26,7 +26,7 @@ export interface FreeBusyResponse {
 /**
  * Get OAuth client for a specific user using their stored tokens
  */
-export async function getOAuthClientForUser(userId: string) {
+export async function getOAuthClientForUser(_userId: string) {
   // For now, we'll use the service account approach
   // In a full implementation, you'd fetch user tokens from NextAuth Account table
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;

@@ -253,7 +253,7 @@ export async function POST(request: NextRequest) {
         ? `Half day (${halfDayType === 'morning' ? 'Morning' : 'Afternoon'}) - ${durationDays} day`
         : `${durationDays} day(s)`;
       
-      const emailBody = `
+      const _emailBody = `
 <!DOCTYPE html>
 <html>
 <head>

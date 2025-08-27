@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     });
 
     return res;
-  } catch (e) {
+  } catch (_e) {
     return NextResponse.json({ error: "fetch failed" }, { status: 502 });
   }
 }

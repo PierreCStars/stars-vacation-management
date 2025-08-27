@@ -179,7 +179,7 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
       console.log('✅ Email sent successfully via Custom SMTP');
       return smtpResult;
     }
-  } catch (_error) {
+  } catch {
     console.log('⚠️ Custom SMTP failed, trying Resend...');
   }
 
@@ -190,7 +190,7 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
       console.log('✅ Email sent successfully via Resend');
       return resendResult;
     }
-  } catch (_error) {
+  } catch {
     console.log('⚠️ Resend failed, trying Gmail SMTP...');
   }
 
@@ -201,7 +201,7 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
       console.log('✅ Email sent successfully via Gmail SMTP');
       return gmailResult;
     }
-  } catch (_error) {
+  } catch {
     console.log('⚠️ Gmail SMTP failed, trying Ethereal...');
   }
 
@@ -213,7 +213,7 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
       console.log('📧 Preview URL:', etherealResult.previewUrl);
       return etherealResult;
     }
-  } catch (_error) {
+  } catch {
     console.log('⚠️ Ethereal failed...');
   }
 

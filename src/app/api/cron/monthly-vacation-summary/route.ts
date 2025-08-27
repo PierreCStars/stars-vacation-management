@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getVacationAnalytics } from '@/lib/vacation-analytics';
 import { sendEmailWithFallbacks } from '@/lib/simple-email-service';
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   try {
     // Get analytics for the current month
     const now = new Date();

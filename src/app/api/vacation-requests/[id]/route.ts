@@ -1,9 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { updateVacationRequestStatus, getAllVacationRequests, updateVacationRequest } from '@/lib/firebase';
+import { updateVacationRequestStatus, getAllVacationRequests } from '@/lib/firebase';
 import { sendEmailWithFallbacks } from '@/lib/simple-email-service';
-import { addVacationToCalendar } from '@/lib/google-calendar';
 import { getEmployeeEmailTemplate, getAdminEmailTemplate } from '@/lib/email-templates';
 
 export async function PATCH(request: Request, context: { params: { id: string } }) {
@@ -55,20 +54,33 @@ export async function PATCH(request: Request, context: { params: { id: string } 
     // If approved, add to Google Calendar
     if (status === 'APPROVED') {
       try {
-        const eventId = await addVacationToCalendar({
-          userName: updatedRequest.userName,
+        // Use the new calendar sync functionality
+        const { upsertVacationEvent } = await import('@/src/lib/calendar-sync');
+        
+        await upsertVacationEvent({
+          externalId: id,
+          title: `Vacation — ${updatedRequest.userName}`,
+          description: updatedRequest.reason || "",
           startDate: updatedRequest.startDate,
           endDate: updatedRequest.endDate,
-          type: updatedRequest.type,
-          company: updatedRequest.company,
-          reason: updatedRequest.reason || undefined,
+          isHalfDay: !!updatedRequest.isHalfDay,
+          halfDayType: (updatedRequest.halfDayType ?? null) as any,
+          userEmail: updatedRequest.userEmail,
         });
-        // Store event ID in Firestore
-        if (eventId) {
-          await updateVacationRequest(id, { googleCalendarEventId: eventId });
-        }
+        
+        console.log('✅ Vacation event synced to Calendar A');
       } catch (calendarError) {
-        console.error('❌ Error adding event to Google Calendar:', calendarError);
+        console.error('❌ Error syncing event to Calendar A:', calendarError);
+        // Don't fail the request if calendar fails
+      }
+    } else if (status === 'REJECTED' || status === 'CANCELLED') {
+      try {
+        // Remove from Calendar A if rejected/cancelled
+        const { deleteVacationEventByExternalId } = await import('@/src/lib/calendar-sync');
+        await deleteVacationEventByExternalId(id);
+        console.log('✅ Vacation event removed from Calendar A');
+      } catch (calendarError) {
+        console.error('❌ Error removing event from Calendar A:', calendarError);
         // Don't fail the request if calendar fails
       }
     }

@@ -1,5 +1,5 @@
 import { db } from './firebase';
-import { collection, getDocs, query, where, orderBy } from 'firebase/firestore';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 
 export interface VacationAnalytics {
   totalVacations: number;

@@ -13,21 +13,11 @@ interface LanguageContextType {
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
-// Default context value to prevent undefined errors
-const defaultContextValue: LanguageContextType = {
-  language: 'en',
-  setLanguage: () => {},
-  t: getTranslations('en'),
-  getLanguageName,
-  getLanguageFlag,
-};
+
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>('en');
-  const [isClient, setIsClient] = useState(false);
-
   useEffect(() => {
-    setIsClient(true);
     
     // Only try to access localStorage on the client side
     if (typeof window !== 'undefined' && window.localStorage) {

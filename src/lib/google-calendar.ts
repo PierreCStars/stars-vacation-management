@@ -1,4 +1,5 @@
 import { google } from 'googleapis';
+import { getGoogleCalendarColorId, getCompanyColor } from './company-colors';
 
 // Utility function to load and parse Google credentials
 // Updated: Fixed newline handling for Google Calendar integration
@@ -42,6 +43,22 @@ const auth = new google.auth.GoogleAuth({
 });
 
 const calendar = google.calendar({ version: 'v3', auth });
+
+// Export calendar client for use in other modules
+export function calendarClient() {
+  return calendar;
+}
+
+// Calendar IDs from environment variables
+export const CAL_TARGET = process.env.GOOGLE_CALENDAR_TARGET_ID || process.env.GOOGLE_CALENDAR_ID || 'primary';
+export const CAL_SOURCE = process.env.GOOGLE_CALENDAR_SOURCE_ID;
+export const APP_TZ = process.env.APP_TIMEZONE || "Europe/Monaco";
+
+// Utility function to convert date and time to RFC3339 local format
+export function toRFC3339Local(dateISO: string, timeHHMM: string) {
+  // Produces a local-time RFC3339 without timezone offset; Calendar uses timeZone field.
+  return `${dateISO}T${timeHHMM}:00`;
+}
 
 export interface VacationEvent {
   userName: string;
@@ -131,29 +148,11 @@ function getCompanyDisplayName(company: string): string {
 }
 
 function getColorIdForCompany(company: string): string {
-  // Define a color mapping for companies based on the vacation request form
-  // Google Calendar color IDs: 1-11 (different colors)
-  const companyColors: { [key: string]: string } = {
-    'STARS_MC': '1',           // Blue (default for Stars MC)
-    'STARS_YACHTING': '2',     // Green (for Stars Yachting)
-    'STARS_REAL_ESTATE': '3',  // Red (for Stars Real Estate)
-    'LE_PNEU': '4',            // Orange (for Le Pneu)
-    'MIDI_PNEU': '5',          // Yellow (for Midi Pneu)
-    'STARS_AVIATION': '6',     // Purple (for Stars Aviation)
-  };
-
-  // Return the color for the company, or a default color if not found
-  return companyColors[company] || '1'; // Default to blue if company not in list
+  // Use centralized company color configuration
+  return getGoogleCalendarColorId(company);
 }
 
 // Helper function to get all available company colors
-export function getCompanyColors(): { [key: string]: { id: string; name: string } } {
-  return {
-    'STARS_MC': { id: '1', name: 'Blue' },
-    'STARS_YACHTING': { id: '2', name: 'Green' },
-    'STARS_REAL_ESTATE': { id: '3', name: 'Red' },
-    'LE_PNEU': { id: '4', name: 'Orange' },
-    'MIDI_PNEU': { id: '5', name: 'Yellow' },
-    'STARS_AVIATION': { id: '6', name: 'Purple' },
-  };
+export function getCompanyColors() {
+  return getCompanyColor;
 } 

@@ -1,41 +1,30 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useLanguage } from '../contexts/LanguageContext';
-
-// Company color mapping for the legend - matches the vacation request form
-const COMPANY_COLORS = {
-  'STARS_MC': { id: '1', name: 'Blue', hex: '#D8B11B', displayName: 'Stars MC' },
-  'STARS_YACHTING': { id: '2', name: 'Green', hex: '#21254B', displayName: 'Stars Yachting' },
-  'STARS_REAL_ESTATE': { id: '3', name: 'Red', hex: '#273341', displayName: 'Stars Real Estate' },
-  'LE_PNEU': { id: '4', name: 'Orange', hex: '#FFA500', displayName: 'Le Pneu' },
-  'MIDI_PNEU': { id: '5', name: 'Yellow', hex: '#FFD700', displayName: 'Midi Pneu' },
-  'STARS_AVIATION': { id: '6', name: 'Purple', hex: '#0B77BD', displayName: 'Stars Aviation' },
-};
+import CompanyLegend from './ui/CompanyLegend';
 
 // Specific calendar ID for the Stars vacation calendar
 const STARS_VACATION_CALENDAR_ID = 'c_e98f5350bf743174f87e1a786038cb9d103c306b7246c6200684f81c37a6a764@group.calendar.google.com';
 
 interface GoogleCalendarProps {
-  calendarId?: string;
+  _calendarId?: string;
   height?: string;
   title?: string;
-  userEmail?: string;
+  _userEmail?: string;
 }
 
 export default function GoogleCalendar({ 
-  calendarId = STARS_VACATION_CALENDAR_ID, 
+  _calendarId = STARS_VACATION_CALENDAR_ID, 
   height = '400px',
   title = 'Stars Vacation Calendar',
-  userEmail
+  _userEmail
 }: GoogleCalendarProps) {
   const { t } = useLanguage();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'WEEK' | 'MONTH'>('WEEK');
 
-  const formatDate = (date: Date) => {
-    return date.toISOString().split('T')[0];
-  };
+
 
   const getDisplayText = () => {
     if (viewMode === 'WEEK') {
@@ -62,44 +51,8 @@ export default function GoogleCalendar({
   // Render company color legend
   const renderCompanyLegend = () => {
     return (
-      <div style={{
-        marginTop: '16px',
-        padding: '12px',
-        background: '#f8fafc',
-        borderRadius: '6px',
-        border: '1px solid #e2e8f0'
-      }}>
-        <h4 style={{
-          margin: '0 0 8px 0',
-          fontSize: '14px',
-          fontWeight: '600',
-          color: '#374151'
-        }}>
-          Company Color Legend
-        </h4>
-        <div style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-          gap: '8px'
-        }}>
-          {Object.entries(COMPANY_COLORS).map(([company, color]) => (
-            <div key={company} style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              fontSize: '12px'
-            }}>
-              <div style={{
-                width: '12px',
-                height: '12px',
-                borderRadius: '2px',
-                backgroundColor: color.hex,
-                border: '1px solid #d1d5db'
-              }} />
-              <span style={{ color: '#64748b' }}>{color.displayName}</span>
-            </div>
-          ))}
-        </div>
+      <div style={{ marginTop: '16px' }}>
+        <CompanyLegend title="Company Color Legend" compact={true} />
       </div>
     );
   };

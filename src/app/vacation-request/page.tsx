@@ -1,132 +1,71 @@
 'use client';
 
-import { useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { useLanguage } from '@/contexts/LanguageContext';
-import LanguageSelector from '@/components/LanguageSelector';
-import PersistentCalendar from '@/components/PersistentCalendar';
+import Navigation from '@/components/Navigation';
+import VacationCalendar from '@/components/VacationCalendar';
+import { VacationRequest } from '@/types/vacation';
 
 export default function VacationRequestPage() {
-  const { data: session, status } = useSession();
-  const router = useRouter();
-  const { t } = useLanguage();
-  
   const [formData, setFormData] = useState({
     startDate: '',
     endDate: '',
     company: '',
     type: '',
-    reason: ''
+    reason: '',
+    isHalfDay: false,
+    halfDayType: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [errorMessage, setErrorMessage] = useState('');
+  const [vacationRequests, setVacationRequests] = useState<VacationRequest[]>([]);
+  const [loading, setLoading] = useState(true);
 
+  // Fetch existing vacation requests for the calendar
   useEffect(() => {
-    if (status === 'loading') return;
+    const fetchVacationRequests = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch('/api/vacation-requests');
+        if (response.ok) {
+          const data = await response.json();
+          setVacationRequests(data);
+        }
+      } catch (error) {
+        console.error('Error fetching vacation requests:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-    if (!session?.user?.email) {
-      router.push('/auth/signin');
-      return;
-    }
-  }, [session, status, router]);
-
-  if (status === 'loading') {
-    return (
-      <main 
-        className="min-h-screen flex flex-col items-center justify-center py-12"
-        style={{ 
-          background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-          minHeight: '100vh',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          paddingTop: '3rem',
-          paddingBottom: '3rem'
-        }}
-      >
-        <div 
-          className="w-full max-w-4xl"
-          style={{ 
-            width: '100%', 
-            maxWidth: '896px', 
-            paddingLeft: '1.5rem', 
-            paddingRight: '1.5rem' 
-          }}
-        >
-          <div 
-            className="text-center mb-8"
-            style={{ textAlign: 'center', marginBottom: '2rem' }}
-          >
-            <Link href="/dashboard">
-              <Image 
-                src="/stars-logo.png" 
-                alt="Stars Logo" 
-                width={180}
-                height={180}
-                style={{ maxWidth: 180, maxHeight: 180, width: 'auto', height: 'auto', display: 'block', margin: '0 auto', cursor: 'pointer' }}
-                className="mb-6 drop-shadow-lg"
-                priority 
-              />
-            </Link>
-            <h1 
-              className="text-5xl font-bold tracking-tight mb-6 text-gray-900"
-              style={{ 
-                fontSize: '3rem', 
-                fontWeight: '700', 
-                color: '#111827', 
-                letterSpacing: '-0.025em', 
-                marginBottom: '1.5rem',
-                textShadow: '0 2px 4px rgba(0,0,0,0.1)'
-              }}
-            >
-              {t.vacationRequest.title}
-            </h1>
-          </div>
-          <div 
-            className="card text-center"
-            style={{ 
-              backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-              borderRadius: '1rem', 
-              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', 
-              padding: '2rem',
-              textAlign: 'center',
-              backdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.2)'
-            }}
-          >
-            <div style={{ width: 64, height: 64, border: '4px solid #f3f4f6', borderTop: '4px solid #3b82f6', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 24px auto' }}></div>
-            <h2 style={{ fontSize: 24, fontWeight: 600, color: '#111827', marginBottom: 8 }}>
-              {t.common.loading}
-            </h2>
-            <p style={{ color: '#6b7280' }}>Please wait while we load the form.</p>
-          </div>
-        </div>
-        <style>{`
-          @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-          }
-        `}</style>
-      </main>
-    );
-  }
-
-  if (!session?.user) {
-    return null;
-  }
+    fetchVacationRequests();
+  }, []);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    const { name, value, type } = e.target;
+
+    if (type === 'radio') {
+      const radioName = (e.target as HTMLInputElement).name;
+      if (radioName === 'duration') {
+        setFormData(prev => ({
+          ...prev,
+          isHalfDay: value === 'half',
+          halfDayType: value === 'half' ? prev.halfDayType : ''
+        }));
+      } else if (radioName === 'halfDayType') {
+        setFormData(prev => ({
+          ...prev,
+          halfDayType: value
+        }));
+      }
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -136,12 +75,22 @@ export default function VacationRequestPage() {
     setErrorMessage('');
 
     try {
+      const payload = {
+        startDate: formData.startDate,
+        endDate: formData.isHalfDay ? formData.startDate : formData.endDate,
+        company: formData.company,
+        type: formData.type,
+        reason: formData.reason,
+        isHalfDay: formData.isHalfDay,
+        halfDayType: formData.isHalfDay ? formData.halfDayType : null
+      };
+
       const response = await fetch('/api/vacation-requests', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
@@ -151,15 +100,23 @@ export default function VacationRequestPage() {
           endDate: '',
           company: '',
           type: '',
-          reason: ''
+          reason: '',
+          isHalfDay: false,
+          halfDayType: ''
         });
+        // Refresh the calendar after successful submission
+        const refreshResponse = await fetch('/api/vacation-requests');
+        if (refreshResponse.ok) {
+          const data = await refreshResponse.json();
+          setVacationRequests(data);
+        }
       } else {
         const error = await response.json();
-        setErrorMessage(error.error || t.vacationRequest.error);
+        setErrorMessage(error.error || 'Failed to submit request');
         setSubmitStatus('error');
       }
     } catch (error) {
-      setErrorMessage(t.vacationRequest.error);
+      setErrorMessage('Network error occurred');
       setSubmitStatus('error');
     } finally {
       setIsSubmitting(false);
@@ -167,404 +124,276 @@ export default function VacationRequestPage() {
   };
 
   const validateForm = () => {
-    if (!formData.startDate || !formData.endDate || !formData.company || !formData.type) {
+    if (!formData.startDate || !formData.company || !formData.type) {
       return false;
     }
-    // Allow same-day requests (startDate === endDate) but prevent end date before start date
-    if (new Date(formData.endDate) < new Date(formData.startDate)) {
+    if (!formData.isHalfDay && !formData.endDate) {
+      return false;
+    }
+    if (formData.isHalfDay && !formData.halfDayType) {
+      return false;
+    }
+    if (!formData.isHalfDay && new Date(formData.endDate) < new Date(formData.startDate)) {
       return false;
     }
     return true;
   };
 
   return (
-    <main 
-      className="min-h-screen flex flex-col items-center justify-start py-12"
-      style={{ 
-        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
-        paddingTop: '3rem',
-        paddingBottom: '3rem'
-      }}
-    >
-      <div 
-        className="w-full max-w-4xl"
-        style={{ 
-          width: '100%', 
-          maxWidth: '896px', 
-          paddingLeft: '1.5rem', 
-          paddingRight: '1.5rem' 
-        }}
-      >
-        {/* Header with Language Selector */}
-        <div 
-          className="flex justify-between items-center mb-8"
-          style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center', 
-            marginBottom: '2rem' 
-          }}
-        >
-          <Link 
-            href="/dashboard"
-            className="text-blue-600 hover:text-blue-700 font-semibold"
-            style={{ 
-              color: '#2563eb',
-              textDecoration: 'none',
-              fontWeight: '600'
-            }}
-          >
-            ← {t.common.back}
-          </Link>
-          <LanguageSelector />
-        </div>
+    <>
+      <Navigation />
+      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12">
+        <div className="w-full max-w-6xl mx-auto px-6">
+          {/* Header with Navigation - REMOVED as Navigation component handles it */}
+          <div className="text-center mb-8">
+            <Link href="/dashboard">
+              <Image
+                src="/stars-logo.png"
+                alt="Stars Logo"
+                width={120}
+                height={120}
+                className="mb-4 drop-shadow-lg mx-auto cursor-pointer"
+                priority
+              />
+            </Link>
+            <h1 className="text-4xl font-bold tracking-tight mb-4 text-gray-900">
+              Vacation Request Form
+            </h1>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Submit your vacation request with company details and leave type.
+              You can request full days or half days (morning/afternoon).
+            </p>
+          </div>
 
-        <div 
-          className="text-center mb-8"
-          style={{ textAlign: 'center', marginBottom: '2rem' }}
-        >
-          <Link href="/dashboard">
-            <Image 
-              src="/stars-logo.png" 
-              alt="Stars Logo" 
-              width={120}
-              height={120}
-              style={{ maxWidth: 120, maxHeight: 120, width: 'auto', height: 'auto', display: 'block', margin: '0 auto', cursor: 'pointer' }}
-              className="mb-4 drop-shadow-lg"
-              priority 
-            />
-          </Link>
-          <h1 
-            className="text-4xl font-bold tracking-tight mb-4 text-gray-900"
-            style={{ 
-              fontSize: '2.25rem', 
-              fontWeight: '700', 
-              color: '#111827', 
-              letterSpacing: '-0.025em', 
-              marginBottom: '1rem',
-              textShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}
-          >
-            {t.vacationRequest.title}
-          </h1>
-          <p 
-            className="text-lg text-gray-600"
-            style={{ 
-              fontSize: '1.125rem', 
-              color: '#4b5563',
-              lineHeight: 1.6
-            }}
-          >
-            {t.vacationRequest.subtitle}
-          </p>
-        </div>
-
-        <div 
-          className="card"
-          style={{ 
-            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-            borderRadius: '1rem', 
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', 
-            padding: '2.5rem',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)'
-          }}
-        >
-          {submitStatus === 'success' ? (
-            <div className="text-center">
-              <div 
-                className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"
-                style={{ 
-                  width: '4rem', 
-                  height: '4rem', 
-                  backgroundColor: '#dcfce7', 
-                  borderRadius: '50%', 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  justifyContent: 'center', 
-                  margin: '0 auto 1rem auto' 
-                }}
-              >
-                <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                </svg>
-              </div>
-              <h2 
-                className="text-2xl font-semibold mb-4 text-gray-900"
-                style={{ 
-                  fontSize: '1.5rem', 
-                  fontWeight: '600', 
-                  color: '#111827', 
-                  marginBottom: '1rem' 
-                }}
-              >
-                {t.vacationRequest.success}
-              </h2>
-              <Link 
-                href="/dashboard"
-                className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200"
-                style={{ 
-                  display: 'inline-block',
-                  backgroundColor: '#2563eb',
-                  color: 'white',
-                  padding: '0.5rem 1.5rem',
-                  borderRadius: '0.5rem',
-                  fontWeight: '600',
-                  textDecoration: 'none',
-                  transition: 'background-color 0.2s ease'
-                }}
-              >
-                {t.common.back}
-              </Link>
-            </div>
-          ) : (
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label 
-                    htmlFor="startDate"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                    style={{ 
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      color: '#374151',
-                      marginBottom: '0.5rem'
-                    }}
+          <div className="bg-white/95 rounded-2xl border shadow-xl p-8 backdrop-blur-sm">
+            {submitStatus === 'success' ? (
+              <div className="text-center">
+                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <h2 className="text-2xl font-semibold mb-4 text-gray-900">
+                  Request Submitted Successfully!
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  Your vacation request has been submitted and is pending approval.
+                </p>
+                <div className="flex justify-center space-x-4">
+                  <Link
+                    href="/dashboard"
+                    className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200"
                   >
-                    {t.vacationRequest.startDate} *
+                    Back to Dashboard
+                  </Link>
+                  <button
+                    onClick={() => setSubmitStatus('idle')}
+                    className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                  >
+                    Submit Another Request
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-8">
+                {/* Duration Type */}
+                <div className="bg-gray-50 rounded-lg p-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Duration Type</h3>
+                  <div className="flex gap-6">
+                    <label className="inline-flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="duration"
+                        value="full"
+                        checked={!formData.isHalfDay}
+                        onChange={handleInputChange}
+                        className="text-blue-600 focus:ring-blue-500 w-5 h-5"
+                      />
+                      <span className="text-gray-700 font-medium">Full day(s)</span>
+                    </label>
+                    <label className="inline-flex items-center gap-3">
+                      <input
+                        type="radio"
+                        name="duration"
+                        value="half"
+                        checked={formData.isHalfDay}
+                        onChange={handleInputChange}
+                        className="text-blue-600 focus:ring-blue-500 w-5 h-5"
+                      />
+                      <span className="text-gray-700 font-medium">Half day</span>
+                    </label>
+                  </div>
+                </div>
+
+                {/* Half Day Type */}
+                {formData.isHalfDay && (
+                  <div className="bg-blue-50 rounded-lg p-6">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Half Day Type</h3>
+                    <div className="flex gap-6">
+                      <label className="inline-flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="halfDayType"
+                          value="morning"
+                          checked={formData.halfDayType === 'morning'}
+                          onChange={handleInputChange}
+                          className="text-blue-600 focus:ring-blue-500 w-5 h-5"
+                        />
+                        <span className="text-gray-700 font-medium">Morning (AM) - 09:00 to 13:00</span>
+                      </label>
+                      <label className="inline-flex items-center gap-3">
+                        <input
+                          type="radio"
+                          name="halfDayType"
+                          value="afternoon"
+                          checked={formData.halfDayType === 'afternoon'}
+                          onChange={handleInputChange}
+                          className="text-blue-600 focus:ring-blue-500 w-5 h-5"
+                        />
+                        <span className="text-gray-700 font-medium">Afternoon (PM) - 14:00 to 18:00</span>
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                {/* Date Fields */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Start Date *
+                    </label>
+                    <input
+                      type="date"
+                      name="startDate"
+                      value={formData.startDate}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className={`block text-sm font-medium mb-2 ${formData.isHalfDay ? 'text-gray-400' : 'text-gray-700'}`}>
+                      End Date {formData.isHalfDay ? '(Auto-filled for half day)' : '*'}
+                    </label>
+                    <input
+                      type="date"
+                      name="endDate"
+                      value={formData.isHalfDay ? formData.startDate : formData.endDate}
+                      onChange={handleInputChange}
+                      required={!formData.isHalfDay}
+                      disabled={formData.isHalfDay}
+                      min={formData.startDate}
+                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                        formData.isHalfDay ? 'bg-gray-100 cursor-not-allowed' : ''
+                      }`}
+                    />
+                  </div>
+                </div>
+
+                {/* Company and Leave Type */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Company *
+                    </label>
+                    <select
+                      name="company"
+                      value={formData.company}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select a company</option>
+                      <option value="STARS_MC">Stars MC</option>
+                      <option value="STARS_YACHTING">Stars Yachting</option>
+                      <option value="STARS_REAL_ESTATE">Stars Real Estate</option>
+                      <option value="LE_PNEU">Le Pneu</option>
+                      <option value="MIDI_PNEU">Midi Pneu</option>
+                      <option value="STARS_AVIATION">Stars Aviation</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Type of Leave *
+                    </label>
+                    <select
+                      name="type"
+                      value={formData.type}
+                      onChange={handleInputChange}
+                      required
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    >
+                      <option value="">Select leave type</option>
+                      <option value="VACATION">Vacation</option>
+                      <option value="SICK_LEAVE">Sick Leave</option>
+                      <option value="PERSONAL_DAY">Personal Day</option>
+                      <option value="BUSINESS_TRIP">Business Trip</option>
+                      <option value="OTHER">Other</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Reason */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Reason (Optional)
                   </label>
-                  <input
-                    type="date"
-                    id="startDate"
-                    name="startDate"
-                    value={formData.startDate}
+                  <textarea
+                    name="reason"
+                    value={formData.reason}
                     onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    style={{ 
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '0.375rem',
-                      boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-                      outline: 'none'
-                    }}
+                    rows={4}
+                    placeholder="Please provide a reason for your request..."
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
                   />
                 </div>
 
-                <div>
-                  <label 
-                    htmlFor="endDate"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                    style={{ 
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      color: '#374151',
-                      marginBottom: '0.5rem'
-                    }}
+                {/* Error Message */}
+                {submitStatus === 'error' && (
+                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <p className="text-red-800 font-medium">
+                      {errorMessage}
+                    </p>
+                  </div>
+                )}
+
+                {/* Form Actions */}
+                <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+                  <Link
+                    href="/dashboard"
+                    className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
                   >
-                    {t.vacationRequest.endDate} *
-                  </label>
-                  <input
-                    type="date"
-                    id="endDate"
-                    name="endDate"
-                    value={formData.endDate}
-                    onChange={handleInputChange}
-                    required
-                    min={formData.startDate}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    style={{ 
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '0.375rem',
-                      boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-                      outline: 'none'
-                    }}
-                  />
+                    Cancel
+                  </Link>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || !validateForm()}
+                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 font-medium"
+                  >
+                    {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                  </button>
                 </div>
+              </form>
+            )}
+          </div>
+
+          {/* Calendar Integration */}
+          <div className="mt-12 bg-white/95 rounded-2xl border shadow-xl p-8 backdrop-blur-sm">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">Vacation Calendar</h2>
+            {loading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                <p className="text-gray-600">Loading vacation calendar...</p>
               </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label 
-                    htmlFor="company"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                    style={{ 
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      color: '#374151',
-                      marginBottom: '0.5rem'
-                    }}
-                  >
-                    {t.vacationRequest.company} *
-                  </label>
-                  <select
-                    id="company"
-                    name="company"
-                    value={formData.company}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    style={{ 
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '0.375rem',
-                      boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-                      outline: 'none'
-                    }}
-                  >
-                    <option value="">{t.common.loading}</option>
-                    <option value="STARS_MC">{t.companies.STARS_MC}</option>
-                    <option value="STARS_YACHTING">{t.companies.STARS_YACHTING}</option>
-                    <option value="STARS_REAL_ESTATE">{t.companies.STARS_REAL_ESTATE}</option>
-                    <option value="LE_PNEU">{t.companies.LE_PNEU}</option>
-                    <option value="MIDI_PNEU">{t.companies.MIDI_PNEU}</option>
-                    <option value="STARS_AVIATION">{t.companies.STARS_AVIATION}</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label 
-                    htmlFor="type"
-                    className="block text-sm font-medium text-gray-700 mb-2"
-                    style={{ 
-                      display: 'block',
-                      fontSize: '0.875rem',
-                      fontWeight: '500',
-                      color: '#374151',
-                      marginBottom: '0.5rem'
-                    }}
-                  >
-                    {t.vacationRequest.type} *
-                  </label>
-                  <select
-                    id="type"
-                    name="type"
-                    value={formData.type}
-                    onChange={handleInputChange}
-                    required
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                    style={{ 
-                      width: '100%',
-                      padding: '0.5rem 0.75rem',
-                      border: '1px solid #d1d5db',
-                      borderRadius: '0.375rem',
-                      boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-                      outline: 'none'
-                    }}
-                  >
-                    <option value="">{t.common.loading}</option>
-                    <option value="VACATION">{t.vacationTypes.VACATION}</option>
-                    <option value="SICK_LEAVE">{t.vacationTypes.SICK_LEAVE}</option>
-                    <option value="PERSONAL_DAY">{t.vacationTypes.PERSONAL_DAY}</option>
-                    <option value="BUSINESS_TRIP">{t.vacationTypes.BUSINESS_TRIP}</option>
-                    <option value="OTHER">{t.vacationTypes.OTHER}</option>
-                  </select>
-                </div>
-              </div>
-
-              <div>
-                <label 
-                  htmlFor="reason"
-                  className="block text-sm font-medium text-gray-700 mb-2"
-                  style={{ 
-                    display: 'block',
-                    fontSize: '0.875rem',
-                    fontWeight: '500',
-                    color: '#374151',
-                    marginBottom: '0.5rem'
-                  }}
-                >
-                  {t.vacationRequest.reason}
-                </label>
-                <textarea
-                  id="reason"
-                  name="reason"
-                  value={formData.reason}
-                  onChange={handleInputChange}
-                  rows={4}
-                  placeholder={t.vacationRequest.reasonPlaceholder}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                  style={{ 
-                    width: '100%',
-                    padding: '0.5rem 0.75rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '0.375rem',
-                    boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
-                    outline: 'none',
-                    resize: 'vertical'
-                  }}
-                />
-              </div>
-
-              {submitStatus === 'error' && (
-                <div 
-                  className="bg-red-50 border border-red-200 rounded-md p-4"
-                  style={{ 
-                    backgroundColor: '#fef2f2',
-                    border: '1px solid #fecaca',
-                    borderRadius: '0.375rem',
-                    padding: '1rem'
-                  }}
-                >
-                  <p 
-                    className="text-red-800"
-                    style={{ color: '#991b1b' }}
-                  >
-                    {errorMessage}
-                  </p>
-                </div>
-              )}
-
-              <div className="flex justify-end space-x-4">
-                <Link 
-                  href="/dashboard"
-                  className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-                  style={{ 
-                    padding: '0.5rem 1.5rem',
-                    border: '1px solid #d1d5db',
-                    borderRadius: '0.375rem',
-                    color: '#374151',
-                    textDecoration: 'none',
-                    transition: 'background-color 0.2s ease'
-                  }}
-                >
-                  {t.common.cancel}
-                </Link>
-                <button
-                  type="submit"
-                  disabled={isSubmitting || !validateForm()}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
-                  style={{ 
-                    padding: '0.5rem 1.5rem',
-                    backgroundColor: '#2563eb',
-                    color: 'white',
-                    borderRadius: '0.375rem',
-                    border: 'none',
-                    cursor: isSubmitting || !validateForm() ? 'not-allowed' : 'pointer',
-                    opacity: isSubmitting || !validateForm() ? 0.5 : 1,
-                    transition: 'background-color 0.2s ease'
-                  }}
-                >
-                  {isSubmitting ? t.vacationRequest.submitting : t.vacationRequest.submit}
-                </button>
-              </div>
-            </form>
-          )}
+            ) : (
+              <VacationCalendar
+                vacationRequests={vacationRequests}
+                className="w-full"
+              />
+            )}
+          </div>
         </div>
-      </div>
-      <PersistentCalendar />
-    </main>
+      </main>
+    </>
   );
 } 

@@ -22,9 +22,10 @@ interface VacationRequest {
 interface SortableVacationRequestsTableProps {
   requests: VacationRequest[];
   type: 'pending' | 'reviewed';
+  onRefresh?: () => void;
 }
 
-export default function SortableVacationRequestsTable({ requests, type }: SortableVacationRequestsTableProps) {
+export default function SortableVacationRequestsTable({ requests, type, onRefresh }: SortableVacationRequestsTableProps) {
   const [sortField, setSortField] = useState<'userName' | 'company'>('userName');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [processingRequests, setProcessingRequests] = useState<Set<string>>(new Set());
@@ -180,11 +181,16 @@ export default function SortableVacationRequestsTable({ requests, type }: Sortab
         throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
       }
 
-      const result = await response.json();
+      await response.json();
       alert(`Request ${status.toLowerCase()} successfully!`);
       
-      // Refresh the page to show updated data
-      window.location.reload();
+      // Refresh the data without reloading the page
+      if (onRefresh) {
+        onRefresh();
+      } else {
+        // Fallback to page reload if no refresh callback provided
+        window.location.reload();
+      }
       
     } catch (error) {
       console.error(`Error ${status.toLowerCase()}ing request:`, error);
@@ -261,8 +267,8 @@ export default function SortableVacationRequestsTable({ requests, type }: Sortab
                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap' }}>
                   {type === 'pending' ? (
                     <div style={{ display: 'flex', gap: 8, flexDirection: 'column' }}>
-                      <button
-                        onClick={() => window.location.href = `/admin/vacation-requests/${req.id}`}
+                      <Link
+                        href={`/admin/vacation-requests/${req.id}`}
                         style={{ 
                           display: 'inline-flex', 
                           alignItems: 'center', 
@@ -276,11 +282,12 @@ export default function SortableVacationRequestsTable({ requests, type }: Sortab
                           background: 'linear-gradient(90deg, #3b82f6 0%, #6366f1 100%)', 
                           color: '#fff', 
                           transition: 'background 0.2s, box-shadow 0.2s', 
-                          margin: 0 
+                          margin: 0,
+                          textDecoration: 'none'
                         }}
                       >
                         Review
-                      </button>
+                      </Link>
                       <div style={{ display: 'flex', gap: 4 }}>
                         <button
                           onClick={() => handleApproveReject(req.id, 'APPROVED')}
@@ -327,8 +334,8 @@ export default function SortableVacationRequestsTable({ requests, type }: Sortab
                       </div>
                     </div>
                   ) : (
-                    <button
-                      onClick={() => window.location.href = `/admin/vacation-requests/${req.id}`}
+                    <Link
+                      href={`/admin/vacation-requests/${req.id}`}
                       style={{ 
                         display: 'inline-flex', 
                         alignItems: 'center', 
@@ -342,11 +349,12 @@ export default function SortableVacationRequestsTable({ requests, type }: Sortab
                         background: '#f3f4f6', 
                         color: '#374151', 
                         transition: 'background 0.2s, box-shadow 0.2s', 
-                        margin: 0 
+                        margin: 0,
+                        textDecoration: 'none'
                       }}
                     >
                       View
-                    </button>
+                    </Link>
                   )}
                 </td>
                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap' }}>

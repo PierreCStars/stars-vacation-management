@@ -1,144 +1,87 @@
-import { redirect } from 'next/navigation';
-import { getServerSession } from 'next-auth/next';
-import { authOptions } from '@/lib/auth';
-import Image from 'next/image';
-import Link from 'next/link';
+'use client';
+
+import { useSession } from 'next-auth/react';
+import { useEffect, Suspense } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import Navigation from '@/components/Navigation';
+import PageHeader from '@/components/ui/PageHeader';
+import Card from '@/components/ui/Card';
 import SignInButton from '@/components/SignInButton';
 
-export default async function SignIn({ searchParams }: { searchParams: Promise<{ callbackUrl?: string }> }) {
-  const { callbackUrl } = await searchParams;
-  const session = await getServerSession(authOptions);
-  
-  console.log('SignIn page - Session:', session);
-  console.log('SignIn page - Session user:', session?.user);
-  console.log('SignIn page - Session user email:', session?.user?.email);
+function SignInContent() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams?.get('callbackUrl') || '/dashboard';
 
-  // Only redirect if we have a valid session with user data
-  if (session?.user?.email) {
-    console.log('Redirecting to callback URL or home - user is signed in');
-    redirect(callbackUrl || '/');
+  useEffect(() => {
+    if (status === 'loading') return;
+
+    if (session?.user) {
+      router.push(callbackUrl);
+    }
+  }, [session, status, router, callbackUrl]);
+
+  if (status === 'loading') {
+    return (
+      <>
+        <Navigation />
+        <main className="min-h-screen flex flex-col items-center justify-center py-12 bg-gray-50">
+          <div className="text-center">
+            <div className="w-16 h-16 border-4 border-gray-200 border-t-brand-600 rounded-full animate-spin mx-auto mb-4"></div>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">Loading...</h2>
+            <p className="text-gray-600">Please wait while we redirect you.</p>
+          </div>
+        </main>
+      </>
+    );
+  }
+
+  if (session?.user) {
+    return null;
   }
 
   return (
-    <main 
-      className="min-h-screen flex flex-col items-center justify-center py-12"
-      style={{ 
-        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingTop: '3rem',
-        paddingBottom: '3rem'
-      }}
-    >
-      <div 
-        className="w-full max-w-md"
-        style={{ 
-          width: '100%', 
-          maxWidth: '28rem', 
-          paddingLeft: '1.5rem', 
-          paddingRight: '1.5rem' 
-        }}
-      >
-        <div 
-          className="text-center mb-8"
-          style={{ textAlign: 'center', marginBottom: '2rem' }}
-        >
-          <div className="mb-6">
-            <Image 
-              src="/stars-logo.png" 
-              alt="Stars Logo" 
-              width={180}
-              height={180}
-              style={{ maxWidth: 180, maxHeight: 180, width: 'auto', height: 'auto', display: 'block', margin: '0 auto' }}
-              className="drop-shadow-lg"
-              priority 
-            />
-          </div>
-          <h1 
-            className="text-3xl font-bold tracking-tight mb-4 text-gray-900"
-            style={{ 
-              fontSize: '1.875rem', 
-              fontWeight: '700', 
-              color: '#111827', 
-              letterSpacing: '-0.025em', 
-              marginBottom: '1rem',
-              textShadow: '0 2px 4px rgba(0,0,0,0.1)'
-            }}
-          >
-            Sign In
-          </h1>
-          <p 
-            className="text-lg text-gray-600"
-            style={{ 
-              fontSize: '1.125rem', 
-              color: '#4b5563',
-              lineHeight: 1.6
-            }}
-          >
-            Access your Stars vacation management account
-          </p>
-        </div>
+    <>
+      <Navigation />
+      <main className="min-h-screen bg-gray-50 py-12">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Page Header */}
+          <PageHeader 
+            title="Sign In"
+          />
 
-        <div 
-          className="card"
-          style={{ 
-            backgroundColor: 'rgba(255, 255, 255, 0.95)', 
-            borderRadius: '1rem', 
-            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)', 
-            padding: '2.5rem',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(255, 255, 255, 0.2)'
-          }}
-        >
-          <div className="text-center mb-6">
-            <h2 
-              className="text-xl font-semibold mb-4 text-gray-900"
-              style={{ 
-                fontSize: '1.25rem', 
-                fontWeight: '600', 
-                color: '#111827', 
-                marginBottom: '1rem' 
-              }}
-            >
-              Welcome to Stars
-            </h2>
-            <p 
-              className="text-gray-600 mb-8"
-              style={{ 
-                color: '#4b5563', 
-                marginBottom: '2rem',
-                lineHeight: 1.6
-              }}
-            >
-              Please sign in with your Stars MC account to access the vacation management system.
-            </p>
+          {/* Sign In Card */}
+          <div className="max-w-md mx-auto">
+            <Card className="text-center">
+              <div className="mb-6">
+                <h2 className="text-2xl font-semibold mb-4 text-gray-900">
+                  Welcome Back
+                </h2>
+                <p className="text-gray-600 mb-6">
+                  Sign in with your Stars MC account to continue
+                </p>
+              </div>
+              <SignInButton callbackUrl={callbackUrl} />
+            </Card>
           </div>
-          
-          <SignInButton callbackUrl={callbackUrl || '/'} />
-          
-          <div 
-            className="mt-6 text-center"
-            style={{ marginTop: '1.5rem', textAlign: 'center' }}
-          >
-            <Link 
-              href="/"
-              className="text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
-              style={{ 
-                color: '#2563eb', 
-                fontSize: '0.875rem', 
-                fontWeight: '500',
-                textDecoration: 'none',
-                transition: 'color 0.2s ease-in-out'
-              }}
-            >
-              ← Back to Home
-            </Link>
-          </div>
+        </div>
+      </main>
+    </>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-gray-200 border-t-brand-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading sign in page...</p>
         </div>
       </div>
-    </main>
+    }>
+      <SignInContent />
+    </Suspense>
   );
 } 

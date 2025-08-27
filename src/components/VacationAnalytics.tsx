@@ -42,7 +42,7 @@ interface TypeAnalytics {
 }
 
 export default function VacationAnalytics() {
-  const { t } = useLanguage();
+  const { t: _t } = useLanguage();
   const [activeTab, setActiveTab] = useState<'summary' | 'byPerson' | 'byCompany' | 'byType'>('summary');
   const [analytics, setAnalytics] = useState<VacationAnalytics | null>(null);
   const [loading, setLoading] = useState(true);

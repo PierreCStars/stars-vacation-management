@@ -160,9 +160,9 @@ export async function sendCustomSMTP(to: string[], subject: string, body: string
     console.log('✅ Custom SMTP email sent successfully');
     console.log('📧 Message ID:', info.messageId);
     return { success: true, messageId: info.messageId };
-  } catch (error) {
-    console.error('❌ Custom SMTP failed:', error);
-    return { success: false, error };
+  } catch (_error) {
+    console.error('❌ Custom SMTP failed:', _error);
+    return { success: false, error: _error };
   }
 }
 
@@ -179,7 +179,7 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
       console.log('✅ Email sent successfully via Custom SMTP');
       return smtpResult;
     }
-  } catch (error) {
+  } catch (_error) {
     console.log('⚠️ Custom SMTP failed, trying Resend...');
   }
 
@@ -190,7 +190,7 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
       console.log('✅ Email sent successfully via Resend');
       return resendResult;
     }
-  } catch (error) {
+  } catch (_error) {
     console.log('⚠️ Resend failed, trying Gmail SMTP...');
   }
 
@@ -201,7 +201,7 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
       console.log('✅ Email sent successfully via Gmail SMTP');
       return gmailResult;
     }
-  } catch (error) {
+  } catch (_error) {
     console.log('⚠️ Gmail SMTP failed, trying Ethereal...');
   }
 
@@ -213,7 +213,7 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
       console.log('📧 Preview URL:', etherealResult.previewUrl);
       return etherealResult;
     }
-  } catch (error) {
+  } catch (_error) {
     console.log('⚠️ Ethereal failed...');
   }
 

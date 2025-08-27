@@ -12,45 +12,45 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID
 };
 
-// Validate Firebase configuration
-const requiredFields = ['apiKey', 'projectId', 'messagingSenderId', 'appId'];
-const missingFields = requiredFields.filter(field => !firebaseConfig[field as keyof typeof firebaseConfig]);
+// Check if Firebase should be enabled
+const FIREBASE_ENABLED = process.env.NEXT_PUBLIC_ENABLE_FIREBASE === 'true' && 
+  firebaseConfig.apiKey && 
+  firebaseConfig.projectId && 
+  firebaseConfig.messagingSenderId && 
+  firebaseConfig.appId;
 
-if (missingFields.length > 0) {
-  console.error('❌ Missing Firebase configuration fields:', missingFields);
-  console.error('Current config:', firebaseConfig);
-  throw new Error(`Firebase configuration incomplete. Missing: ${missingFields.join(', ')}`);
-}
-
-// Initialize Firebase
+// Initialize Firebase only if enabled
 let app: FirebaseApp | undefined;
 let db: Firestore | undefined;
 let auth: Auth | undefined;
 
-try {
-  // Only initialize if we have the required configuration
-  if (firebaseConfig.apiKey && firebaseConfig.projectId && firebaseConfig.messagingSenderId && firebaseConfig.appId) {
+if (FIREBASE_ENABLED) {
+  try {
     app = initializeApp(firebaseConfig);
     db = getFirestore(app);
     auth = getAuth(app);
     console.log('✅ Firebase initialized successfully');
-  } else {
-    console.warn('⚠️ Firebase configuration incomplete, skipping initialization');
+  } catch (error) {
+    console.error('❌ Firebase initialization failed:', error);
+    console.log('⚠️  Continuing without Firebase');
   }
-} catch (error) {
-  console.error('❌ Firebase initialization failed:', error);
-  // Don't throw error - let the app continue without Firebase
-  console.log('⚠️  Continuing without Firebase');
+} else {
+  console.log('ℹ️ Firebase disabled - set NEXT_PUBLIC_ENABLE_FIREBASE=true and configure Firebase env vars to enable');
 }
 
 // Initialize Firebase authentication (with error handling)
 export async function initializeFirebaseAuth() {
+  if (!FIREBASE_ENABLED || !auth) {
+    console.log('ℹ️ Firebase auth not available');
+    return null;
+  }
+
   try {
     // Check if user is already signed in
-    const user = auth?.currentUser;
+    const user = auth.currentUser;
     if (!user) {
       console.log('🔐 No current Firebase user, signing in anonymously...');
-      await signInAnonymously(auth!);
+      await signInAnonymously(auth);
       console.log('✅ Firebase anonymous auth initialized');
     } else {
       console.log('✅ Firebase auth already initialized with user:', user.uid);
@@ -59,10 +59,9 @@ export async function initializeFirebaseAuth() {
     // Wait a moment for auth to be fully ready
     await new Promise(resolve => setTimeout(resolve, 100));
     
-    return auth?.currentUser;
+    return auth.currentUser;
   } catch (error) {
     console.error('❌ Firebase auth error:', error);
-    // Don't throw error - let the app continue without auth for now
     console.log('⚠️  Continuing without Firebase authentication');
     return null;
   }
@@ -70,14 +69,22 @@ export async function initializeFirebaseAuth() {
 
 // Wait for authentication to be ready (with fallback)
 export async function ensureAuth() {
-  return new Promise((resolve, reject) => {
-    const unsubscribe = onAuthStateChanged(auth!, (user) => {
+  if (!FIREBASE_ENABLED || !auth) {
+    console.log('ℹ️ Firebase auth not available');
+    return null;
+  }
+
+  return new Promise((resolve) => {
+    if (!auth) {
+      resolve(null);
+      return;
+    }
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       unsubscribe();
       if (user) {
         resolve(user);
       } else {
-        // Don't reject - just resolve with null to continue
-        console.log('⚠️  No Firebase auth user, continuing without authentication');
+        console.log('ℹ️ No Firebase auth user');
         resolve(null);
       }
     });
@@ -113,16 +120,9 @@ export async function loadVacationRequests(): Promise<VacationRequest[]> {
     console.log('🔧 Loading vacation requests from Firestore...');
     
     // Check if Firebase is available
-    if (!db) {
-      console.error('❌ Firebase database not available');
+    if (!FIREBASE_ENABLED || !db) {
+      console.log('ℹ️ Firebase database not available');
       return [];
-    }
-    
-    // Try to ensure auth, but continue if it fails
-    try {
-      await ensureAuth();
-    } catch (error) {
-      console.log('⚠️  Auth failed, continuing without authentication');
     }
     
     const q = query(
@@ -167,11 +167,10 @@ export async function addVacationRequest(request: Omit<VacationRequest, 'id'>): 
   try {
     console.log('🔧 Adding vacation request to Firestore...');
     
-    // Try to ensure auth, but continue if it fails
-    try {
-      await ensureAuth();
-    } catch (error) {
-      console.log('⚠️  Auth failed, continuing without authentication');
+    // Check if Firebase is available
+    if (!FIREBASE_ENABLED || !db) {
+      console.log('ℹ️ Firebase database not available');
+      throw new Error('Firebase not available');
     }
     
     const docRef = await addDoc(collection(db!, VACATION_REQUESTS_COLLECTION), {
@@ -192,7 +191,13 @@ export async function updateVacationRequest(id: string, updates: Partial<Vacatio
   try {
     console.log(`🔧 Updating vacation request ${id} in Firestore...`);
     
-    const docRef = doc(db!, VACATION_REQUESTS_COLLECTION, id);
+    // Check if Firebase is available
+    if (!FIREBASE_ENABLED || !db) {
+      console.log('ℹ️ Firebase database not available');
+      throw new Error('Firebase not available');
+    }
+    
+    const docRef = doc(db, VACATION_REQUESTS_COLLECTION, id);
     await updateDoc(docRef, {
       ...updates,
       ...(updates.status === 'APPROVED' || updates.status === 'REJECTED' ? {
@@ -239,8 +244,14 @@ export async function getUserVacationRequests(userId: string): Promise<VacationR
   try {
     console.log(`🔧 Loading vacation requests for user ${userId} from Firestore...`);
     
+    // Check if Firebase is available
+    if (!FIREBASE_ENABLED || !db) {
+      console.log('ℹ️ Firebase database not available');
+      return [];
+    }
+    
     const q = query(
-      collection(db!, VACATION_REQUESTS_COLLECTION),
+      collection(db, VACATION_REQUESTS_COLLECTION),
       where('userId', '==', userId),
       orderBy('createdAt', 'desc')
     );
@@ -282,7 +293,13 @@ export async function deleteVacationRequest(id: string): Promise<void> {
   try {
     console.log(`🔧 Deleting vacation request ${id} from Firestore...`);
     
-    const docRef = doc(db!, VACATION_REQUESTS_COLLECTION, id);
+    // Check if Firebase is available
+    if (!FIREBASE_ENABLED || !db) {
+      console.log('ℹ️ Firebase database not available');
+      throw new Error('Firebase not available');
+    }
+    
+    const docRef = doc(db, VACATION_REQUESTS_COLLECTION, id);
     await deleteDoc(docRef);
     
     console.log(`✅ Vacation request ${id} deleted from Firestore`);
@@ -297,5 +314,5 @@ export { db, auth, app };
 
 // Helper function to check if Firebase is available
 export function isFirebaseAvailable(): boolean {
-  return !!(db && auth && app);
+  return Boolean(FIREBASE_ENABLED) && !!(db && auth && app);
 } 

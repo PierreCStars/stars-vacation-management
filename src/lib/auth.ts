@@ -1,4 +1,4 @@
-import { AuthOptions, SessionStrategy } from "next-auth";
+import { AuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 
 // Ensure we have a valid secret
@@ -23,8 +23,9 @@ export const authOptions: AuthOptions = {
       clientSecret: process.env.GOOGLE_SECRET!,
       authorization: {
         params: {
+          scope: 'openid email profile https://www.googleapis.com/auth/calendar.readonly',
           access_type: "offline",
-          prompt: "select_account",
+          prompt: "consent", // Force consent to get refresh token
           hd: "stars.mc"  // Restrict to stars.mc Google Workspace domain
         }
       }
@@ -46,13 +47,21 @@ export const authOptions: AuthOptions = {
     async session({ session, token }: any) {
       if (token) {
         session.user.id = token.sub;
+        // Add calendar access info to session
+        session.user.hasCalendarAccess = token.hasCalendarAccess || false;
       }
       return session;
     },
-    async jwt({ token, user }: any) {
+    async jwt({ token, user, account }: any) {
       if (user) {
         token.sub = user.id;
       }
+      
+      // Store calendar access scope in token
+      if (account?.scope) {
+        token.hasCalendarAccess = account.scope.includes('https://www.googleapis.com/auth/calendar.readonly');
+      }
+      
       return token;
     },
   },

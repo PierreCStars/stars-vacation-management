@@ -5,25 +5,11 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import GoogleCalendar from '@/components/GoogleCalendar';
-import PersistentCalendar from '@/components/PersistentCalendar';
+import VacationRequestCalendar from '@/components/VacationRequestCalendar';
+import VacationConflictCalendar from '@/components/VacationConflictCalendar';
+import CalendarConflictsPanel from '@/components/CalendarConflictsPanel';
 
-interface VacationRequest {
-  id: string;
-  userName: string;
-  userId: string;
-  userEmail: string;
-  company: string;
-  type: string;
-  startDate: string;
-  endDate: string;
-  reason?: string;
-  status: string;
-  reviewedBy?: string;
-  reviewerEmail?: string;
-  reviewedAt?: string;
-  adminComment?: string;
-}
+import { VacationRequest } from '@/types/vacation';
 
 interface VacationRequestClientProps {
   id: string;
@@ -33,6 +19,7 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
   const { data: session, status } = useSession();
   const router = useRouter();
   const [request, setRequest] = useState<VacationRequest | null>(null);
+  const [allVacationRequests, setAllVacationRequests] = useState<VacationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [comment, setComment] = useState('');
@@ -75,6 +62,7 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
       }
 
       setRequest(foundRequest);
+      setAllVacationRequests(data); // Store all requests for conflict analysis
     } catch (err) {
       console.error('Error loading vacation request:', err);
       setError(err instanceof Error ? err.message : 'Failed to load vacation request');
@@ -180,6 +168,7 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
               height={180}
               style={{ maxWidth: 180, maxHeight: 180, width: 'auto', height: 'auto', display: 'block', margin: '0 auto', cursor: 'pointer' }}
               priority
+
             />
           </Link>
         </div>
@@ -277,14 +266,38 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
           )}
         </div>
 
-        {/* Calendar Section */}
+        {/* Google Calendar Conflicts Panel */}
         <div style={{ background: '#fff', boxShadow: '0 4px 32px rgba(0,0,0,0.08)', borderRadius: 16, padding: 24, border: '1px solid #eee', marginBottom: 24 }}>
-          <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#000000', marginBottom: 16, textAlign: 'center' }}>Team Calendar</h2>
-          <GoogleCalendar 
-            calendarId="pierre@stars.mc"
-            height="400px"
-            title="Stars Vacation Calendar"
-            userEmail={session?.user?.email}
+          <CalendarConflictsPanel
+            requestId={request.id}
+            startDate={request.startDate}
+            endDate={request.endDate}
+            requesterUserId={request.userId || request.userEmail || ''}
+          />
+        </div>
+
+        {/* Conflict Analysis Calendar */}
+        <div style={{ background: '#fff', boxShadow: '0 4px 32px rgba(0,0,0,0.08)', borderRadius: 16, padding: 24, border: '1px solid #eee', marginBottom: 24 }}>
+          <h3 style={{ fontSize: '20px', fontWeight: 600, color: '#1f2937', marginBottom: 16 }}>
+            🚨 Conflict Analysis - Check for Overlapping Vacations
+          </h3>
+          <p style={{ color: '#6b7280', marginBottom: 20, fontSize: '14px' }}>
+            This calendar shows all vacation requests. Look for dates with multiple people requesting time off - these are conflicts that need attention.
+          </p>
+          <VacationConflictCalendar 
+            vacationRequests={allVacationRequests} 
+            currentRequestId={request.id}
+          />
+        </div>
+
+        {/* Vacation Request Calendar */}
+        <div style={{ background: '#fff', boxShadow: '0 4px 32px rgba(0,0,0,0.08)', borderRadius: 16, padding: 24, border: '1px solid #eee', marginBottom: 24 }}>
+          <VacationRequestCalendar
+            startDate={request.startDate}
+            endDate={request.endDate}
+            userName={request.userName}
+            company={request.company}
+            type={request.type}
           />
         </div>
 
@@ -310,7 +323,6 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
           </Link>
         </div>
       </div>
-      <PersistentCalendar />
     </div>
   );
 } 

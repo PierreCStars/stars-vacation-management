@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
-
-import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
-import { VacationRequest } from '@/types/vacation';
-import { usePathname } from '@/i18n/routing';
+import { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { usePathname } from 'next-intl/client';
+import { createLocaleLink } from '@/lib/utils';
+import VacationRequestForm from '@/components/VacationRequestForm';
+import { VacationRequest } from '@/types/vacation';
+import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 
 export default function VacationRequestPage() {
   const [formData, setFormData] = useState({

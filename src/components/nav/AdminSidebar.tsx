@@ -1,7 +1,8 @@
 'use client';
 
+import { usePathname } from 'next-intl/client';
+import { createLocaleUrl } from '@/i18n/routing';
 import Link from 'next/link';
-import { usePathname, createLocaleUrl } from '@/i18n/routing';
 
 export function AdminSidebar() {
   const pathname = usePathname();

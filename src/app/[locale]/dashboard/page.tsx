@@ -1,12 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import Link from 'next/link';
-import Image from 'next/image';
+import { useTranslations } from 'next-intl';
+import { usePathname } from 'next-intl/client';
 import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 import { VacationRequest } from '@/types/vacation';
-import { usePathname } from '@/i18n/routing';
-import { useTranslations } from 'next-intl';
+import { createLocaleLink } from '@/lib/utils';
 
 export default function Dashboard() {
   const pathname = usePathname();

@@ -1,7 +1,7 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState } from 'react';
-import { usePathname } from '@/i18n/routing';
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import { usePathname } from 'next-intl/client';
 
 // Define the translation structure
 interface Translations {

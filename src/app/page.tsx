@@ -1,39 +1,5 @@
-import { getServerSession } from 'next-auth';
 import { redirect } from 'next/navigation';
-import { authOptions } from '@/lib/auth';
-import SignInButton from '@/components/SignInButton';
-import PageHeader from '@/components/ui/PageHeader';
 
-export default async function HomePage() {
-  const session = await getServerSession(authOptions);
-
-  if (session) {
-    redirect('/dashboard');
-  }
-
-  return (
-    <main className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Page Header */}
-        <PageHeader 
-          title="Stars Vacation Management"
-        />
-
-        {/* Sign In Card */}
-        <div className="max-w-md mx-auto">
-          <div className="card text-center">
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold mb-4 text-gray-900">
-                Welcome to Stars
-              </h2>
-              <p className="text-gray-600 mb-6">
-                Please sign in with your Stars MC account to access the vacation management system.
-              </p>
-            </div>
-            <SignInButton />
-          </div>
-        </div>
-      </div>
-    </main>
-  );
+export default function Page() {
+  redirect('/en');
 }

@@ -1,47 +1,71 @@
 import { NextResponse } from 'next/server';
-import { sendEmailWithFallbacks } from '@/lib/simple-email-service';
+import { sendAdminNotification } from '@/lib/mailer';
+import { adminVacationSubject, adminVacationHtml, adminVacationText } from '@/lib/email-templates';
 
 export async function GET() {
   try {
-    console.log('🧪 Testing email service...');
+    console.log('🧪 Testing email notification system...');
     
-    const testEmailBody = `
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8">
-    <title>Test Email</title>
-</head>
-<body>
-    <h1>Test Email from Stars Vacation Management</h1>
-    <p>This is a test email to verify the email service is working.</p>
-    <p>Time: ${new Date().toISOString()}</p>
-    <p>If you receive this email, the email service is configured correctly.</p>
-</body>
-</html>
-    `.trim();
-
-    const result = await sendEmailWithFallbacks(
-      ['compta@stars.mc'], 
-      '🧪 Test Email - compta@stars.mc - Stars Vacation Management', 
-      testEmailBody
-    );
-
-    console.log('📧 Email test result:', result);
-
-    return NextResponse.json({
-      success: true,
-      message: 'Email test completed',
-      result: result,
-      timestamp: new Date().toISOString()
+    // Test email templates
+    const subject = adminVacationSubject({
+      hasConflicts: false,
+      userName: 'Test User',
+    });
+    
+    const html = adminVacationHtml({
+      userName: 'Test User',
+      companyName: 'Stars MC',
+      startDate: '2025-09-15',
+      endDate: '2025-09-20',
+      isHalfDay: false,
+      halfDayType: null,
+      hasConflicts: false,
+      reviewUrl: 'http://localhost:3000/admin/vacation-requests/test-123',
     });
 
+    const text = adminVacationText({
+      userName: 'Test User',
+      companyName: 'Stars MC',
+      startDate: '2025-09-15',
+      endDate: '2025-09-20',
+      isHalfDay: false,
+      halfDayType: null,
+      hasConflicts: false,
+    });
+    
+    console.log('✅ Email templates generated successfully');
+    console.log('Subject:', subject);
+    console.log('HTML length:', html.length, 'characters');
+    console.log('Text length:', text.length, 'characters');
+    
+    // Try to send email (this will fail if SMTP not configured, but that's expected)
+    try {
+      await sendAdminNotification({ subject, html, text });
+      console.log('✅ Email sent successfully!');
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Email sent successfully',
+        subject,
+        htmlLength: html.length,
+        textLength: text.length
+      });
+    } catch (emailError) {
+      console.log('⚠️ Email sending failed (expected if SMTP not configured):', emailError.message);
+      return NextResponse.json({ 
+        success: true, 
+        message: 'Email templates work, but SMTP not configured',
+        subject,
+        htmlLength: html.length,
+        textLength: text.length,
+        emailError: emailError.message
+      });
+    }
+    
   } catch (error) {
-    console.error('❌ Email test failed:', error);
-    return NextResponse.json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
-      timestamp: new Date().toISOString()
+    console.error('❌ Test failed:', error);
+    return NextResponse.json({ 
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
     }, { status: 500 });
   }
-} 
+}

@@ -156,3 +156,93 @@ function getColorIdForCompany(company: string): string {
 export function getCompanyColors() {
   return getCompanyColor;
 } 
+
+function getJwt() {
+  // Parse the service account key from environment variable
+  const serviceAccountKey = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+  if (!serviceAccountKey) {
+    throw new Error('Missing GOOGLE_SERVICE_ACCOUNT_KEY environment variable');
+  }
+
+  let credentials;
+  try {
+    credentials = JSON.parse(serviceAccountKey);
+  } catch (error) {
+    throw new Error('Invalid GOOGLE_SERVICE_ACCOUNT_KEY JSON format');
+  }
+
+  const { client_email, private_key } = credentials;
+  if (!client_email || !private_key) {
+    throw new Error('Missing client_email or private_key in service account');
+  }
+
+  // Clean up the private key (remove \n escapes)
+  const cleanPrivateKey = private_key.replace(/\\n/g, '\n');
+
+  return new google.auth.JWT({
+    email: client_email,
+    key: cleanPrivateKey,
+    scopes: [
+      'https://www.googleapis.com/auth/calendar.readonly',
+      'https://www.googleapis.com/auth/calendar'
+    ],
+  });
+}
+
+export async function listEventsInRange(calendarId: string, timeMinISO: string, timeMaxISO: string) {
+  const auth = getJwt();
+  const calendar = google.calendar({ version: 'v3', auth });
+  
+  try {
+    const res = await calendar.events.list({
+      calendarId,
+      timeMin: timeMinISO,
+      timeMax: timeMaxISO,
+      singleEvents: true,
+      orderBy: 'startTime',
+      maxResults: 2500
+    });
+    return res.data.items || [];
+  } catch (error) {
+    console.error('Error fetching calendar events:', error);
+    return [];
+  }
+}
+
+export async function addEventToCalendar(calendarId: string, event: {
+  summary: string;
+  description?: string;
+  start: { date?: string; dateTime?: string };
+  end: { date?: string; dateTime?: string };
+  location?: string;
+}) {
+  const auth = getJwt();
+  const calendar = google.calendar({ version: 'v3', auth });
+  
+  try {
+    const res = await calendar.events.insert({
+      calendarId,
+      requestBody: event
+    });
+    return res.data;
+  } catch (error) {
+    console.error('Error adding event to calendar:', error);
+    throw error;
+  }
+}
+
+export async function removeEventFromCalendar(calendarId: string, eventId: string) {
+  const auth = getJwt();
+  const calendar = google.calendar({ version: 'v3', auth });
+  
+  try {
+    await calendar.events.delete({
+      calendarId,
+      eventId
+    });
+    return true;
+  } catch (error) {
+    console.error('Error removing event from calendar:', error);
+    throw error;
+  }
+} 

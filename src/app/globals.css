@@ -12,7 +12,12 @@
 
 html, body { 
   background: #f7f8fb; /* light neutral like TARGET */
+  overflow-x: hidden; /* Prevent horizontal scrollbars across the app */
 }
+
+/* Optional: utility if any element still tries to show a scrollbar */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
 h1, h2, h3 { 
   letter-spacing: -0.01em; 

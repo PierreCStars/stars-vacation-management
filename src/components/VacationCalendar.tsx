@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { VacationRequest } from '@/types/vacation';
 import CompanyLegend from './ui/CompanyLegend';
+import { getCompanyHexColor } from '@/lib/company-colors';
 
 interface VacationCalendarProps {
   vacationRequests: VacationRequest[];
@@ -170,17 +171,26 @@ export default function VacationCalendar({ vacationRequests, className = '' }: V
                 
                 {hasRequests && (
                   <div className="mt-1 space-y-1">
-                    {requests.slice(0, 2).map((request, reqIndex) => (
-                      <div
-                        key={reqIndex}
-                        className="text-xs p-1 bg-blue-100 text-blue-800 rounded truncate"
-                        title={`${request.userName} - ${request.company}`}
-                      >
-                        {request.userName}
-                      </div>
-                    ))}
+                    {requests.slice(0, 2).map((request, reqIndex) => {
+                      const companyColor = getCompanyHexColor(request.company);
+                      const textColor = request.company === 'STARS_MC' || request.company === 'LE_PNEU' ? '#ffffff' : '#000000';
+                      
+                      return (
+                        <div
+                          key={reqIndex}
+                          className="text-xs p-1 rounded truncate text-xs font-medium"
+                          style={{
+                            backgroundColor: companyColor,
+                            color: textColor
+                          }}
+                          title={`${request.userName} - ${request.company}`}
+                        >
+                          {request.userName}
+                        </div>
+                      );
+                    })}
                     {requests.length > 2 && (
-                      <div className="text-xs text-blue-600 font-medium">
+                      <div className="text-xs text-gray-600 font-medium">
                         +{requests.length - 2} more
                       </div>
                     )}

@@ -1,5 +1,6 @@
 "use client";
 import * as React from "react";
+import { safeTrim } from "@/lib/strings";
 
 type AvatarProps = {
   name: string;               // for initials fallback
@@ -10,7 +11,7 @@ type AvatarProps = {
 };
 
 function initialsFromName(name: string) {
-  const parts = name.trim().split(/\s+/).slice(0, 2);
+  const parts = safeTrim(name, '').split(/\s+/).slice(0, 2);
   return parts.map(p => p[0]?.toUpperCase() ?? "").join("") || "•";
 }
 

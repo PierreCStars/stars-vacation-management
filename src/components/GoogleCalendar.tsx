@@ -201,7 +201,7 @@ export default function GoogleCalendar({
           color: '#1e40af',
           fontWeight: '500'
         }}>
-          {t.calendar.switchToFullMode}
+          Switch to Full Mode
         </p>
       </div>
 

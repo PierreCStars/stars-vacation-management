@@ -2,6 +2,7 @@
 
 import React, { useState, useMemo } from 'react';
 import { VacationRequest } from '@/types/vacation';
+import { getCompanyHexColor } from '@/lib/company-colors';
 
 interface VacationConflictCalendarProps {
   vacationRequests: VacationRequest[];
@@ -305,11 +306,16 @@ export default function VacationConflictCalendar({
               {calendarDays
                 .find(d => d.date.toDateString() === selectedDate.toDateString())
                 ?.vacations.map(vacation => (
-                  <div key={vacation.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-blue-200">
+                  <div key={vacation.id} className="flex items-center justify-between p-3 bg-white rounded-lg border border-gray-200">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3">
                         <span className="font-bold text-gray-800">{vacation.userName}</span>
-                        <span className="text-sm text-gray-500">({vacation.company})</span>
+                        <span 
+                          className="text-sm px-2 py-1 rounded text-white font-medium"
+                          style={{ backgroundColor: getCompanyHexColor(vacation.company) }}
+                        >
+                          {vacation.company}
+                        </span>
                         <span className="text-xs text-gray-400">{vacation.type}</span>
                       </div>
                       {vacation.reason && (

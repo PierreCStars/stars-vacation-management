@@ -3,9 +3,11 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import Navigation from '@/components/Navigation';
-import VacationCalendar from '@/components/VacationCalendar';
+
+import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 import { VacationRequest } from '@/types/vacation';
+import { usePathname } from '@/i18n/routing';
+import { useTranslations } from 'next-intl';
 
 export default function VacationRequestPage() {
   const [formData, setFormData] = useState({
@@ -22,6 +24,17 @@ export default function VacationRequestPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [vacationRequests, setVacationRequests] = useState<VacationRequest[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Use next-intl translations
+  const tVacations = useTranslations('vacations');
+  const tCommon = useTranslations('common');
+
+  // Extract current locale from pathname
+  const pathname = usePathname();
+  const currentLocale = pathname?.split('/')[1] || 'en';
+
+  // Helper function to create locale-aware links
+  const createLocaleLink = (href: string) => `/${currentLocale}${href}`;
 
   // Fetch existing vacation requests for the calendar
   useEffect(() => {
@@ -141,7 +154,6 @@ export default function VacationRequestPage() {
 
   return (
     <>
-      <Navigation />
       <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12">
         <div className="w-full max-w-6xl mx-auto px-6">
           {/* Header with Navigation - REMOVED as Navigation component handles it */}
@@ -157,7 +169,7 @@ export default function VacationRequestPage() {
               />
             </Link>
             <h1 className="text-4xl font-bold tracking-tight mb-4 text-gray-900">
-              Vacation Request Form
+              {tVacations('title')}
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
               Submit your vacation request with company details and leave type.
@@ -386,9 +398,11 @@ export default function VacationRequestPage() {
                 <p className="text-gray-600">Loading vacation calendar...</p>
               </div>
             ) : (
-              <VacationCalendar
+              <UnifiedVacationCalendar
                 vacationRequests={vacationRequests}
                 className="w-full"
+                showLegend={true}
+                compact={false}
               />
             )}
           </div>

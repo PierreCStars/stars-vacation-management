@@ -19,18 +19,22 @@
     "tsprune": "ts-prune -p tsconfig.json",
     "depcheck": "depcheck --skip-missing=true",
     "cleanup:report": "npm run knip && npm run tsprune && npm run depcheck",
-    "build:check": "npm run lint:fix && next build"
+    "build:check": "npm run lint:fix && next build",
+    "translate-missing": "tsx src/i18n/translate-missing.ts"
   },
   "dependencies": {
-    "@types/nodemailer": "^6.4.17",
+    "@types/nodemailer": "^6.4.19",
     "dotenv": "^17.1.0",
     "firebase": "^11.10.0",
+    "firebase-admin": "^13.4.0",
     "googleapis": "^150.0.1",
     "next": "^15.5.0",
     "next-auth": "^4.24.11",
+    "next-intl": "^4.3.5",
     "nodemailer": "^6.10.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
+    "recharts": "^3.1.2",
     "zod": "^3.25.76"
   },
   "devDependencies": {
@@ -47,6 +51,7 @@
     "postcss": "^8.5.6",
     "tailwindcss": "^3.4.17",
     "ts-prune": "^0.10.3",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "tsx": "^4.7.0"
   }
 }

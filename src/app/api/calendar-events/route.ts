@@ -3,6 +3,7 @@ export const revalidate = 0;
 
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
+import { safeTrim, safeStartsWith } from '@/lib/strings';
 
 // Utility function to load and parse Google credentials
 function loadGoogleCreds() {
@@ -10,7 +11,7 @@ function loadGoogleCreds() {
   if (!raw) throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY manquante");
 
   // 1) Si c'est du JSON (cas recommandé en .env)
-  if (raw.trim().startsWith("{")) {
+  if (safeStartsWith(raw, "{")) {
     const obj = JSON.parse(raw);
     if (!obj.client_email || !obj.private_key) {
       throw new Error("Clé de service Google invalide (champs manquants)");
@@ -80,8 +81,8 @@ export async function GET(request: NextRequest) {
         if (summary.includes(' - ')) {
           const parts = summary.split(' - ');
           if (parts.length >= 2) {
-            userName = parts[0].trim();
-            company = parts[1].trim();
+            userName = safeTrim(parts[0], 'Unknown User');
+            company = safeTrim(parts[1], 'UNKNOWN');
           }
         }
         
@@ -89,14 +90,14 @@ export async function GET(request: NextRequest) {
         if (company === 'UNKNOWN' && description.includes('Company:')) {
           const companyMatch = description.match(/Company:\s*([^\n]+)/);
           if (companyMatch) {
-            company = companyMatch[1].trim();
+            company = safeTrim(companyMatch[1], 'UNKNOWN');
           }
         }
         
         if (userName === 'Unknown User' && description.includes('Name:')) {
           const nameMatch = description.match(/Name:\s*([^\n]+)/);
           if (nameMatch) {
-            userName = nameMatch[1].trim();
+            userName = safeTrim(nameMatch[1], 'Unknown User');
           }
         }
 

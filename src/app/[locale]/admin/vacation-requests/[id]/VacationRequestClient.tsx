@@ -5,8 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
-import VacationRequestCalendar from '@/components/VacationRequestCalendar';
-import VacationConflictCalendar from '@/components/VacationConflictCalendar';
+import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 import CalendarConflictsPanel from '@/components/CalendarConflictsPanel';
 
 import { VacationRequest } from '@/types/vacation';
@@ -276,28 +275,19 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
           />
         </div>
 
-        {/* Conflict Analysis Calendar */}
+        {/* Unified Vacation Calendar with Conflict Detection */}
         <div style={{ background: '#fff', boxShadow: '0 4px 32px rgba(0,0,0,0.08)', borderRadius: 16, padding: 24, border: '1px solid #eee', marginBottom: 24 }}>
           <h3 style={{ fontSize: '20px', fontWeight: 600, color: '#1f2937', marginBottom: 16 }}>
-            🚨 Conflict Analysis - Check for Overlapping Vacations
+            🗓️ Vacation Calendar & Conflict Detection
           </h3>
           <p style={{ color: '#6b7280', marginBottom: 20, fontSize: '14px' }}>
-            This calendar shows all vacation requests. Look for dates with multiple people requesting time off - these are conflicts that need attention.
+            This calendar shows all vacation requests with company colors and conflict warnings. Look for dates with multiple people requesting time off.
           </p>
-          <VacationConflictCalendar 
+          <UnifiedVacationCalendar 
             vacationRequests={allVacationRequests} 
             currentRequestId={request.id}
-          />
-        </div>
-
-        {/* Vacation Request Calendar */}
-        <div style={{ background: '#fff', boxShadow: '0 4px 32px rgba(0,0,0,0.08)', borderRadius: 16, padding: 24, border: '1px solid #eee', marginBottom: 24 }}>
-          <VacationRequestCalendar
-            startDate={request.startDate}
-            endDate={request.endDate}
-            userName={request.userName}
-            company={request.company}
-            type={request.type}
+            showLegend={true}
+            compact={false}
           />
         </div>
 

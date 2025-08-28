@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { getCompanyHexColor } from '@/lib/company-colors';
 
 interface VacationRequestCalendarProps {
   startDate: string;
@@ -94,17 +95,17 @@ export default function VacationRequestCalendar({
           flexDirection: 'column',
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: isVacation ? '#fef3c7' : '#ffffff',
-          borderColor: isVacation ? '#f59e0b' : '#e2e8f0',
+          backgroundColor: isVacation ? getCompanyHexColor(company) : '#ffffff',
+          borderColor: isVacation ? '#374151' : '#e2e8f0',
           fontWeight: isVacation ? '600' : '400',
-          color: isVacation ? '#92400e' : '#374151'
+          color: isVacation ? '#ffffff' : '#374151'
         }}
       >
         <span style={{ fontSize: '14px', marginBottom: '4px' }}>{day}</span>
         {isVacation && (
           <div style={{
             fontSize: '10px',
-            color: '#92400e',
+            color: '#ffffff',
             textAlign: 'center',
             lineHeight: '1.2'
           }}>

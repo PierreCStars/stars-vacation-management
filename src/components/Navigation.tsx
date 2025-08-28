@@ -1,118 +1,120 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import Link from 'next/link';
 import Image from 'next/image';
-import LanguageSelector from './LanguageSelector';
+import { LanguageSwitcher } from './nav/LanguageSwitcher';
 import { SignOutButton } from './SignOutButton';
 import Avatar from './Avatar';
+import { Link, usePathname } from '@/i18n/routing';
+import { useLanguage } from '@/contexts/LanguageContext';
 
 export default function Navigation() {
   const { data: session } = useSession();
-  
-  // Check if user has admin access
-  const isAdmin = session?.user?.email === 'johnny@stars.mc' || 
-                  session?.user?.email === 'daniel@stars.mc' || 
-                  session?.user?.email === 'pierre@stars.mc' || 
-                  session?.user?.email === 'compta@stars.mc';
+  const pathname = usePathname();
+  const { tNav } = useLanguage();
+
+  // Extract current locale from pathname
+  const currentLocale = pathname?.split('/')[1] || 'en';
+
+  // Helper function to check if a link is active
+  const isActive = (href: string) => {
+    if (href === '/') {
+      return pathname === `/${currentLocale}`;
+    }
+    return pathname === `/${currentLocale}${href}`;
+  };
+
+  // Helper function to create locale-aware links
+  const createLocaleLink = (href: string) => `/${currentLocale}${href}`;
 
   return (
-    <nav className="bg-white/80 backdrop-blur-sm border-b border-gray-100 sticky top-0 z-50">
+    <nav className="bg-white shadow-sm border-b">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
-          {/* Logo and Brand - Centered */}
-          <div className="flex items-center space-x-4">
-            <Link href="/dashboard" className="flex items-center space-x-3">
-              <Image 
-                src="/stars-logo.png" 
-                alt="Stars Logo" 
-                width={48}
-                height={48}
-                style={{ height: 'auto' }}
-                className="rounded-lg"
-
-              />
-              <span className="text-xl font-bold text-gray-900 hidden sm:block">
-                Stars Vacation
-              </span>
-            </Link>
+        <div className="flex justify-between h-16">
+          {/* Left side - Logo and main nav */}
+          <div className="flex items-center">
+            <div className="flex-shrink-0 flex items-center">
+              <Link href={createLocaleLink('/')} className="flex items-center">
+                <Image
+                  src="/stars-logo.png"
+                  alt="Stars Logo"
+                  width={40}
+                  height={40}
+                  className="h-8 w-auto"
+                />
+                <span className="ml-2 text-xl font-semibold text-gray-900">
+                  Stars Vacation Management
+                </span>
+              </Link>
+            </div>
+            
+            {/* Main navigation links */}
+            <div className="hidden md:ml-8 md:flex md:space-x-8">
+              <Link
+                href={createLocaleLink('/dashboard')}
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  isActive('/dashboard')
+                    ? 'border-indigo-500 text-gray-900'
+                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                }`}
+              >
+                {tNav('dashboard')}
+              </Link>
+              
+              <Link
+                href={createLocaleLink('/vacation-request')}
+                className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                  isActive('/vacation-request')
+                    ? 'border-indigo-500 text-gray-900'
+                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                }`}
+              >
+                {tNav('vacationRequests')}
+              </Link>
+              
+              {session?.user?.role === 'admin' && (
+                <>
+                  <Link
+                    href={createLocaleLink('/admin/vacation-requests')}
+                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                      isActive('/admin/vacation-requests')
+                        ? 'border-indigo-500 text-gray-900'
+                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                    }`}
+                  >
+                    {tNav('admin')}
+                  </Link>
+                  
+                  <Link
+                    href={createLocaleLink('/admin/analytics')}
+                    className={`inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium ${
+                      isActive('/admin/analytics')
+                        ? 'border-indigo-500 text-gray-900'
+                        : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+                    }`}
+                  >
+                    {tNav('analytics')}
+                  </Link>
+                </>
+              )}
+            </div>
           </div>
 
-          {/* Navigation Links - Centered */}
-          <div className="hidden md:flex items-center space-x-8">
-            <Link 
-              href="/dashboard"
-              className="text-gray-700 hover:text-brand-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
-            >
-              Dashboard
-            </Link>
+          {/* Right side - Language switcher, user menu, etc. */}
+          <div className="flex items-center space-x-4">
+            <LanguageSwitcher />
             
-            <Link 
-              href="/vacation-request"
-              className="text-gray-700 hover:text-brand-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
-            >
-              Request Vacation
-            </Link>
-
-            {isAdmin && (
-              <Link 
-                href="/admin/vacation-requests"
-                className="text-gray-700 hover:text-purple-600 px-3 py-2 rounded-lg text-sm font-medium transition-colors duration-200"
-              >
-                Management
-              </Link>
+            {session?.user ? (
+              <div className="flex items-center space-x-3">
+                <Avatar user={session.user} />
+                <SignOutButton />
+              </div>
+            ) : (
+              <div className="flex items-center space-x-3">
+                <span className="text-sm text-gray-500">Not signed in</span>
+              </div>
             )}
           </div>
-
-          {/* Right side - User info and controls */}
-          <div className="flex items-center space-x-4">
-            <LanguageSelector />
-            
-            {/* User Profile */}
-            <div className="flex items-center space-x-3">
-              <Avatar 
-                name={session?.user?.name || session?.user?.email || "User"}
-                src={session?.user?.image}
-                size={36}
-                className="border-2 border-brand-200"
-                alt="Profile"
-              />
-              <div className="hidden sm:block">
-                <p className="text-sm font-medium text-gray-900">{session?.user?.name}</p>
-                <p className="text-xs text-gray-500">{session?.user?.email}</p>
-              </div>
-            </div>
-
-            <SignOutButton />
-          </div>
-        </div>
-      </div>
-
-      {/* Mobile Navigation */}
-      <div className="md:hidden">
-        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-gray-100">
-          <Link 
-            href="/dashboard"
-            className="text-gray-700 hover:text-brand-600 block px-3 py-2 rounded-lg text-base font-medium"
-          >
-            Dashboard
-          </Link>
-          
-          <Link 
-            href="/vacation-request"
-            className="text-gray-700 hover:text-brand-600 block px-3 py-2 rounded-lg text-base font-medium"
-          >
-            Request Vacation
-          </Link>
-
-          {isAdmin && (
-            <Link 
-              href="/admin/vacation-requests"
-              className="text-gray-700 hover:text-purple-600 block px-3 py-2 rounded-lg text-base font-medium"
-            >
-              Management
-            </Link>
-          )}
         </div>
       </div>
     </nav>

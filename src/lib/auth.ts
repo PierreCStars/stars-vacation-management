@@ -1,5 +1,6 @@
 import { AuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
 
 // Ensure we have a valid secret
 const getSecret = () => {
@@ -11,6 +12,8 @@ const getSecret = () => {
   return secret;
 };
 
+const isPreview = process.env.VERCEL_ENV === 'preview';
+
 export const authOptions: AuthOptions = {
   secret: getSecret(),
   session: {
@@ -18,29 +21,50 @@ export const authOptions: AuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   providers: [
-    GoogleProvider({
-      clientId: process.env.GOOGLE_ID!,
-      clientSecret: process.env.GOOGLE_SECRET!,
-      authorization: {
-        params: {
-          scope: 'openid email profile https://www.googleapis.com/auth/calendar.readonly',
-          access_type: "offline",
-          prompt: "consent", // Force consent to get refresh token
-          hd: "stars.mc"  // Restrict to stars.mc Google Workspace domain
-        }
-      }
-    }),
+    ...(isPreview
+      ? [
+          CredentialsProvider({
+            name: 'Preview Login',
+            credentials: {
+              username: { label: 'Email', type: 'text' },
+              password: { label: 'Password', type: 'password' }
+            },
+            async authorize(creds) {
+              const user = process.env.PREVIEW_USER;
+              const pass = process.env.PREVIEW_PASS;
+              if (!user || !pass) return null;
+              if (creds?.username === user && creds?.password === pass) {
+                return { id: 'preview-user', name: 'Preview User', email: user } as any;
+              }
+              return null;
+            }
+          })
+        ]
+      : [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_ID!,
+            clientSecret: process.env.GOOGLE_SECRET!,
+            authorization: {
+              params: {
+                scope: 'openid email profile https://www.googleapis.com/auth/calendar.readonly',
+                access_type: "offline",
+                prompt: "consent", // Force consent to get refresh token
+                hd: "stars.mc"  // Restrict to stars.mc Google Workspace domain
+              }
+            }
+          })
+        ])
   ],
   callbacks: {
     async signIn({ profile }: any) {
+      // In preview, credentials provider already validated
+      if (isPreview) return true;
       const email = profile?.email;
       const domain = email?.split('@')[1];
-      
       if (domain !== "stars.mc") {
         console.log(`Access denied for domain: ${domain}`);
         return false;
       }
-      
       console.log(`Access granted for user: ${email}`);
       return true;
     },
@@ -48,20 +72,18 @@ export const authOptions: AuthOptions = {
       if (token) {
         session.user.id = token.sub;
         // Add calendar access info to session
-        session.user.hasCalendarAccess = token.hasCalendarAccess || false;
+        session.user.hasCalendarAccess = (token as any).hasCalendarAccess || false;
       }
       return session;
     },
     async jwt({ token, user, account }: any) {
       if (user) {
-        token.sub = user.id;
+        token.sub = (user as any).id;
       }
-      
-      // Store calendar access scope in token
+      // Store calendar access scope in token (Google only)
       if (account?.scope) {
-        token.hasCalendarAccess = account.scope.includes('https://www.googleapis.com/auth/calendar.readonly');
+        (token as any).hasCalendarAccess = account.scope.includes('https://www.googleapis.com/auth/calendar.readonly');
       }
-      
       return token;
     },
   },

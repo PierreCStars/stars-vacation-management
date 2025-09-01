@@ -1,12 +1,15 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
-import { useEffect, Suspense } from 'react';
+import { useEffect, Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Navigation from '@/components/Navigation';
 import PageHeader from '@/components/ui/PageHeader';
 import Card from '@/components/ui/Card';
 import SignInButton from '@/components/SignInButton';
+import { signIn } from 'next-auth/react';
+
+const isPreview = process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview';
 
 function SignInContent() {
   const { data: session, status } = useSession();
@@ -59,15 +62,46 @@ function SignInContent() {
                   Welcome Back
                 </h2>
                 <p className="text-gray-600 mb-6">
-                  Sign in with your Stars MC account to continue
+                  {isPreview ? 'Enter the preview credentials to continue' : 'Sign in with your Stars MC account to continue'}
                 </p>
               </div>
-              <SignInButton callbackUrl={callbackUrl} />
+              {isPreview ? (
+                <PreviewCredentialsForm callbackUrl={callbackUrl} />
+              ) : (
+                <SignInButton callbackUrl={callbackUrl} />
+              )}
             </Card>
           </div>
         </div>
       </main>
     </>
+  );
+}
+
+function PreviewCredentialsForm({ callbackUrl }: { callbackUrl: string }) {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState<string | null>(null);
+
+  const handleSubmit = async () => {
+    setError(null);
+    const res = await signIn('credentials', { username: email, password, callbackUrl, redirect: false });
+    if (!res?.ok) setError('Invalid preview credentials');
+    else window.location.href = callbackUrl;
+  };
+
+  return (
+    <div className="space-y-3 text-left">
+      <label className="block text-sm font-medium text-gray-700">Email</label>
+      <input className="border p-2 w-full rounded" placeholder="Email" value={email} onChange={(e)=> setEmail(e.target.value)} />
+      <label className="block text-sm font-medium text-gray-700">Password</label>
+      <input className="border p-2 w-full rounded" type="password" placeholder="Password" value={password} onChange={(e)=> setPassword(e.target.value)} />
+      <button className="px-3 py-2 border rounded w-full bg-blue-600 text-white" onClick={handleSubmit}>
+        Sign in
+      </button>
+      {error && <p className="text-sm text-red-600">{error}</p>}
+      <p className="text-xs text-gray-500">Preview environment only.</p>
+    </div>
   );
 }
 

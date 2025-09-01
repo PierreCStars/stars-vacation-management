@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { usePathname } from 'next/navigation';
-import Link from 'next/link';
+import Link from 'next-intl/link';
 import Image from 'next/image';
 import { createLocaleLink } from '@/lib/utils';
 import VacationRequestForm from '@/components/VacationRequestForm';

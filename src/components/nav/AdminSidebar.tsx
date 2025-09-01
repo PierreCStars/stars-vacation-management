@@ -2,7 +2,7 @@
 
 import { usePathname } from 'next/navigation';
 import { createLocaleUrl } from '@/i18n/routing';
-import Link from 'next/link';
+import Link from 'next-intl/link';
 
 export function AdminSidebar() {
   const pathname = usePathname();

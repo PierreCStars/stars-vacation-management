@@ -1,6 +1,6 @@
 "use client";
 import { useSession } from "next-auth/react";
-import Link from "next/link";
+import Link from "next-intl/link";
 
 export default function TestSessionPage() {
   const { data: session, status } = useSession();

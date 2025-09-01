@@ -1,6 +1,6 @@
-# Stars Vacation Management
+# Stars Vacation Management System
 
-A comprehensive vacation management system for Stars Luxury Group.
+A comprehensive vacation request management system with Google Calendar integration, built with Next.js, TypeScript, and Firebase.
 
 ## Features
 
@@ -22,6 +22,7 @@ npm run dev
 This project is deployed on Vercel with automatic deployments from the main branch.
 
 <!-- Force new deployment: 2024-01-08 -->
-<!-- Deployment trigger: 2024-01-08 -->
+<!-- Deployment trigger: 2024-01-08 17:15:00 -->
+<!-- Force Vercel to use latest commit 4b9e260 -->
 <!-- Locale JSON fix deployment: 2024-01-08 -->
 <!-- Force latest commit deployment: 2024-01-08 -->

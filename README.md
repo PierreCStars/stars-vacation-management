@@ -22,3 +22,4 @@ npm run dev
 This project is deployed on Vercel with automatic deployments from the main branch.
 
 <!-- Force new deployment: 2024-01-08 -->
+<!-- Deployment trigger: 2024-01-08 -->

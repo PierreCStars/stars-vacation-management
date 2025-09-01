@@ -92,7 +92,7 @@ export async function GET(request: NextRequest) {
           .limit(50);
 
         const querySnapshot = await q.get();
-        const overlappingRequests = [];
+        const overlappingRequests: any[] = [];
 
         querySnapshot.forEach(doc => {
           const data = doc.data();

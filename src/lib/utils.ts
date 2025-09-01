@@ -9,3 +9,5 @@ export function createLocaleLink(path: string, locale: SupportedLocale) {
 
 // small helpers used across the app (safe no-ops if not needed)
 export const isDefined = <T>(v: T | undefined | null): v is T => v !== undefined && v !== null;
+
+// Force new deployment

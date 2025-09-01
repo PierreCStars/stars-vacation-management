@@ -22,7 +22,7 @@ npm run dev
 This project is deployed on Vercel with automatic deployments from the main branch.
 
 <!-- Force new deployment: 2024-01-08 -->
-<!-- Deployment trigger: 2024-01-08 17:15:00 -->
-<!-- Force Vercel to use latest commit 4b9e260 -->
-<!-- Locale JSON fix deployment: 2024-01-08 -->
+<!-- Deployment trigger: 2024-01-08 17:45:00 -->
+<!-- Force Vercel to use latest commit 11199b1 with locale JSON fixes -->
+<!-- Previous commit: 29cc05c - Vercel needs to use 11199b1 -->
 <!-- Force latest commit deployment: 2024-01-08 -->

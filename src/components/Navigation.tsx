@@ -5,9 +5,10 @@ import Image from 'next/image';
 import { LanguageSwitcher } from './nav/LanguageSwitcher';
 import { SignOutButton } from './SignOutButton';
 import Avatar from './Avatar';
-import Link from 'next-intl/link';
+import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { createLocaleUrl } from '@/i18n/routing';
 
 export default function Navigation() {
   const { data: session } = useSession();

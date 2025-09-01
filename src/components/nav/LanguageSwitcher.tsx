@@ -1,7 +1,7 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import Link from 'next-intl/link';
+import Link from 'next/link';
 
 export function LanguageSwitcher() {
   const pathname = usePathname();

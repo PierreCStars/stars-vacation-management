@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { detectCalendarConflicts, FreeBusyRequest } from '@/lib/google/calendar-client';
 
-// Ensure this route runs in Node.js runtime for googleapis compatibility
-export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 
 export async function POST(request: NextRequest) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions) as any;
     if (!session?.user?.email) {
       return NextResponse.json(
         { error: 'Unauthorized' },

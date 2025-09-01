@@ -63,10 +63,10 @@ export async function GET(req: Request) {
     try {
       if (isFirebaseAdminAvailable()) {
         const { db } = firebaseAdmin();
-        let q = db.collection("vacationRequests");
-        if (status !== "all") q = q.where("status", "==", status);
+        const collection = db.collection("vacationRequests");
+        let q = status !== "all" ? collection.where("status", "==", status) : collection;
         const snap = await q.get();
-        rows = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+        rows = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
         
         console.log(`✅ Fetched ${rows.length} vacation requests for CSV export (status: ${status})`);
       } else {

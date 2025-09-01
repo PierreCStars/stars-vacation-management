@@ -1,12 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { usePathname } from 'next/navigation';
-import Link from 'next-intl/link';
+import Link from 'next/link';
 import Image from 'next/image';
 import { createLocaleLink } from '@/lib/utils';
-import VacationRequestForm from '@/components/VacationRequestForm';
 import { VacationRequest } from '@/types/vacation';
 import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 

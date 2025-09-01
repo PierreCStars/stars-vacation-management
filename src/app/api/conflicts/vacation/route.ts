@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await getServerSession(authOptions) as any;
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }

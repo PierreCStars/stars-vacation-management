@@ -29,7 +29,7 @@ export default function VacationRequestDetailPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const requestId = params.id as string;
+  const requestId = params?.id as string;
 
   useEffect(() => {
     const fetchData = async () => {

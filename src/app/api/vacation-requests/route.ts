@@ -2,11 +2,12 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { NextRequest, NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { adminVacationSubject, adminVacationHtml, adminVacationText } from '@/lib/email-templates';
 import { sendAdminNotification } from '@/lib/mailer';
+import { getBaseUrl } from '@/lib/base-url';
 
 // Temporary in-memory storage for testing
 const tempVacationRequests = new Map();
@@ -105,7 +106,7 @@ export async function POST(request: Request) {
 
     // Send admin notification email
     try {
-      const baseUrl = process.env.APP_BASE_URL || process.env.NEXT_PUBLIC_APP_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+      const baseUrl = getBaseUrl();
       // Fix: Include locale prefix in the review URL
       const reviewUrl = `${baseUrl}/en/admin/vacation-requests/${tempRequestId}`;
 

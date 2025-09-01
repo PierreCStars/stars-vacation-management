@@ -6,7 +6,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 const getSecret = () => {
   const secret = process.env.NEXTAUTH_SECRET;
   if (!secret) {
-    console.warn("NEXTAUTH_SECRET not set, using fallback secret");
+    console.warn('NEXTAUTH_SECRET is missing; using fallback only in DEV.');
     return "fallback-secret-for-development-only";
   }
   return secret;

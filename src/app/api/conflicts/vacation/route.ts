@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
+import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { firebaseAdmin, isFirebaseAdminAvailable } from '@/lib/firebase-admin';
 import { listEventsInRange } from '@/lib/google-calendar';

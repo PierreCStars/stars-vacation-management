@@ -1,7 +1,28 @@
-// Use require for JSON files to avoid module resolution issues
-const en = require('./en.json');
-const fr = require('./fr.json');
-const it = require('./it.json');
+// Dynamic import function for JSON files to work with Next.js 15
+export async function loadMessages() {
+  const en = await import('./en.json');
+  const fr = await import('./fr.json');
+  const it = await import('./it.json');
+  
+  return { 
+    en: en.default, 
+    fr: fr.default, 
+    it: it.default 
+  };
+}
 
-export const messages = { en, fr, it };
-export type SupportedLocale = keyof typeof messages;
+// For backward compatibility, we'll also try to load them synchronously
+let messages: any = {};
+
+try {
+  // Try to load synchronously first
+  const en = require('./en.json');
+  const fr = require('./fr.json');
+  const it = require('./it.json');
+  messages = { en, fr, it };
+} catch (error) {
+  console.warn('Could not load messages synchronously, will use dynamic loading');
+}
+
+export { messages };
+export type SupportedLocale = 'en' | 'fr' | 'it';

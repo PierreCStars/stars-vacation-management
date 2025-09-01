@@ -54,14 +54,16 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     // Load translations for the current locale
     const loadTranslations = async () => {
       try {
-        const { messages } = await import('@/locales');
+        const { loadMessages } = await import('@/locales');
+        const messages = await loadMessages();
         const localeMessages = messages[locale as keyof typeof messages];
         setTranslations(localeMessages);
       } catch (error) {
         console.warn(`Failed to load translations for locale ${locale}:`, error);
         // Fallback to English
         try {
-          const { messages } = await import('@/locales');
+          const { loadMessages } = await import('@/locales');
+          const messages = await loadMessages();
           setTranslations(messages.en);
         } catch (fallbackError) {
           console.error('Failed to load fallback translations:', fallbackError);

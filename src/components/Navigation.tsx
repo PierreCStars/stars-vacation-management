@@ -5,7 +5,7 @@ import Image from 'next/image';
 import { LanguageSwitcher } from './nav/LanguageSwitcher';
 import { SignOutButton } from './SignOutButton';
 import Avatar from './Avatar';
-import { Link } from 'next-intl/navigation';
+import Link from 'next-intl/link';
 import { usePathname } from 'next/navigation';
 import { useLanguage } from '@/contexts/LanguageContext';
 

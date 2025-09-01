@@ -9,6 +9,13 @@ const nextConfig = {
       ...(config.resolve.alias || {}),
       "@": new URL('./src', import.meta.url).pathname,
     };
+    
+    // Ensure JSON files are properly handled
+    config.module.rules.push({
+      test: /\.json$/,
+      type: 'json',
+    });
+    
     return config;
   },
   images: {

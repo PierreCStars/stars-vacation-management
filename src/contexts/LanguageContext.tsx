@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { usePathname } from 'next-intl/client';
+import { usePathname } from 'next/navigation';
 
 // Define the translation structure
 interface Translations {

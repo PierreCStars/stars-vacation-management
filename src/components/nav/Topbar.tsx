@@ -1,5 +1,5 @@
 'use client';
-import { usePathname } from 'next-intl/client';
+import { usePathname } from 'next/navigation';
 import { createLocaleUrl } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 import Link from 'next/link';

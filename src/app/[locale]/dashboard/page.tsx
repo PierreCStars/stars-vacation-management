@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useTranslations } from 'next-intl';
-import { usePathname } from 'next-intl/client';
+import { usePathname } from 'next/navigation';
 import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 import { VacationRequest } from '@/types/vacation';
 import { createLocaleLink } from '@/lib/utils';

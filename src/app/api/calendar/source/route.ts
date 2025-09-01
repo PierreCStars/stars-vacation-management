@@ -6,6 +6,14 @@ import { listEventsInRange } from '@/lib/google-calendar';
 
 export async function GET(req: Request) {
   try {
+    // Handle build-time scenario where req.url might be undefined
+    if (!req.url) {
+      return NextResponse.json({
+        events: [],
+        error: 'Request URL not available during build time'
+      }, { status: 400 });
+    }
+
     const url = new URL(req.url);
     const days = Number(url.searchParams.get('days') || 90);
     const calId = process.env.GOOGLE_CALENDAR_SOURCE_ID;

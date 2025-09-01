@@ -28,6 +28,15 @@ function loadGoogleCreds() {
 
 export async function GET(request: NextRequest) {
   try {
+    // Handle build-time scenario where request.url might be undefined
+    if (!request.url) {
+      return NextResponse.json({
+        success: false,
+        error: 'Request URL not available during build time',
+        events: []
+      }, { status: 400 });
+    }
+
     const { searchParams } = new URL(request.url);
     const timeMin = searchParams.get('timeMin');
     const timeMax = searchParams.get('timeMax');

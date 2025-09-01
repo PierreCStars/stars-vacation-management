@@ -36,22 +36,38 @@ const mockEvents = [
 ];
 
 export async function GET(req: Request) {
-  const url = new URL(req.url);
-  const days = Number(url.searchParams.get('days') || 60);
-  
-  // For now, return mock data
-  // TODO: Integrate with Google Calendar API
-  // const calId = process.env.GOOGLE_CALENDAR_TARGET_ID;
-  // if (!calId) return NextResponse.json({events: [], error: 'Missing GOOGLE_CALENDAR_TARGET_ID'}, {status: 200});
+  try {
+    // Handle build-time scenario where req.url might be undefined
+    if (!req.url) {
+      return NextResponse.json({
+        events: [],
+        error: 'Request URL not available during build time'
+      }, { status: 400 });
+    }
 
-  const now = new Date();
-  const end = new Date(now.getTime() + days * 24 * 3600 * 1000);
-  
-  // Filter events within the date range
-  const events = mockEvents.filter(event => {
-    const eventStart = new Date(event.startDate);
-    return eventStart >= now && eventStart <= end;
-  });
+    const url = new URL(req.url);
+    const days = Number(url.searchParams.get('days') || 60);
+    
+    // For now, return mock data
+    // TODO: Integrate with Google Calendar API
+    // const calId = process.env.GOOGLE_CALENDAR_TARGET_ID;
+    // if (!calId) return NextResponse.json({events: [], error: 'Missing GOOGLE_CALENDAR_TARGET_ID'}, {status: 200});
 
-  return NextResponse.json({ events });
+    const now = new Date();
+    const end = new Date(now.getTime() + days * 24 * 3600 * 1000);
+    
+    // Filter events within the date range
+    const events = mockEvents.filter(event => {
+      const eventStart = new Date(event.startDate);
+      return eventStart >= now && eventStart <= end;
+    });
+
+    return NextResponse.json({ events });
+  } catch (error) {
+    console.error('Error in global calendar route:', error);
+    return NextResponse.json({
+      events: [],
+      error: 'Failed to fetch calendar events'
+    }, { status: 500 });
+  }
 }

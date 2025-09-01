@@ -46,6 +46,13 @@ function toCSV(rows: Record<string, any>[]) {
 
 export async function GET(req: Request) {
   try {
+    // Handle build-time scenario where req.url might be undefined
+    if (!req.url) {
+      return NextResponse.json({
+        error: 'Request URL not available during build time'
+      }, { status: 400 });
+    }
+
     const url = new URL(req.url);
     // status filter (default approved)
     const status = url.searchParams.get("status") || "approved";

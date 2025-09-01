@@ -40,6 +40,15 @@ interface ConflictResult {
 
 export async function GET(request: NextRequest) {
   try {
+    // Handle build-time scenario where request.url might be undefined
+    if (!request.url) {
+      return NextResponse.json({
+        success: false,
+        error: 'Request URL not available during build time',
+        timestamp: new Date().toISOString()
+      }, { status: 400 });
+    }
+
     // Check authentication
     const session = await getServerSession(authOptions);
     if (!session?.user?.email) {

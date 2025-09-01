@@ -33,6 +33,15 @@ function resolveDuration(v: VR) {
 
 export async function GET(req: Request) {
   try {
+    // Handle build-time scenario where req.url might be undefined
+    if (!req.url) {
+      return NextResponse.json({
+        success: false,
+        error: 'Request URL not available during build time',
+        data: null
+      }, { status: 400 });
+    }
+
     const url = new URL(req.url);
     const status = url.searchParams.get("status") || "approved"; // default
     

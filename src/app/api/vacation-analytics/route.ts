@@ -5,6 +5,15 @@ import { getVacationAnalytics, getVacationAnalyticsForPeriod } from '@/lib/vacat
 
 export async function GET(request: NextRequest) {
   try {
+    // Handle build-time scenario where request.url might be undefined
+    if (!request.url) {
+      return NextResponse.json({
+        success: false,
+        error: 'Request URL not available during build time',
+        timestamp: new Date().toISOString()
+      }, { status: 400 });
+    }
+
     const { searchParams } = new URL(request.url);
     const startDate = searchParams.get('startDate');
     const endDate = searchParams.get('endDate');

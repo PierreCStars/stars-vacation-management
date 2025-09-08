@@ -1,5 +1,7 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
+export const runtime = 'nodejs';
+export const maxDuration = 60;
 
 import { NextResponse } from "next/server";
 import { importCalendarBIncremental } from "@/lib/import-calendar-b";

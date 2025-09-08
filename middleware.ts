@@ -1,10 +1,10 @@
-import createMiddleware from 'next-intl/middleware';
+// Temporarily disabled middleware to resolve 500 errors
+// import { NextRequest, NextResponse } from 'next/server';
 
-export default createMiddleware({
-  locales: ['en','fr','it'],
-  defaultLocale: 'en'
-});
+// export default function middleware(request: NextRequest) {
+//   return NextResponse.next();
+// }
 
-export const config = {
-  matcher: ['/', '/(en|fr|it)/:path*']
-};
+// export const config = {
+//   matcher: []
+// };

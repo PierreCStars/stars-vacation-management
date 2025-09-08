@@ -8,10 +8,10 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 export function Topbar() {
   const pathname = usePathname();
   const t = useTranslations();
-  const currentLocale = pathname.split('/')[1] || 'en';
+  const currentLocale = pathname?.split('/')[1] || 'en';
 
   const isActive = (href: string) =>
-    pathname === href || pathname.startsWith(href + '/');
+    pathname === href || pathname?.startsWith(href + '/') || false;
 
   return (
     <header

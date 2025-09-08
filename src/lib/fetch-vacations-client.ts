@@ -5,6 +5,11 @@ import { normalizeRequest, type VacationRequest } from "@/lib/vacations";
 
 /** Returns a plain array of VacationRequest */
 export async function fetchVacationRequestsClient(): Promise<VacationRequest[]> {
+  if (!db) {
+    console.warn('Firebase not initialized, returning empty array');
+    return [];
+  }
+  
   try {
     const snap = await getDocs(collection(db, "vacationRequests"));
     const arr = snap.docs.map(doc => normalizeRequest(doc.data(), doc.id));

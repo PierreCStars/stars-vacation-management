@@ -7,6 +7,9 @@ import VacationAnalytics from '@/components/VacationAnalytics';
 import Navigation from '@/components/Navigation';
 import PageHeader from '@/components/ui/PageHeader';
 
+// Disable static generation for this page
+export const dynamic = 'force-dynamic';
+
 export default function AnalyticsPage() {
   const { data: session, status } = useSession();
   const router = useRouter();

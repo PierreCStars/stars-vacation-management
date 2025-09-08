@@ -1,23 +1,24 @@
 'use client';
 
 import { useLanguage } from '@/contexts/LanguageContext';
-import { Language } from '@/lib/i18n';
+import { Language, getLanguageName, getLanguageFlag } from '@/lib/i18n';
 import { useState } from 'react';
 
 export default function LanguageSelector() {
-  const { language, setLanguage, getLanguageName, getLanguageFlag } = useLanguage();
+  const { currentLocale } = useLanguage();
   const [isOpen, setIsOpen] = useState(false);
 
   const languages: Language[] = ['en', 'fr', 'it'];
 
   const handleLanguageChange = (newLanguage: Language) => {
-    setLanguage(newLanguage);
+    // Navigate to the new language
+    window.location.href = `/${newLanguage}`;
     setIsOpen(false);
   };
 
   // Fallback values in case translations are not loaded yet
-  const currentLanguageName = getLanguageName ? getLanguageName(language) : 'English';
-  const currentLanguageFlag = getLanguageFlag ? getLanguageFlag(language) : '🇺🇸';
+  const currentLanguageName = getLanguageName(currentLocale as Language);
+  const currentLanguageFlag = getLanguageFlag(currentLocale as Language);
 
   return (
     <div className="relative">
@@ -90,7 +91,7 @@ export default function LanguageSelector() {
                   key={lang}
                   onClick={() => handleLanguageChange(lang)}
                   className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors duration-150 flex items-center space-x-3 ${
-                    language === lang ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                    currentLocale === lang ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
                   }`}
                   style={{
                     width: '100%',
@@ -101,25 +102,25 @@ export default function LanguageSelector() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.75rem',
-                    backgroundColor: language === lang ? '#eff6ff' : 'transparent',
-                    color: language === lang ? '#1d4ed8' : '#374151'
+                    backgroundColor: currentLocale === lang ? '#eff6ff' : 'transparent',
+                    color: currentLocale === lang ? '#1d4ed8' : '#374151'
                   }}
                   onMouseEnter={(e) => {
-                    if (language !== lang) {
+                    if (currentLocale !== lang) {
                       e.currentTarget.style.backgroundColor = '#f3f4f6';
                     }
                   }}
                   onMouseLeave={(e) => {
-                    if (language !== lang) {
+                    if (currentLocale !== lang) {
                       e.currentTarget.style.backgroundColor = 'transparent';
                     }
                   }}
                 >
                   <span style={{ fontSize: '1.25rem' }}>{langFlag}</span>
-                  <span style={{ fontWeight: language === lang ? '600' : '400' }}>
+                  <span style={{ fontWeight: currentLocale === lang ? '600' : '400' }}>
                     {langName}
                   </span>
-                  {language === lang && (
+                  {currentLocale === lang && (
                     <svg
                       style={{ width: '1rem', height: '1rem', marginLeft: 'auto' }}
                       fill="currentColor"

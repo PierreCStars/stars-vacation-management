@@ -8,7 +8,7 @@ export function AdminSidebar() {
   const pathname = usePathname();
   const currentLocale = pathname?.split('/')[1] || 'en';
 
-  const isActive = (href: string) => pathname.includes(href);
+  const isActive = (href: string) => pathname?.includes(href) || false;
 
   return (
     <div className="w-64 bg-white shadow-lg min-h-screen">

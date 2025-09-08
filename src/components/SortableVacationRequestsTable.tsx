@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next-intl/link';
+import Link from 'next/link';
 
 interface VacationRequest {
   id: string;

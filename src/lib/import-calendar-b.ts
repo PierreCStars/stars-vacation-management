@@ -31,7 +31,7 @@ function toExternalEvent(it: any): ExternalEvent {
 
 export async function importCalendarBIncremental(): Promise<{inserted: number; updated: number; deleted: number; status: "ok" | "partial" | "error"; note?: string;}> {
   const log = await createSyncLog();
-  let updated = 0, deleted = 0;
+  let inserted = 0, updated = 0, deleted = 0;
   let status: "ok" | "partial" | "error" = "ok";
   let note = "";
 
@@ -83,7 +83,7 @@ export async function importCalendarBIncremental(): Promise<{inserted: number; u
 
       const items = resp.data.items || [];
       for (const it of items) {
-        if (it.status === "cancelled" || it?.deleted) {
+        if (it.status === "cancelled") {
           // deletion / cancellation
           await deleteExternalEventById(it.id!);
           deleted++;

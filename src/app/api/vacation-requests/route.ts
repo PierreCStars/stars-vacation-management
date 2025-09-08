@@ -106,7 +106,7 @@ export async function POST(request: Request) {
 
     // Send admin notification email
     try {
-      const baseUrl = getBaseUrl();
+      const baseUrl = await getBaseUrl();
       // Fix: Include locale prefix in the review URL
       const reviewUrl = `${baseUrl}/en/admin/vacation-requests/${tempRequestId}`;
 

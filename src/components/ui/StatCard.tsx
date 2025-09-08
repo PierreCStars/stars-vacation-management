@@ -1,7 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
-import Link from 'next-intl/link';
+import Link from 'next/link';
 import Card from './Card';
 
 interface StatCardProps {

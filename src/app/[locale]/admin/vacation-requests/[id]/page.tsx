@@ -2,9 +2,9 @@
 
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import PageHeader from '@/components/ui/PageHeader';
-import Card from '@/components/ui/Card';
-import Badge from '@/components/ui/Badge';
+// import PageHeader from '@/components/ui/PageHeader';
+// import Card from '@/components/ui/Card';
+// import Badge from '@/components/ui/Badge';
 
 interface VacationRequest {
   id: string;
@@ -296,10 +296,10 @@ export default function VacationRequestDetailPage() {
           </div>
 
           {/* Page Header */}
-          <PageHeader 
+          {/* <PageHeader 
             title="Vacation Request Details"
             description={`Reviewing request from ${vacationRequest.userName}`}
-          />
+          /> */}
 
           {/* Debug Panel - Remove after fixing the issue */}
           {process.env.NODE_ENV === 'development' && (
@@ -327,7 +327,7 @@ export default function VacationRequestDetailPage() {
           </div>
 
           {/* Request Details */}
-          <Card className="p-8">
+          <div className="p-8 bg-white rounded-lg shadow-sm border">
             <div className="space-y-6">
               {/* Header */}
               <div className="flex items-start justify-between border-b border-gray-200 pb-4">
@@ -338,7 +338,14 @@ export default function VacationRequestDetailPage() {
                   <p className="text-gray-600 mt-1">{vacationRequest.userEmail}</p>
                 </div>
                 <div className="text-right">
-                  <Badge status={vacationRequest.status} />
+                  <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border ${
+                    vacationRequest.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                    vacationRequest.status === 'APPROVED' ? 'bg-green-100 text-green-800 border-green-200' :
+                    vacationRequest.status === 'REJECTED' ? 'bg-red-100 text-red-800 border-red-200' :
+                    'bg-gray-100 text-gray-800 border-gray-200'
+                  }`}>
+                    {vacationRequest.status}
+                  </span>
                   <p className="text-sm text-gray-500 mt-1">
                     Requested {new Date(vacationRequest.createdAt).toLocaleDateString()}
                   </p>
@@ -428,7 +435,7 @@ export default function VacationRequestDetailPage() {
                 </div>
               )}
             </div>
-          </Card>
+          </div>
         </div>
       </div>
     </>

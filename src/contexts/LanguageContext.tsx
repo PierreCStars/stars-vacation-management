@@ -8,11 +8,11 @@ interface Translations {
   common: Record<string, string>;
   nav: Record<string, string>;
   vacations: Record<string, string>;
-  analytics: Record<string, string>;
-  emails: Record<string, string>;
-  calendar: Record<string, string>;
-  admin: Record<string, string>;
-  dashboard: Record<string, string>;
+  analytics?: Record<string, string>;
+  emails?: Record<string, string>;
+  calendar?: Record<string, string>;
+  admin?: Record<string, string>;
+  dashboard?: Record<string, string>;
 }
 
 // Create the context

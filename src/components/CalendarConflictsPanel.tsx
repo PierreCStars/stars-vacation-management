@@ -12,7 +12,7 @@ interface CalendarConflictsPanelProps {
 }
 
 export default function CalendarConflictsPanel({ 
-  _requestId, 
+  requestId, 
   startDate, 
   endDate, 
   requesterUserId 

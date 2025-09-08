@@ -74,7 +74,10 @@ export default function Navigation() {
                 {tNav('vacationRequests')}
               </Link>
               
-              {session?.user?.role === 'admin' && (
+              {(session?.user?.email === 'johnny@stars.mc' || 
+                session?.user?.email === 'pierre@stars.mc' || 
+                session?.user?.email === 'daniel@stars.mc' || 
+                session?.user?.email === 'compta@stars.mc') && (
                 <>
                   <Link
                     href={createLocaleLink('/admin/vacation-requests')}
@@ -108,7 +111,10 @@ export default function Navigation() {
             
             {session?.user ? (
               <div className="flex items-center space-x-3">
-                <Avatar user={session.user} />
+                <Avatar 
+                  name={session.user.name || session.user.email || 'User'} 
+                  src={session.user.image} 
+                />
                 <SignOutButton />
               </div>
             ) : (

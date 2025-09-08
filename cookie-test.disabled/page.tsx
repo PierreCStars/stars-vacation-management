@@ -2,6 +2,9 @@
 
 import { useSession } from "next-auth/react";
 
+// Disable static generation for this page
+export const dynamic = 'force-dynamic';
+
 export default function CookieTestPage() {
   const { data: session, status } = useSession();
 

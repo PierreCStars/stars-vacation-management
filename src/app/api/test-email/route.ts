@@ -50,14 +50,14 @@ export async function GET() {
         textLength: text.length
       });
     } catch (emailError) {
-      console.log('⚠️ Email sending failed (expected if SMTP not configured):', emailError.message);
+      console.log('⚠️ Email sending failed (expected if SMTP not configured):', emailError instanceof Error ? emailError.message : String(emailError));
       return NextResponse.json({ 
         success: true, 
         message: 'Email templates work, but SMTP not configured',
         subject,
         htmlLength: html.length,
         textLength: text.length,
-        emailError: emailError.message
+        emailError: emailError instanceof Error ? emailError.message : String(emailError)
       });
     }
     

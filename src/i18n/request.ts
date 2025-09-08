@@ -5,6 +5,7 @@ export default getRequestConfig(async ({locale}) => {
   const { messages } = await import('@/locales');
   const localeMessages = messages[safe as keyof typeof messages];
   return {
+    locale: safe,
     messages: localeMessages,
     timeZone: 'Europe/Paris'
   };

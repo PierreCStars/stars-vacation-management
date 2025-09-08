@@ -9,6 +9,9 @@ import Card from '@/components/ui/Card';
 import SignInButton from '@/components/SignInButton';
 import { signIn } from 'next-auth/react';
 
+// Disable static generation for this page
+export const dynamic = 'force-dynamic';
+
 const isPreview = process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview';
 
 function SignInContent() {

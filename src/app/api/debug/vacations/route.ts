@@ -12,7 +12,7 @@ export async function GET() {
     // Try to fetch from Firestore first
     try {
       if (isFirebaseAdminAvailable()) {
-        const { db } = firebaseAdmin();
+        const { db } = await firebaseAdmin();
         const snap = await db.collection("vacationRequests").orderBy("createdAt", "desc").limit(5).get();
         latest = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
         console.log(`🔍 Debug: Found ${latest.length} latest requests in Firestore`);

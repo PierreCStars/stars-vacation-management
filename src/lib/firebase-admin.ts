@@ -9,7 +9,7 @@ export {
 } from './firebaseAdmin';
 
 // Legacy function for backward compatibility
-export function firebaseAdmin() {
-  const { getFirebaseAdminFirestore } = require('./firebaseAdmin');
+export async function firebaseAdmin() {
+  const { getFirebaseAdminFirestore } = await import('./firebaseAdmin');
   return { db: getFirebaseAdminFirestore() };
 }

@@ -119,7 +119,7 @@ export async function GET(req: Request) {
     // Try to fetch from Firestore first
     try {
       if (isFirebaseAdminAvailable()) {
-        const { db } = firebaseAdmin();
+        const { db } = await firebaseAdmin();
         
         // Pull approved/rejected requests whose startDate is in prev month
         const snap = await db.collection("vacationRequests")

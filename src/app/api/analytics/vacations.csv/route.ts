@@ -63,7 +63,7 @@ export async function GET(req: Request) {
     // Try to fetch from Firestore first
     try {
       if (isFirebaseAdminAvailable()) {
-        const { db } = firebaseAdmin();
+        const { db } = await firebaseAdmin();
         const collection = db.collection("vacationRequests");
         const q = status !== "all" ? collection.where("status", "==", status) : collection;
         const snap = await q.get();

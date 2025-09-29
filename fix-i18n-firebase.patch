@@ -1,0 +1,131 @@
+{\rtf1\ansi\ansicpg1252\cocoartf2865
+\cocoatextscaling0\cocoaplatform0{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+{\*\expandedcolortbl;;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww11520\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural\partightenfactor0
+
+\f0\fs24 \cf0 diff --git a/next.config.mjs b/next.config.mjs\
+new file mode 100644\
+--- /dev/null\
++++ b/next.config.mjs\
+@@ -0,0 +1,16 @@\
++/** @type \{import('next').NextConfig\} */\
++const nextConfig = \{\
++  i18n: \{\
++    locales: ["en", "fr"],\
++    defaultLocale: "en",\
++    localeDetection: true,\
++  \},\
++  productionBrowserSourceMaps: false,\
++\};\
++\
++export default nextConfig;\
+diff --git a/app/middleware.ts b/app/middleware.ts\
+new file mode 100644\
+--- /dev/null\
++++ b/app/middleware.ts\
+@@ -0,0 +1,29 @@\
++import \{ NextResponse \} from "next/server";\
++import type \{ NextRequest \} from "next/server";\
++\
++const PUBLIC_FILE = /\\.(.*)$/;\
++\
++export function middleware(req: NextRequest) \{\
++  const \{ pathname \} = req.nextUrl;\
++\
++  if (\
++    PUBLIC_FILE.test(pathname) ||\
++    pathname.startsWith("/api") ||\
++    pathname.startsWith("/_next")\
++  ) \{\
++    return;\
++  \}\
++\
++  const hasLocale = /^\\/(en|fr)(\\/|$)/.test(pathname);\
++  if (!hasLocale) \{\
++    const url = req.nextUrl.clone();\
++    url.pathname = `/en$\{pathname\}`;\
++    return NextResponse.redirect(url);\
++  \}\
++\}\
+diff --git a/app/[locale]/dashboard/page.tsx b/app/[locale]/dashboard/page.tsx\
+new file mode 100644\
+--- /dev/null\
++++ b/app/[locale]/dashboard/page.tsx\
+@@ -0,0 +1,29 @@\
++type Props = \{ params: \{ locale: "en" | "fr" \} \};\
++\
++export default function DashboardPage(\{ params: \{ locale \} \}: Props) \{\
++  const t = \{\
++    title: locale === "fr" ? "Tableau de bord" : "Dashboard",\
++    welcome:\
++      locale === "fr"\
++        ? "Bienvenue sur Stars Vacation."\
++        : "Welcome to Stars Vacation.",\
++  \};\
++\
++  return (\
++    <main className="p-6 space-y-4">\
++      <h1 className="text-2xl font-semibold">\{t.title\}</h1>\
++      <p>\{t.welcome\}</p>\
++    </main>\
++  );\
++\}\
+diff --git a/components/FirebaseDisabledBanner.tsx b/components/FirebaseDisabledBanner.tsx\
+new file mode 100644\
+--- /dev/null\
++++ b/components/FirebaseDisabledBanner.tsx\
+@@ -0,0 +1,21 @@\
++export default function FirebaseDisabledBanner() \{\
++  const enabled = process.env.NEXT_PUBLIC_ENABLE_FIREBASE === "true";\
++  if (enabled) return null;\
++  return (\
++    <div className="bg-yellow-100 text-yellow-900 p-3 text-sm">\
++      \uc0\u9888 \u65039  Firebase disabled \'96 set <code>NEXT_PUBLIC_ENABLE_FIREBASE=true</code>\{" "\}\
++      and add all <code>NEXT_PUBLIC_FIREBASE_*</code> variables in Vercel.\
++    </div>\
++  );\
++\}\
+diff --git a/lib/firebase.ts b/lib/firebase.ts\
+new file mode 100644\
+--- /dev/null\
++++ b/lib/firebase.ts\
+@@ -0,0 +1,30 @@\
++import \{ initializeApp, getApps \} from "firebase/app";\
++\
++const enabled = process.env.NEXT_PUBLIC_ENABLE_FIREBASE === "true";\
++\
++export const firebaseApp = enabled\
++  ? getApps()[0] ??\
++    initializeApp(\{\
++      apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY!,\
++      authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN!,\
++      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID!,\
++      storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET!,\
++      messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID!,\
++      appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID!,\
++    \})\
++  : undefined;\
++\
++export const isFirebaseEnabled = enabled;\
+diff --git a/app/[locale]/dashboard/layout.tsx b/app/[locale]/dashboard/layout.tsx\
+new file mode 100644\
+--- /dev/null\
++++ b/app/[locale]/dashboard/layout.tsx\
+@@ -0,0 +1,17 @@\
++import type \{ ReactNode \} from "react";\
++import FirebaseDisabledBanner from "@/components/FirebaseDisabledBanner";\
++\
++export default function DashboardLayout(\{\
++  children,\
++\}: \{\
++  children: ReactNode;\
++\}) \{\
++  return (\
++    <div className="min-h-screen">\
++      <FirebaseDisabledBanner />\
++      \{children\}\
++    </div>\
++  );\
++\}}

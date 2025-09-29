@@ -7,5 +7,5 @@ export default async function RootPage() {
   if (session?.user?.email) {
     redirect("/en/dashboard");
   }
-  redirect("/login");
+  redirect("/en/login");
 }

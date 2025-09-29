@@ -14,7 +14,8 @@ export async function GET() {
       'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID',
       'NEXT_PUBLIC_FIREBASE_APP_ID',
       'FIREBASE_PROJECT_ID',
-      'FIREBASE_SERVICE_ACCOUNT_KEY'
+      'FIREBASE_ADMIN_CLIENT_EMAIL',
+      'FIREBASE_ADMIN_PRIVATE_KEY'
     ];
 
     const envStatus = requiredVars.map(varName => ({
@@ -35,14 +36,14 @@ export async function GET() {
     let firebaseTest = { success: false, error: null };
     if (firebaseEnabled) {
       try {
-        // Try to import and initialize Firebase
-        const { initializeFirebase } = await import('@/lib/firebase');
-        const { app, db, auth } = initializeFirebase();
+        // Try to import and initialize Firebase client
+        const { getFirebase } = await import('@/lib/firebase');
+        const firebase = getFirebase();
         
-        if (app && db) {
+        if (firebase && firebase.app && firebase.db) {
           firebaseTest = { success: true, error: null };
         } else {
-          firebaseTest = { success: false, error: 'Firebase initialized but app/db is undefined' };
+          firebaseTest = { success: false, error: 'Firebase client initialized but app/db is undefined' };
         }
       } catch (error) {
         firebaseTest = { 
@@ -56,7 +57,7 @@ export async function GET() {
     let adminTest = { success: false, error: null };
     if (adminConfigComplete) {
       try {
-        const { getFirebaseAdminApp } = await import('@/lib/firebaseAdmin');
+        const { getFirebaseAdminApp } = await import('@/lib/firebase');
         const app = getFirebaseAdminApp();
         adminTest = { success: true, error: null };
       } catch (error) {

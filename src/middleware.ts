@@ -65,5 +65,5 @@ export const config = {
   matcher: [
     // Protect everything by default, except public files handled above
     "/((?!_next/static|_next/image|favicon.ico).*)"
-  ],
+  ]
 };

@@ -8,7 +8,8 @@ import { authOptions } from '@/lib/auth';
 import { adminVacationSubject, adminVacationHtml, adminVacationText } from '@/lib/email-templates';
 import { sendAdminNotification } from '@/lib/mailer';
 import { getBaseUrl } from '@/lib/base-url';
-import { getVacationRequestsService, VacationRequest } from '@/lib/firebase';
+import { getFirebaseAdminDb, isFirebaseAdminAvailable } from '@/lib/firebase';
+import { VacationRequest } from '@/types/vacation';
 import { submitVacation } from '@/lib/vacation-orchestration';
 
 // Temporary in-memory storage for testing
@@ -17,13 +18,21 @@ const tempVacationRequests = new Map();
 export async function GET() {
   try {
     // Try to load from Firebase first
-    try {
-      const vacationService = getVacationRequestsService();
-      const requests = await vacationService.getAllVacationRequests();
-      console.log(`📊 Loaded ${requests.length} vacation requests from Firebase`);
-      return NextResponse.json(requests);
-    } catch (firebaseError) {
-      console.log('⚠️ Firebase not available, falling back to mock data:', firebaseError instanceof Error ? firebaseError.message : String(firebaseError));
+    if (isFirebaseAdminAvailable()) {
+      try {
+        const db = getFirebaseAdminDb();
+        const snapshot = await db.collection('vacationRequests').get();
+        const requests = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as VacationRequest[];
+        console.log(`📊 Loaded ${requests.length} vacation requests from Firebase`);
+        return NextResponse.json(requests);
+      } catch (firebaseError) {
+        console.log('⚠️ Firebase error, falling back to mock data:', firebaseError instanceof Error ? firebaseError.message : String(firebaseError));
+      }
+    } else {
+      console.log('⚠️ Firebase Admin not available, falling back to mock data');
       
       // Fallback to mock data if Firebase is not available
       const mockData = [
@@ -143,12 +152,29 @@ export async function POST(request: Request) {
     let requestId: string;
     
     // Try to save to Firebase first
-    try {
-      const vacationService = getVacationRequestsService();
-      requestId = await vacationService.createVacationRequest(vacationRequest);
-      console.log(`✅ Vacation request saved to Firebase with ID: ${requestId}`);
-    } catch (firebaseError) {
-      console.log('⚠️ Firebase not available, using temporary storage:', firebaseError instanceof Error ? firebaseError.message : String(firebaseError));
+    if (isFirebaseAdminAvailable()) {
+      try {
+        const db = getFirebaseAdminDb();
+        const docRef = await db.collection('vacationRequests').add({
+          ...vacationRequest,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        });
+        requestId = docRef.id;
+        console.log(`✅ Vacation request saved to Firebase with ID: ${requestId}`);
+      } catch (firebaseError) {
+        console.log('⚠️ Firebase error, using temporary storage:', firebaseError instanceof Error ? firebaseError.message : String(firebaseError));
+        // Fallback to temporary storage
+        requestId = `temp-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+        tempVacationRequests.set(requestId, {
+          ...vacationRequest,
+          id: requestId,
+          status: 'pending',
+          createdAt: new Date().toISOString()
+        });
+      }
+    } else {
+      console.log('⚠️ Firebase Admin not available, using temporary storage');
       
       // Fallback to temporary storage
       requestId = `temp-${Date.now()}-${Math.floor(Math.random() * 1000)}`;

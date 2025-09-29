@@ -13,8 +13,8 @@ export function getFirebaseAdmin(): {
   db: FirebaseFirestore.Firestore | null;
   error: string | null;
 } {
-  const projectId = process.env.FIREBASE_PROJECT_ID;
-  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
+  const projectId = process.env.FIREBASE_PROJECT_ID?.trim();
+  const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL?.trim();
   const privateKey = normalizePrivateKey(process.env.FIREBASE_ADMIN_PRIVATE_KEY);
 
   if (!projectId || !clientEmail || !privateKey) {

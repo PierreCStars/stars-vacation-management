@@ -37,7 +37,7 @@ export async function GET() {
     if (firebaseEnabled) {
       try {
         // Try to import and initialize Firebase client
-        const { getFirebase } = await import('@/lib/firebase');
+        const { getFirebase } = await import('@/lib/firebase/index');
         const firebase = getFirebase();
         
         if (firebase && firebase.app && firebase.db) {
@@ -57,7 +57,7 @@ export async function GET() {
     let adminTest = { success: false, error: null };
     if (adminConfigComplete) {
       try {
-        const { getFirebaseAdminApp } = await import('@/lib/firebase');
+        const { getFirebaseAdminApp } = await import('@/lib/firebase/index');
         const app = getFirebaseAdminApp();
         adminTest = { success: true, error: null };
       } catch (error) {

@@ -8,7 +8,7 @@ import { authOptions } from '@/lib/auth';
 import { adminVacationSubject, adminVacationHtml, adminVacationText } from '@/lib/email-templates';
 import { sendAdminNotification } from '@/lib/mailer';
 import { getBaseUrl } from '@/lib/base-url';
-import { getFirebaseAdminDb, isFirebaseAdminAvailable } from '@/lib/firebase';
+import { getFirebaseAdminDb, isFirebaseAdminAvailable } from '@/lib/firebase/index';
 import { VacationRequest } from '@/types/vacation';
 import { submitVacation } from '@/lib/vacation-orchestration';
 

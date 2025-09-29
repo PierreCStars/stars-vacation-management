@@ -3,13 +3,14 @@ import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth-config";
 import DashboardClient from "./DashboardClient";
 
-export default async function DashboardPage({ params }: { params: { locale: string } }) {
+export default async function DashboardPage({ params }: { params: Promise<{ locale: string }> }) {
+  const { locale } = await params;
   const session = await getServerSession(authOptions);
-  if (!session?.user?.email) redirect(`/${params.locale}/login`);
+  if (!session?.user?.email) redirect(`/${locale}/login`);
   
   // (Optional) enforce domain again, defensive:
   if (!session.user.email.endsWith("@"+(process.env.AUTH_ALLOWED_DOMAIN || "stars.mc"))) {
-    redirect(`/${params.locale}/login`);
+    redirect(`/${locale}/login`);
   }
   
   return <DashboardClient />;

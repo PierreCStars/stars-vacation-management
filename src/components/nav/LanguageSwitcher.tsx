@@ -1,14 +1,18 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import { createLocaleUrl } from '@/i18n/routing';
 
 export function LanguageSwitcher() {
   const pathname = usePathname();
+  const currentLocale = pathname?.split('/')[1] || 'en';
 
   const handleLanguageChange = (newLocale: string) => {
-    // Extract the path without locale prefix
-    const pathWithoutLocale = pathname?.replace(`/${newLocale}`, '') || '';
-    const newPath = `/${newLocale}${pathWithoutLocale}`;
+    // Get the current path without the locale prefix
+    const pathWithoutLocale = pathname?.replace(`/${currentLocale}`, '') || '/dashboard';
+    
+    // Create the new URL with the selected locale
+    const newPath = createLocaleUrl(pathWithoutLocale, newLocale);
     
     // Use window.location for navigation to ensure proper locale change
     window.location.href = newPath;

@@ -11,8 +11,12 @@ export default function LanguageSelector() {
   const languages: Language[] = ['en', 'fr', 'it'];
 
   const handleLanguageChange = (newLanguage: Language) => {
-    // Navigate to the new language
-    window.location.href = `/${newLanguage}`;
+    // Get current pathname and extract the path without locale
+    const pathname = window.location.pathname;
+    const pathWithoutLocale = pathname.replace(`/${currentLocale}`, '') || '/dashboard';
+    
+    // Navigate to the new language with the same path
+    window.location.href = `/${newLanguage}${pathWithoutLocale}`;
     setIsOpen(false);
   };
 

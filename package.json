@@ -10,8 +10,8 @@
     "kill:3000": "./scripts/kill-3000.sh",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "lint:fix": "eslint . --ext .ts,.tsx --fix",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "setup:production": "node setup-production-env.js",
     "deploy:firebase": "firebase deploy",
     "deploy:functions": "firebase deploy --only functions",
@@ -47,18 +47,22 @@
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@eslint/js": "^9.36.0",
     "@mswjs/interceptors": "^0.39.6",
     "@playwright/test": "^1.55.1",
     "@types/node": "^20.11.19",
     "@types/react": "^18.2.57",
+    "@typescript-eslint/eslint-plugin": "^8.44.1",
+    "@typescript-eslint/parser": "^8.44.1",
     "autoprefixer": "^10.4.21",
     "concurrently": "^9.2.1",
     "cross-env": "^7.0.3",
     "depcheck": "^1.4.7",
-    "eslint": "^8.56.0",
-    "eslint-config-next": "^14.2.32",
+    "eslint": "^9.36.0",
+    "eslint-config-next": "^15.5.4",
     "eslint-plugin-unused-imports": "^4.2.0",
     "firebase-tools": "^14.11.2",
+    "globals": "^16.4.0",
     "knip": "^5.63.0",
     "msw": "^2.11.3",
     "postcss": "^8.5.6",
@@ -68,5 +72,8 @@
     "tsx": "^4.7.0",
     "typescript": "^5.8.3",
     "vitest": "^3.2.4"
+  },
+  "overrides": {
+    "node-domexception": "^2.0.0"
   }
 }

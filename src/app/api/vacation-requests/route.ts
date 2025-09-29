@@ -1,4 +1,5 @@
 
+export const runtime = 'nodejs';
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
@@ -8,7 +9,7 @@ import { authOptions } from '@/lib/auth';
 import { adminVacationSubject, adminVacationHtml, adminVacationText } from '@/lib/email-templates';
 import { sendAdminNotification } from '@/lib/mailer';
 import { getBaseUrl } from '@/lib/base-url';
-import { getFirebaseAdminDb, isFirebaseAdminAvailable } from '@/lib/firebase/index';
+import { getFirebaseAdmin } from '@/lib/firebase/admin';
 import { VacationRequest } from '@/types/vacation';
 import { submitVacation } from '@/lib/vacation-orchestration';
 
@@ -18,9 +19,11 @@ const tempVacationRequests = new Map();
 export async function GET() {
   try {
     // Try to load from Firebase first
-    if (isFirebaseAdminAvailable()) {
+    const { db, error } = getFirebaseAdmin();
+    if (error || !db) {
+      console.log('⚠️ Firebase Admin not available, falling back to mock data:', error);
+    } else {
       try {
-        const db = getFirebaseAdminDb();
         const snapshot = await db.collection('vacationRequests').get();
         const requests = snapshot.docs.map(doc => ({
           id: doc.id,
@@ -31,11 +34,10 @@ export async function GET() {
       } catch (firebaseError) {
         console.log('⚠️ Firebase error, falling back to mock data:', firebaseError instanceof Error ? firebaseError.message : String(firebaseError));
       }
-    } else {
-      console.log('⚠️ Firebase Admin not available, falling back to mock data');
-      
-      // Fallback to mock data if Firebase is not available
-      const mockData = [
+    }
+    
+    // Fallback to mock data if Firebase is not available
+    const mockData = [
         {
           id: 'temp-1',
           userId: 'john@example.com',
@@ -86,8 +88,7 @@ export async function GET() {
         }
       ];
 
-      return NextResponse.json(mockData);
-    }
+    return NextResponse.json(mockData);
   } catch (error) {
     console.error('❌ Error fetching vacation requests:', error);
     return NextResponse.json([], { status: 500 });
@@ -149,12 +150,14 @@ export async function POST(request: Request) {
       durationDays: durationDays
     };
 
-    let requestId: string;
+    let requestId: string | undefined;
     
     // Try to save to Firebase first
-    if (isFirebaseAdminAvailable()) {
+    const { db, error } = getFirebaseAdmin();
+    if (error || !db) {
+      console.log('⚠️ Firebase Admin not available, using temporary storage:', error);
+    } else {
       try {
-        const db = getFirebaseAdminDb();
         const docRef = await db.collection('vacationRequests').add({
           ...vacationRequest,
           createdAt: new Date(),
@@ -173,10 +176,10 @@ export async function POST(request: Request) {
           createdAt: new Date().toISOString()
         });
       }
-    } else {
-      console.log('⚠️ Firebase Admin not available, using temporary storage');
-      
-      // Fallback to temporary storage
+    }
+    
+    if (!requestId) {
+      // Fallback to temporary storage if Firebase failed
       requestId = `temp-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
       tempVacationRequests.set(requestId, {
         ...vacationRequest,

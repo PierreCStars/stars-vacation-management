@@ -5,7 +5,7 @@ import { useParams } from "next/navigation";
 
 export default function LoginPage() {
   const params = useParams();
-  const locale = params.locale as string;
+  const locale = (params?.locale as string) || 'en';
   
   return (
     <main className="min-h-dvh flex items-center justify-center bg-gray-50 p-6">

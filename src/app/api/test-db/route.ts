@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 
+export const runtime = 'nodejs';
+
 export async function GET() {
   try {
     console.log('🔍 Testing database connection...');
@@ -33,12 +35,12 @@ export async function GET() {
     const adminConfigComplete = requiredVars.slice(7).every(v => !!process.env[v]);
 
     // Test Firebase client initialization
-    let firebaseTest = { success: false, error: null };
+    let firebaseTest: { success: boolean; error: string | null } = { success: false, error: null };
     if (firebaseEnabled) {
       try {
         // Try to import and initialize Firebase client
-        const { getFirebase } = await import('@/lib/firebase/index');
-        const firebase = getFirebase();
+        const { getFirebaseClient } = await import('@/lib/firebase/client');
+        const firebase = getFirebaseClient();
         
         if (firebase && firebase.app && firebase.db) {
           firebaseTest = { success: true, error: null };
@@ -54,11 +56,11 @@ export async function GET() {
     }
 
     // Test Firebase Admin
-    let adminTest = { success: false, error: null };
+    let adminTest: { success: boolean; error: string | null } = { success: false, error: null };
     if (adminConfigComplete) {
       try {
-        const { getFirebaseAdminApp } = await import('@/lib/firebase/index');
-        const app = getFirebaseAdminApp();
+        const { getFirebaseAdmin } = await import('@/lib/firebase/admin');
+        const { app } = getFirebaseAdmin();
         adminTest = { success: true, error: null };
       } catch (error) {
         adminTest = { 

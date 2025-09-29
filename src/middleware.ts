@@ -1,69 +1,72 @@
+// middleware.ts (root)
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 const PUBLIC_PATHS = new Set<string>([
-  "/login",
-  "/api/auth",   // NextAuth endpoints
-  "/api/health", // optional health
-  "/favicon.ico",
-  "/stars-logo.png",
-  "/favicon-32.png",
-  "/favicon-16.png",
-  "/favicon-48.png",
+  '/login',
+  '/favicon.ico',
+  '/stars-logo.png',
+  '/favicon-16.png',
+  '/favicon-32.png',
+  '/favicon-48.png',
 ]);
+
+// Build-time inline; safe for Edge
+const IS_DEV = process.env.NODE_ENV === 'development';
 
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Log all requests in development
-  // In Edge Runtime, we can use VERCEL_ENV to detect environment
-  const isDevelopment = process.env.VERCEL_ENV === 'development' || 
-                       process.env.VERCEL_ENV === undefined; // local development
-  
-  if (isDevelopment) {
-    console.log(`🌐 ${req.method} ${pathname}`, {
-      userAgent: req.headers.get('user-agent'),
-      referer: req.headers.get('referer'),
-      timestamp: new Date().toISOString()
+  // Dev-only lightweight log (Edge-safe)
+  if (IS_DEV) {
+    console.log('🌐', req.method, pathname, {
+      ua: req.headers.get('user-agent'),
+      t: new Date().toISOString(),
     });
   }
 
-  // Allow NextAuth and static/public files
+  // Always allow Next internals, images, and static files
   if (
-    pathname.startsWith("/api/auth") ||
-    pathname.startsWith("/_next/") ||
-    pathname.startsWith("/images/") ||
-    pathname.startsWith("/public/") ||
+    pathname.startsWith('/_next/') ||
+    pathname.startsWith('/images/') ||
     PUBLIC_PATHS.has(pathname)
   ) {
     return NextResponse.next();
   }
 
-  // If no session cookie, send to /login
-  const hasSession =
-    req.cookies.has("next-auth.session-token") || // production cookie name (Node)
-    req.cookies.has("__Secure-next-auth.session-token"); // secure cookie on HTTPS
+  // Allow NextAuth endpoints explicitly
+  if (pathname.startsWith('/api/auth')) {
+    return NextResponse.next();
+  }
 
-  if (!hasSession && pathname !== "/login") {
+  // Skip ALL other API routes from auth middleware (avoid pulling server code into Edge)
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.next();
+  }
+
+  // Session cookie check
+  const hasSession =
+    req.cookies.has('next-auth.session-token') ||
+    req.cookies.has('__Secure-next-auth.session-token');
+
+  if (!hasSession && pathname !== '/login') {
     const url = req.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("from", pathname);
+    url.pathname = '/login';
+    url.searchParams.set('from', pathname);
     return NextResponse.redirect(url);
   }
 
-  // Add error tracking headers
-  const response = NextResponse.next();
-  
-  // Add custom headers for debugging
-  response.headers.set('X-Debug-Timestamp', new Date().toISOString());
-  response.headers.set('X-Debug-Request-ID', Math.random().toString(36).substring(2, 15));
-
-  return response;
+  // Add debug headers
+  const res = NextResponse.next();
+  res.headers.set('X-Debug-Timestamp', new Date().toISOString());
+  res.headers.set('X-Debug-Request-ID', Math.random().toString(36).slice(2, 10));
+  return res;
 }
 
+// Narrow matcher: protect pages, not Next internals or API (except /api/auth which we allow above)
 export const config = {
   matcher: [
-    // Protect everything by default, except public files handled above
-    "/((?!_next/static|_next/image|favicon.ico).*)"
-  ]
+    // exclude: _next/*, static files, images, and ALL api routes
+    '/((?!_next/|api/|images/|favicon.ico|.*\\.(png|jpg|jpeg|gif|svg|ico|txt|xml)).*)',
+  ],
 };

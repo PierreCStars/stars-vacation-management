@@ -49,7 +49,13 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/api/') ||
     pathname === '/favicon.ico' ||
-    /\.(png|jpg|jpeg|gif|svg|ico|webp)$/.test(pathname)
+    pathname.endsWith('.png') ||
+    pathname.endsWith('.jpg') ||
+    pathname.endsWith('.jpeg') ||
+    pathname.endsWith('.gif') ||
+    pathname.endsWith('.svg') ||
+    pathname.endsWith('.ico') ||
+    pathname.endsWith('.webp')
   ) {
     return NextResponse.next();
   }

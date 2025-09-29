@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { isFirebaseAvailable, getFirebaseApp } from '@/lib/firebase';
+import { isFirebaseEnabled } from '@/lib/firebase/index';
 
 interface DiagnosticsData {
   nodeEnv: string;
@@ -77,7 +77,7 @@ export default function FirebaseDiagnostics() {
 
         const data: DiagnosticsData = {
           nodeEnv: process.env.NODE_ENV || 'unknown',
-          firebaseEnabled: process.env.NEXT_PUBLIC_ENABLE_FIREBASE === 'true',
+          firebaseEnabled: isFirebaseEnabled(),
           projectId,
           envVars: envVarStatus,
           timestamp: new Date().toISOString()

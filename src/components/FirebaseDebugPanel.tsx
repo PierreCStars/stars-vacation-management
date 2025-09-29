@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { isFirebaseAvailable, getFirebaseApp } from '@/lib/firebase-client';
+import { isFirebaseEnabled, getFirebase } from '@/lib/firebase/index';
 
 interface DiagnosticsData {
   nodeEnv: string;
@@ -33,26 +33,27 @@ export default function FirebaseDebugPanel() {
       try {
         const data: DiagnosticsData = {
           nodeEnv: process.env.NODE_ENV || 'unknown',
-          firebaseEnabled: process.env.NEXT_PUBLIC_ENABLE_FIREBASE === 'true',
+          firebaseEnabled: isFirebaseEnabled(),
           timestamp: new Date().toISOString(),
         };
 
-        if (data.firebaseEnabled && isFirebaseAvailable()) {
+        if (data.firebaseEnabled) {
           try {
-            const app = getFirebaseApp();
-            data.projectId = app.options.projectId;
+            const firebase = getFirebase();
+            if (firebase && firebase.app) {
+              data.projectId = firebase.app.options.projectId;
 
             // Try to get current user
-            const { getAuth } = await import('firebase/auth');
-            const auth = getAuth(app);
-            const user = auth.currentUser;
-            
-            if (user) {
-              data.currentUser = {
-                uid: user.uid,
-                email: user.email || undefined,
-                isAnonymous: user.isAnonymous,
-              };
+            if (firebase.auth) {
+              const user = firebase.auth.currentUser;
+              
+              if (user) {
+                data.currentUser = {
+                  uid: user.uid,
+                  email: user.email || undefined,
+                  isAnonymous: user.isAnonymous,
+                };
+              }
             }
           } catch (error) {
             data.lastError = error instanceof Error ? error.message : 'Unknown error';

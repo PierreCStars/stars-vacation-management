@@ -9,7 +9,7 @@ import UnifiedVacationCalendar from "@/components/UnifiedVacationCalendar";
 import ConflictDetailsDrawer from "@/components/ConflictDetailsDrawer";
 import FirebaseDebugPanel from "@/components/FirebaseDebugPanel";
 import FirebaseDiagnostics from "@/components/FirebaseDiagnostics";
-import { isFirebaseAvailable } from "@/lib/firebase";
+import { isFirebaseEnabled } from "@/lib/firebase/index";
 import { VacationRequestWithConflicts } from './_server/getRequestsWithConflicts';
 
 // Handle browser extension interference - moved to useEffect
@@ -157,7 +157,7 @@ export default function AdminVacationRequestsClient({
   return (
     <div className="space-y-6">
       {/* Firebase Warning Banner */}
-      {!isFirebaseAvailable() && (
+      {!isFirebaseEnabled() && (
         <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
           <div className="flex">
             <div className="flex-shrink-0">

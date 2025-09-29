@@ -8,8 +8,17 @@ const nextConfig = {
   
   // Instrumentation is enabled by default in Next.js 15+
   
-  // Enable source maps in production for better error tracking
-  productionBrowserSourceMaps: true,
+  // Disable source maps in production to avoid Vercel deployment issues
+  productionBrowserSourceMaps: false,
+  
+  // Webpack configuration for better source map handling
+  webpack: (config, { dev, isServer }) => {
+    if (!dev && !isServer) {
+      // Disable source maps in production builds
+      config.devtool = false;
+    }
+    return config;
+  },
   
   // Note: timezone is configured in src/i18n/request.ts for next-intl
   // Explicit environment variable mapping for build-time injection

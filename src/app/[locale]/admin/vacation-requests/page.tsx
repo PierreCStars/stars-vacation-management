@@ -1,5 +1,8 @@
 import Link from 'next/link';
 import { getRequestsWithConflicts, VacationRequestWithConflicts } from './_server/getRequestsWithConflicts';
+
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
 import UnifiedVacationCalendar from "@/components/UnifiedVacationCalendar";
 import ConflictDetailsDrawer from "@/components/ConflictDetailsDrawer";
 import FirebaseDebugPanel from "@/components/FirebaseDebugPanel";

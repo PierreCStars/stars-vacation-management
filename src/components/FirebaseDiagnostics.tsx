@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { isFirebaseEnabled } from '@/lib/firebase/index';
+import { isFirebaseEnabled } from '@/lib/firebase/client';
 
 interface DiagnosticsData {
   nodeEnv: string;

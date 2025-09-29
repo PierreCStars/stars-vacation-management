@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { isFirebaseEnabled, getFirebase } from '@/lib/firebase/index';
+import { isFirebaseEnabled, getFirebaseClient } from '@/lib/firebase/client';
 
 interface DiagnosticsData {
   nodeEnv: string;
@@ -39,7 +39,7 @@ export default function FirebaseDebugPanel() {
 
         if (data.firebaseEnabled) {
           try {
-            const firebase = getFirebase();
+            const firebase = getFirebaseClient();
             if (firebase && firebase.app) {
               data.projectId = firebase.app.options.projectId;
 

@@ -20,3 +20,8 @@ export function getFirebaseClient() {
   const app = getApps().length ? getApp() : initializeApp(cfg);
   return { app, auth: getAuth(app), db: getFirestore(app) };
 }
+
+// Utility function to check if Firebase is enabled
+export function isFirebaseEnabled(): boolean {
+  return process.env.NEXT_PUBLIC_ENABLE_FIREBASE?.trim() === 'true';
+}

@@ -9,7 +9,7 @@ import UnifiedVacationCalendar from "@/components/UnifiedVacationCalendar";
 import ConflictDetailsDrawer from "@/components/ConflictDetailsDrawer";
 import FirebaseDebugPanel from "@/components/FirebaseDebugPanel";
 import FirebaseDiagnostics from "@/components/FirebaseDiagnostics";
-import { isFirebaseEnabled } from "@/lib/firebase/index";
+import { isFirebaseEnabled } from "@/lib/firebase/client";
 import { VacationRequestWithConflicts } from './_server/getRequestsWithConflicts';
 
 // Handle browser extension interference - moved to useEffect

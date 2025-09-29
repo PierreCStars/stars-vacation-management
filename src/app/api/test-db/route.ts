@@ -30,7 +30,7 @@ export async function GET() {
         'MISSING'
     }));
 
-    const firebaseEnabled = process.env.NEXT_PUBLIC_ENABLE_FIREBASE === 'true';
+    const firebaseEnabled = process.env.NEXT_PUBLIC_ENABLE_FIREBASE?.trim() === 'true';
     const clientConfigComplete = requiredVars.slice(0, 7).every(v => !!process.env[v]);
     const adminConfigComplete = requiredVars.slice(7).every(v => !!process.env[v]);
 

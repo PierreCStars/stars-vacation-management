@@ -23,4 +23,7 @@ export interface VacationRequest {
   isHalfDay?: boolean;           // default false
   halfDayType?: HalfDayType;     // "morning" | "afternoon" | null
   durationDays?: number;         // e.g., 1, 2.5, 0.5
+  
+  // Google Calendar integration
+  googleEventId?: string;        // ID of the Google Calendar event
 }

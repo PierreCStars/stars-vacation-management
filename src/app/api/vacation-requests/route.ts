@@ -2,68 +2,83 @@
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { adminVacationSubject, adminVacationHtml, adminVacationText } from '@/lib/email-templates';
 import { sendAdminNotification } from '@/lib/mailer';
 import { getBaseUrl } from '@/lib/base-url';
+import { getVacationRequestsService, VacationRequest } from '@/lib/firebase';
+import { submitVacation } from '@/lib/vacation-orchestration';
 
 // Temporary in-memory storage for testing
 const tempVacationRequests = new Map();
 
 export async function GET() {
   try {
-    // For now, return mock data in the correct format
-    // TODO: Replace with Firestore when enabled
-    const mockData = [
-      {
-        id: 'temp-1',
-        userName: 'John Smith',
-        company: 'Stars Yachting',
-        type: 'Full day',
-        startDate: '2025-01-15',
-        endDate: '2025-01-17',
-        status: 'pending',
-        userEmail: 'john@example.com',
-        isHalfDay: false,
-        halfDayType: null,
-        durationDays: 3,
-        createdAt: '2025-01-08T10:00:00Z'
-      },
-      {
-        id: 'temp-2',
-        userName: 'Jane Doe',
-        company: 'Stars Real Estate',
-        type: 'Half day AM',
-        startDate: '2025-01-20',
-        endDate: '2025-01-20',
-        status: 'pending',
-        userEmail: 'jane@example.com',
-        isHalfDay: true,
-        halfDayType: 'morning',
-        durationDays: 1,
-        createdAt: '2025-01-09T14:30:00Z'
-      },
-      {
-        id: 'temp-3',
-        userName: 'Mike Wilson',
-        company: 'Le Pneu',
-        type: 'Full day',
-        startDate: '2025-01-10',
-        endDate: '2025-01-12',
-        status: 'approved',
-        userEmail: 'mike@example.com',
-        isHalfDay: false,
-        halfDayType: null,
-        durationDays: 3,
-        createdAt: '2025-01-07T09:15:00Z',
-        reviewedAt: '2025-01-08T10:00:00Z',
-        reviewedBy: { id: 'admin@stars.mc', name: 'Admin User', email: 'admin@stars.mc' }
-      }
-    ];
+    // Try to load from Firebase first
+    try {
+      const vacationService = getVacationRequestsService();
+      const requests = await vacationService.getAllVacationRequests();
+      console.log(`📊 Loaded ${requests.length} vacation requests from Firebase`);
+      return NextResponse.json(requests);
+    } catch (firebaseError) {
+      console.log('⚠️ Firebase not available, falling back to mock data:', firebaseError instanceof Error ? firebaseError.message : String(firebaseError));
+      
+      // Fallback to mock data if Firebase is not available
+      const mockData = [
+        {
+          id: 'temp-1',
+          userId: 'john@example.com',
+          userName: 'John Smith',
+          userEmail: 'john@example.com',
+          company: 'Stars Yachting',
+          type: 'Full day',
+          startDate: '2025-01-15',
+          endDate: '2025-01-17',
+          status: 'pending',
+          isHalfDay: false,
+          halfDayType: null,
+          durationDays: 3,
+          createdAt: '2025-01-08T10:00:00Z'
+        },
+        {
+          id: 'temp-2',
+          userId: 'jane@example.com',
+          userName: 'Jane Doe',
+          userEmail: 'jane@example.com',
+          company: 'Stars Real Estate',
+          type: 'Half day AM',
+          startDate: '2025-01-20',
+          endDate: '2025-01-20',
+          status: 'pending',
+          isHalfDay: true,
+          halfDayType: 'morning',
+          durationDays: 1,
+          createdAt: '2025-01-09T14:30:00Z'
+        },
+        {
+          id: 'temp-3',
+          userId: 'mike@example.com',
+          userName: 'Mike Wilson',
+          userEmail: 'mike@example.com',
+          company: 'Le Pneu',
+          type: 'Full day',
+          startDate: '2025-01-10',
+          endDate: '2025-01-12',
+          status: 'approved',
+          isHalfDay: false,
+          halfDayType: null,
+          durationDays: 3,
+          createdAt: '2025-01-07T09:15:00Z',
+          reviewedAt: '2025-01-08T10:00:00Z',
+          reviewedBy: 'Admin User',
+          reviewerEmail: 'admin@stars.mc'
+        }
+      ];
 
-    return NextResponse.json(mockData);
+      return NextResponse.json(mockData);
+    }
   } catch (error) {
     console.error('❌ Error fetching vacation requests:', error);
     return NextResponse.json([], { status: 500 });
@@ -78,20 +93,72 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const vacationRequest = await request.json();
+    const vacationRequestData = await request.json();
     
-    // Generate a temporary ID
-    const tempRequestId = `temp-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    // Calculate duration if not provided or invalid
+    let durationDays = vacationRequestData.durationDays;
+    console.log('🔍 Raw durationDays from frontend:', durationDays);
+    console.log('🔍 Vacation request data:', vacationRequestData);
     
-    // Add the request to temporary storage
-    tempVacationRequests.set(tempRequestId, {
-      ...vacationRequest,
-      id: tempRequestId,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
+    // Always recalculate to ensure accuracy
+    if (vacationRequestData.startDate && vacationRequestData.endDate) {
+      console.log('🔧 Calculating durationDays...');
+      const startDate = new Date(vacationRequestData.startDate);
+      const endDate = new Date(vacationRequestData.endDate);
+      const timeDiff = endDate.getTime() - startDate.getTime();
+      durationDays = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1; // +1 to include both start and end days
+      
+      // For half days, set to 0.5
+      if (vacationRequestData.isHalfDay) {
+        durationDays = 0.5;
+      }
+      console.log('✅ Calculated durationDays:', durationDays);
+    } else {
+      console.error('❌ Missing startDate or endDate in request data');
+      return NextResponse.json({ error: 'Missing required date fields' }, { status: 400 });
+    }
+    
+    // Ensure durationDays is a valid number
+    if (typeof durationDays !== 'number' || isNaN(durationDays) || durationDays <= 0) {
+      console.error('❌ Invalid durationDays calculated:', durationDays);
+      return NextResponse.json({ error: 'Invalid duration calculation' }, { status: 400 });
+    }
+
+    // Prepare the vacation request data
+    const vacationRequest: Omit<VacationRequest, 'id' | 'createdAt' | 'updatedAt'> = {
+      userId: session.user.email,
       userEmail: session.user.email,
-      userName: session.user.name || session.user.email
-    });
+      userName: session.user.name || session.user.email,
+      startDate: vacationRequestData.startDate,
+      endDate: vacationRequestData.endDate,
+      reason: vacationRequestData.reason,
+      company: vacationRequestData.company,
+      type: vacationRequestData.type,
+      status: 'pending',
+      isHalfDay: vacationRequestData.isHalfDay || false,
+      halfDayType: vacationRequestData.halfDayType || null,
+      durationDays: durationDays
+    };
+
+    let requestId: string;
+    
+    // Try to save to Firebase first
+    try {
+      const vacationService = getVacationRequestsService();
+      requestId = await vacationService.createVacationRequest(vacationRequest);
+      console.log(`✅ Vacation request saved to Firebase with ID: ${requestId}`);
+    } catch (firebaseError) {
+      console.log('⚠️ Firebase not available, using temporary storage:', firebaseError instanceof Error ? firebaseError.message : String(firebaseError));
+      
+      // Fallback to temporary storage
+      requestId = `temp-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+      tempVacationRequests.set(requestId, {
+        ...vacationRequest,
+        id: requestId,
+        status: 'pending',
+        createdAt: new Date().toISOString()
+      });
+    }
 
     console.log('🔧 Adding vacation request with ½-day support...', {
       isHalfDay: vacationRequest.isHalfDay,
@@ -104,57 +171,24 @@ export async function POST(request: Request) {
     // Check for conflicts (simplified for now)
     const hasConflicts = false; // TODO: Implement actual conflict detection
 
-    // Send admin notification email
+    // Send emails using orchestration
     try {
-      const baseUrl = await getBaseUrl();
-      // Fix: Include locale prefix in the review URL
-      const reviewUrl = `${baseUrl}/en/admin/vacation-requests/${tempRequestId}`;
-
-      // Get company name from the request or use default
-      const companyName = vacationRequest.company || 'Stars MC';
-
-      const subject = adminVacationSubject({
-        hasConflicts,
-        userName: vacationRequest.userName,
+      await submitVacation({
+        requesterEmail: vacationRequest.userEmail,
+        requestId,
+        startIso: vacationRequest.startDate,
+        endIso: vacationRequest.endDate
       });
-
-      const html = adminVacationHtml({
-        userName: vacationRequest.userName,
-        companyName,
-        startDate: vacationRequest.startDate,
-        endDate: vacationRequest.endDate,
-        isHalfDay: vacationRequest.isHalfDay,
-        halfDayType: vacationRequest.halfDayType,
-        hasConflicts,
-        reviewUrl,
-      });
-
-      const text = adminVacationText({
-        userName: vacationRequest.userName,
-        companyName,
-        startDate: vacationRequest.startDate,
-        endDate: vacationRequest.endDate,
-        isHalfDay: vacationRequest.isHalfDay,
-        halfDayType: vacationRequest.halfDayType,
-        hasConflicts,
-      });
-
-      // Send email to all admins
-      await sendAdminNotification({ subject, html, text });
-
-      console.log('✅ Admin notification email sent successfully');
-      if (hasConflicts) {
-        console.log('⚠️ Conflict warning included in email');
-      }
+      console.log('✅ Vacation request emails sent successfully');
     } catch (emailError) {
-      console.error('❌ Failed to send admin notification:', emailError);
+      console.error('❌ Failed to send vacation request emails:', emailError);
     }
 
-    console.log('✅ Vacation request prepared for Google Calendar (disabled for testing)');
+    console.log('✅ Vacation request prepared for Google Calendar integration');
 
     return NextResponse.json({ 
       success: true, 
-      id: tempRequestId,
+      id: requestId,
       message: 'Vacation request submitted successfully' 
     });
 

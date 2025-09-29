@@ -12,12 +12,33 @@ interface CompanyEvent {
   location: string;
 }
 
+interface ConflictEvent {
+  id: string;
+  userName: string;
+  userEmail: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  type: string;
+  isHalfDay: boolean;
+  halfDayType: string | null;
+  reason?: string;
+  company: string;
+  createdAt: string;
+}
+
 interface UnifiedVacationCalendarProps {
   vacationRequests: VacationRequest[];
   currentRequestId?: string;
   showLegend?: boolean;
   compact?: boolean;
   className?: string;
+  // New props for conflict highlighting
+  readOnly?: boolean;
+  initialRange?: { start: Date; end: Date };
+  conflicts?: ConflictEvent[];
+  highlightRange?: boolean;
+  onRangeChange?: (range: { start: Date; end: Date }) => void;
 }
 
 interface CalendarDay {
@@ -30,6 +51,9 @@ interface CalendarDay {
   conflictCount: number;
   hasConflict: boolean;
   severity: 'none' | 'low' | 'medium' | 'high';
+  // New properties for conflict highlighting
+  isInSelectedRange?: boolean;
+  conflictEvents?: ConflictEvent[];
 }
 
 export default function UnifiedVacationCalendar({ 
@@ -37,62 +61,73 @@ export default function UnifiedVacationCalendar({
   currentRequestId,
   showLegend = true,
   compact = false,
-  className = ''
+  className = '',
+  // New props
+  readOnly = false,
+  initialRange,
+  conflicts = [],
+  highlightRange = false,
+  onRangeChange
 }: UnifiedVacationCalendarProps) {
-  console.log('UnifiedVacationCalendar: Component starting to render');
-  console.log('UnifiedVacationCalendar: Props received:', { vacationRequests: vacationRequests?.length, currentRequestId, showLegend, compact, className });
 
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const [currentDate, setCurrentDate] = useState(() => new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [companyEvents, setCompanyEvents] = useState<CompanyEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
+  const [mounted, setMounted] = useState(false);
+
+  // Set mounted state after component mounts
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Fetch company events from the source calendar
   useEffect(() => {
-    console.log('UnifiedVacationCalendar: useEffect running');
+    if (!mounted) return;
+    
     const fetchCompanyEvents = async () => {
       try {
-        console.log('UnifiedVacationCalendar: Starting to fetch company events...');
         setLoadingEvents(true);
         const response = await fetch('/api/calendar/source?days=90');
-        console.log('UnifiedVacationCalendar: API response status:', response.status);
         if (response.ok) {
           const data = await response.json();
-          console.log('UnifiedVacationCalendar: Company events received:', data);
           setCompanyEvents(data.events || []);
         } else {
-          console.error('UnifiedVacationCalendar: Failed to fetch company events:', response.status);
+          console.error('Failed to fetch company events:', response.status);
           setCompanyEvents([]);
         }
       } catch (error) {
-        console.error('UnifiedVacationCalendar: Error fetching company events:', error);
+        console.error('Error fetching company events:', error);
         setCompanyEvents([]);
       } finally {
-        console.log('UnifiedVacationCalendar: Setting loadingEvents to false');
         setLoadingEvents(false);
       }
     };
 
     fetchCompanyEvents();
-  }, []);
+  }, [mounted]); // Run only after component mounts
 
-  // Get current month info
-  const currentMonth = currentDate.getMonth();
-  const currentYear = currentDate.getFullYear();
-  const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+  // Get current month info - memoized to prevent recalculation
+  const monthInfo = useMemo(() => {
+    const currentMonth = currentDate.getMonth();
+    const currentYear = currentDate.getFullYear();
+    const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+    const startDate = new Date(firstDayOfMonth);
+    startDate.setDate(startDate.getDate() - firstDayOfMonth.getDay());
+    
+    return { currentMonth, currentYear, firstDayOfMonth, startDate };
+  }, [currentDate]);
 
-  const startDate = new Date(firstDayOfMonth);
-  startDate.setDate(startDate.getDate() - firstDayOfMonth.getDay());
-
-  // Generate calendar days
+  // Generate calendar days - memoized to prevent regeneration on every render
   const calendarDays = useMemo(() => {
-    console.log('UnifiedVacationCalendar: Generating calendar days');
+    if (!mounted) return [];
+    
     const days: CalendarDay[] = [];
     const currentDateObj = new Date();
 
     for (let i = 0; i < 42; i++) {
-      const date = new Date(startDate);
-      date.setDate(startDate.getDate() + i);
+      const date = new Date(monthInfo.startDate);
+      date.setDate(monthInfo.startDate.getDate() + i);
       
       // Find vacations for this date
       const dayVacations = vacationRequests.filter(request => {
@@ -108,9 +143,21 @@ export default function UnifiedVacationCalendar({
         return date >= start && date <= end;
       });
 
-      // Calculate conflicts (including company events)
-      const totalEvents = dayVacations.length + dayCompanyEvents.length;
-      const hasConflict = totalEvents > 1;
+      // Find conflict events for this date
+      const dayConflictEvents = conflicts.filter(conflict => {
+        const start = new Date(conflict.startDate);
+        const end = new Date(conflict.endDate);
+        return date >= start && date <= end;
+      });
+
+      // Check if date is in selected range
+      const isInSelectedRange = initialRange && 
+        date >= initialRange.start && 
+        date <= initialRange.end;
+
+      // Calculate conflicts (including company events and conflict events)
+      const totalEvents = dayVacations.length + dayCompanyEvents.length + dayConflictEvents.length;
+      const hasConflict = totalEvents > 1 || dayConflictEvents.length > 0;
       
       // Determine severity
       let severity: 'none' | 'low' | 'medium' | 'high';
@@ -122,31 +169,34 @@ export default function UnifiedVacationCalendar({
       days.push({
         date,
         dayNumber: date.getDate(),
-        isCurrentMonth: date.getMonth() === currentMonth,
+        isCurrentMonth: date.getMonth() === monthInfo.currentMonth,
         isToday: date.toDateString() === currentDateObj.toDateString(),
         vacations: dayVacations,
         companyEvents: dayCompanyEvents,
         conflictCount: totalEvents,
         hasConflict,
-        severity
+        severity,
+        isInSelectedRange,
+        conflictEvents: dayConflictEvents
       });
     }
 
-    console.log('UnifiedVacationCalendar: Generated', days.length, 'calendar days');
     return days;
-  }, [vacationRequests, companyEvents, currentMonth, startDate]);
+  }, [vacationRequests, companyEvents, monthInfo, conflicts, initialRange, mounted]);
 
   // Navigation functions
   const goToPreviousMonth = () => {
-    setCurrentDate(new Date(currentYear, currentMonth - 1, 1));
+    setCurrentDate(new Date(monthInfo.currentYear, monthInfo.currentMonth - 1, 1));
   };
 
   const goToNextMonth = () => {
-    setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
+    setCurrentDate(new Date(monthInfo.currentYear, monthInfo.currentMonth + 1, 1));
   };
 
   const goToToday = () => {
-    setCurrentDate(new Date());
+    if (mounted) {
+      setCurrentDate(new Date());
+    }
   };
 
   const monthNames = [
@@ -172,7 +222,17 @@ export default function UnifiedVacationCalendar({
     }
   };
 
-  console.log('UnifiedVacationCalendar: About to render JSX');
+  // Don't render until mounted to prevent hydration mismatch
+  if (!mounted) {
+    return (
+      <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className} ${compact ? 'mini-calendar' : ''}`}>
+        <div className="p-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading calendar...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className} ${compact ? 'mini-calendar' : ''}`}>
@@ -221,7 +281,7 @@ export default function UnifiedVacationCalendar({
       {/* Month/Year Display */}
       <div className="text-center py-4 bg-gray-50 border-b border-gray-200">
         <h3 className="text-xl font-bold text-gray-800">
-          {monthNames[currentMonth]} {currentYear}
+          {monthNames[monthInfo.currentMonth]} {monthInfo.currentYear}
         </h3>
       </div>
 
@@ -248,12 +308,18 @@ export default function UnifiedVacationCalendar({
           {calendarDays.map((day, index) => (
             <div
               key={index}
-              className={`p-2 min-h-[80px] border rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
+              className={`p-2 min-h-[80px] border rounded-lg transition-all duration-200 ${
+                readOnly ? 'cursor-default' : 'cursor-pointer hover:shadow-md'
+              } ${
                 day.isCurrentMonth ? 'bg-white' : 'bg-gray-50'
               } ${getConflictColor(day.severity)} ${
                 day.isToday ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
+              } ${
+                day.isInSelectedRange ? 'bg-blue-50 border-blue-300 ring-1 ring-blue-200' : ''
+              } ${
+                day.conflictEvents && day.conflictEvents.length > 0 ? 'bg-red-50 border-red-300 ring-1 ring-red-200' : ''
               }`}
-              onClick={() => setSelectedDate(selectedDate?.toDateString() === day.date.toDateString() ? null : day.date)}
+              onClick={() => !readOnly && setSelectedDate(selectedDate?.toDateString() === day.date.toDateString() ? null : day.date)}
             >
               <div className={`text-sm font-medium ${
                 day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
@@ -281,6 +347,26 @@ export default function UnifiedVacationCalendar({
                 </div>
               )}
               
+              {/* Conflict events (displayed first with distinct styling) */}
+              {day.conflictEvents && day.conflictEvents.length > 0 && (
+                <div className="mt-1 space-y-1">
+                  {day.conflictEvents.slice(0, compact ? 1 : 2).map((conflict, conflictIndex) => (
+                    <div
+                      key={`conflict-${conflictIndex}`}
+                      className="text-xs p-1 rounded truncate font-medium bg-red-100 border border-red-300 text-red-800"
+                      title={`CONFLICT: ${conflict.userName} - ${conflict.company} (${conflict.status})`}
+                    >
+                      {compact ? '⚠️' : `⚠️ ${conflict.userName.substring(0, 8)}...`}
+                    </div>
+                  ))}
+                  {day.conflictEvents.length > (compact ? 1 : 2) && (
+                    <div className="text-xs text-red-600 font-medium">
+                      +{day.conflictEvents.length - (compact ? 1 : 2)} conflicts
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Vacation indicators */}
               {day.vacations.length > 0 && (
                 <div className="mt-1 space-y-1">
@@ -353,10 +439,45 @@ export default function UnifiedVacationCalendar({
               ?.companyEvents.length === 0 && 
               calendarDays
                 .find(d => d.date.toDateString() === selectedDate.toDateString())
-                ?.vacations.length === 0 ? (
+                ?.vacations.length === 0 &&
+              calendarDays
+                .find(d => d.date.toDateString() === selectedDate.toDateString())
+                ?.conflictEvents?.length === 0 ? (
               <p className="text-gray-500 text-sm">No events or vacation requests on this date</p>
             ) : (
               <div className="space-y-3">
+                {/* Conflict Events */}
+                {calendarDays
+                  .find(d => d.date.toDateString() === selectedDate.toDateString())
+                  ?.conflictEvents?.map(conflict => (
+                    <div key={conflict.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3">
+                          <span className="text-red-600">⚠️</span>
+                          <span className="font-bold text-red-800">{conflict.userName}</span>
+                          <span className="text-sm px-2 py-1 rounded bg-red-100 text-red-800 font-medium">
+                            CONFLICT
+                          </span>
+                          <span className="text-xs text-gray-400">{conflict.type}</span>
+                        </div>
+                        <p className="text-sm text-red-600 mt-1">
+                          {conflict.startDate === conflict.endDate ? 
+                            conflict.startDate : 
+                            `${conflict.startDate} - ${conflict.endDate}`
+                          }
+                        </p>
+                        {conflict.reason && (
+                          <p className="text-sm text-red-500 mt-1">{conflict.reason}</p>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <span className={`px-2 py-1 text-xs rounded-full font-semibold ${getStatusColor(conflict.status)} text-white`}>
+                          {conflict.status}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+
                 {/* Company Events */}
                 {calendarDays
                   .find(d => d.date.toDateString() === selectedDate.toDateString())
@@ -420,10 +541,22 @@ export default function UnifiedVacationCalendar({
           </div>
         )}
 
-        {/* Simple Legend */}
+        {/* Enhanced Legend */}
         {showLegend && (
           <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="flex items-center space-x-4">
+            <div className="flex flex-wrap items-center gap-4">
+              {highlightRange && initialRange && (
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-blue-50 border border-blue-300 rounded"></div>
+                  <span className="text-sm text-gray-600">Selected Range</span>
+                </div>
+              )}
+              {conflicts.length > 0 && (
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 bg-red-100 border border-red-300 rounded"></div>
+                  <span className="text-sm text-gray-600">Conflicts</span>
+                </div>
+              )}
               <div className="flex items-center space-x-2">
                 <div className="w-4 h-4 bg-purple-100 border border-purple-300 rounded"></div>
                 <span className="text-sm text-gray-600">Company Events</span>

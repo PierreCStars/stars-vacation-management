@@ -2,11 +2,42 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Vacation Requests Collection
+    match /vacationRequests/{requestId} {
+      // Require authentication for all operations
+      allow read, write: if request.auth != null;
+    }
     
-    // Temporarily allow all operations while fixing Firebase project setup
-    // TODO: Re-enable authentication once Firebase project is properly configured
-    match /{document=**} {
-      allow read, write: if true;
+    // Calendar Sync Collection
+    match /calendarSync/{syncId} {
+      allow read, write: if request.auth != null 
+        && isAdmin(request.auth.token.email);
+    }
+    
+    // External Events Collection
+    match /externalEvents/{eventId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null 
+        && isAdmin(request.auth.token.email);
+    }
+    
+    // Sync Logs Collection
+    match /calendarSyncLogs/{logId} {
+      allow read: if request.auth != null 
+        && isAdmin(request.auth.token.email);
+      allow write: if request.auth != null 
+        && isAdmin(request.auth.token.email);
+    }
+    
+    // Helper function to check if user is admin
+    function isAdmin(email) {
+      return email in [
+        'pierre@stars.mc',
+        'johnny@stars.mc', 
+        'daniel@stars.mc',
+        'compta@stars.mc',
+        'admin@stars.mc'
+      ];
     }
   }
 }

@@ -1,0 +1,22 @@
+# Firebase Configuration Template for stars-vacation-management
+# Add these to your .env.local file
+
+# Public Firebase Configuration (Client-side)
+NEXT_PUBLIC_FIREBASE_API_KEY=YOUR_ACTUAL_API_KEY
+NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=stars-vacation-management.firebaseapp.com
+NEXT_PUBLIC_FIREBASE_PROJECT_ID=stars-vacation-management
+NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET=stars-vacation-management.appspot.com
+NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID=YOUR_ACTUAL_SENDER_ID
+NEXT_PUBLIC_FIREBASE_APP_ID=YOUR_ACTUAL_APP_ID
+NEXT_PUBLIC_ENABLE_FIREBASE=true
+
+# Firebase Admin Configuration (Server-side)
+FIREBASE_PROJECT_ID=stars-vacation-management
+FIREBASE_ADMIN_CLIENT_EMAIL=YOUR_SERVICE_ACCOUNT_EMAIL
+FIREBASE_ADMIN_PRIVATE_KEY="YOUR_PRIVATE_KEY_WITH_NEWLINES"
+
+# Instructions:
+# 1. Go to https://console.firebase.google.com/project/stars-vacation-management/settings/general
+# 2. Scroll down to "Your apps" section and copy the config
+# 3. For admin config, go to Service Accounts and download the key file
+# 4. Replace the placeholder values above with the real ones

@@ -4,7 +4,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import VacationAnalytics from '@/components/VacationAnalytics';
-import Navigation from '@/components/Navigation';
+// import Navigation from '@/components/Navigation';
 import PageHeader from '@/components/ui/PageHeader';
 
 // Disable static generation for this page
@@ -68,7 +68,7 @@ export default function AnalyticsPage() {
 
   return (
     <>
-      <Navigation />
+      {/* <Navigation /> */}
       <main className="min-h-screen bg-gray-50 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <PageHeader 

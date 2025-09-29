@@ -1,13 +1,16 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import { useTranslations } from 'next-intl';
+import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 // import PageHeader from '@/components/ui/PageHeader';
 // import Card from '@/components/ui/Card';
 // import Badge from '@/components/ui/Badge';
 
 interface VacationRequest {
   id: string;
+  userId: string;
   userName: string;
   userEmail: string;
   startDate: string;
@@ -17,19 +20,83 @@ interface VacationRequest {
   type: string;
   status: string;
   isHalfDay: boolean;
-  halfDayType: string | null;
+  halfDayType: "morning" | "afternoon" | null;
   durationDays: number;
+  createdAt: string;
+}
+
+interface ConflictEvent {
+  id: string;
+  userName: string;
+  userEmail: string;
+  startDate: string;
+  endDate: string;
+  status: string;
+  type: string;
+  isHalfDay: boolean;
+  halfDayType: string | null;
+  reason?: string;
+  company: string;
   createdAt: string;
 }
 
 export default function VacationRequestDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const [isPending, startTransition] = useTransition();
   const [vacationRequest, setVacationRequest] = useState<VacationRequest | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [conflicts, setConflicts] = useState<ConflictEvent[]>([]);
+  const [conflictsLoading, setConflictsLoading] = useState(false);
+  const [allVacationRequests, setAllVacationRequests] = useState<VacationRequest[]>([]);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Use next-intl translations
+  const t = useTranslations('admin');
+  const tVacations = useTranslations('vacations');
 
   const requestId = params?.id as string;
+
+  // Function to fetch conflicts for the current request
+  const fetchConflicts = async (request: VacationRequest) => {
+    try {
+      setConflictsLoading(true);
+      const url = `/api/conflicts/vacation?company=${encodeURIComponent(request.company)}&start=${request.startDate}&end=${request.endDate}&id=${request.id}`;
+      const response = await fetch(url);
+      
+      if (response.ok) {
+        const data = await response.json();
+        setConflicts(data.conflicts || []);
+      } else {
+        console.error('Failed to fetch conflicts:', response.status);
+        setConflicts([]);
+      }
+    } catch (error) {
+      console.error('Error fetching conflicts:', error);
+      setConflicts([]);
+    } finally {
+      setConflictsLoading(false);
+    }
+  };
+
+  // Function to fetch all vacation requests for the calendar
+  const fetchAllVacationRequests = async () => {
+    try {
+      const response = await fetch('/api/vacation-requests');
+      if (response.ok) {
+        const data = await response.json();
+        setAllVacationRequests(Array.isArray(data) ? data : []);
+      } else {
+        console.error('Failed to fetch all vacation requests:', response.status);
+        setAllVacationRequests([]);
+      }
+    } catch (error) {
+      console.error('Error fetching all vacation requests:', error);
+      setAllVacationRequests([]);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -60,6 +127,11 @@ export default function VacationRequestDetailPage() {
           if (request) {
             console.log('✅ Setting vacation request in state:', request);
             setVacationRequest(request);
+            // Fetch conflicts and all vacation requests for the calendar
+            await Promise.all([
+              fetchConflicts(request),
+              fetchAllVacationRequests()
+            ]);
           } else {
             console.log('❌ Request not found for ID:', requestId);
             setError(`Vacation request with ID "${requestId}" not found`);
@@ -98,23 +170,108 @@ export default function VacationRequestDetailPage() {
     }
   }, [requestId]);
 
-  const handleStatusUpdate = async (newStatus: string) => {
-    if (!vacationRequest) return;
+  // Show toast message
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  // Handle status update (approve/reject)
+  const handleStatusUpdate = async (newStatus: 'approved' | 'rejected') => {
+    if (!vacationRequest || actionLoading) return;
     
-    try {
-      // For now, just update the local state
-      // In production, this would update the database
-      setVacationRequest({
-        ...vacationRequest,
-        status: newStatus
-      });
-      
-      // Show success message
-      alert(`Status updated to ${newStatus}`);
-    } catch (error) {
-      console.error('Error updating status:', error);
-      alert('Failed to update status');
-    }
+    startTransition(async () => {
+      try {
+        setActionLoading(true);
+        
+        const response = await fetch(`/api/vacation-requests/${vacationRequest.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: newStatus,
+            adminComment: `Request ${newStatus} by admin`
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `Failed to ${newStatus} request`);
+        }
+
+        const result = await response.json();
+        console.log(`✅ Request ${newStatus} successfully:`, result);
+
+        // Show success toast
+        showToast(`Request ${newStatus} successfully!`, 'success');
+
+        // Redirect back to admin list after a short delay
+        setTimeout(() => {
+          router.push('/en/admin/vacation-requests');
+          router.refresh(); // Ensure list is up-to-date
+        }, 1000);
+
+      } catch (error) {
+        console.error(`❌ Error ${newStatus} request:`, error);
+        showToast(`Failed to ${newStatus} request: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
+      } finally {
+        setActionLoading(false);
+      }
+    });
+  };
+
+  // Handle date update
+  const handleDateUpdate = async (newStartDate: string, newEndDate: string) => {
+    if (!vacationRequest || actionLoading) return;
+    
+    startTransition(async () => {
+      try {
+        setActionLoading(true);
+        
+        // Calculate new duration
+        const startDate = new Date(newStartDate);
+        const endDate = new Date(newEndDate);
+        const timeDiff = endDate.getTime() - startDate.getTime();
+        const durationDays = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+
+        const response = await fetch(`/api/vacation-requests/${vacationRequest.id}`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            startDate: newStartDate,
+            endDate: newEndDate,
+            durationDays: durationDays,
+            adminComment: 'Dates updated by admin'
+          }),
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Failed to update dates');
+        }
+
+        const result = await response.json();
+        console.log('✅ Dates updated successfully:', result);
+
+        // Show success toast
+        showToast('Dates updated successfully!', 'success');
+
+        // Redirect back to admin list after a short delay
+        setTimeout(() => {
+          router.push('/en/admin/vacation-requests');
+          router.refresh(); // Ensure list is up-to-date
+        }, 1000);
+
+      } catch (error) {
+        console.error('❌ Error updating dates:', error);
+        showToast(`Failed to update dates: ${error instanceof Error ? error.message : 'Unknown error'}`, 'error');
+      } finally {
+        setActionLoading(false);
+      }
+    });
   };
 
   const handleRetry = () => {
@@ -177,6 +334,7 @@ export default function VacationRequestDetailPage() {
     // Use mock data directly as fallback
     const mockRequest: VacationRequest = {
       id: requestId,
+      userId: 'mock-user-123',
       userName: 'John Smith (Mock)',
       userEmail: 'john@example.com',
       startDate: '2025-01-15',
@@ -292,12 +450,12 @@ export default function VacationRequestDetailPage() {
             >
               ← Back
             </button>
-            <h1 className="text-3xl font-bold text-gray-900">Vacation Request Details</h1>
+            <h1 className="text-3xl font-bold text-gray-900">{t('vacationRequestDetails')}</h1>
           </div>
 
           {/* Page Header */}
           {/* <PageHeader 
-            title="Vacation Request Details"
+            title={t('vacationRequestDetails')}
             description={`Reviewing request from ${vacationRequest.userName}`}
           /> */}
 
@@ -306,7 +464,7 @@ export default function VacationRequestDetailPage() {
             <div className="mb-6 p-4 bg-gray-100 border border-gray-300 rounded-lg">
               <h3 className="text-sm font-semibold text-gray-700 mb-2">Debug Info (Development Only)</h3>
               <div className="text-xs text-gray-600 space-y-1">
-                <div>Request ID: {requestId}</div>
+                <div data-testid="request-id">Request ID: {requestId}</div>
                 <div>Loading: {loading.toString()}</div>
                 <div>Error: {error || 'None'}</div>
                 <div>Has Data: {!!vacationRequest}</div>
@@ -359,11 +517,11 @@ export default function VacationRequestDetailPage() {
                   <div className="space-y-2">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Start Date:</span>
-                      <span className="font-medium">{new Date(vacationRequest.startDate).toLocaleDateString()}</span>
+                      <span className="font-medium">{new Date(vacationRequest.startDate).toLocaleDateString('en-GB', { timeZone: 'Europe/Paris' })}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">End Date:</span>
-                      <span className="font-medium">{new Date(vacationRequest.endDate).toLocaleDateString()}</span>
+                      <span className="font-medium">{new Date(vacationRequest.endDate).toLocaleDateString('en-GB', { timeZone: 'Europe/Paris' })}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Duration:</span>
@@ -407,19 +565,72 @@ export default function VacationRequestDetailPage() {
 
               {/* Action Buttons */}
               {vacationRequest.status === 'pending' && (
-                <div className="flex gap-4 pt-6 border-t border-gray-200">
-                  <button 
-                    onClick={() => handleStatusUpdate('approved')}
-                    className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                  >
-                    Approve Request
-                  </button>
-                  <button 
-                    onClick={() => handleStatusUpdate('rejected')}
-                    className="px-6 py-2 border border-red-300 text-red-700 rounded hover:bg-red-50"
-                  >
-                    Reject Request
-                  </button>
+                <div className="pt-6 border-t border-gray-200">
+                  <div className="flex flex-wrap gap-4 mb-4">
+                    <button 
+                      onClick={() => handleStatusUpdate('approved')}
+                      disabled={actionLoading || isPending}
+                      className="px-6 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      data-testid="approve-button"
+                    >
+                      {(actionLoading || isPending) && (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      )}
+                      Approve Request
+                    </button>
+                    <button 
+                      onClick={() => handleStatusUpdate('rejected')}
+                      disabled={actionLoading || isPending}
+                      className="px-6 py-2 border border-red-300 text-red-700 rounded hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      data-testid="deny-button"
+                    >
+                      {(actionLoading || isPending) && (
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-red-500"></div>
+                      )}
+                      Reject Request
+                    </button>
+                  </div>
+                  
+                  {/* Date Update Section */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h4 className="text-sm font-medium text-gray-700 mb-3">Update Dates</h4>
+                    <div className="flex flex-wrap gap-4 items-end">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">Start Date</label>
+                        <input
+                          type="date"
+                          defaultValue={vacationRequest.startDate}
+                          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          id="startDate"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-600 mb-1">End Date</label>
+                        <input
+                          type="date"
+                          defaultValue={vacationRequest.endDate}
+                          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          id="endDate"
+                        />
+                      </div>
+                      <button
+                        onClick={() => {
+                          const startDateInput = document.getElementById('startDate') as HTMLInputElement;
+                          const endDateInput = document.getElementById('endDate') as HTMLInputElement;
+                          if (startDateInput && endDateInput) {
+                            handleDateUpdate(startDateInput.value, endDateInput.value);
+                          }
+                        }}
+                        disabled={actionLoading || isPending}
+                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                      >
+                        {(actionLoading || isPending) && (
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                        )}
+                        Update Dates
+                      </button>
+                    </div>
+                  </div>
                 </div>
               )}
 
@@ -436,8 +647,60 @@ export default function VacationRequestDetailPage() {
               )}
             </div>
           </div>
+
+          {/* Team Calendar with Conflict Highlighting */}
+          <div className="mt-8 bg-white rounded-lg shadow-sm border p-6">
+            <div className="mb-4 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Team Calendar</h2>
+                <p className="text-sm text-gray-600 mt-1">
+                  Selected vs. Conflicts - {conflicts.length} conflict{conflicts.length === 1 ? '' : 's'} found
+                </p>
+              </div>
+              {conflictsLoading && (
+                <div className="flex items-center space-x-2 text-sm text-gray-500">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-500"></div>
+                  <span>Checking conflicts...</span>
+                </div>
+              )}
+            </div>
+
+            <UnifiedVacationCalendar
+              vacationRequests={allVacationRequests}
+              currentRequestId={vacationRequest.id}
+              readOnly={true}
+              initialRange={{
+                start: new Date(vacationRequest.startDate),
+                end: new Date(vacationRequest.endDate)
+              }}
+              conflicts={conflicts}
+              highlightRange={true}
+              showLegend={true}
+              compact={false}
+              className="w-full"
+              data-testid="request-calendar"
+            />
+          </div>
         </div>
       </div>
+
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="fixed top-4 right-4 z-50 max-w-sm">
+          <div className={`p-4 rounded-lg shadow-lg border ${
+            toastMessage.includes('successfully') 
+              ? 'bg-green-50 border-green-200 text-green-800' 
+              : 'bg-red-50 border-red-200 text-red-800'
+          }`}>
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${
+                toastMessage.includes('successfully') ? 'bg-green-500' : 'bg-red-500'
+              }`}></div>
+              <span className="text-sm font-medium">{toastMessage}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 } 

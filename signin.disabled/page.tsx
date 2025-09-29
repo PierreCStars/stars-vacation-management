@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react';
 import { useEffect, Suspense, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import Navigation from '@/components/Navigation';
+// import Navigation from '@/components/Navigation';
 import PageHeader from '@/components/ui/PageHeader';
 import Card from '@/components/ui/Card';
 import SignInButton from '@/components/SignInButton';
@@ -31,7 +31,7 @@ function SignInContent() {
   if (status === 'loading') {
     return (
       <>
-        <Navigation />
+        {/* <Navigation /> */}
         <main className="min-h-screen flex flex-col items-center justify-center py-12 bg-gray-50">
           <div className="text-center">
             <div className="w-16 h-16 border-4 border-gray-200 border-t-brand-600 rounded-full animate-spin mx-auto mb-4"></div>
@@ -49,7 +49,7 @@ function SignInContent() {
 
   return (
     <>
-      <Navigation />
+      {/* <Navigation /> */}
       <main className="min-h-screen bg-gray-50 py-12">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Page Header */}

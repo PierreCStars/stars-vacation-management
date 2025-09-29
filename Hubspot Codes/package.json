@@ -1,0 +1,34 @@
+{
+  "name": "stars-vacation-management",
+  "version": "1.0.0",
+  "description": "Stars Vacation Management System with Firebase integration",
+  "type": "module",
+  "main": "app.jsx",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "vite",
+    "deploy": "vercel --prod",
+    "vercel-build": "vite build"
+  },
+  "dependencies": {
+    "firebase": "^10.7.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.8.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.0.0",
+    "vercel": "^48.1.6",
+    "vite": "^4.4.0"
+  },
+  "keywords": [
+    "vacation",
+    "management",
+    "firebase",
+    "react"
+  ],
+  "author": "Stars Team",
+  "license": "MIT"
+}

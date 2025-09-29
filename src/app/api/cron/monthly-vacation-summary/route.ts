@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+export const runtime = 'nodejs';
 export const revalidate = 0;
 
 import { NextResponse } from "next/server";
@@ -125,7 +126,7 @@ export async function GET(req: Request) {
           .where("status", "in", ["approved", "rejected"])
           .get();
 
-        all = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+        all = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
         console.log(`✅ Fetched ${all.length} approved/rejected requests from Firestore`);
       } else {
         console.log('⚠️  Firebase Admin not available - using mock data for monthly summary');

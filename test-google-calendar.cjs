@@ -1,14 +1,14 @@
 #!/usr/bin/env node
 
-require('dotenv').config();
+require('dotenv').config({ path: '.env.local' });
 const { google } = require('googleapis');
 
 console.log('🧪 Testing Google Calendar Integration\n');
 
 // Check environment variables
-if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY || !process.env.GOOGLE_CALENDAR_ID) {
+if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY || !process.env.GOOGLE_CALENDAR_TARGET_ID) {
   console.log('❌ Missing required environment variables!');
-  console.log('Please set GOOGLE_SERVICE_ACCOUNT_KEY and GOOGLE_CALENDAR_ID');
+  console.log('Please set GOOGLE_SERVICE_ACCOUNT_KEY and GOOGLE_CALENDAR_TARGET_ID');
   process.exit(1);
 }
 
@@ -64,7 +64,7 @@ async function testCalendarAccess() {
     console.log(`📅 Found ${calendarsResponse.data.items?.length || 0} accessible calendars`);
     
     // Test 2: Try to access the specific calendar
-    const calendarId = process.env.GOOGLE_CALENDAR_ID || 'primary';
+    const calendarId = process.env.GOOGLE_CALENDAR_TARGET_ID || 'primary';
     console.log(`🔍 Testing access to calendar: ${calendarId}`);
     
     const calendarResponse = await calendar.calendars.get({

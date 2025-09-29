@@ -1,4 +1,5 @@
 export const dynamic = "force-dynamic";
+export const runtime = 'nodejs';
 export const revalidate = 0;
 
 import { NextResponse } from "next/server";
@@ -64,7 +65,7 @@ export async function GET(req: Request) {
       if (isFirebaseAdminAvailable()) {
         const { db } = firebaseAdmin();
         const collection = db.collection("vacationRequests");
-        let q = status !== "all" ? collection.where("status", "==", status) : collection;
+        const q = status !== "all" ? collection.where("status", "==", status) : collection;
         const snap = await q.get();
         rows = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
         

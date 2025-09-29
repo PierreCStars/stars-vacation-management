@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { firebaseAdmin, isFirebaseAdminAvailable } from "@/lib/firebase-admin";
 
 export const dynamic = "force-dynamic";
+export const runtime = 'nodejs';
 export const revalidate = 0;
 
 export async function GET() {
@@ -13,7 +14,7 @@ export async function GET() {
       if (isFirebaseAdminAvailable()) {
         const { db } = firebaseAdmin();
         const snap = await db.collection("vacationRequests").orderBy("createdAt", "desc").limit(5).get();
-        latest = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
+        latest = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
         console.log(`🔍 Debug: Found ${latest.length} latest requests in Firestore`);
       } else {
         console.log('⚠️  Debug: Firebase Admin not available');
@@ -23,7 +24,7 @@ export async function GET() {
     }
 
     // Also check temp storage if available
-    let tempStorageInfo = "Not accessible from API route";
+    const tempStorageInfo = "Not accessible from API route";
     
     return NextResponse.json({ 
       timestamp: new Date().toISOString(),

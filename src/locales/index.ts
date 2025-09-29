@@ -1,6 +1,7 @@
 // Direct JSON content to avoid import issues with Next.js 15
 const en = {
   "common": {
+    "appName": "Stars Vacation Management",
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",
@@ -49,7 +50,11 @@ const en = {
     "auto": "Auto",
     "en": "English",
     "fr": "French",
-    "it": "Italian"
+    "it": "Italian",
+    "show": "Show",
+    "hide": "Hide",
+    "ascending": "Ascending",
+    "descending": "Descending"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -59,7 +64,9 @@ const en = {
     "admin": "Admin",
     "profile": "Profile",
     "settings": "Settings",
-    "logout": "Logout"
+    "logout": "Logout",
+    "vacationRequests": "Vacation Requests",
+    "administration": "Administration"
   },
   "vacations": {
     "title": "Vacation Management",
@@ -78,6 +85,7 @@ const en = {
     "manager": "Manager",
     "department": "Department",
     "type": "Type",
+    "company": "Company",
     "annual": "Annual Leave",
     "sick": "Sick Leave",
     "personal": "Personal Leave",
@@ -109,12 +117,44 @@ const en = {
     "blackoutPeriod": "Blackout period",
     "companyHoliday": "Company holiday",
     "teamEvent": "Team event",
-    "otherConflict": "Other conflict"
+    "otherConflict": "Other conflict",
+    "requestSubmittedSuccessfully": "Request Submitted Successfully!",
+    "requestSubmittedMessage": "Your vacation request has been submitted and is pending approval.",
+    "backToDashboard": "Back to Dashboard",
+    "submitAnotherRequest": "Submit Another Request"
+  },
+  "admin": {
+    "title": "Admin",
+    "breadcrumb": "Admin",
+    "vacationRequestsTitle": "Vacation Requests",
+    "vacationRequestsDescription": "Manage and review vacation requests from employees",
+    "pending": "Pending",
+    "reviewed": "Reviewed",
+    "conflictDetection": "Conflict Detection",
+    "conflictsFound": "conflicts found",
+    "scanning": "Scanning...",
+    "scanAll": "Scan All",
+    "notScanned": "Not scanned",
+    "noPendingRequests": "No pending requests",
+    "noReviewedRequests": "No reviewed requests",
+    "allVacationRequestsReviewed": "All vacation requests have been reviewed",
+    "sortBy": "Sort by",
+    "dates": "Dates",
+    "conflict": "Conflict",
+    "viewDetails": "View Details",
+    "reviewedAt": "Reviewed At",
+    "actions": "Actions",
+    "ascending": "Ascending",
+    "descending": "Descending",
+    "show": "Show",
+    "hide": "Hide",
+    "vacationRequestDetails": "Vacation Request Details"
   }
 };
 
 const fr = {
   "common": {
+    "appName": "Gestion des congés Stars",
     "loading": "Chargement...",
     "error": "Erreur",
     "success": "Succès",
@@ -163,7 +203,11 @@ const fr = {
     "auto": "Auto",
     "en": "Anglais",
     "fr": "Français",
-    "it": "Italien"
+    "it": "Italien",
+    "show": "Afficher",
+    "hide": "Masquer",
+    "ascending": "Croissant",
+    "descending": "Décroissant"
   },
   "nav": {
     "dashboard": "Tableau de bord",
@@ -173,7 +217,9 @@ const fr = {
     "admin": "Administration",
     "profile": "Profil",
     "settings": "Paramètres",
-    "logout": "Déconnexion"
+    "logout": "Déconnexion",
+    "vacationRequests": "Demandes de congés",
+    "administration": "Administration"
   },
   "vacations": {
     "title": "Gestion des congés",
@@ -192,6 +238,7 @@ const fr = {
     "manager": "Manager",
     "department": "Département",
     "type": "Type",
+    "company": "Entreprise",
     "annual": "Congé annuel",
     "sick": "Congé maladie",
     "personal": "Congé personnel",
@@ -223,12 +270,44 @@ const fr = {
     "blackoutPeriod": "Période d'interdiction",
     "companyHoliday": "Jour férié de l'entreprise",
     "teamEvent": "Événement d'équipe",
-    "otherConflict": "Autre conflit"
+    "otherConflict": "Autre conflit",
+    "requestSubmittedSuccessfully": "Demande soumise avec succès !",
+    "requestSubmittedMessage": "Votre demande de congé a été soumise et est en attente d'approbation.",
+    "backToDashboard": "Retour au tableau de bord",
+    "submitAnotherRequest": "Soumettre une autre demande"
+  },
+  "admin": {
+    "title": "Administration",
+    "breadcrumb": "Administration",
+    "vacationRequestsTitle": "Demandes de congés",
+    "vacationRequestsDescription": "Gérer et examiner les demandes de congés des employés",
+    "pending": "En attente",
+    "reviewed": "Examinées",
+    "conflictDetection": "Détection de conflits",
+    "conflictsFound": "conflits trouvés",
+    "scanning": "Analyse en cours...",
+    "scanAll": "Tout analyser",
+    "notScanned": "Non analysé",
+    "noPendingRequests": "Aucune demande en attente",
+    "noReviewedRequests": "Aucune demande examinée",
+    "allVacationRequestsReviewed": "Toutes les demandes de congés ont été examinées",
+    "sortBy": "Trier par",
+    "dates": "Dates",
+    "conflict": "Conflit",
+    "viewDetails": "Voir les détails",
+    "reviewedAt": "Examiné le",
+    "actions": "Actions",
+    "ascending": "Croissant",
+    "descending": "Décroissant",
+    "show": "Afficher",
+    "hide": "Masquer",
+    "vacationRequestDetails": "Détails de la demande de congé"
   }
 };
 
 const it = {
   "common": {
+    "appName": "Gestione Vacanze Stars",
     "loading": "Caricamento...",
     "error": "Errore",
     "success": "Successo",
@@ -277,7 +356,11 @@ const it = {
     "auto": "Auto",
     "en": "Inglese",
     "fr": "Francese",
-    "it": "Italiano"
+    "it": "Italiano",
+    "show": "Mostra",
+    "hide": "Nascondi",
+    "ascending": "Crescente",
+    "descending": "Decrescente"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -287,7 +370,9 @@ const it = {
     "admin": "Amministrazione",
     "profile": "Profilo",
     "settings": "Impostazioni",
-    "logout": "Disconnetti"
+    "logout": "Disconnetti",
+    "vacationRequests": "Richieste di vacanza",
+    "administration": "Amministrazione"
   },
   "vacations": {
     "title": "Gestione Vacanze",
@@ -306,6 +391,7 @@ const it = {
     "manager": "Manager",
     "department": "Dipartimento",
     "type": "Tipo",
+    "company": "Azienda",
     "annual": "Ferie annuali",
     "sick": "Malattia",
     "personal": "Permesso personale",
@@ -337,7 +423,38 @@ const it = {
     "blackoutPeriod": "Periodo di blocco",
     "companyHoliday": "Festa aziendale",
     "teamEvent": "Evento di team",
-    "otherConflict": "Altro conflitto"
+    "otherConflict": "Altro conflitto",
+    "requestSubmittedSuccessfully": "Richiesta inviata con successo!",
+    "requestSubmittedMessage": "La tua richiesta di vacanza è stata inviata ed è in attesa di approvazione.",
+    "backToDashboard": "Torna alla dashboard",
+    "submitAnotherRequest": "Invia un'altra richiesta"
+  },
+  "admin": {
+    "title": "Amministrazione",
+    "breadcrumb": "Amministrazione",
+    "vacationRequestsTitle": "Richieste di vacanza",
+    "vacationRequestsDescription": "Gestisci e rivedi le richieste di vacanza dei dipendenti",
+    "pending": "In attesa",
+    "reviewed": "Rivedute",
+    "conflictDetection": "Rilevamento conflitti",
+    "conflictsFound": "conflitti trovati",
+    "scanning": "Scansione in corso...",
+    "scanAll": "Scansiona tutto",
+    "notScanned": "Non scansionato",
+    "noPendingRequests": "Nessuna richiesta in attesa",
+    "noReviewedRequests": "Nessuna richiesta riveduta",
+    "allVacationRequestsReviewed": "Tutte le richieste di vacanza sono state rivedute",
+    "sortBy": "Ordina per",
+    "dates": "Date",
+    "conflict": "Conflitto",
+    "viewDetails": "Visualizza dettagli",
+    "reviewedAt": "Riveduto il",
+    "actions": "Azioni",
+    "ascending": "Crescente",
+    "descending": "Decrescente",
+    "show": "Mostra",
+    "hide": "Nascondi",
+    "vacationRequestDetails": "Dettagli richiesta vacanza"
   }
 };
 

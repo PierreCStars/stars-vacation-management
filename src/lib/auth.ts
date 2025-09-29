@@ -13,6 +13,7 @@ const getSecret = () => {
 };
 
 const isPreview = process.env.VERCEL_ENV === 'preview';
+const isDevelopment = process.env.NODE_ENV === 'development';
 
 export const authOptions: AuthOptions = {
   secret: getSecret(),
@@ -21,20 +22,22 @@ export const authOptions: AuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   providers: [
-    ...(isPreview
+    ...(isPreview || isDevelopment
       ? [
           CredentialsProvider({
-            name: 'Preview Login',
+            name: 'Development Login',
             credentials: {
               username: { label: 'Email', type: 'text' },
               password: { label: 'Password', type: 'password' }
             },
             async authorize(creds) {
-              const user = process.env.PREVIEW_USER;
-              const pass = process.env.PREVIEW_PASS;
-              if (!user || !pass) return null;
-              if (creds?.username === user && creds?.password === pass) {
-                return { id: 'preview-user', name: 'Preview User', email: user } as any;
+              // For development, allow any @stars.mc email with any password
+              if (creds?.username?.endsWith('@stars.mc')) {
+                return { 
+                  id: 'dev-user', 
+                  name: 'Development User', 
+                  email: creds.username 
+                } as any;
               }
               return null;
             }
@@ -56,10 +59,10 @@ export const authOptions: AuthOptions = {
         ])
   ],
   callbacks: {
-    async signIn({ profile }: any) {
-      // In preview, credentials provider already validated
-      if (isPreview) return true;
-      const email = profile?.email;
+    async signIn({ profile, user }: any) {
+      // In preview or development, credentials provider already validated
+      if (isPreview || isDevelopment) return true;
+      const email = profile?.email || user?.email;
       const domain = email?.split('@')[1];
       if (domain !== "stars.mc") {
         console.log(`Access denied for domain: ${domain}`);

@@ -23,10 +23,14 @@ export default async function LocaleLayout({
 
   return (
     <IntlProvider messages={messages} locale={safeLocale}>
-      <Topbar />
-      <div className="flex min-h-screen">
-        <AdminSidebar />
-        <main className="flex-1 p-6">{children}</main>
+      <div className="min-h-screen bg-gray-50">
+        <Topbar />
+        <div className="flex">
+          <AdminSidebar />
+          <main className="flex-1 min-h-screen">
+            {children}
+          </main>
+        </div>
       </div>
     </IntlProvider>
   );

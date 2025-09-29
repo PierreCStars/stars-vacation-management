@@ -1,9 +1,11 @@
 export const dynamic = "force-dynamic";
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth/next';
-import { firebaseAdmin, isFirebaseAdminAvailable } from '@/lib/firebase-admin';
-import { Timestamp } from 'firebase-admin/firestore';
+import { getVacationRequestsService } from '@/lib/firebase';
+import { addVacationToCalendar, CAL_TARGET } from '@/lib/google-calendar';
+import { VacationRequest } from '@/lib/firebase';
+import { decideVacation } from '@/lib/vacation-orchestration';
 
 // Google Calendar API for Holidays Calendar
 const GOOGLE_CALENDAR_ID = 'c_e98f5350bf743174f87e1a786038cb9d103c306b7246c6200684f81c37a6a764@group.calendar.google.com';
@@ -19,41 +21,76 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const { id } = await params;
     const body = await req.json();
     const newStatus = body?.status; // "approved" | "rejected"
+    const newStartDate = body?.startDate;
+    const newEndDate = body?.endDate;
+    const newDurationDays = body?.durationDays;
+    const adminComment = body?.adminComment;
+    
     const reviewer = {
       id: session.user.email,
       name: session.user.name || session.user.email,
       email: session.user.email
     };
 
-    if (!["approved", "rejected"].includes(newStatus)) {
-      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
+    // Check if this is a status update or a general update
+    const isStatusUpdate = newStatus && ["approved", "rejected"].includes(newStatus);
+    const isDateUpdate = newStartDate && newEndDate;
+    
+    if (!isStatusUpdate && !isDateUpdate) {
+      return NextResponse.json({ error: 'Invalid update request - must be status update or date update' }, { status: 400 });
     }
 
     try {
       // Use Firestore to update the vacation request if available
-      if (isFirebaseAdminAvailable()) {
-        const { db } = firebaseAdmin();
-        const ref = db.collection("vacationRequests").doc(id);
+      try {
+        const vacationService = getVacationRequestsService();
         
         // Get the current vacation request data
-        const doc = await ref.get();
-        if (!doc.exists) {
+        const requestData = await vacationService.getVacationRequestById(id);
+        if (!requestData) {
           return NextResponse.json({ error: 'Vacation request not found' }, { status: 404 });
         }
         
-        const requestData = doc.data();
+        // Handle status updates
+        if (isStatusUpdate) {
+          if (newStatus === 'approved') {
+            await vacationService.approveVacationRequest(
+              id, 
+              reviewer.name, 
+              reviewer.email, 
+              adminComment
+            );
+          } else if (newStatus === 'rejected') {
+            await vacationService.rejectVacationRequest(
+              id, 
+              reviewer.name, 
+              reviewer.email, 
+              adminComment
+            );
+          }
+        }
         
-        // Update the status
-        await ref.set({
-          status: newStatus,
-          reviewedAt: Timestamp.now(),
-          reviewedBy: reviewer
-        }, { merge: true });
+        // Handle date updates
+        if (isDateUpdate) {
+          const updateData: any = {
+            startDate: newStartDate,
+            endDate: newEndDate,
+            durationDays: newDurationDays,
+            updatedAt: new Date().toISOString()
+          };
+          
+          if (adminComment) {
+            updateData.adminComment = adminComment;
+          }
+          
+          await vacationService.updateVacationRequest(id, updateData);
+          console.log('✅ Vacation request dates updated successfully in Firestore');
+        }
 
-        console.log('✅ Vacation request status updated successfully in Firestore');
+        console.log('✅ Vacation request updated successfully in Firestore');
 
         // If approved, sync to Holidays Calendar
-        if (newStatus === 'approved' && requestData) {
+        if (isStatusUpdate && newStatus === 'approved' && requestData) {
           try {
             await syncToHolidaysCalendar(requestData, id);
             console.log('✅ Vacation request synced to Holidays Calendar');
@@ -62,24 +99,50 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             // Don't fail the request if calendar sync fails
           }
         }
-      } else {
-        console.log('⚠️  Firebase Admin not available - using mock update');
+
+        // Send decision emails and calendar updates using orchestration
+        if (isStatusUpdate && newStatus && (newStatus === 'approved' || newStatus === 'rejected')) {
+          try {
+            await decideVacation({
+              requesterEmail: requestData.userEmail,
+              requestId: id,
+              decision: newStatus.toUpperCase() as 'APPROVED' | 'DENIED',
+              startIso: requestData.startDate,
+              endIso: requestData.endDate
+            });
+            console.log(`✅ Decision emails and calendar updates sent for ${newStatus} request`);
+          } catch (orchestrationError) {
+            console.error('❌ Failed to send decision emails/calendar updates:', orchestrationError);
+          }
+        }
+      } catch (firebaseError) {
+        console.log('⚠️  Firebase not available - using mock update:', firebaseError);
+        throw firebaseError;
       }
-      
-      // TODO: Send status emails when SMTP is configured
-      console.log('📧 Status emails would be sent here (when SMTP configured)');
 
       const updatedRequest = {
         id,
-        status: newStatus,
-        reviewedAt: new Date().toISOString(),
-        reviewedBy: reviewer
+        ...(isStatusUpdate ? {
+          status: newStatus,
+          reviewedAt: new Date().toISOString(),
+          reviewedBy: reviewer
+        } : {}),
+        ...(isDateUpdate ? {
+          startDate: newStartDate,
+          endDate: newEndDate,
+          durationDays: newDurationDays,
+          updatedAt: new Date().toISOString()
+        } : {})
       };
+
+      const message = isStatusUpdate 
+        ? `Vacation request ${newStatus} successfully`
+        : 'Vacation request dates updated successfully';
 
       return NextResponse.json({ 
         ok: true, 
         request: updatedRequest,
-        message: `Vacation request ${newStatus} successfully`
+        message
       });
 
     } catch (firebaseError) {
@@ -90,18 +153,30 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       
       const updatedRequest = {
         id,
-        status: newStatus,
-        reviewedAt: new Date().toISOString(),
-        reviewedBy: reviewer
+        ...(isStatusUpdate ? {
+          status: newStatus,
+          reviewedAt: new Date().toISOString(),
+          reviewedBy: reviewer
+        } : {}),
+        ...(isDateUpdate ? {
+          startDate: newStartDate,
+          endDate: newEndDate,
+          durationDays: newDurationDays,
+          updatedAt: new Date().toISOString()
+        } : {})
       };
 
-      console.log('✅ Vacation request status updated successfully (mock)');
+      console.log('✅ Vacation request updated successfully (mock)');
       console.log('📧 Status emails would be sent here (when SMTP configured)');
+
+      const message = isStatusUpdate 
+        ? `Vacation request ${newStatus} successfully`
+        : 'Vacation request dates updated successfully';
 
       return NextResponse.json({ 
         ok: true, 
         request: updatedRequest,
-        message: `Vacation request ${newStatus} successfully`
+        message
       });
     }
 
@@ -123,10 +198,8 @@ async function syncToHolidaysCalendar(requestData: any, requestId: string) {
       return;
     }
 
-    // For now, we'll log the sync attempt
-    // TODO: Implement actual Google Calendar API integration
-    console.log('📅 Would sync to Holidays Calendar:', {
-      calendarId: GOOGLE_CALENDAR_ID,
+    console.log('📅 Syncing vacation request to Google Calendar...', {
+      calendarId: CAL_TARGET,
       requestId,
       userName: requestData.userName,
       company: requestData.company,
@@ -135,10 +208,32 @@ async function syncToHolidaysCalendar(requestData: any, requestId: string) {
       type: requestData.type
     });
 
-    // TODO: When Google Calendar API is implemented:
-    // 1. Create event in Holidays Calendar
-    // 2. Store googleEventId in Firestore
-    // 3. Handle event updates/deletions
+    // Create vacation event for Google Calendar
+    const vacationEvent = {
+      userName: requestData.userName,
+      startDate: requestData.startDate,
+      endDate: requestData.endDate,
+      type: requestData.type,
+      company: requestData.company,
+      reason: requestData.reason
+    };
+
+    // Add event to Google Calendar
+    const googleEventId = await addVacationToCalendar(vacationEvent);
+    
+    console.log('✅ Vacation event created in Google Calendar:', googleEventId);
+
+    // Store the Google Event ID in Firestore for future reference
+    try {
+      const vacationService = getVacationRequestsService();
+      await vacationService.updateVacationRequest(requestId, {
+        googleEventId: googleEventId
+      } as Partial<VacationRequest>);
+      console.log('✅ Google Event ID stored in Firestore');
+    } catch (firestoreError) {
+      console.error('⚠️ Failed to store Google Event ID in Firestore:', firestoreError);
+      // Don't fail the whole operation if Firestore update fails
+    }
 
   } catch (error) {
     console.error('❌ Error in syncToHolidaysCalendar:', error);

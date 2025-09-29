@@ -43,16 +43,17 @@ export default function FirebaseDebugPanel() {
             if (firebase && firebase.app) {
               data.projectId = firebase.app.options.projectId;
 
-            // Try to get current user
-            if (firebase.auth) {
-              const user = firebase.auth.currentUser;
-              
-              if (user) {
-                data.currentUser = {
-                  uid: user.uid,
-                  email: user.email || undefined,
-                  isAnonymous: user.isAnonymous,
-                };
+              // Try to get current user
+              if (firebase.auth) {
+                const user = firebase.auth.currentUser;
+                
+                if (user) {
+                  data.currentUser = {
+                    uid: user.uid,
+                    email: user.email || undefined,
+                    isAnonymous: user.isAnonymous,
+                  };
+                }
               }
             }
           } catch (error) {

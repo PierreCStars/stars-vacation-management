@@ -11,10 +11,21 @@ export default function LanguageSelector() {
   const languages: Language[] = ['en', 'fr', 'it'];
 
   const handleLanguageChange = (newLanguage: Language) => {
-    // Get current pathname and extract the path without locale
+    // Get current pathname and extract the path without any locale prefixes
     const pathname = window.location.pathname;
     const pathSegments = pathname.split('/');
-    const pathWithoutLocale = '/' + pathSegments.slice(2).join('/') || '/dashboard';
+    
+    // Find the first non-locale segment (skip empty string and any locale prefixes)
+    const locales = ['en', 'fr', 'it'];
+    let pathStartIndex = 1; // Start after the empty string
+    
+    // Skip all locale prefixes
+    while (pathStartIndex < pathSegments.length && locales.includes(pathSegments[pathStartIndex])) {
+      pathStartIndex++;
+    }
+    
+    // Build the path without any locale prefixes
+    const pathWithoutLocale = '/' + pathSegments.slice(pathStartIndex).join('/') || '/dashboard';
     
     // Navigate to the new language with the same path
     window.location.href = `/${newLanguage}${pathWithoutLocale}`;

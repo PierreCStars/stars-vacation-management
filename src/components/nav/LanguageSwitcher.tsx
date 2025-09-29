@@ -8,10 +8,20 @@ export function LanguageSwitcher() {
   const currentLocale = pathname?.split('/')[1] || 'en';
 
   const handleLanguageChange = (newLocale: string) => {
-    // Get the current path without the locale prefix
-    // Split by '/' and remove the first two elements (empty string and locale)
+    // Get the current path without any locale prefixes
     const pathSegments = pathname?.split('/') || [];
-    const pathWithoutLocale = '/' + pathSegments.slice(2).join('/') || '/dashboard';
+    
+    // Find the first non-locale segment (skip empty string and any locale prefixes)
+    const locales = ['en', 'fr', 'it'];
+    let pathStartIndex = 1; // Start after the empty string
+    
+    // Skip all locale prefixes
+    while (pathStartIndex < pathSegments.length && locales.includes(pathSegments[pathStartIndex])) {
+      pathStartIndex++;
+    }
+    
+    // Build the path without any locale prefixes
+    const pathWithoutLocale = '/' + pathSegments.slice(pathStartIndex).join('/') || '/dashboard';
     
     // Create the new URL with the selected locale
     const newPath = createLocaleUrl(pathWithoutLocale, newLocale);

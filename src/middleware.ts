@@ -44,6 +44,16 @@ function getLocaleFromHeader(request: NextRequest): string | undefined {
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
 
+  // Skip middleware for static assets
+  if (
+    pathname.startsWith('/_next/') ||
+    pathname.startsWith('/api/') ||
+    pathname === '/favicon.ico' ||
+    /\.(png|jpg|jpeg|gif|svg|ico|webp)$/.test(pathname)
+  ) {
+    return NextResponse.next();
+  }
+
   // Check if there is any supported locale in the pathname
   const pathnameIsMissingLocale = locales.every(
     (locale) => !pathname.startsWith(`/${locale}/`) && pathname !== `/${locale}`
@@ -73,6 +83,6 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  // Matcher ignoring `/_next/`, `/api/`, and static assets
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico|.*\\.(png|jpg|jpeg|gif|svg|ico|webp)).*)']
+  // Matcher for all routes except API and static assets
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)']
 };

@@ -16,7 +16,11 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Log all requests in development
-  if (process.env.NODE_ENV === 'development') {
+  // In Edge Runtime, we can use VERCEL_ENV to detect environment
+  const isDevelopment = process.env.VERCEL_ENV === 'development' || 
+                       process.env.VERCEL_ENV === undefined; // local development
+  
+  if (isDevelopment) {
     console.log(`🌐 ${req.method} ${pathname}`, {
       userAgent: req.headers.get('user-agent'),
       referer: req.headers.get('referer'),

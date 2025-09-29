@@ -16,15 +16,7 @@ export function createLocaleUrl(path: string, currentLocale: string) {
   // Ensure the path starts with /
   const normalizedPath = path.startsWith('/') ? path : `/${path}`;
   
-  // Check if the path already has a locale prefix
-  const pathSegments = normalizedPath.split('/');
-  const firstSegment = pathSegments[1];
-  
-  if (locales.includes(firstSegment as typeof locales[number])) {
-    // Path already has a locale, replace it with the new locale
-    return `/${currentLocale}${normalizedPath.substring(`/${firstSegment}`.length)}`;
-  } else {
-    // Path doesn't have a locale, add the current locale
-    return `/${currentLocale}${normalizedPath}`;
-  }
+  // Simply prepend the locale to the path
+  // The components should handle removing existing locales before calling this
+  return `/${currentLocale}${normalizedPath}`;
 }

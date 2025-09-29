@@ -9,7 +9,9 @@ export function LanguageSwitcher() {
 
   const handleLanguageChange = (newLocale: string) => {
     // Get the current path without the locale prefix
-    const pathWithoutLocale = pathname?.replace(`/${currentLocale}`, '') || '/dashboard';
+    // Split by '/' and remove the first two elements (empty string and locale)
+    const pathSegments = pathname?.split('/') || [];
+    const pathWithoutLocale = '/' + pathSegments.slice(2).join('/') || '/dashboard';
     
     // Create the new URL with the selected locale
     const newPath = createLocaleUrl(pathWithoutLocale, newLocale);

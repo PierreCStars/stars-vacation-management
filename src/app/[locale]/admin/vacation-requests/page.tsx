@@ -7,7 +7,7 @@ import UnifiedVacationCalendar from "@/components/UnifiedVacationCalendar";
 import ConflictDetailsDrawer from "@/components/ConflictDetailsDrawer";
 import FirebaseDebugPanel from "@/components/FirebaseDebugPanel";
 import FirebaseDiagnostics from "@/components/FirebaseDiagnostics";
-import { isFirebaseAvailable } from "@/lib/firebase";
+import { isFirebaseEnabled } from "@/lib/firebase/client";
 import AdminVacationRequestsClient from './AdminVacationRequestsClient';
 import ClientOnly from '@/components/ClientOnly';
 

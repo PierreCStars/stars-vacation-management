@@ -57,10 +57,26 @@ export async function getRequestsWithConflicts(): Promise<VacationRequestWithCon
     }
     
     const snapshot = await db.collection('vacationRequests').get();
-    const allRequests = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as any[];
+    const allRequests = snapshot.docs.map(doc => {
+      try {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          // Convert Firestore timestamps to ISO strings safely
+          reviewedAt: data.reviewedAt?.toDate?.()?.toISOString() || data.reviewedAt || null,
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt || null
+        };
+      } catch (error) {
+        console.error('Error processing document:', doc.id, error);
+        return {
+          id: doc.id,
+          ...doc.data(),
+          reviewedAt: null,
+          createdAt: null
+        };
+      }
+    }) as any[];
     
     console.log(`📊 Server-side: Found ${allRequests.length} total vacation requests`);
     

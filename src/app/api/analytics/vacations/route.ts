@@ -3,7 +3,7 @@ export const runtime = 'nodejs';
 export const revalidate = 0;
 
 import { NextResponse } from "next/server";
-import { firebaseAdmin, isFirebaseAdminAvailable } from "@/lib/firebase-admin";
+import { getFirebaseAdmin, isFirebaseAdminAvailable } from "@/lib/firebase";
 
 type VR = {
   id: string;
@@ -51,14 +51,18 @@ export async function GET(req: Request) {
     // Try to fetch from Firestore first
     try {
       if (isFirebaseAdminAvailable()) {
-        const { db } = await firebaseAdmin();
-        const collection = db.collection("vacationRequests");
-        const q = status !== "all" ? collection.where("status", "==", status) : collection;
+        const { db, error } = getFirebaseAdmin();
+        if (error || !db) {
+          console.log('⚠️  Firebase Admin not available - using mock data for analytics');
+        } else {
+          const collection = db.collection("vacationRequests");
+          const q = status !== "all" ? collection.where("status", "==", status) : collection;
 
-        const snap = await q.get();
-        rows = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
-        
-        console.log(`✅ Fetched ${rows.length} vacation requests from Firestore for analytics`);
+          const snap = await q.get();
+          rows = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
+          
+          console.log(`✅ Fetched ${rows.length} vacation requests from Firestore for analytics`);
+        }
       } else {
         console.log('⚠️  Firebase Admin not available - using mock data for analytics');
       }

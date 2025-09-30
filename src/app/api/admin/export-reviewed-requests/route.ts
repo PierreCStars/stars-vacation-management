@@ -25,7 +25,7 @@ export async function GET() {
         createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt || null,
         updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt || null
       };
-    });
+    }) as any[];
 
     // Filter only reviewed requests (non-pending)
     const reviewedRequests = allRequests.filter(r => r.status?.toLowerCase() !== 'pending');

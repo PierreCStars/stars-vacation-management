@@ -1,4 +1,4 @@
-import { getVacationRequestsService } from '@/lib/firebase';
+import { getFirebaseAdminDb } from '@/lib/firebase';
 
 export interface VacationRequestWithConflicts {
   id: string;
@@ -49,9 +49,18 @@ export async function getRequestsWithConflicts(): Promise<VacationRequestWithCon
   try {
     console.log('🔄 Server-side: Fetching vacation requests with conflicts...');
     
-    // 1) Get all vacation requests
-    const vacationService = getVacationRequestsService();
-    const allRequests = await vacationService.getAllVacationRequests();
+    // 1) Get all vacation requests from Firestore
+    const db = getFirebaseAdminDb();
+    if (!db) {
+      console.log('⚠️ Firebase Admin not available, returning empty array');
+      return [];
+    }
+    
+    const snapshot = await db.collection('vacationRequests').get();
+    const allRequests = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as any[];
     
     console.log(`📊 Server-side: Found ${allRequests.length} total vacation requests`);
     

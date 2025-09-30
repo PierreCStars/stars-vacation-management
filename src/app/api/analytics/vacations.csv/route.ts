@@ -3,7 +3,7 @@ export const runtime = 'nodejs';
 export const revalidate = 0;
 
 import { NextResponse } from "next/server";
-import { getFirebaseAdmin, isFirebaseAdminAvailable } from "@/lib/firebase";
+import { getFirebaseAdmin, isFirebaseAdminAvailable } from "@/lib/firebase/index";
 
 type VR = {
   id: string;

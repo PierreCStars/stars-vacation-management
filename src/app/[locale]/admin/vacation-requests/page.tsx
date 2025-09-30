@@ -24,13 +24,17 @@ export default async function AdminVacationRequestsPage() {
     console.log(`[VACATION_REQUESTS] Basic load successful: ${basicRequests.length} requests`);
     
     // Then get full data with conflicts
+    console.log('[VACATION_REQUESTS] Getting requests with conflicts...');
     const requests = await getRequestsWithConflicts();
+    console.log(`[VACATION_REQUESTS] Got ${requests.length} requests with conflicts`);
     
     // Separate pending and reviewed requests (case-insensitive)
+    console.log('[VACATION_REQUESTS] Filtering requests by status...');
     const pending = requests.filter(r => r.status?.toLowerCase() === 'pending');
     const reviewed = requests.filter(r => r.status?.toLowerCase() !== 'pending');
     
     // Count requests with conflicts
+    console.log('[VACATION_REQUESTS] Counting conflicts...');
     const conflictCount = requests.filter(r => r.conflicts.length > 0).length;
     
     console.log(`✅ Server-side: Loaded ${requests.length} requests (${pending.length} pending, ${reviewed.length} reviewed, ${conflictCount} with conflicts)`);

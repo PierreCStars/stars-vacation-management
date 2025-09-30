@@ -7,32 +7,49 @@ export async function loadVacationRequests(limit = 50) {
   console.time('[VACATION_REQUESTS] fetch');
   
   try {
+    console.log('[VACATION_REQUESTS] Getting Firebase Admin...');
     const { db, error } = getFirebaseAdmin();
+    console.log('[VACATION_REQUESTS] Firebase Admin result:', { hasDb: !!db, error });
+    
     if (error || !db) {
+      console.error('[VACATION_REQUESTS] Firebase Admin failed:', error);
       throw new Error(`[VACATION_REQUESTS] Admin not ready: ${error ?? 'no db'}`);
     }
     
     console.log('[VACATION_REQUESTS] Firebase Admin connected, fetching data...');
     
     const snap = await db.collection('vacationRequests').limit(limit).get();
-    const requests = snap.docs.map(d => {
-      const data = d.data();
-      return {
-        id: d.id,
-        ...data,
-        // Convert Firestore timestamps to ISO strings safely
-        reviewedAt: data.reviewedAt?.toDate?.()?.toISOString() || data.reviewedAt || null,
-        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt || null
-      };
+    console.log(`[VACATION_REQUESTS] Got ${snap.docs.length} documents from Firestore`);
+    
+    const requests = snap.docs.map((d, index) => {
+      try {
+        console.log(`[VACATION_REQUESTS] Processing document ${index + 1}/${snap.docs.length}: ${d.id}`);
+        const data = d.data();
+        
+        const processedData = {
+          id: d.id,
+          ...data,
+          // Convert Firestore timestamps to ISO strings safely
+          reviewedAt: data.reviewedAt?.toDate?.()?.toISOString() || data.reviewedAt || null,
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt || null
+        };
+        
+        console.log(`[VACATION_REQUESTS] Document ${d.id} processed successfully`);
+        return processedData;
+      } catch (docError) {
+        console.error(`[VACATION_REQUESTS] Error processing document ${d.id}:`, docError);
+        throw docError;
+      }
     });
     
     console.timeEnd('[VACATION_REQUESTS] fetch');
-    console.log(`[VACATION_REQUESTS] loaded ${requests.length} requests`);
+    console.log(`[VACATION_REQUESTS] loaded ${requests.length} requests successfully`);
     
     return requests;
   } catch (error) {
     console.timeEnd('[VACATION_REQUESTS] fetch');
-    console.error('[VACATION_REQUESTS] error:', error);
+    console.error('[VACATION_REQUESTS] FATAL ERROR:', error);
+    console.error('[VACATION_REQUESTS] Error stack:', error instanceof Error ? error.stack : 'No stack');
     throw error;
   }
 }

@@ -17,9 +17,9 @@ export default async function AdminVacationRequestsPage() {
     console.log('🔄 Server-side: Loading vacation requests with conflicts...');
     const requests = await getRequestsWithConflicts();
     
-    // Separate pending and reviewed requests
-    const pending = requests.filter(r => r.status === 'pending');
-    const reviewed = requests.filter(r => r.status !== 'pending');
+    // Separate pending and reviewed requests (case-insensitive)
+    const pending = requests.filter(r => r.status?.toLowerCase() === 'pending');
+    const reviewed = requests.filter(r => r.status?.toLowerCase() !== 'pending');
     
     // Count requests with conflicts
     const conflictCount = requests.filter(r => r.conflicts.length > 0).length;

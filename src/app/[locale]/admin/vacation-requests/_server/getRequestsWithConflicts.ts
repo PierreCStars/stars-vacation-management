@@ -1,4 +1,4 @@
-import { getFirebaseAdminDb } from '@/lib/firebase';
+import { getFirebaseAdminDb } from '@/lib/firebase/index';
 
 export interface VacationRequestWithConflicts {
   id: string;

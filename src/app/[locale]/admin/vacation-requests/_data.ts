@@ -29,9 +29,10 @@ export async function loadVacationRequests(limit = 50) {
         const processedData = {
           id: d.id,
           ...data,
-          // Convert Firestore timestamps to ISO strings safely
+          // Convert ALL Firestore timestamps to ISO strings safely
           reviewedAt: data.reviewedAt?.toDate?.()?.toISOString() || data.reviewedAt || null,
-          createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt || null
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt || null,
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt || null
         };
         
         console.log(`[VACATION_REQUESTS] Document ${d.id} processed successfully`);

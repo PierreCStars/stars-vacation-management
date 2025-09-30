@@ -63,9 +63,10 @@ export async function getRequestsWithConflicts(): Promise<VacationRequestWithCon
         return {
           id: doc.id,
           ...data,
-          // Convert Firestore timestamps to ISO strings safely
+          // Convert ALL Firestore timestamps to ISO strings safely
           reviewedAt: data.reviewedAt?.toDate?.()?.toISOString() || data.reviewedAt || null,
-          createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt || null
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt || null,
+          updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt || null
         };
       } catch (error) {
         console.error('Error processing document:', doc.id, error);
@@ -73,7 +74,8 @@ export async function getRequestsWithConflicts(): Promise<VacationRequestWithCon
           id: doc.id,
           ...doc.data(),
           reviewedAt: null,
-          createdAt: null
+          createdAt: null,
+          updatedAt: null
         };
       }
     }) as any[];

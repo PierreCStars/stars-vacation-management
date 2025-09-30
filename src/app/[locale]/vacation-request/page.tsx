@@ -416,7 +416,7 @@ export default function VacationRequestPage() {
               </div>
             ) : (
               <UnifiedVacationCalendar
-                vacationRequests={vacationRequests}
+                vacationRequests={vacationRequests.filter(r => r.status?.toLowerCase() === 'approved')}
                 className="w-full"
                 showLegend={true}
                 compact={false}

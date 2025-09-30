@@ -284,7 +284,7 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
             This calendar shows all vacation requests with company colors and conflict warnings. Look for dates with multiple people requesting time off.
           </p>
           <UnifiedVacationCalendar 
-            vacationRequests={allVacationRequests} 
+            vacationRequests={allVacationRequests.filter(r => r.status?.toLowerCase() === 'approved')} 
             currentRequestId={request.id}
             showLegend={true}
             compact={false}

@@ -238,7 +238,7 @@ export default function AdminVacationRequestsClient({
         </div>
         <div className="p-6">
           <UnifiedVacationCalendar 
-            vacationRequests={initialRequests as any} 
+            vacationRequests={initialRequests.filter(r => r.status?.toLowerCase() === 'approved') as any} 
             currentRequestId={undefined}
             showLegend={true}
             compact={false}

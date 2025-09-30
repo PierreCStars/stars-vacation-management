@@ -109,7 +109,7 @@ export default function DashboardClient() {
                 <p className="text-gray-600">Loading vacation calendar...</p>
               </>
             ) : (
-              <UnifiedVacationCalendar vacationRequests={vacationRequests} />
+              <UnifiedVacationCalendar vacationRequests={vacationRequests.filter(r => r.status?.toLowerCase() === 'approved')} />
             )}
           </div>
         </div>

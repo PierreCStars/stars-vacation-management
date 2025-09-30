@@ -76,11 +76,12 @@ export async function GET() {
     ]);
 
     // Escape CSV values (handle commas, quotes, newlines)
-    const escapeCsvValue = (value: string) => {
-      if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-        return `"${value.replace(/"/g, '""')}"`;
+    const escapeCsvValue = (value: any) => {
+      const stringValue = String(value || '');
+      if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+        return `"${stringValue.replace(/"/g, '""')}"`;
       }
-      return value;
+      return stringValue;
     };
 
     const csvContent = [

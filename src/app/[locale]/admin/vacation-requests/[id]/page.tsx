@@ -336,7 +336,7 @@ export default function VacationRequestDetailPage() {
       id: requestId,
       userId: 'mock-user-123',
       userName: 'Test User (Mock)',
-      userEmail: 'john@example.com',
+      userEmail: 'test@example.com',
       startDate: '2025-01-15',
       endDate: '2025-01-17',
       reason: 'Annual vacation',

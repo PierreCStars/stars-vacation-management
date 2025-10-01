@@ -61,7 +61,7 @@ describe('Check Pending Requests Cron', () => {
       id: 'test-request-1',
       data: () => ({
         userName: 'John Doe',
-        userEmail: 'john@example.com',
+        userEmail: 'test@example.com',
         startDate: '2025-01-15',
         endDate: '2025-01-17',
         reason: 'Vacation',
@@ -153,7 +153,7 @@ describe('Check Pending Requests Cron', () => {
       id: 'test-request-1',
       data: () => ({
         userName: 'John Doe',
-        userEmail: 'john@example.com',
+        userEmail: 'test@example.com',
         startDate: '2025-01-15',
         endDate: '2025-01-17',
         reason: 'Vacation',

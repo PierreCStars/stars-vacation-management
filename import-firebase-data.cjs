@@ -25,9 +25,9 @@ const firebaseConfig = {
 // Sample vacation request data
 const sampleVacationRequests = [
   {
-    userId: 'john.smith@stars.mc',
-    userEmail: 'john.smith@stars.mc',
-    userName: 'John Smith',
+    userId: 'test.user1@stars.mc',
+    userEmail: 'test.user1@stars.mc',
+    userName: 'Test User 1',
     startDate: '2025-01-15',
     endDate: '2025-01-17',
     reason: 'Family vacation to the mountains',
@@ -39,9 +39,9 @@ const sampleVacationRequests = [
     durationDays: 3
   },
   {
-    userId: 'jane.doe@stars.mc',
-    userEmail: 'jane.doe@stars.mc',
-    userName: 'Jane Doe',
+    userId: 'test.user2@stars.mc',
+    userEmail: 'test.user2@stars.mc',
+    userName: 'Test User 2',
     startDate: '2025-01-20',
     endDate: '2025-01-20',
     reason: 'Medical appointment',
@@ -53,9 +53,9 @@ const sampleVacationRequests = [
     durationDays: 1
   },
   {
-    userId: 'mike.wilson@stars.mc',
-    userEmail: 'mike.wilson@stars.mc',
-    userName: 'Mike Wilson',
+    userId: 'test.user3@stars.mc',
+    userEmail: 'test.user3@stars.mc',
+    userName: 'Test User 3',
     startDate: '2025-01-10',
     endDate: '2025-01-12',
     reason: 'Personal time off',

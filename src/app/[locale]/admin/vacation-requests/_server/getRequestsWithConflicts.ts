@@ -162,7 +162,7 @@ export async function getRequestsWithConflicts(): Promise<VacationRequestWithCon
       {
         id: 'mock-1',
         userId: 'user-1',
-        userEmail: 'john@example.com',
+        userEmail: 'test@example.com',
         userName: 'Test User',
         company: 'STARS_MC',
         type: 'VACATION',

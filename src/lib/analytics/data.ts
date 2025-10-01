@@ -7,7 +7,7 @@
  * Runtime: Node.js only (server-side)
  */
 
-import { getFirebaseAdminFirestore, isFirebaseAdminAvailable } from '@/lib/firebaseAdmin';
+import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 
 export interface VacationRequest {
   id: string;
@@ -71,17 +71,17 @@ export interface VacationAnalytics {
  */
 export async function getVacationRequests(status?: string): Promise<VacationRequest[]> {
   console.info('[ANALYTICS] source=firebase query=getVacationRequests', { status });
+
+  const { db, error } = getFirebaseAdmin();
   
-  if (!isFirebaseAdminAvailable()) {
-    console.error('❌ Firebase Admin not available');
+  if (!db || error) {
+    console.error('❌ Firebase Admin not available:', error);
     throw new Error('Firebase Admin not available');
   }
 
   console.log('🔍 Debug: Firebase Admin is available, getting Firestore instance');
-  const db = getFirebaseAdminFirestore();
-  console.log('🔍 Debug: Got Firestore instance, accessing collection');
   const collection = db.collection('vacationRequests');
-  
+
   let snapshot;
   try {
     if (status && status !== 'all') {
@@ -96,13 +96,13 @@ export async function getVacationRequests(status?: string): Promise<VacationRequ
     console.error('❌ Error querying Firestore:', queryError);
     throw queryError;
   }
-  
+
   const requests: VacationRequest[] = snapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data()
   })) as VacationRequest[];
 
-  console.info('[ANALYTICS] source=firebase result=success', { 
+  console.info('[ANALYTICS] source=firebase result=success', {
     count: requests.length,
     status: status || 'all'
   });
@@ -249,8 +249,9 @@ export async function getAnalyticsSourceInfo(): Promise<{
   sampleIds: string[];
 }> {
   console.info('[ANALYTICS] source=firebase query=getAnalyticsSourceInfo');
-  
-  const firebaseAvailable = isFirebaseAdminAvailable();
+
+  const { db, error } = getFirebaseAdmin();
+  const firebaseAvailable = !error && !!db;
   let totalRequests = 0;
   let sampleIds: string[] = [];
 

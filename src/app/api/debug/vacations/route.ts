@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getFirebaseAdminFirestore, isFirebaseAdminAvailable } from "@/lib/firebaseAdmin";
+import { getFirebaseAdmin } from "@/lib/firebaseAdmin";
 
 export const dynamic = "force-dynamic";
 export const runtime = 'nodejs';
@@ -11,13 +11,13 @@ export async function GET() {
     
     // Try to fetch from Firestore first
     try {
-      if (isFirebaseAdminAvailable()) {
-        const db = getFirebaseAdminFirestore();
+      const { db, error } = getFirebaseAdmin();
+      if (db && !error) {
         const snap = await db.collection("vacationRequests").orderBy("createdAt", "desc").limit(5).get();
         latest = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
         console.log(`🔍 Debug: Found ${latest.length} latest requests in Firestore`);
       } else {
-        console.log('⚠️  Debug: Firebase Admin not available');
+        console.log('⚠️  Debug: Firebase Admin not available:', error);
       }
     } catch (firebaseError) {
       console.error('❌ Debug: Firebase error:', firebaseError);
@@ -26,9 +26,10 @@ export async function GET() {
     // Also check temp storage if available
     const tempStorageInfo = "Not accessible from API route";
     
+    const { db, error } = getFirebaseAdmin();
     return NextResponse.json({ 
       timestamp: new Date().toISOString(),
-      firebaseAvailable: isFirebaseAdminAvailable(),
+      firebaseAvailable: !error && !!db,
       latestFromFirestore: latest,
       tempStorageInfo,
       totalCount: latest.length

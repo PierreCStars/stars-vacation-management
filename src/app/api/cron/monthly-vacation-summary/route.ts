@@ -119,15 +119,19 @@ export async function GET(req: Request) {
     // Try to fetch from Firestore first
     try {
       if (isFirebaseAdminAvailable()) {
-        const { db } = await firebaseAdmin();
+        const { db, error } = await firebaseAdmin();
         
-        // Pull approved/rejected requests whose startDate is in prev month
-        const snap = await db.collection("vacationRequests")
-          .where("status", "in", ["approved", "rejected"])
-          .get();
+        if (db && !error) {
+          // Pull approved/rejected requests whose startDate is in prev month
+          const snap = await db.collection("vacationRequests")
+            .where("status", "in", ["approved", "rejected"])
+            .get();
 
-        all = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
-        console.log(`✅ Fetched ${all.length} approved/rejected requests from Firestore`);
+          all = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
+          console.log(`✅ Fetched ${all.length} approved/rejected requests from Firestore`);
+        } else {
+          console.log('⚠️  Firebase Admin not available - using mock data for monthly summary:', error);
+        }
       } else {
         console.log('⚠️  Firebase Admin not available - using mock data for monthly summary');
       }

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getFirebaseAdminFirestore, isFirebaseAdminAvailable } from '@/lib/firebaseAdmin';
+import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { sendAdminNotification } from '@/lib/mailer';
 
 export const dynamic = "force-dynamic";
@@ -81,12 +81,11 @@ This is an automated notification. Please review the request as soon as possible
  * Find vacation requests that have been pending for 3+ days
  */
 async function findOverdueRequests(): Promise<OverdueRequest[]> {
-  if (!isFirebaseAdminAvailable()) {
-    console.error('[CRON] Firebase Admin not available');
+  const { db, error } = getFirebaseAdmin();
+  if (!db || error) {
+    console.error('[CRON] Firebase Admin not available:', error);
     return [];
   }
-
-  const db = getFirebaseAdminFirestore();
   const threeDaysAgo = new Date();
   threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
   

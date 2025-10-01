@@ -7,21 +7,21 @@ import { NextResponse } from 'next/server';
 const mockEvents = [
   {
     id: '1',
-    title: 'Johnny Vacation',
+    title: 'Employee Vacation',
     startDate: '2025-09-15',
     endDate: '2025-09-17',
     location: 'Stars Yachting'
   },
   {
     id: '2',
-    title: 'Daniel Half Day',
+    title: 'Half Day Leave',
     startDate: '2025-09-20',
     endDate: '2025-09-20',
     location: 'Stars Real Estate'
   },
   {
     id: '3',
-    title: 'Pierre Vacation',
+    title: 'Annual Leave',
     startDate: '2025-10-01',
     endDate: '2025-10-05',
     location: 'Stars MC'

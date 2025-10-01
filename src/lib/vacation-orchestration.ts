@@ -2,34 +2,78 @@ import { emailAdapter } from '@/lib/email';
 import { RealCalendarGateway } from '@/lib/calendar/real';
 import { FakeCalendarGateway } from '@/lib/calendar/fake';
 import { ADMINS } from '../../config/admins';
+import { sendAdminNotification, sendEmailToRecipients } from '@/lib/email-notifications';
+import { generateAdminNotificationEmail, generateRequestConfirmationEmail } from '@/lib/email-templates';
+import type { VacationRequestData } from '@/lib/email-templates';
 
 // On submission:
 export async function submitVacation({ 
   requesterEmail, 
   requestId, 
   startIso, 
-  endIso 
+  endIso,
+  vacationRequestData
 }: {
   requesterEmail: string; 
   requestId: string; 
   startIso: string; 
   endIso: string;
+  vacationRequestData?: VacationRequestData;
 }) {
-  const mail = emailAdapter();
+  console.log('📧 Sending vacation request notifications...', { requestId, requesterEmail });
 
-  // Notify admins
-  await mail.send({ 
-    type: 'ADMIN_NOTIFY', 
-    to: ADMINS.map(a => a.email), 
-    requestId 
-  });
-  
-  // Confirm to requester
-  await mail.send({ 
-    type: 'REQUEST_SUBMITTED', 
-    to: requesterEmail, 
-    requestId 
-  });
+  try {
+    // Send admin notification with deep link
+    if (vacationRequestData) {
+      const adminEmail = generateAdminNotificationEmail(vacationRequestData);
+      const adminResult = await sendAdminNotification(adminEmail.subject, adminEmail.html, adminEmail.text);
+      
+      if (adminResult.success) {
+        console.log('✅ Admin notification sent successfully', { provider: adminResult.provider, messageId: adminResult.messageId });
+      } else {
+        console.error('❌ Failed to send admin notification:', adminResult.error);
+      }
+    } else {
+      // Fallback to old system if no detailed data available
+      console.log('⚠️ Using fallback email system (no detailed data)');
+      const mail = emailAdapter();
+      await mail.send({ 
+        type: 'ADMIN_NOTIFY', 
+        to: ADMINS.map(a => a.email), 
+        requestId 
+      });
+    }
+    
+    // Send confirmation to requester
+    if (vacationRequestData) {
+      const confirmationEmail = generateRequestConfirmationEmail(vacationRequestData);
+      const confirmationResult = await sendEmailToRecipients(
+        [requesterEmail],
+        confirmationEmail.subject, 
+        confirmationEmail.html, 
+        confirmationEmail.text
+      );
+      
+      if (confirmationResult.success) {
+        console.log('✅ Confirmation email sent successfully', { provider: confirmationResult.provider, messageId: confirmationResult.messageId });
+      } else {
+        console.error('❌ Failed to send confirmation email:', confirmationResult.error);
+      }
+    } else {
+      // Fallback to old system
+      const mail = emailAdapter();
+      await mail.send({ 
+        type: 'REQUEST_SUBMITTED', 
+        to: requesterEmail, 
+        requestId 
+      });
+    }
+    
+    console.log('✅ Vacation request email notifications completed');
+  } catch (error) {
+    console.error('❌ Error sending vacation request emails:', error);
+    throw error;
+  }
   
   // Persist request in DB with status 'PENDING' and local embedded calendar entry
   // (Write to your app's embedded calendar store / DB table)

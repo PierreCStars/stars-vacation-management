@@ -3,7 +3,7 @@ export const runtime = 'nodejs';
 export const revalidate = 0;
 
 import { NextResponse } from "next/server";
-import { getFirebaseAdmin, isFirebaseAdminAvailable } from "@/lib/firebase/index";
+import { getVacationRequests } from "@/lib/analytics/data";
 
 type VR = {
   id: string;
@@ -58,68 +58,10 @@ export async function GET(req: Request) {
     // status filter (default approved)
     const status = url.searchParams.get("status") || "approved";
     
-    let rows: VR[] = [];
+    console.info('[ANALYTICS] source=firebase query=analytics-csv', { status });
     
-    // Try to fetch from Firestore first
-    try {
-      if (isFirebaseAdminAvailable()) {
-        const { db, error } = getFirebaseAdmin();
-        if (error || !db) {
-          console.log('⚠️  Firebase Admin not available - using mock data for CSV export');
-        } else {
-          const collection = db.collection("vacationRequests");
-          const q = status !== "all" ? collection.where("status", "==", status) : collection;
-          const snap = await q.get();
-          rows = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
-          
-          console.log(`✅ Fetched ${rows.length} vacation requests for CSV export (status: ${status})`);
-        }
-      } else {
-        console.log('⚠️  Firebase Admin not available - using mock data for CSV export');
-      }
-    } catch (firebaseError) {
-      console.error('❌ Firebase error:', firebaseError);
-      console.log('⚠️  Falling back to mock data for CSV export...');
-    }
-
-    // Fallback to mock data if Firestore fails or is not available
-    if (rows.length === 0) {
-      rows = [
-        {
-          id: 'mock-1',
-          userId: 'user1',
-          userName: 'John Smith',
-          company: 'Stars Yachting',
-          type: 'Full day',
-          status: 'approved',
-          isHalfDay: false,
-          startDate: '2025-01-15',
-          endDate: '2025-01-17'
-        },
-        {
-          id: 'mock-2',
-          userId: 'user2',
-          userName: 'Jane Doe',
-          company: 'Stars Real Estate',
-          type: 'Half day',
-          status: 'approved',
-          isHalfDay: true,
-          startDate: '2025-01-20',
-          endDate: '2025-01-20'
-        },
-        {
-          id: 'mock-3',
-          userId: 'user3',
-          userName: 'Mike Wilson',
-          company: 'Le Pneu',
-          type: 'Full day',
-          status: 'approved',
-          isHalfDay: false,
-          startDate: '2025-01-10',
-          endDate: '2025-01-12'
-        }
-      ];
-    }
+    // Fetch data from Firebase only
+    const rows = await getVacationRequests(status);
 
     const flat = rows.map(r => ({
       employee: r.userName || "Unknown",

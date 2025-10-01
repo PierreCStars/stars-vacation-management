@@ -6,7 +6,7 @@ export const revalidate = 0;
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { adminVacationSubject, adminVacationHtml, adminVacationText } from '@/lib/email-templates';
+import { generateAdminNotificationEmail } from '@/lib/email-templates';
 import { sendAdminNotification } from '@/lib/mailer';
 import { getBaseUrl } from '@/lib/base-url';
 import { getFirebaseAdmin } from '@/lib/firebase/admin';
@@ -37,56 +37,8 @@ export async function GET() {
     }
     
     // Fallback to mock data if Firebase is not available
-    const mockData = [
-        {
-          id: 'temp-1',
-          userId: 'john@example.com',
-          userName: 'John Smith',
-          userEmail: 'john@example.com',
-          company: 'Stars Yachting',
-          type: 'Full day',
-          startDate: '2025-01-15',
-          endDate: '2025-01-17',
-          status: 'pending',
-          isHalfDay: false,
-          halfDayType: null,
-          durationDays: 3,
-          createdAt: '2025-01-08T10:00:00Z'
-        },
-        {
-          id: 'temp-2',
-          userId: 'jane@example.com',
-          userName: 'Jane Doe',
-          userEmail: 'jane@example.com',
-          company: 'Stars Real Estate',
-          type: 'Half day AM',
-          startDate: '2025-01-20',
-          endDate: '2025-01-20',
-          status: 'pending',
-          isHalfDay: true,
-          halfDayType: 'morning',
-          durationDays: 1,
-          createdAt: '2025-01-09T14:30:00Z'
-        },
-        {
-          id: 'temp-3',
-          userId: 'mike@example.com',
-          userName: 'Mike Wilson',
-          userEmail: 'mike@example.com',
-          company: 'Le Pneu',
-          type: 'Full day',
-          startDate: '2025-01-10',
-          endDate: '2025-01-12',
-          status: 'approved',
-          isHalfDay: false,
-          halfDayType: null,
-          durationDays: 3,
-          createdAt: '2025-01-07T09:15:00Z',
-          reviewedAt: '2025-01-08T10:00:00Z',
-          reviewedBy: 'Admin User',
-          reviewerEmail: 'admin@stars.mc'
-        }
-      ];
+    // No mock data - return empty array if no data from Firebase
+    const mockData: any[] = [];
 
     return NextResponse.json(mockData);
   } catch (error) {
@@ -202,11 +154,29 @@ export async function POST(request: Request) {
 
     // Send emails using orchestration
     try {
+      // Prepare detailed vacation request data for email templates
+      const vacationRequestData = {
+        id: requestId,
+        userName: vacationRequest.userName,
+        userEmail: vacationRequest.userEmail,
+        startDate: vacationRequest.startDate,
+        endDate: vacationRequest.endDate,
+        reason: vacationRequest.reason || 'No reason provided',
+        company: vacationRequest.company,
+        type: vacationRequest.type,
+        isHalfDay: vacationRequest.isHalfDay || false,
+        halfDayType: vacationRequest.halfDayType || null,
+        durationDays: vacationRequest.durationDays || 1,
+        createdAt: new Date().toISOString(),
+        locale: 'en' // Default locale, could be extracted from request headers if needed
+      };
+
       await submitVacation({
         requesterEmail: vacationRequest.userEmail,
         requestId,
         startIso: vacationRequest.startDate,
-        endIso: vacationRequest.endDate
+        endIso: vacationRequest.endDate,
+        vacationRequestData
       });
       console.log('✅ Vacation request emails sent successfully');
     } catch (emailError) {

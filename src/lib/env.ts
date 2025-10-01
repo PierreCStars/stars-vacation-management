@@ -26,6 +26,21 @@ const EnvSchema = z.object({
   GMAIL_CLIENT_SECRET: z.string().min(1, 'GMAIL_CLIENT_SECRET missing'),
   GMAIL_REFRESH_TOKEN: z.string().min(1, 'GMAIL_REFRESH_TOKEN missing'),
   
+  // Email configuration
+  APP_BASE_URL: z.string().url('APP_BASE_URL must be a URL').optional(),
+  NOTIFY_ADMIN_EMAILS: z.string().min(1, 'NOTIFY_ADMIN_EMAILS missing'),
+  
+  // SMTP configuration (for email notifications)
+  SMTP_HOST: z.string().optional(),
+  SMTP_PORT: z.string().optional(),
+  SMTP_USER: z.string().optional(),
+  SMTP_PASS: z.string().optional(),
+  SMTP_SECURE: z.string().optional(),
+  FROM_EMAIL: z.string().email('FROM_EMAIL must be a valid email').optional(),
+  
+  // Resend configuration (alternative to SMTP)
+  RESEND_API_KEY: z.string().optional(),
+  
   // Optional but recommended
   NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
   VERCEL_URL: z.string().optional(),
@@ -47,6 +62,15 @@ const _env = {
   GMAIL_CLIENT_ID: process.env.GMAIL_CLIENT_ID,
   GMAIL_CLIENT_SECRET: process.env.GMAIL_CLIENT_SECRET,
   GMAIL_REFRESH_TOKEN: process.env.GMAIL_REFRESH_TOKEN,
+  APP_BASE_URL: process.env.APP_BASE_URL,
+  NOTIFY_ADMIN_EMAILS: process.env.NOTIFY_ADMIN_EMAILS,
+  SMTP_HOST: process.env.SMTP_HOST,
+  SMTP_PORT: process.env.SMTP_PORT,
+  SMTP_USER: process.env.SMTP_USER,
+  SMTP_PASS: process.env.SMTP_PASS,
+  SMTP_SECURE: process.env.SMTP_SECURE,
+  FROM_EMAIL: process.env.FROM_EMAIL,
+  RESEND_API_KEY: process.env.RESEND_API_KEY,
   NODE_ENV: process.env.NODE_ENV,
   VERCEL_URL: process.env.VERCEL_URL,
 };

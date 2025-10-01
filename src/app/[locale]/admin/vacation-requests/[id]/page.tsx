@@ -335,7 +335,7 @@ export default function VacationRequestDetailPage() {
     const mockRequest: VacationRequest = {
       id: requestId,
       userId: 'mock-user-123',
-      userName: 'John Smith (Mock)',
+      userName: 'Test User (Mock)',
       userEmail: 'john@example.com',
       startDate: '2025-01-15',
       endDate: '2025-01-17',

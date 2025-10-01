@@ -9,6 +9,42 @@ A comprehensive vacation request management system with Google Calendar integrat
 - Multi-language support (EN, FR, IT)
 - Admin dashboard with analytics
 - Email notifications
+- **Automated overdue request notifications** - Admins receive daily emails for requests pending review for 3+ days
+
+## Automated Notifications
+
+The system includes an automated notification system to ensure vacation requests are reviewed promptly:
+
+### Overdue Request Notifications
+
+- **Trigger**: Vacation requests that remain in "pending" status for 3+ days
+- **Frequency**: Daily check at 9:00 AM UTC via Vercel Cron
+- **Recipients**: Admin users (configured via email settings)
+- **Content**: 
+  - Request details (employee, dates, reason, company)
+  - Days overdue count
+  - Direct link to review the request in the admin panel
+  - Professional HTML and plain text email formats
+
+### Manual Testing
+
+You can manually trigger the overdue request check:
+
+```bash
+# Test the cron endpoint locally
+curl http://localhost:3000/api/cron/check-pending-requests
+
+# Or via POST
+curl -X POST http://localhost:3000/api/cron/check-pending-requests
+```
+
+### Configuration
+
+The notification system is automatically configured when deployed to Vercel. The cron job runs daily and requires:
+
+- Firebase Admin SDK access (for querying requests)
+- SMTP configuration (for sending emails)
+- Proper environment variables (see Environment Variables section)
 
 ## Development
 

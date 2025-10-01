@@ -163,7 +163,7 @@ export async function getRequestsWithConflicts(): Promise<VacationRequestWithCon
         id: 'mock-1',
         userId: 'user-1',
         userEmail: 'john@example.com',
-        userName: 'John Smith',
+        userName: 'Test User',
         company: 'STARS_MC',
         type: 'VACATION',
         startDate: '2025-01-15',
@@ -174,10 +174,10 @@ export async function getRequestsWithConflicts(): Promise<VacationRequestWithCon
           {
             type: 'same-company' as const,
             severity: 'high' as const,
-            details: 'Overlap with Jane Doe\'s VACATION from 2025-01-16 to 2025-01-16',
+            details: 'Overlap with Test User\'s VACATION from 2025-01-16 to 2025-01-16',
             conflictingRequests: [{
               id: 'mock-conflict-1',
-              userName: 'Jane Doe',
+              userName: 'Test User 2',
               company: 'STARS_MC',
               startDate: '2025-01-16',
               endDate: '2025-01-16',

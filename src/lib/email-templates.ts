@@ -1,251 +1,280 @@
-import { nonEmpty } from '@/lib/strings';
+/**
+ * HTML email templates for vacation request notifications
+ */
 
-export function getEmployeeEmailTemplate(
-  status: string,
-  userName: string,
-  statusMessage: string,
-  statusClass: string,
-  company: string,
-  type: string,
-  startDate: string,
-  endDate: string,
-  reviewerName: string,
-  reviewDate: string,
-  commentSection: string
-): string {
-  // Safe fallbacks for critical fields
-  const safeUserName = nonEmpty(userName, 'Unknown Employee');
-  const safeCompany = nonEmpty(company, '—');
-  const safeType = nonEmpty(type, 'Vacation');
-  const safeStartDate = nonEmpty(startDate, '—');
-  const safeEndDate = nonEmpty(endDate, safeStartDate);
-  const safeReviewerName = nonEmpty(reviewerName, 'Admin');
-  const safeReviewDate = nonEmpty(reviewDate, '—');
-  
-  return '<!DOCTYPE html>' +
-    '<html>' +
-    '<head>' +
-        '<meta charset="utf-8">' +
-        '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
-        '<title>Vacation Request Update</title>' +
-        '<style>' +
-            'body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }' +
-            '.header { background: #D8B11B; color: white; padding: 20px; text-align: center; }' +
-            '.content { padding: 20px; }' +
-            '.status-approved { background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; }' +
-            '.status-rejected { background-color: #fef2f2; border-left: 4px solid #ef4444; padding: 15px; margin: 20px 0; }' +
-            '.details { background-color: #f8f9fa; padding: 15px; margin: 20px 0; }' +
-            '.footer { background-color: #f8f9fa; padding: 20px; text-align: center; }' +
-        '</style>' +
-    '</head>' +
-    '<body>' +
-        '<div class="header">' +
-            '<h1>Vacation Request Update</h1>' +
-            '<h2>' + status + '</h2>' +
-        '</div>' +
-        '<div class="content">' +
-            '<p>Dear ' + safeUserName + ',</p>' +
-            '<div class="' + statusClass + '">' +
-                statusMessage +
-            '</div>' +
-            '<div class="details">' +
-                '<h3>Request Details</h3>' +
-                '<p><strong>Employee:</strong> ' + safeUserName + '</p>' +
-                '<p><strong>Company:</strong> ' + safeCompany + '</p>' +
-                '<p><strong>Type:</strong> ' + safeType + '</p>' +
-                '<p><strong>Start Date:</strong> ' + safeStartDate + '</p>' +
-                '<p><strong>End Date:</strong> ' + safeEndDate + '</p>' +
-                '<p><strong>Reviewed By:</strong> ' + safeReviewerName + '</p>' +
-                '<p><strong>Review Date:</strong> ' + safeReviewDate + '</p>' +
-                commentSection +
-            '</div>' +
-        '</div>' +
-        '<div class="footer">' +
-            '<p>Stars Group - Vacation Management System</p>' +
-        '</div>' +
-    '</body>' +
-    '</html>';
-}
+import { adminVacationRequestUrl } from './urls';
 
-export function getAdminEmailTemplate(
-  status: string,
-  reviewerName: string,
-  userName: string,
-  userId: string,
-  company: string,
-  type: string,
-  startDate: string,
-  endDate: string,
-  reviewDate: string,
-  commentSection: string
-): string {
-  // Safe fallbacks for critical fields
-  const safeReviewerName = nonEmpty(reviewerName, 'Admin');
-  const safeUserName = nonEmpty(userName, 'Unknown Employee');
-  const safeUserId = nonEmpty(userId, '—');
-  const safeCompany = nonEmpty(company, '—');
-  const safeType = nonEmpty(type, 'Vacation');
-  const safeStartDate = nonEmpty(startDate, '—');
-  const safeEndDate = nonEmpty(endDate, safeStartDate);
-  const safeReviewDate = nonEmpty(reviewDate, '—');
-  
-  return '<!DOCTYPE html>' +
-    '<html>' +
-    '<head>' +
-        '<meta charset="utf-8">' +
-        '<meta name="viewport" content="width=device-width, initial-scale=1.0">' +
-        '<title>Vacation Request Update</title>' +
-        '<style>' +
-            'body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }' +
-            '.header { background: #D8B11B; color: white; padding: 20px; text-align: center; }' +
-            '.content { padding: 20px; }' +
-            '.summary { background-color: #f8f9fa; padding: 15px; margin: 20px 0; }' +
-            '.footer { background-color: #f8f9fa; padding: 20px; text-align: center; }' +
-        '</style>' +
-    '</head>' +
-    '<body>' +
-        '<div class="header">' +
-            '<h1>Vacation Request ' + status + '</h1>' +
-        '</div>' +
-        '<div class="content">' +
-            '<p><strong>' + safeReviewerName + '</strong> has ' + status.toLowerCase() + ' a vacation request.</p>' +
-            '<div class="summary">' +
-                '<h3>Request Summary</h3>' +
-                '<p><strong>Employee:</strong> ' + safeUserName + ' (' + safeUserId + ')</p>' +
-                '<p><strong>Company:</strong> ' + safeCompany + '</p>' +
-                '<p><strong>Type:</strong> ' + safeType + '</p>' +
-                '<p><strong>Start Date:</strong> ' + safeStartDate + '</p>' +
-                '<p><strong>End Date:</strong> ' + safeEndDate + '</p>' +
-                '<p><strong>Status:</strong> ' + status + '</p>' +
-                '<p><strong>Reviewed By:</strong> ' + safeReviewerName + '</p>' +
-                '<p><strong>Review Date:</strong> ' + safeReviewDate + '</p>' +
-                commentSection +
-            '</div>' +
-        '</div>' +
-        '<div class="footer">' +
-            '<p>Stars Group - Vacation Management System</p>' +
-        '</div>' +
-    '</body>' +
-    '</html>';
-}
-
-export function adminVacationSubject({
-  hasConflicts,
-  userName,
-}: {
-  hasConflicts: boolean;
+export interface VacationRequestData {
+  id: string;
   userName: string;
-}) {
-  const safeUserName = nonEmpty(userName, 'Unknown Employee');
-  const prefix = hasConflicts ? "⚠️ Possible conflict — " : "";
-  return `${prefix}New Vacation Request — ${safeUserName}`;
-}
-
-export function adminVacationText({
-  userName,
-  companyName,
-  startDate,
-  endDate,
-  isHalfDay,
-  halfDayType,
-  hasConflicts,
-}: {
-  userName: string;
-  companyName: string;
+  userEmail: string;
   startDate: string;
   endDate: string;
-  isHalfDay?: boolean;
-  halfDayType?: "morning" | "afternoon" | null;
-  hasConflicts: boolean;
-}): string {
-  // Safe fallbacks for critical fields
-  const safeUserName = nonEmpty(userName, 'Unknown Employee');
-  const safeCompanyName = nonEmpty(companyName, '—');
-  const safeStartDate = nonEmpty(startDate, '—');
-  const safeEndDate = nonEmpty(endDate, safeStartDate);
-  
-  const dateRange = safeStartDate === safeEndDate ? safeStartDate : `${safeStartDate} to ${safeEndDate}`;
-  const halfDaySuffix = isHalfDay ? ` (Half-day, ${halfDayType})` : "";
-  const conflictWarning = hasConflicts ? "\n\nCheck for conflicts before reviewing the request." : "";
-  
-  return `Hello Admin,
-
-${isHalfDay ? 'Half-day' : 'Full-day'} vacation request from ${safeUserName} from ${safeCompanyName}.
-Dates required ${dateRange}${halfDaySuffix}
-
-Check for conflicts before reviewing the request.
-
-Thank you!
-
-The vacation system`;
+  reason: string;
+  company: string;
+  type: string;
+  isHalfDay: boolean;
+  halfDayType?: 'morning' | 'afternoon' | null;
+  durationDays: number;
+  createdAt: string;
+  locale?: string;
 }
 
-export function adminVacationHtml({
-  userName,
-  companyName,
-  startDate,
-  endDate,
-  isHalfDay,
-  halfDayType,
-  hasConflicts,
-  reviewUrl,
-}: {
-  userName: string;
-  companyName: string;
-  startDate: string;
-  endDate: string;
-  isHalfDay?: boolean;
-  halfDayType?: "morning" | "afternoon" | null;
-  hasConflicts: boolean;
-  reviewUrl: string;
-}): string {
-  // Safe fallbacks for critical fields
-  const safeUserName = nonEmpty(userName, 'Unknown Employee');
-  const safeCompanyName = nonEmpty(companyName, '—');
-  const safeStartDate = nonEmpty(startDate, '—');
-  const safeEndDate = nonEmpty(endDate, safeStartDate);
+/**
+ * Generate admin notification email for new vacation request
+ */
+export function generateAdminNotificationEmail(data: VacationRequestData): { subject: string; html: string; text: string } {
+  const adminUrl = adminVacationRequestUrl(data.id, data.locale || 'en');
+  const formattedStartDate = new Date(data.startDate).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  const formattedEndDate = new Date(data.endDate).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  const subject = `New Vacation Request #${data.id} - ${data.userName}`;
   
-  const dateRange = safeStartDate === safeEndDate ? safeStartDate : `${safeStartDate} to ${safeEndDate}`;
-  const halfDaySuffix = isHalfDay ? ` (Half-day, ${halfDayType})` : "";
-  
-  return `<!DOCTYPE html>
+  const html = `
+<!DOCTYPE html>
 <html>
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>New Vacation Request</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
-        .header { background: #D8B11B; color: white; padding: 20px; text-align: center; }
-        .content { padding: 20px; }
-        .details { background-color: #f8f9fa; padding: 15px; margin: 20px 0; }
-        .conflict { color: #d63384; font-weight: bold; }
-        .button { display: inline-block; padding: 10px 20px; background: #D8B11B; color: white; text-decoration: none; border-radius: 5px; margin-top: 20px; }
-        .footer { background-color: #f8f9fa; padding: 20px; text-align: center; margin-top: 20px; }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>New Vacation Request</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f5f5f5; }
+    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden; }
+    .header { background: #2563eb; color: white; padding: 20px; text-align: center; }
+    .header h1 { margin: 0; font-size: 24px; }
+    .content { padding: 30px; }
+    .request-info { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 20px; margin: 20px 0; }
+    .info-row { display: flex; justify-content: space-between; margin: 10px 0; padding: 8px 0; border-bottom: 1px solid #e2e8f0; }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { font-weight: 600; color: #4a5568; }
+    .info-value { color: #2d3748; }
+    .cta-button { display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 20px 0; }
+    .cta-button:hover { background: #1d4ed8; }
+    .footer { background: #f8fafc; padding: 20px; text-align: center; color: #6b7280; font-size: 14px; }
+    .badge { display: inline-block; background: #fbbf24; color: #92400e; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+    .half-day { background: #dbeafe; color: #1e40af; }
+  </style>
 </head>
 <body>
+  <div class="container">
     <div class="header">
-        <h1>New Vacation Request</h1>
+      <h1>🏖️ New Vacation Request</h1>
     </div>
+    
     <div class="content">
-        <p>Hello Admin,</p>
-        
-        <div class="details">
-            <p><strong>${isHalfDay ? 'Half-day' : 'Full-day'} vacation request from ${safeUserName} from ${safeCompanyName}.</strong></p>
-            <p><strong>Dates required ${dateRange}${halfDaySuffix}</strong></p>
+      <p>A new vacation request has been submitted and requires your review.</p>
+      
+      <div class="request-info">
+        <div class="info-row">
+          <span class="info-label">Request ID:</span>
+          <span class="info-value">#${data.id}</span>
         </div>
-        
-        <p>Check for conflicts before reviewing the request.</p>
-        
-        <a href="${reviewUrl}" class="button">Review Request</a>
-        
-        <p>Thank you!</p>
-        <p><strong>The vacation system</strong></p>
+        <div class="info-row">
+          <span class="info-label">Employee:</span>
+          <span class="info-value">${data.userName} (${data.userEmail})</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Company:</span>
+          <span class="info-value">${data.company}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Type:</span>
+          <span class="info-value">${data.type}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Start Date:</span>
+          <span class="info-value">${formattedStartDate}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">End Date:</span>
+          <span class="info-value">${formattedEndDate}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Duration:</span>
+          <span class="info-value">
+            ${data.durationDays} day${data.durationDays !== 1 ? 's' : ''}
+            ${data.isHalfDay ? `<span class="badge half-day">Half Day (${data.halfDayType})</span>` : ''}
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Reason:</span>
+          <span class="info-value">${data.reason}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Submitted:</span>
+          <span class="info-value">${new Date(data.createdAt).toLocaleString('en-US')}</span>
+        </div>
+      </div>
+      
+      <div style="text-align: center;">
+        <a href="${adminUrl}" class="cta-button">Review Request</a>
+      </div>
+      
+      <p style="margin-top: 30px; color: #6b7280; font-size: 14px;">
+        This request is currently pending approval. Please review the details and take appropriate action.
+      </p>
     </div>
+    
     <div class="footer">
-        <p>Stars Group - Vacation Management System</p>
+      <p>Stars Vacation Management System</p>
+      <p>If you cannot click the button above, copy and paste this link: <a href="${adminUrl}">${adminUrl}</a></p>
     </div>
+  </div>
 </body>
 </html>`;
-} 
+
+  const text = `
+New Vacation Request #${data.id}
+
+Employee: ${data.userName} (${data.userEmail})
+Company: ${data.company}
+Type: ${data.type}
+Start Date: ${formattedStartDate}
+End Date: ${formattedEndDate}
+Duration: ${data.durationDays} day${data.durationDays !== 1 ? 's' : ''}${data.isHalfDay ? ` (Half Day - ${data.halfDayType})` : ''}
+Reason: ${data.reason}
+Submitted: ${new Date(data.createdAt).toLocaleString('en-US')}
+
+Review this request: ${adminUrl}
+
+This request is currently pending approval. Please review the details and take appropriate action.
+
+---
+Stars Vacation Management System
+`;
+
+  return { subject, html, text };
+}
+
+/**
+ * Generate confirmation email for the requester
+ */
+export function generateRequestConfirmationEmail(data: VacationRequestData): { subject: string; html: string; text: string } {
+  const formattedStartDate = new Date(data.startDate).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  const formattedEndDate = new Date(data.endDate).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  const subject = `Vacation Request Submitted #${data.id}`;
+  
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vacation Request Confirmation</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f5f5f5; }
+    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden; }
+    .header { background: #10b981; color: white; padding: 20px; text-align: center; }
+    .header h1 { margin: 0; font-size: 24px; }
+    .content { padding: 30px; }
+    .request-info { background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 6px; padding: 20px; margin: 20px 0; }
+    .info-row { display: flex; justify-content: space-between; margin: 10px 0; padding: 8px 0; border-bottom: 1px solid #bbf7d0; }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { font-weight: 600; color: #166534; }
+    .info-value { color: #15803d; }
+    .status-badge { display: inline-block; background: #fbbf24; color: #92400e; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+    .half-day { background: #dbeafe; color: #1e40af; }
+    .footer { background: #f8fafc; padding: 20px; text-align: center; color: #6b7280; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>✅ Request Submitted</h1>
+    </div>
+    
+    <div class="content">
+      <p>Hello ${data.userName},</p>
+      
+      <p>Your vacation request has been successfully submitted and is now under review.</p>
+      
+      <div class="request-info">
+        <div class="info-row">
+          <span class="info-label">Request ID:</span>
+          <span class="info-value">#${data.id}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Status:</span>
+          <span class="info-value"><span class="status-badge">Pending Review</span></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Start Date:</span>
+          <span class="info-value">${formattedStartDate}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">End Date:</span>
+          <span class="info-value">${formattedEndDate}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Duration:</span>
+          <span class="info-value">
+            ${data.durationDays} day${data.durationDays !== 1 ? 's' : ''}
+            ${data.isHalfDay ? `<span class="status-badge half-day">Half Day (${data.halfDayType})</span>` : ''}
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Reason:</span>
+          <span class="info-value">${data.reason}</span>
+        </div>
+      </div>
+      
+      <p>You will receive an email notification once your request has been reviewed and a decision has been made.</p>
+      
+      <p style="margin-top: 30px; color: #6b7280; font-size: 14px;">
+        If you have any questions about your request, please contact your manager or HR department.
+      </p>
+    </div>
+    
+    <div class="footer">
+      <p>Stars Vacation Management System</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const text = `
+Vacation Request Confirmation #${data.id}
+
+Hello ${data.userName},
+
+Your vacation request has been successfully submitted and is now under review.
+
+Request Details:
+- Request ID: #${data.id}
+- Status: Pending Review
+- Start Date: ${formattedStartDate}
+- End Date: ${formattedEndDate}
+- Duration: ${data.durationDays} day${data.durationDays !== 1 ? 's' : ''}${data.isHalfDay ? ` (Half Day - ${data.halfDayType})` : ''}
+- Reason: ${data.reason}
+
+You will receive an email notification once your request has been reviewed and a decision has been made.
+
+If you have any questions about your request, please contact your manager or HR department.
+
+---
+Stars Vacation Management System
+`;
+
+  return { subject, html, text };
+}

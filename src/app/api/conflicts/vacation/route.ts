@@ -101,8 +101,8 @@ export async function GET(req: NextRequest) {
       const mockConflicts = [
         {
           id: 'mock-conflict-1',
-          userName: 'Jane Doe',
-          userEmail: 'jane@example.com',
+          userName: 'Test User',
+          userEmail: 'test@example.com',
           startDate: start,
           endDate: end,
           status: 'approved',

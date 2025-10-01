@@ -6,11 +6,14 @@ import {
 
 type EmployeeRow = { 
   userId?: string; 
+  userEmail?: string;
   userName: string; 
   company: string; 
   totalDays: number; 
   count: number; 
-  avg: number; 
+  avg: number;
+  lastRequestDate?: string;
+  firstRequestDate?: string;
 };
 
 type FreqByType = { 
@@ -26,13 +29,25 @@ type StackRow = {
 export default function AnalyticsPage() {
   const [status, setStatus] = useState<"approved"|"pending"|"rejected"|"all">("approved");
   const [data, setData] = useState<{
-    meta: { statusFilter: string; totalRequests: number };
+    meta: { 
+      statusFilter: string; 
+      totalRequests: number;
+      dateRange?: {
+        earliest: number;
+        latest: number;
+      };
+    };
     employees: EmployeeRow[];
     freqByType: FreqByType[];
     freqByCompanyStack: StackRow[];
     daysByCompanyStack: StackRow[];
+    freqByReason?: { reason: string; count: number }[];
+    freqByStatus?: { status: string; count: number }[];
+    monthlyTrends?: { month: string; requests: number; days: number }[];
     typeKeys: string[];
     companyKeys: string[];
+    reasonKeys?: string[];
+    statusKeys?: string[];
   } | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -151,7 +166,7 @@ export default function AnalyticsPage() {
       </div>
 
       {/* KPI cards */}
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+      <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="text-sm text-gray-500 mb-2">Total Requests</div>
           <div className="text-3xl font-bold text-gray-900">{data.meta.totalRequests}</div>
@@ -159,13 +174,20 @@ export default function AnalyticsPage() {
         </div>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="text-sm text-gray-500 mb-2">Unique Employees</div>
-          <div className="text-3xl font-bold text-gray-900">{new Set(data.employees.map(e=>e.userName)).size}</div>
+          <div className="text-3xl font-bold text-gray-900">{new Set(data.employees.map(e=>e.userEmail || e.userName)).size}</div>
           <div className="text-xs text-gray-500 mt-1">Active users</div>
         </div>
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="text-sm text-gray-500 mb-2">Total Days</div>
           <div className="text-3xl font-bold text-gray-900">{data.employees.reduce((s,e)=>s+e.totalDays,0).toFixed(1)}</div>
           <div className="text-xs text-gray-500 mt-1">Sum of all requests</div>
+        </div>
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="text-sm text-gray-500 mb-2">Avg Days/Employee</div>
+          <div className="text-3xl font-bold text-gray-900">
+            {data.employees.length > 0 ? (data.employees.reduce((s,e)=>s+e.totalDays,0) / data.employees.length).toFixed(1) : '0'}
+          </div>
+          <div className="text-xs text-gray-500 mt-1">Average per employee</div>
         </div>
       </section>
 
@@ -205,25 +227,31 @@ export default function AnalyticsPage() {
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Employee</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Days taken</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Frequency</th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Avg duration</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last request</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {employeesSorted.map((e, i)=>(
-                <tr key={e.userId || e.userName || i} className="hover:bg-gray-50">
+                <tr key={e.userEmail || e.userId || e.userName || i} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{e.userName}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{e.userEmail || 'N/A'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{e.company}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{e.totalDays.toFixed(1)}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{e.count}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-right">{e.avg.toFixed(2)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {e.lastRequestDate ? new Date(e.lastRequestDate).toLocaleDateString() : 'N/A'}
+                  </td>
                 </tr>
               ))}
               {employeesSorted.length===0 && (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-gray-500">
+                  <td colSpan={7} className="px-6 py-8 text-center text-gray-500">
                     <div className="text-center">
                       <div className="text-gray-400 text-4xl mb-2">📊</div>
                       <p className="text-lg font-medium text-gray-900">No employee data</p>
@@ -296,6 +324,69 @@ export default function AnalyticsPage() {
           </ResponsiveContainer>
         </div>
       </section>
+
+      {/* Status Distribution */}
+      {data.freqByStatus && data.freqByStatus.length > 0 && (
+        <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Request Status Distribution</h2>
+          <div className="h-80 w-full">
+            <ResponsiveContainer>
+              <PieChart>
+                <Pie 
+                  dataKey="count" 
+                  nameKey="status" 
+                  data={data.freqByStatus} 
+                  outerRadius={120} 
+                  label={({ status, count }) => `${status}: ${count}`}
+                >
+                  {data.freqByStatus.map((entry, index) => (
+                    <Cell key={entry.status} fill={colors[index % colors.length]} />
+                  ))}
+                </Pie>
+                <Tooltip formatter={(value) => [value, 'Count']} />
+                <Legend />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      )}
+
+      {/* Vacation Reasons */}
+      {data.freqByReason && data.freqByReason.length > 0 && (
+        <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Vacation Reasons</h2>
+          <div className="h-80 w-full">
+            <ResponsiveContainer>
+              <BarChart data={data.freqByReason.slice(0, 10)} layout="horizontal">
+                <XAxis type="number" />
+                <YAxis dataKey="reason" type="category" width={200} />
+                <Tooltip formatter={(value) => [value, 'Count']} />
+                <Bar dataKey="count" fill="#8884d8" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      )}
+
+      {/* Monthly Trends */}
+      {data.monthlyTrends && data.monthlyTrends.length > 0 && (
+        <section className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <h2 className="text-lg font-semibold text-gray-900 mb-4">Monthly Trends</h2>
+          <div className="h-80 w-full">
+            <ResponsiveContainer>
+              <BarChart data={data.monthlyTrends}>
+                <XAxis dataKey="month" />
+                <YAxis yAxisId="left" />
+                <YAxis yAxisId="right" orientation="right" />
+                <Tooltip formatter={(value, name) => [value, name === 'requests' ? 'Requests' : 'Days']} />
+                <Legend />
+                <Bar yAxisId="left" dataKey="requests" fill="#8884d8" name="requests" />
+                <Bar yAxisId="right" dataKey="days" fill="#82ca9d" name="days" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

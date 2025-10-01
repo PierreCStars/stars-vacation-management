@@ -141,7 +141,7 @@ export async function GET(req: Request) {
       all = [
         {
           id: 'mock-1',
-          userName: 'John Smith',
+          userName: 'Test User 1',
           company: 'Stars Yachting',
           type: 'Full day',
           status: 'approved',
@@ -151,7 +151,7 @@ export async function GET(req: Request) {
         },
         {
           id: 'mock-2',
-          userName: 'Jane Doe',
+          userName: 'Test User 2',
           company: 'Stars Real Estate',
           type: 'Half day',
           status: 'rejected',

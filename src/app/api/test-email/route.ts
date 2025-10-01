@@ -1,37 +1,29 @@
 import { NextResponse } from 'next/server';
 import { sendAdminNotification } from '@/lib/mailer';
-import { adminVacationSubject, adminVacationHtml, adminVacationText } from '@/lib/email-templates';
+import { generateAdminNotificationEmail } from '@/lib/email-templates';
 
 export async function GET() {
   try {
     console.log('🧪 Testing email notification system...');
     
     // Test email templates
-    const subject = adminVacationSubject({
-      hasConflicts: false,
+    const testData = {
+      id: 'test-123',
       userName: 'Test User',
-    });
+      userEmail: 'test@example.com',
+      startDate: '2025-09-15',
+      endDate: '2025-09-20',
+      reason: 'Test vacation',
+      company: 'Stars MC',
+      type: 'Full day',
+      isHalfDay: false,
+      halfDayType: null,
+      durationDays: 5,
+      createdAt: new Date().toISOString(),
+      locale: 'en'
+    };
     
-    const html = adminVacationHtml({
-      userName: 'Test User',
-      companyName: 'Stars MC',
-      startDate: '2025-09-15',
-      endDate: '2025-09-20',
-      isHalfDay: false,
-      halfDayType: null,
-      hasConflicts: false,
-      reviewUrl: 'http://localhost:3000/admin/vacation-requests/test-123',
-    });
-
-    const text = adminVacationText({
-      userName: 'Test User',
-      companyName: 'Stars MC',
-      startDate: '2025-09-15',
-      endDate: '2025-09-20',
-      isHalfDay: false,
-      halfDayType: null,
-      hasConflicts: false,
-    });
+    const { subject, html, text } = generateAdminNotificationEmail(testData);
     
     console.log('✅ Email templates generated successfully');
     console.log('Subject:', subject);

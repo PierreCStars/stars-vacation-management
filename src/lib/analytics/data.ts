@@ -133,7 +133,11 @@ export async function getVacationAnalytics(status?: string): Promise<VacationAna
     const empKey = request.userEmail || request.userId || request.userName || request.id;
     const name = request.userName || 'Unknown';
     const company = request.company || '—';
-    const type = request.type || (request.isHalfDay ? 'Half day' : 'Full day');
+    // Normalize vacation types - treat both VACATION and PAID_VACATION as "Paid Vacation"
+    let type = request.type || (request.isHalfDay ? 'Half day' : 'Full day');
+    if (type === 'VACATION' || type === 'PAID_VACATION') {
+      type = 'Paid Vacation';
+    }
 
     if (!byPersonMap.has(empKey)) {
       byPersonMap.set(empKey, {

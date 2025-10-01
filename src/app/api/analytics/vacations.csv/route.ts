@@ -63,15 +63,23 @@ export async function GET(req: Request) {
     // Fetch data from Firebase only
     const rows = await getVacationRequests(status);
 
-    const flat = rows.map(r => ({
-      employee: r.userName || "Unknown",
-      company: r.company || "—",
-      type: r.type || (r.isHalfDay ? "Half day" : "Full day"),
-      status: r.status || "",
-      startDate: r.startDate || "",
-      endDate: r.endDate || r.startDate || "",
-      days: resolveDuration(r)
-    }));
+    const flat = rows.map(r => {
+      // Normalize vacation types - treat both VACATION and PAID_VACATION as "Paid Vacation"
+      let type = r.type || (r.isHalfDay ? "Half day" : "Full day");
+      if (type === 'VACATION' || type === 'PAID_VACATION') {
+        type = 'Paid Vacation';
+      }
+      
+      return {
+        employee: r.userName || "Unknown",
+        company: r.company || "—",
+        type,
+        status: r.status || "",
+        startDate: r.startDate || "",
+        endDate: r.endDate || r.startDate || "",
+        days: resolveDuration(r)
+      };
+    });
 
     const csv = toCSV(flat);
     

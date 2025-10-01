@@ -89,7 +89,11 @@ export async function GET(req: Request) {
       const empKey = r.userEmail || r.userId || r.userName || r.id;
       const name = r.userName || "Unknown";
       const cmp = r.company || "—";
-      const typ = r.type || (r.isHalfDay ? "Half day" : "Full day");
+      // Normalize vacation types - treat both VACATION and PAID_VACATION as "Paid Vacation"
+      let typ = r.type || (r.isHalfDay ? "Half day" : "Full day");
+      if (typ === 'VACATION' || typ === 'PAID_VACATION') {
+        typ = 'Paid Vacation';
+      }
       
       // Convert timestamps to ISO strings for consistent handling
       const requestDate = r.createdAt ? 

@@ -352,7 +352,7 @@ export default function VacationRequestPage() {
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">Select leave type</option>
-                      <option value="VACATION">Vacation</option>
+                      <option value="PAID_VACATION">Paid Vacation</option>
                       <option value="SICK_LEAVE">Sick Leave</option>
                       <option value="PERSONAL_DAY">Personal Day</option>
                       <option value="BUSINESS_TRIP">Business Trip</option>

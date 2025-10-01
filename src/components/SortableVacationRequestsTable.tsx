@@ -368,7 +368,7 @@ export default function SortableVacationRequestsTable({ requests, type, onRefres
                   </td>
                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap' }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: 12, fontSize: 12, fontWeight: 500, background: '#dbeafe', color: '#1e40af' }}>
-                      {req.type === 'PAID_VACATION' ? 'Paid Vacation' :
+                      {req.type === 'PAID_VACATION' || req.type === 'VACATION' ? 'Paid Vacation' :
                        req.type === 'UNPAID_VACATION' ? 'Unpaid Vacation' :
                        req.type === 'SICK_LEAVE' ? 'Sick Leave' :
                      req.type === 'OTHER' ? 'Other' : 

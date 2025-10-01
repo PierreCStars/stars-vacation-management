@@ -120,7 +120,6 @@ function getServiceAccountFromSeparateEnvs(): ServiceAccount | null {
   });
   
   return {
-    type: 'service_account',
     project_id: projectId,
     private_key_id: '', // Not available from separate envs
     private_key: normalizedPrivateKey,

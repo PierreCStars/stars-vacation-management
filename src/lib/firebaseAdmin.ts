@@ -121,14 +121,8 @@ function getServiceAccountFromSeparateEnvs(): ServiceAccount | null {
   
   return {
     projectId: projectId,
-    privateKeyId: '', // Not available from separate envs
     privateKey: normalizedPrivateKey,
-    clientEmail: clientEmail,
-    clientId: '', // Not available from separate envs
-    authUri: 'https://accounts.google.com/o/oauth2/auth',
-    tokenUri: 'https://oauth2.googleapis.com/token',
-    authProviderX509CertUrl: 'https://www.googleapis.com/oauth2/v1/certs',
-    clientX509CertUrl: `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(clientEmail)}`
+    clientEmail: clientEmail
   };
 }
 

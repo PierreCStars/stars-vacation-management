@@ -120,15 +120,15 @@ function getServiceAccountFromSeparateEnvs(): ServiceAccount | null {
   });
   
   return {
-    project_id: projectId,
-    private_key_id: '', // Not available from separate envs
-    private_key: normalizedPrivateKey,
-    client_email: clientEmail,
-    client_id: '', // Not available from separate envs
-    auth_uri: 'https://accounts.google.com/o/oauth2/auth',
-    token_uri: 'https://oauth2.googleapis.com/token',
-    auth_provider_x509_cert_url: 'https://www.googleapis.com/oauth2/v1/certs',
-    client_x509_cert_url: `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(clientEmail)}`
+    projectId: projectId,
+    privateKeyId: '', // Not available from separate envs
+    privateKey: normalizedPrivateKey,
+    clientEmail: clientEmail,
+    clientId: '', // Not available from separate envs
+    authUri: 'https://accounts.google.com/o/oauth2/auth',
+    tokenUri: 'https://oauth2.googleapis.com/token',
+    authProviderX509CertUrl: 'https://www.googleapis.com/oauth2/v1/certs',
+    clientX509CertUrl: `https://www.googleapis.com/robot/v1/metadata/x509/${encodeURIComponent(clientEmail)}`
   };
 }
 
@@ -158,12 +158,12 @@ export function getFirebaseAdminApp() {
         
             adminApp = initializeApp({
               credential: cert(serviceAccount),
-              projectId: process.env.FIREBASE_PROJECT_ID || serviceAccount.project_id,
+              projectId: process.env.FIREBASE_PROJECT_ID || serviceAccount.projectId,
             });
         
         console.log('[FIREBASE_ADMIN] ✅ Firebase Admin initialized successfully');
         console.log('[FIREBASE_ADMIN] 📊 Project ID:', adminApp.options.projectId);
-        console.log('[FIREBASE_ADMIN] 📧 Client Email:', serviceAccount.client_email);
+        console.log('[FIREBASE_ADMIN] 📧 Client Email:', serviceAccount.clientEmail);
       } catch (error) {
         console.error('[FIREBASE_ADMIN] ❌ Failed to initialize Firebase Admin:', error);
         throw error;

@@ -10,8 +10,27 @@ type GoogleCreds = {
 };
 
 function loadGoogleCreds(): GoogleCreds {
+  // Try base64 encoded key first (GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64)
+  const base64Key = process.env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64;
+  if (base64Key) {
+    try {
+      const decoded = Buffer.from(base64Key, 'base64').toString('utf-8');
+      const obj = JSON.parse(decoded);
+      if (!obj.client_email || !obj.private_key) {
+        throw new Error("Base64 Google Calendar service account key invalid (missing fields)");
+      }
+      // Normalize private key newlines
+      obj.private_key = String(obj.private_key).replace(/\\n/g, "\n");
+      return { client_email: obj.client_email, private_key: obj.private_key };
+    } catch (error) {
+      console.error('❌ Error decoding base64 Google Calendar key:', error);
+      throw new Error("Failed to decode GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64");
+    }
+  }
+
+  // Fallback to regular key (GOOGLE_SERVICE_ACCOUNT_KEY)
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-  if (!raw) throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY manquante");
+  if (!raw) throw new Error("GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64 or GOOGLE_SERVICE_ACCOUNT_KEY missing");
 
   // 1) Si c'est du JSON (cas recommandé en .env)
   if (raw.trim().startsWith("{")) {

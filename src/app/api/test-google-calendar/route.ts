@@ -16,7 +16,9 @@ export async function GET(req: Request) {
     
     // Check environment variables
     const envCheck = {
+      GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64: process.env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64 ? '✅ Present' : '❌ Missing',
       GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY: process.env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY ? '✅ Present' : '❌ Missing',
+      GOOGLE_SERVICE_ACCOUNT_KEY: process.env.GOOGLE_SERVICE_ACCOUNT_KEY ? '✅ Present' : '❌ Missing',
       GOOGLE_CALENDAR_TARGET_ID: process.env.GOOGLE_CALENDAR_TARGET_ID || 'Not set',
       GOOGLE_CALENDAR_SOURCE_ID: process.env.GOOGLE_CALENDAR_SOURCE_ID || 'Not set',
       GOOGLE_CALENDAR_ID: process.env.GOOGLE_CALENDAR_ID || 'Not set',
@@ -26,18 +28,45 @@ export async function GET(req: Request) {
     
     console.log('🔍 Environment check:', envCheck);
     
-    if (!process.env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY) {
+    if (!process.env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64 && !process.env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY && !process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
       return NextResponse.json({
         success: false,
-        error: 'Google Calendar service account key not configured',
+        error: 'Google Calendar service account key not configured (need GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64, GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY, or GOOGLE_SERVICE_ACCOUNT_KEY)',
         envCheck
       }, { status: 400 });
     }
     
     // Test Google Calendar API initialization
     try {
+      // Use the same credential loading logic as the main library
+      let credentials;
+      
+      // Try base64 encoded key first
+      const base64Key = process.env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64;
+      if (base64Key) {
+        try {
+          const decoded = Buffer.from(base64Key, 'base64').toString('utf-8');
+          credentials = JSON.parse(decoded);
+          // Normalize private key newlines
+          credentials.private_key = String(credentials.private_key).replace(/\\n/g, "\n");
+        } catch (error) {
+          throw new Error(`Failed to decode base64 key: ${error instanceof Error ? error.message : String(error)}`);
+        }
+      } else {
+        // Fallback to regular key
+        const raw = process.env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY || process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+        if (!raw) throw new Error('No service account key found');
+        
+        if (raw.trim().startsWith("{")) {
+          credentials = JSON.parse(raw);
+          credentials.private_key = String(credentials.private_key).replace(/\\n/g, "\n");
+        } else {
+          throw new Error('Service account key must be JSON format');
+        }
+      }
+
       const auth = new google.auth.GoogleAuth({
-        credentials: JSON.parse(process.env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY),
+        credentials,
         scopes: ['https://www.googleapis.com/auth/calendar'],
       });
       

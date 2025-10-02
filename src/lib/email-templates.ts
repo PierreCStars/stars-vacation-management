@@ -278,3 +278,158 @@ Stars Vacation Management System
 
   return { subject, html, text };
 }
+
+/**
+ * Generate decision email for the requester (approved/denied)
+ */
+export function generateDecisionEmail(data: VacationRequestData & { 
+  decision: 'approved' | 'denied'; 
+  adminComment?: string; 
+  reviewedBy?: string; 
+}): { subject: string; html: string; text: string } {
+  const formattedStartDate = new Date(data.startDate).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  const formattedEndDate = new Date(data.endDate).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+
+  const isApproved = data.decision === 'approved';
+  const subject = `Vacation Request ${isApproved ? 'Approved' : 'Denied'} #${data.id}`;
+  
+  const headerColor = isApproved ? '#10b981' : '#ef4444';
+  const headerIcon = isApproved ? '✅' : '❌';
+  const headerText = isApproved ? 'Request Approved' : 'Request Denied';
+  const statusColor = isApproved ? '#f0fdf4' : '#fef2f2';
+  const borderColor = isApproved ? '#bbf7d0' : '#fecaca';
+  const textColor = isApproved ? '#166534' : '#dc2626';
+  const valueColor = isApproved ? '#15803d' : '#dc2626';
+  
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vacation Request Decision</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f5f5f5; }
+    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden; }
+    .header { background: ${headerColor}; color: white; padding: 20px; text-align: center; }
+    .header h1 { margin: 0; font-size: 24px; }
+    .content { padding: 30px; }
+    .request-info { background: ${statusColor}; border: 1px solid ${borderColor}; border-radius: 6px; padding: 20px; margin: 20px 0; }
+    .info-row { display: flex; justify-content: space-between; margin: 10px 0; padding: 8px 0; border-bottom: 1px solid ${borderColor}; }
+    .info-row:last-child { border-bottom: none; }
+    .info-label { font-weight: 600; color: ${textColor}; }
+    .info-value { color: ${valueColor}; }
+    .status-badge { display: inline-block; background: ${isApproved ? '#10b981' : '#ef4444'}; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+    .half-day { background: #dbeafe; color: #1e40af; }
+    .admin-comment { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 15px; margin: 20px 0; }
+    .footer { background: #f8fafc; padding: 20px; text-align: center; color: #6b7280; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>${headerIcon} ${headerText}</h1>
+    </div>
+    
+    <div class="content">
+      <p>Hello ${data.userName},</p>
+      
+      <p>Your vacation request has been reviewed and ${isApproved ? 'approved' : 'denied'}.</p>
+      
+      <div class="request-info">
+        <div class="info-row">
+          <span class="info-label">Request ID:</span>
+          <span class="info-value">#${data.id}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Status:</span>
+          <span class="info-value"><span class="status-badge">${isApproved ? 'Approved' : 'Denied'}</span></span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Start Date:</span>
+          <span class="info-value">${formattedStartDate}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">End Date:</span>
+          <span class="info-value">${formattedEndDate}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Duration:</span>
+          <span class="info-value">
+            ${data.durationDays} day${data.durationDays !== 1 ? 's' : ''}
+            ${data.isHalfDay ? `<span class="status-badge half-day">Half Day (${data.halfDayType})</span>` : ''}
+          </span>
+        </div>
+        <div class="info-row">
+          <span class="info-label">Reason:</span>
+          <span class="info-value">${data.reason}</span>
+        </div>
+        ${data.reviewedBy ? `
+        <div class="info-row">
+          <span class="info-label">Reviewed by:</span>
+          <span class="info-value">${data.reviewedBy}</span>
+        </div>
+        ` : ''}
+      </div>
+      
+      ${data.adminComment ? `
+      <div class="admin-comment">
+        <h3 style="margin-top: 0; color: #4a5568;">Admin Comment:</h3>
+        <p style="margin-bottom: 0; color: #2d3748;">${data.adminComment}</p>
+      </div>
+      ` : ''}
+      
+      <p style="margin-top: 30px; color: #6b7280; font-size: 14px;">
+        ${isApproved 
+          ? 'Your vacation request has been approved. Please ensure you have completed any necessary handover tasks before your vacation begins.'
+          : 'If you have any questions about this decision, please contact your manager or HR department.'
+        }
+      </p>
+    </div>
+    
+    <div class="footer">
+      <p>Stars Vacation Management System</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const text = `
+Vacation Request ${isApproved ? 'Approved' : 'Denied'} #${data.id}
+
+Hello ${data.userName},
+
+Your vacation request has been reviewed and ${isApproved ? 'approved' : 'denied'}.
+
+Request Details:
+- Request ID: #${data.id}
+- Status: ${isApproved ? 'Approved' : 'Denied'}
+- Start Date: ${formattedStartDate}
+- End Date: ${formattedEndDate}
+- Duration: ${data.durationDays} day${data.durationDays !== 1 ? 's' : ''}${data.isHalfDay ? ` (Half Day - ${data.halfDayType})` : ''}
+- Reason: ${data.reason}
+${data.reviewedBy ? `- Reviewed by: ${data.reviewedBy}` : ''}
+
+${data.adminComment ? `Admin Comment: ${data.adminComment}` : ''}
+
+${isApproved 
+  ? 'Your vacation request has been approved. Please ensure you have completed any necessary handover tasks before your vacation begins.'
+  : 'If you have any questions about this decision, please contact your manager or HR department.'
+}
+
+---
+Stars Vacation Management System
+`;
+
+  return { subject, html, text };
+}

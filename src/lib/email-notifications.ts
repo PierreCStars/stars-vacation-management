@@ -40,7 +40,7 @@ export function getAdminEmails(): string[] {
  * Get sender email from environment
  */
 export function getFromEmail(): string {
-  return process.env.FROM_EMAIL || process.env.SMTP_USER || 'no-reply@stars.mc';
+  return process.env.FROM_EMAIL || 'hr@stars.mc';
 }
 
 /**

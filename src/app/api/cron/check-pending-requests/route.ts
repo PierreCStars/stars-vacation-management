@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { sendAdminNotification } from '@/lib/mailer';
+import { adminVacationRequestUrl } from '@/lib/urls';
 
 export const dynamic = "force-dynamic";
 export const runtime = 'nodejs';
@@ -21,8 +22,8 @@ interface OverdueRequest {
 /**
  * Generate email content for overdue vacation request notification
  */
-function generateOverdueRequestEmail(request: OverdueRequest, baseUrl: string) {
-  const requestUrl = `${baseUrl}/admin/vacation-requests/${request.id}`;
+function generateOverdueRequestEmail(request: OverdueRequest) {
+  const requestUrl = adminVacationRequestUrl(request.id, 'en');
   const daysOverdue = request.daysOverdue;
   
   const subject = `Vacation request pending for review - ${request.userName}`;
@@ -141,13 +142,11 @@ async function findOverdueRequests(): Promise<OverdueRequest[]> {
  * Send notification emails for overdue requests
  */
 async function sendOverdueNotifications(requests: OverdueRequest[]): Promise<void> {
-  const baseUrl = process.env.NEXTAUTH_URL || 'https://stars-vacation-management.vercel.app';
-  
   for (const request of requests) {
     try {
       console.log(`[CRON] Sending notification for request ${request.id} (${request.daysOverdue} days overdue)`);
       
-      const { subject, html, text } = generateOverdueRequestEmail(request, baseUrl);
+      const { subject, html, text } = generateOverdueRequestEmail(request);
       
       await sendAdminNotification({ subject, html, text });
       

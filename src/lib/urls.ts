@@ -3,28 +3,14 @@
  */
 
 export function getBaseUrl(): string {
-  // Priority: APP_BASE_URL > NEXTAUTH_URL > VERCEL_URL > localhost fallback
-  const appBaseUrl = process.env.APP_BASE_URL;
-  if (appBaseUrl) {
-    return appBaseUrl.replace(/\/$/, ''); // Remove trailing slash
-  }
-  
-  const nextAuthUrl = process.env.NEXTAUTH_URL;
-  if (nextAuthUrl) {
-    return nextAuthUrl.replace(/\/$/, '');
-  }
-  
-  const vercelUrl = process.env.VERCEL_URL;
-  if (vercelUrl) {
-    return `https://${vercelUrl}`;
-  }
-  
-  // Development fallback
-  if (process.env.NODE_ENV === 'development') {
-    return 'http://localhost:3000';
-  }
-  
-  throw new Error('No base URL configured. Please set APP_BASE_URL, NEXTAUTH_URL, or VERCEL_URL');
+  // Priority: APP_BASE_URL (explicit), then NEXTAUTH_URL, then VERCEL_URL
+  const explicit = process.env.APP_BASE_URL || process.env.NEXTAUTH_URL || '';
+  if (explicit) return explicit.replace(/\/$/, '');
+
+  // Fallback to Vercel environment var if present
+  const v = process.env.VERCEL_URL; // e.g. starsvacationmanagementv2.vercel.app
+  if (v && !/^https?:\/\//i.test(v)) return `https://${v}`;  // normalize
+  return (v || ''); // already full URL if it starts with http
 }
 
 export function adminVacationRequestUrl(id: string, locale = 'en'): string {

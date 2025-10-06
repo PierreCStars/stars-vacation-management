@@ -391,6 +391,11 @@ export default function AdminVacationRequestsClient({
 
         {/* Tab Content */}
         <div className="p-6">
+          {/* Debug info */}
+          <div className="bg-red-100 border border-red-400 text-red-800 px-4 py-2 rounded text-sm mb-4">
+            🔧 DEBUG: activeTab = "{activeTab}", effectivePending.length = {effectivePending.length}
+          </div>
+          
           {activeTab === "list" && (
             <div>
               <div className="flex items-center justify-between mb-4">
@@ -405,6 +410,11 @@ export default function AdminVacationRequestsClient({
                   )}
                 </div>
               </div>
+              {/* Debug before ResponsiveRequestsList */}
+              <div className="bg-blue-100 border border-blue-400 text-blue-800 px-4 py-2 rounded text-sm mb-4">
+                🔧 DEBUG: About to render ResponsiveRequestsList with {effectivePending.length} requests
+              </div>
+              
               <ResponsiveRequestsList
                 requests={effectivePending}
                 onUpdateStatus={updateStatus}

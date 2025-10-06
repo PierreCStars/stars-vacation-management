@@ -27,6 +27,7 @@ export default function ResponsiveRequestsList({
   tVacations,
   showActions = true
 }: ResponsiveRequestsListProps) {
+  console.log('[LAYOUT] ResponsiveRequestsList mounted with', requests.length, 'requests');
   const [processingRequests, setProcessingRequests] = useState<Set<string>>(new Set());
 
   const handleStatusUpdate = async (id: string, status: "approved" | "rejected") => {

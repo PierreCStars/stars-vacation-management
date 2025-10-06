@@ -237,42 +237,45 @@ export default function UnifiedVacationCalendar({
   }
 
   return (
-    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className} ${compact ? 'mini-calendar' : ''}`}>
+    <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className} ${compact ? 'mini-calendar' : ''} overflow-hidden`}>
       {/* Calendar Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-4 rounded-t-lg">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-3 sm:p-4 rounded-t-lg">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className={`font-bold ${compact ? 'text-lg' : 'text-xl'}`}>
-              🗓️ Vacation & Company Calendar
+          <div className="flex-1 min-w-0">
+            <h2 className={`font-bold ${compact ? 'text-lg' : 'text-lg sm:text-xl'} truncate`}>
+              🗓️ <span className="hidden sm:inline">Vacation & Company Calendar</span>
+              <span className="sm:hidden">Calendar</span>
+              <span className="ml-2 text-xs bg-yellow-200 text-yellow-800 px-1.5 py-0.5 rounded" data-version="responsive-v1">📱</span>
             </h2>
-            <p className="text-blue-100 text-sm">
+            <p className="text-blue-100 text-xs sm:text-sm mt-1">
               {compact ? 'Team availability & company events' : 'Monitor team availability, company events, and detect scheduling conflicts'}
             </p>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1 sm:space-x-2">
             <button
               onClick={goToPreviousMonth}
-              className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-all duration-200"
+              className="p-1.5 sm:p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-all duration-200"
               title="Previous month"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
             
             <button
               onClick={goToToday}
-              className="px-3 py-1 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-all duration-200 font-semibold text-sm"
+              className="px-2 sm:px-3 py-1 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-all duration-200 font-semibold text-xs sm:text-sm"
             >
-              Today
+              <span className="hidden sm:inline">Today</span>
+              <span className="sm:hidden">Now</span>
             </button>
             
             <button
               onClick={goToNextMonth}
-              className="p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-all duration-200"
+              className="p-1.5 sm:p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-all duration-200"
               title="Next month"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             </button>
@@ -281,8 +284,8 @@ export default function UnifiedVacationCalendar({
       </div>
 
       {/* Month/Year Display */}
-      <div className="text-center py-4 bg-gray-50 border-b border-gray-200">
-        <h3 className="text-xl font-bold text-gray-800">
+      <div className="text-center py-3 sm:py-4 bg-gray-50 border-b border-gray-200">
+        <h3 className="text-lg sm:text-xl font-bold text-gray-800">
           {monthNames[monthInfo.currentMonth]} {monthInfo.currentYear}
         </h3>
       </div>
@@ -295,12 +298,13 @@ export default function UnifiedVacationCalendar({
       </div>
 
       {/* Calendar Grid */}
-      <div className="p-4">
+      <div className="p-2 sm:p-4">
         {/* Day headers */}
         <div className="grid grid-cols-7 gap-1 mb-2">
           {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-            <div key={day} className="p-2 text-center text-xs font-medium text-gray-500">
-              {day}
+            <div key={day} className="p-1 sm:p-2 text-center text-xs font-medium text-gray-500">
+              <span className="hidden sm:inline">{day}</span>
+              <span className="sm:hidden">{day.charAt(0)}</span>
             </div>
           ))}
         </div>
@@ -310,7 +314,7 @@ export default function UnifiedVacationCalendar({
           {calendarDays.map((day, index) => (
             <div
               key={index}
-              className={`p-2 min-h-[80px] border rounded-lg transition-all duration-200 ${
+              className={`p-1 sm:p-2 min-h-[60px] sm:min-h-[80px] border rounded-lg transition-all duration-200 ${
                 readOnly ? 'cursor-default' : 'cursor-pointer hover:shadow-md'
               } ${
                 day.isCurrentMonth ? 'bg-white' : 'bg-gray-50'
@@ -323,7 +327,7 @@ export default function UnifiedVacationCalendar({
               }`}
               onClick={() => !readOnly && setSelectedDate(selectedDate?.toDateString() === day.date.toDateString() ? null : day.date)}
             >
-              <div className={`text-sm font-medium ${
+              <div className={`text-xs sm:text-sm font-medium ${
                 day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
               } ${day.isToday ? 'text-blue-600 font-bold' : ''}`}>
                 {day.dayNumber}
@@ -545,27 +549,27 @@ export default function UnifiedVacationCalendar({
 
         {/* Enhanced Legend */}
         {showLegend && (
-          <div className="mt-4 pt-4 border-t border-gray-200">
-            <div className="flex flex-wrap items-center gap-4">
+          <div className="mt-3 sm:mt-4 pt-3 sm:pt-4 border-t border-gray-200">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               {highlightRange && initialRange && (
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 bg-blue-50 border border-blue-300 rounded"></div>
-                  <span className="text-sm text-gray-600">Selected Range</span>
+                <div className="flex items-center space-x-1 sm:space-x-2">
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-50 border border-blue-300 rounded"></div>
+                  <span className="text-xs sm:text-sm text-gray-600">Selected Range</span>
                 </div>
               )}
               {conflicts.length > 0 && (
-                <div className="flex items-center space-x-2">
-                  <div className="w-4 h-4 bg-red-100 border border-red-300 rounded"></div>
-                  <span className="text-sm text-gray-600">Conflicts</span>
+                <div className="flex items-center space-x-1 sm:space-x-2">
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-100 border border-red-300 rounded"></div>
+                  <span className="text-xs sm:text-sm text-gray-600">Conflicts</span>
                 </div>
               )}
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-purple-100 border border-purple-300 rounded"></div>
-                <span className="text-sm text-gray-600">Company Events</span>
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-purple-100 border border-purple-300 rounded"></div>
+                <span className="text-xs sm:text-sm text-gray-600">Company Events</span>
               </div>
-              <div className="flex items-center space-x-2">
-                <div className="w-4 h-4 bg-blue-500 rounded"></div>
-                <span className="text-sm text-gray-600">Vacation Requests</span>
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded"></div>
+                <span className="text-xs sm:text-sm text-gray-600">Vacation Requests</span>
               </div>
             </div>
           </div>

@@ -10,10 +10,6 @@
   ],
   "crons": [
     {
-      "path": "/api/cron/check-pending-requests",
-      "schedule": "0 9 * * *"
-    },
-    {
       "path": "/api/cron/pending-requests-3d",
       "schedule": "0 7 * * *"
     },

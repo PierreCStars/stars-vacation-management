@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { sendAdminNotification } from '@/lib/email-notifications';
 import { generateAdminNotificationEmail } from '@/lib/email-templates';
+import type { PendingRequestSummary } from '@/lib/cron/pendingRequests';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
       .orderBy('createdAt', 'desc')
       .get();
 
-    const pendingRequests = snapshot.docs.map(doc => ({
+    const pendingRequests: PendingRequestSummary[] = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
 
     for (const request of pendingRequests) {
       try {
-        console.log(`📧 Processing request #${request.id} - ${request.userName || 'Unknown'}`);
+        console.log(`📧 Processing request #${request.id} - ${request.userName || request.userEmail || 'Unknown'}`);
         
         // Generate admin notification email
         const emailData = {

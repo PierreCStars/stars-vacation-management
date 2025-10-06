@@ -6,7 +6,7 @@
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { sendAdminNotification } from '@/lib/mailer';
 import { adminVacationRequestUrl } from '@/lib/urls';
-import { serverTimestamp } from 'firebase-admin/firestore';
+import { FieldValue } from 'firebase-admin/firestore';
 
 // Time constants
 export const THREE_DAYS_MS = 1000 * 60 * 60 * 24 * 3;
@@ -27,6 +27,24 @@ export interface OverdueRequest {
   isHalfDay?: boolean;
   halfDayType?: 'morning' | 'afternoon' | null;
   durationDays?: number;
+}
+
+// Shared interface for pending request data from Firestore
+export interface PendingRequestSummary {
+  id: string;
+  userName?: string;
+  userEmail?: string;
+  startDate?: string;
+  endDate?: string;
+  createdAt?: any; // Firestore Timestamp
+  company?: string;
+  type?: string;
+  reason?: string;
+  isHalfDay?: boolean;
+  halfDayType?: 'morning' | 'afternoon' | null;
+  durationDays?: number;
+  locale?: string;
+  status?: string;
 }
 
 export interface PendingCheckResult {
@@ -276,7 +294,7 @@ Stars Vacation Management System
       if (db) {
         const dedupeField = threshold === '3d' ? 'notifiedAt3d' : 'notifiedAt7d';
         await db.collection('vacationRequests').doc(request.id).update({
-          [dedupeField]: serverTimestamp()
+          [dedupeField]: FieldValue.serverTimestamp()
         });
       }
 

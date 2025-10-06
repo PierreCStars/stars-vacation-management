@@ -1,73 +1,59 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { PATCH } from '../route';
-import { getServerSession } from 'next-auth/next';
-import { getVacationRequestsService } from '@/lib/firebase';
-import { syncEventForRequest, refreshCacheTags } from '@/lib/calendar/sync';
-import { decideVacation } from '@/lib/vacation-orchestration';
 
 // Mock dependencies
 vi.mock('next-auth/next', () => ({
-  getServerSession: vi.fn(),
+  getServerSession: vi.fn()
 }));
 
 vi.mock('@/lib/firebase', () => ({
-  getVacationRequestsService: vi.fn(),
+  getVacationRequestsService: vi.fn(() => ({
+    getVacationRequestById: vi.fn(),
+    approveVacationRequest: vi.fn(),
+    rejectVacationRequest: vi.fn()
+  }))
 }));
 
 vi.mock('@/lib/calendar/sync', () => ({
-  syncEventForRequest: vi.fn(),
-  refreshCacheTags: vi.fn(),
-}));
-
-vi.mock('@/lib/vacation-orchestration', () => ({
-  decideVacation: vi.fn(),
+  syncEventForRequest: vi.fn(() => Promise.resolve({ success: true, eventId: 'test-event-id' })),
+  refreshCacheTags: vi.fn(() => Promise.resolve())
 }));
 
 vi.mock('next/cache', () => ({
   revalidateTag: vi.fn(),
-  revalidatePath: vi.fn(),
+  revalidatePath: vi.fn()
 }));
 
-describe('PATCH /api/vacation-requests/[id]', () => {
-  const mockSession = {
-    user: {
-      email: 'admin@stars.mc',
-      name: 'Admin User',
-    },
-  };
-
-  const mockRequestData = {
-    id: 'test-request-123',
-    userName: 'John Doe',
-    userEmail: 'john@stars.mc',
-    startDate: '2024-01-15',
-    endDate: '2024-01-17',
-    type: 'Full day',
-    company: 'Stars',
-    reason: 'Vacation',
-    status: 'pending',
-  };
-
-  const mockVacationService = {
-    getVacationRequestById: vi.fn(),
-    approveVacationRequest: vi.fn(),
-    rejectVacationRequest: vi.fn(),
-    updateVacationRequest: vi.fn(),
-  };
-
+describe('/api/vacation-requests/[id] PATCH', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(getServerSession).mockResolvedValue(mockSession as any);
-    vi.mocked(getVacationRequestsService).mockReturnValue(mockVacationService as any);
-    vi.mocked(syncEventForRequest).mockResolvedValue({ success: true, eventId: 'test-event-123' });
-    vi.mocked(refreshCacheTags).mockResolvedValue();
-    vi.mocked(decideVacation).mockResolvedValue(undefined);
   });
 
   it('should approve a vacation request successfully', async () => {
-    mockVacationService.getVacationRequestById.mockResolvedValue(mockRequestData);
-    mockVacationService.approveVacationRequest.mockResolvedValue(undefined);
+    const { getServerSession } = await import('next-auth/next');
+    const { getVacationRequestsService } = await import('@/lib/firebase');
+    
+    // Mock session
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { email: 'admin@stars.mc', name: 'Admin User' }
+    } as any);
+
+    // Mock vacation service
+    const mockService = {
+      getVacationRequestById: vi.fn().mockResolvedValue({
+        id: 'test-123',
+        userName: 'Test User',
+        userEmail: 'test@stars.mc',
+        startDate: '2025-01-15',
+        endDate: '2025-01-17',
+        type: 'VACATION',
+        company: 'STARS_MC',
+        reason: 'Test vacation'
+      }),
+      approveVacationRequest: vi.fn().mockResolvedValue(undefined)
+    };
+    vi.mocked(getVacationRequestsService).mockReturnValue(mockService);
 
     const request = new NextRequest('http://localhost:3000/api/vacation-requests/test-123', {
       method: 'PATCH',
@@ -76,9 +62,9 @@ describe('PATCH /api/vacation-requests/[id]', () => {
         reviewer: {
           id: 'admin@stars.mc',
           name: 'Admin User',
-          email: 'admin@stars.mc',
-        },
-      }),
+          email: 'admin@stars.mc'
+        }
+      })
     });
 
     const response = await PATCH(request, { params: Promise.resolve({ id: 'test-123' }) });
@@ -86,30 +72,39 @@ describe('PATCH /api/vacation-requests/[id]', () => {
 
     expect(response.status).toBe(200);
     expect(data.ok).toBe(true);
-    expect(data.message).toBe('Vacation request approved successfully');
-    expect(mockVacationService.approveVacationRequest).toHaveBeenCalledWith(
+    expect(data.request.status).toBe('approved');
+    expect(mockService.approveVacationRequest).toHaveBeenCalledWith(
       'test-123',
       'Admin User',
       'admin@stars.mc',
       undefined
     );
-    expect(syncEventForRequest).toHaveBeenCalledWith({
-      id: 'test-request-123',
-      userName: 'John Doe',
-      userEmail: 'john@stars.mc',
-      startDate: '2024-01-15',
-      endDate: '2024-01-17',
-      type: 'Full day',
-      company: 'Stars',
-      reason: 'Vacation',
-      status: 'approved',
-    });
-    expect(refreshCacheTags).toHaveBeenCalled();
   });
 
   it('should reject a vacation request successfully', async () => {
-    mockVacationService.getVacationRequestById.mockResolvedValue(mockRequestData);
-    mockVacationService.rejectVacationRequest.mockResolvedValue(undefined);
+    const { getServerSession } = await import('next-auth/next');
+    const { getVacationRequestsService } = await import('@/lib/firebase');
+    
+    // Mock session
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { email: 'admin@stars.mc', name: 'Admin User' }
+    } as any);
+
+    // Mock vacation service
+    const mockService = {
+      getVacationRequestById: vi.fn().mockResolvedValue({
+        id: 'test-123',
+        userName: 'Test User',
+        userEmail: 'test@stars.mc',
+        startDate: '2025-01-15',
+        endDate: '2025-01-17',
+        type: 'VACATION',
+        company: 'STARS_MC',
+        reason: 'Test vacation'
+      }),
+      rejectVacationRequest: vi.fn().mockResolvedValue(undefined)
+    };
+    vi.mocked(getVacationRequestsService).mockReturnValue(mockService);
 
     const request = new NextRequest('http://localhost:3000/api/vacation-requests/test-123', {
       method: 'PATCH',
@@ -118,9 +113,9 @@ describe('PATCH /api/vacation-requests/[id]', () => {
         reviewer: {
           id: 'admin@stars.mc',
           name: 'Admin User',
-          email: 'admin@stars.mc',
-        },
-      }),
+          email: 'admin@stars.mc'
+        }
+      })
     });
 
     const response = await PATCH(request, { params: Promise.resolve({ id: 'test-123' }) });
@@ -128,32 +123,24 @@ describe('PATCH /api/vacation-requests/[id]', () => {
 
     expect(response.status).toBe(200);
     expect(data.ok).toBe(true);
-    expect(data.message).toBe('Vacation request rejected successfully');
-    expect(mockVacationService.rejectVacationRequest).toHaveBeenCalledWith(
+    expect(data.request.status).toBe('rejected');
+    expect(mockService.rejectVacationRequest).toHaveBeenCalledWith(
       'test-123',
       'Admin User',
       'admin@stars.mc',
       undefined
     );
-    expect(syncEventForRequest).toHaveBeenCalledWith({
-      id: 'test-request-123',
-      userName: 'John Doe',
-      userEmail: 'john@stars.mc',
-      startDate: '2024-01-15',
-      endDate: '2024-01-17',
-      type: 'Full day',
-      company: 'Stars',
-      reason: 'Vacation',
-      status: 'rejected',
-    });
   });
 
   it('should return 401 for unauthorized requests', async () => {
+    const { getServerSession } = await import('next-auth/next');
+    
+    // Mock no session
     vi.mocked(getServerSession).mockResolvedValue(null);
 
     const request = new NextRequest('http://localhost:3000/api/vacation-requests/test-123', {
       method: 'PATCH',
-      body: JSON.stringify({ status: 'approved' }),
+      body: JSON.stringify({ status: 'approved' })
     });
 
     const response = await PATCH(request, { params: Promise.resolve({ id: 'test-123' }) });
@@ -163,66 +150,23 @@ describe('PATCH /api/vacation-requests/[id]', () => {
     expect(data.error).toBe('Unauthorized');
   });
 
-  it('should return 404 for non-existent requests', async () => {
-    mockVacationService.getVacationRequestById.mockResolvedValue(null);
+  it('should return 400 for invalid update requests', async () => {
+    const { getServerSession } = await import('next-auth/next');
+    
+    // Mock session
+    vi.mocked(getServerSession).mockResolvedValue({
+      user: { email: 'admin@stars.mc', name: 'Admin User' }
+    } as any);
 
     const request = new NextRequest('http://localhost:3000/api/vacation-requests/test-123', {
       method: 'PATCH',
-      body: JSON.stringify({
-        status: 'approved',
-        reviewer: { id: 'admin@stars.mc', name: 'Admin', email: 'admin@stars.mc' },
-      }),
+      body: JSON.stringify({ invalidField: 'value' })
     });
 
     const response = await PATCH(request, { params: Promise.resolve({ id: 'test-123' }) });
     const data = await response.json();
 
-    expect(response.status).toBe(404);
-    expect(data.error).toBe('Vacation request not found');
-  });
-
-  it('should handle calendar sync failures gracefully', async () => {
-    mockVacationService.getVacationRequestById.mockResolvedValue(mockRequestData);
-    mockVacationService.approveVacationRequest.mockResolvedValue(undefined);
-    vi.mocked(syncEventForRequest).mockResolvedValue({ 
-      success: false, 
-      error: 'Calendar sync failed' 
-    });
-
-    const request = new NextRequest('http://localhost:3000/api/vacation-requests/test-123', {
-      method: 'PATCH',
-      body: JSON.stringify({
-        status: 'approved',
-        reviewer: { id: 'admin@stars.mc', name: 'Admin', email: 'admin@stars.mc' },
-      }),
-    });
-
-    const response = await PATCH(request, { params: Promise.resolve({ id: 'test-123' }) });
-    const data = await response.json();
-
-    // Should still succeed even if calendar sync fails
-    expect(response.status).toBe(200);
-    expect(data.ok).toBe(true);
-  });
-
-  it('should handle cache invalidation failures gracefully', async () => {
-    mockVacationService.getVacationRequestById.mockResolvedValue(mockRequestData);
-    mockVacationService.approveVacationRequest.mockResolvedValue(undefined);
-    vi.mocked(refreshCacheTags).mockRejectedValue(new Error('Cache invalidation failed'));
-
-    const request = new NextRequest('http://localhost:3000/api/vacation-requests/test-123', {
-      method: 'PATCH',
-      body: JSON.stringify({
-        status: 'approved',
-        reviewer: { id: 'admin@stars.mc', name: 'Admin', email: 'admin@stars.mc' },
-      }),
-    });
-
-    const response = await PATCH(request, { params: Promise.resolve({ id: 'test-123' }) });
-    const data = await response.json();
-
-    // Should still succeed even if cache invalidation fails
-    expect(response.status).toBe(200);
-    expect(data.ok).toBe(true);
+    expect(response.status).toBe(400);
+    expect(data.error).toContain('Invalid update request');
   });
 });

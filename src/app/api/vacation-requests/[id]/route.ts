@@ -58,6 +58,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         // Handle status updates
         if (isStatusUpdate) {
           console.log('[VALIDATION] updating_status', { id, newStatus, reviewer });
+          
+          // Get current status before update for debugging
+          const currentData = await vacationService.getVacationRequestById(id);
+          console.log('[VALIDATION] current_status_before', { id, currentStatus: currentData?.status });
+          
           if (newStatus === 'approved') {
             await vacationService.approveVacationRequest(
               id, 
@@ -75,6 +80,10 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             );
             console.log('[VALIDATION] rejected', { id });
           }
+          
+          // Verify status after update
+          const updatedData = await vacationService.getVacationRequestById(id);
+          console.log('[VALIDATION] status_after_update', { id, newStatus, actualStatus: updatedData?.status });
         }
         
         // Handle date updates

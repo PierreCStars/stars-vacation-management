@@ -12,6 +12,7 @@ import FirebaseDiagnostics from "@/components/FirebaseDiagnostics";
 import { isFirebaseEnabled } from "@/lib/firebase/client";
 import AdminVacationRequestsClient from './AdminVacationRequestsClient';
 import ClientOnly from '@/components/ClientOnly';
+import { normalizeStatus, isPendingStatus, isReviewedStatus } from '@/types/vacation-status';
 
 export default async function AdminVacationRequestsPage() {
   try {
@@ -57,8 +58,23 @@ export default async function AdminVacationRequestsPage() {
     
     // Separate pending and reviewed requests (case-insensitive)
     console.log('[VACATION_REQUESTS] Filtering requests by status...');
-    const pending = requests.filter(r => r.status?.toLowerCase() === 'pending');
-    const reviewed = requests.filter(r => r.status?.toLowerCase() !== 'pending');
+    
+    // Log all status values for debugging
+    const statusCounts = requests.reduce((acc, r) => {
+      const status = r.status?.toLowerCase() || 'undefined';
+      acc[status] = (acc[status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    console.log('[VACATION_REQUESTS] Status distribution:', statusCounts);
+    
+    const pending = requests.filter(r => {
+      const isPending = isPendingStatus(r.status);
+      if (isPending) {
+        console.log('[VACATION_REQUESTS] Found pending request:', { id: r.id, status: r.status, userName: r.userName });
+      }
+      return isPending;
+    });
+    const reviewed = requests.filter(r => isReviewedStatus(r.status));
     
     // Count requests with conflicts
     console.log('[VACATION_REQUESTS] Counting conflicts...');

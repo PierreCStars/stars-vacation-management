@@ -150,6 +150,7 @@ export async function refreshCacheTags(): Promise<void> {
   try {
     console.log('[CACHE] revalidate calendar:all');
     await revalidateTag('calendar:all');
+    await revalidateTag('vacationRequests:list');
     await revalidatePath('/en/admin/vacation-requests');
     await revalidatePath('/en/dashboard');
     console.log('[CACHE] revalidate success');

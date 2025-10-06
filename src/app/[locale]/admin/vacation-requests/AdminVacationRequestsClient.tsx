@@ -12,6 +12,7 @@ import FirebaseDiagnostics from "@/components/FirebaseDiagnostics";
 import { isFirebaseEnabled } from "@/lib/firebase/client";
 import { VacationRequestWithConflicts } from './_server/getRequestsWithConflicts';
 import ResponsiveRequestsList from '@/components/admin/ResponsiveRequestsList';
+import { normalizeStatus, isPendingStatus, isReviewedStatus } from '@/types/vacation-status';
 
 // Handle browser extension interference - moved to useEffect
 
@@ -100,8 +101,8 @@ export default function AdminVacationRequestsClient({
             conflicts: [] // No conflicts computed client-side
           }));
           
-          const pending = requests.filter((r: any) => r.status?.toLowerCase() === 'pending');
-          const reviewed = requests.filter((r: any) => r.status?.toLowerCase() !== 'pending');
+          const pending = requests.filter((r: any) => isPendingStatus(r.status));
+          const reviewed = requests.filter((r: any) => isReviewedStatus(r.status));
           const conflictCount = requests.filter((r: any) => r.conflicts?.length > 0).length;
           
           setClientRequests(requests);

@@ -43,6 +43,19 @@ function getLocaleFromHeader(request: NextRequest): string | undefined {
 
 export function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const host = request.headers.get('host') || '';
+
+  // Domain redirect: stars-vacation-management.vercel.app -> starsvacationmanagementv2.vercel.app
+  const CANONICAL_HOST = 'starsvacationmanagementv2.vercel.app';
+  const OLD_HOST = 'stars-vacation-management.vercel.app';
+  
+  if (host === OLD_HOST) {
+    console.log('[REDIRECT] Redirecting old domain to canonical:', { from: host, to: CANONICAL_HOST });
+    const url = request.nextUrl.clone();
+    url.host = CANONICAL_HOST;
+    url.protocol = 'https';
+    return NextResponse.redirect(url, 308); // Permanent redirect
+  }
 
   // Skip middleware for static assets
   if (

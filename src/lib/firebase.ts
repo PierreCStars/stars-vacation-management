@@ -398,7 +398,7 @@ export class VacationRequestsService {
     try {
       const docRef = doc(this.db, VACATION_REQUESTS_COLLECTION, id);
       const updateData: any = {
-        status: 'approved',
+        status: 'approved', // Use lowercase canonical format
         reviewedBy,
         reviewerEmail,
         reviewedAt: serverTimestamp(),
@@ -410,7 +410,9 @@ export class VacationRequestsService {
         updateData.adminComment = adminComment;
       }
       
+      console.log('[FIREBASE] approveVacationRequest', { id, status: 'approved', reviewedBy, reviewerEmail });
       await updateDoc(docRef, updateData);
+      console.log('[FIREBASE] approveVacationRequest success', { id });
     } catch (error) {
       console.error('Error approving vacation request:', error);
       throw new Error('Failed to approve vacation request');
@@ -434,7 +436,9 @@ export class VacationRequestsService {
         updateData.adminComment = adminComment;
       }
       
+      console.log('[FIREBASE] rejectVacationRequest', { id, status: 'rejected', reviewedBy, reviewerEmail });
       await updateDoc(docRef, updateData);
+      console.log('[FIREBASE] rejectVacationRequest success', { id });
     } catch (error) {
       console.error('Error rejecting vacation request:', error);
       throw new Error('Failed to reject vacation request');

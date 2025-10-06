@@ -262,7 +262,7 @@ export default function AdminVacationRequestsClient({
     };
 
     for (const requestId of selectedRequests) {
-      await updateStatus(requestId, action, reviewer);
+      await updateStatus(requestId, action);
     }
     
     // Clear selection after bulk action

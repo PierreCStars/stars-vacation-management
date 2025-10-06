@@ -7,15 +7,5 @@
       "destination": "https://starsvacationmanagementv2.vercel.app/$1",
       "permanent": true
     }
-  ],
-  "crons": [
-    {
-      "path": "/api/cron/pending-requests-3d",
-      "schedule": "0 7 * * *"
-    },
-    {
-      "path": "/api/cron/pending-requests-7d",
-      "schedule": "10 7 * * *"
-    }
   ]
 }

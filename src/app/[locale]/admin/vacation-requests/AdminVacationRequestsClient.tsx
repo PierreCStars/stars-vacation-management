@@ -414,7 +414,7 @@ export default function AdminVacationRequestsClient({
                 selectedRequests={selectedRequests}
                 t={t}
                 tVacations={tVacations}
-                showActions={false}
+                showActions={true}
               />
             </div>
           )}

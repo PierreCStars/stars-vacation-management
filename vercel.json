@@ -1,12 +1,5 @@
 {
-  "installCommand": "npm ci --force",
-  "buildCommand": "rm -rf .next && npm run build",
-  "outputDirectory": ".next",
   "framework": "nextjs",
-  "functions": {
-    "api/cron/pending-requests-3d/route.ts": { "runtime": "nodejs18.x" },
-    "api/cron/pending-requests-7d/route.ts": { "runtime": "nodejs18.x" }
-  },
   "redirects": [
     {
       "source": "/(.*)",

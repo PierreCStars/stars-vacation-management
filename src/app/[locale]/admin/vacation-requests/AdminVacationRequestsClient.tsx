@@ -597,3 +597,4 @@ export default function AdminVacationRequestsClient({
     </div>
   );
 }
+console.log('NEW LAYOUT LOADED:', new Date().toISOString());

@@ -32,14 +32,16 @@ export async function sendAdminNotification({
   subject,
   html,
   text,
+  overrideTo,
 }: {
   subject: string;
   html: string;
   text?: string;
+  overrideTo?: string;
 }) {
   const transporter = mailer();
   const from = process.env.SMTP_USER!;
-  const to = adminRecipients();
+  const to = overrideTo ? [overrideTo] : adminRecipients();
 
   await transporter.sendMail({
     from: `"Stars Vacation" <${from}>`,

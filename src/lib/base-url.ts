@@ -16,5 +16,5 @@ export async function getBaseUrl() {
   }
 
   // Dev fallback
-  return 'http://localhost:3000';
+  return 'https://starsvacationmanagementv2.vercel.app';
 }

@@ -57,10 +57,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(url, 308); // Permanent redirect
   }
 
-  // Skip middleware for static assets
+  // Skip middleware for static assets and auth routes
   if (
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/api/') ||
+    pathname.startsWith('/auth/') ||
+    pathname.startsWith('/login') ||
     pathname === '/favicon.ico' ||
     pathname.endsWith('.png') ||
     pathname.endsWith('.jpg') ||

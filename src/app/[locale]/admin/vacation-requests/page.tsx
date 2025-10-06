@@ -11,7 +11,6 @@ import FirebaseDebugPanel from "@/components/FirebaseDebugPanel";
 import FirebaseDiagnostics from "@/components/FirebaseDiagnostics";
 import { isFirebaseEnabled } from "@/lib/firebase/client";
 import AdminVacationRequestsClient from './AdminVacationRequestsClient';
-import ClientOnly from '@/components/ClientOnly';
 import { normalizeStatus, isPendingStatus, isReviewedStatus } from '@/types/vacation-status';
 
 export default async function AdminVacationRequestsPage() {
@@ -83,14 +82,12 @@ export default async function AdminVacationRequestsPage() {
     console.log(`✅ Server-side: Loaded ${requests.length} requests (${pending.length} pending, ${reviewed.length} reviewed, ${conflictCount} with conflicts)`);
 
     return (
-      <ClientOnly>
-        <AdminVacationRequestsClient 
-          initialRequests={requests}
-          pending={pending}
-          reviewed={reviewed}
-          conflictCount={conflictCount}
-        />
-      </ClientOnly>
+      <AdminVacationRequestsClient 
+        initialRequests={requests}
+        pending={pending}
+        reviewed={reviewed}
+        conflictCount={conflictCount}
+      />
     );
   } catch (error) {
     console.error('VACATION_REQUESTS_RENDER_ERROR', error);

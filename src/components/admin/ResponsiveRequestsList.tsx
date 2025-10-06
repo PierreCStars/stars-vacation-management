@@ -30,7 +30,7 @@ export default function ResponsiveRequestsList({
   tVacations,
   showActions = true
 }: ResponsiveRequestsListProps) {
-  console.log('[LAYOUT] ResponsiveRequestsList mounted with', requests.length, 'requests');
+  console.log('[LAYOUT] ResponsiveRequestsList mounted with', requests.length, 'requests, showActions:', showActions);
   const [processingRequests, setProcessingRequests] = useState<Set<string>>(new Set());
 
   const handleStatusUpdate = async (id: string, status: "approved" | "rejected") => {
@@ -162,6 +162,8 @@ function RequestTableRow({
 }: RequestRowProps) {
   const locale = useLocale();
   const isSelected = selectedRequests.has(request.id);
+  
+  console.log('[LAYOUT] RequestTableRow rendering for', request.userName, 'showActions:', showActions);
 
   const handleRowClick = (e: React.MouseEvent) => {
     // Only navigate if clicking on non-interactive elements

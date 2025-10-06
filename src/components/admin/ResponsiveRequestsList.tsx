@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { VacationRequestWithConflicts } from "@/app/[locale]/admin/vacation-requests/_server/getRequestsWithConflicts";
+import { validateRequestAction } from "@/app/[locale]/admin/vacation-requests/actions";
 
 interface ResponsiveRequestsListProps {
   requests: VacationRequestWithConflicts[];
@@ -159,13 +160,28 @@ function RequestTableRow({
 }: RequestRowProps) {
   const isSelected = selectedRequests.has(request.id);
 
+  const handleRowClick = (e: React.MouseEvent) => {
+    // Only navigate if clicking on non-interactive elements
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.closest('button')) {
+      return; // Don't navigate if clicking on interactive elements
+    }
+    onReviewRequest(request.id);
+  };
+
   return (
-    <tr className="hover:bg-gray-50 transition-colors">
+    <tr 
+      className="hover:bg-gray-50 transition-colors cursor-pointer"
+      onClick={handleRowClick}
+    >
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
         <input
           type="checkbox"
           checked={isSelected}
-          onChange={() => onToggleSelection(request.id)}
+          onChange={(e) => {
+            e.stopPropagation();
+            onToggleSelection(request.id);
+          }}
           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
         />
       </td>
@@ -190,21 +206,31 @@ function RequestTableRow({
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
         <button
-          onClick={() => onReviewRequest(request.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onReviewRequest(request.id);
+          }}
           className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
         >
           Review Request
         </button>
       </td>
       {showActions && (
-        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-          <ActionButtons
-            requestId={request.id}
-            onUpdateStatus={onUpdateStatus}
-            isProcessing={isProcessing}
-            t={t}
-            tVacations={tVacations}
-          />
+        <td className="w-[1%] whitespace-nowrap px-6 py-4">
+          <div
+            className="flex gap-2"
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
+            <ActionButtons
+              requestId={request.id}
+              onUpdateStatus={onUpdateStatus}
+              isProcessing={isProcessing}
+              t={t}
+              tVacations={tVacations}
+            />
+          </div>
         </td>
       )}
     </tr>
@@ -225,15 +251,30 @@ function RequestCard({
 }: RequestRowProps) {
   const isSelected = selectedRequests.has(request.id);
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    // Only navigate if clicking on non-interactive elements
+    const target = e.target as HTMLElement;
+    if (target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.closest('button')) {
+      return; // Don't navigate if clicking on interactive elements
+    }
+    onReviewRequest(request.id);
+  };
+
   return (
-    <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+    <div 
+      className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm cursor-pointer"
+      onClick={handleCardClick}
+    >
       {/* Header with checkbox, employee name and company */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-start gap-3 flex-1 min-w-0">
           <input
             type="checkbox"
             checked={isSelected}
-            onChange={() => onToggleSelection(request.id)}
+            onChange={(e) => {
+              e.stopPropagation();
+              onToggleSelection(request.id);
+            }}
             className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
           />
           <div className="flex-1 min-w-0">
@@ -264,20 +305,29 @@ function RequestCard({
       {/* Review button and action buttons */}
       <div className="flex gap-2">
         <button
-          onClick={() => onReviewRequest(request.id)}
+          onClick={(e) => {
+            e.stopPropagation();
+            onReviewRequest(request.id);
+          }}
           className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 font-medium transition-colors"
         >
           Review Request
         </button>
         {showActions && (
-          <ActionButtons
-            requestId={request.id}
-            onUpdateStatus={onUpdateStatus}
-            isProcessing={isProcessing}
-            t={t}
-            tVacations={tVacations}
-            fullWidth
-          />
+          <div
+            onClick={(e) => e.stopPropagation()}
+            onMouseDown={(e) => e.stopPropagation()}
+            onTouchStart={(e) => e.stopPropagation()}
+          >
+            <ActionButtons
+              requestId={request.id}
+              onUpdateStatus={onUpdateStatus}
+              isProcessing={isProcessing}
+              t={t}
+              tVacations={tVacations}
+              fullWidth
+            />
+          </div>
         )}
       </div>
     </div>
@@ -338,24 +388,34 @@ function ActionButtons({
 
   return (
     <>
-      <button
-        onClick={() => onUpdateStatus(requestId, "approved")}
-        disabled={isProcessing}
-        className={`${buttonClass} bg-green-600 hover:bg-green-700 ${
-          isProcessing ? 'opacity-50 cursor-not-allowed' : ''
-        }`}
-      >
-        {isProcessing ? '...' : tVacations('approve')}
-      </button>
-      <button
-        onClick={() => onUpdateStatus(requestId, "rejected")}
-        disabled={isProcessing}
-        className={`${buttonClass} bg-red-600 hover:bg-red-700 ${
-          isProcessing ? 'opacity-50 cursor-not-allowed' : ''
-        }`}
-      >
-        {isProcessing ? '...' : tVacations('reject')}
-      </button>
+      <form action={validateRequestAction}>
+        <input type="hidden" name="id" value={requestId} />
+        <input type="hidden" name="action" value="approve" />
+        <button 
+          type="submit" 
+          disabled={isProcessing}
+          aria-label={`Approve request for ${requestId}`}
+          className={`${buttonClass} bg-green-600 hover:bg-green-700 ${
+            isProcessing ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+        >
+          {isProcessing ? '...' : tVacations('approve')}
+        </button>
+      </form>
+      <form action={validateRequestAction}>
+        <input type="hidden" name="id" value={requestId} />
+        <input type="hidden" name="action" value="deny" />
+        <button 
+          type="submit" 
+          disabled={isProcessing}
+          aria-label={`Reject request for ${requestId}`}
+          className={`${buttonClass} bg-red-600 hover:bg-red-700 ${
+            isProcessing ? 'opacity-50 cursor-not-allowed' : ''
+          }`}
+        >
+          {isProcessing ? '...' : tVacations('reject')}
+        </button>
+      </form>
     </>
   );
 }

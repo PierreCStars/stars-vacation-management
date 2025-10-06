@@ -12,7 +12,9 @@ interface ValidateRequestActionInput {
 }
 
 export async function validateRequestAction(formData: FormData) {
-  console.log('[ADMIN_VALIDATE] start', { formData: Object.fromEntries(formData.entries()) });
+  const id = formData.get('id') as string;
+  const action = formData.get('action') as 'approve' | 'deny';
+  console.log('[ADMIN_VALIDATE] start', { id, action });
   
   try {
     const session = await getServerSession(authOptions);
@@ -21,9 +23,6 @@ export async function validateRequestAction(formData: FormData) {
       throw new Error('Unauthorized');
     }
 
-    const id = formData.get('id') as string;
-    const action = formData.get('action') as 'approve' | 'deny';
-    
     if (!id || !action) {
       console.error('[ADMIN_VALIDATE] error', { error: 'Missing id or action' });
       throw new Error('Missing required fields');
@@ -96,7 +95,8 @@ export async function validateRequestAction(formData: FormData) {
   } catch (error) {
     console.error('[ADMIN_VALIDATE] error', { 
       error: error instanceof Error ? error.message : String(error),
-      formData: Object.fromEntries(formData.entries())
+      id,
+      action
     });
     throw error;
   }

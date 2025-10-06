@@ -3,8 +3,10 @@
  */
 
 export function getBaseUrl(): string {
-  // Priority: APP_BASE_URL (explicit), then NEXTAUTH_URL, then VERCEL_URL
-  const explicit = process.env.APP_BASE_URL || process.env.NEXTAUTH_URL || '';
+  const explicit =
+    process.env.APP_BASE_URL ||
+    process.env.NEXTAUTH_URL ||
+    process.env.PUBLIC_APP_BASE_URL; // optional client-side fallback
   if (explicit) {
     const url = explicit.replace(/\/$/, '');
     // Ensure we always use the canonical domain
@@ -14,8 +16,7 @@ export function getBaseUrl(): string {
     return url;
   }
 
-  // Fallback to Vercel environment var if present
-  const v = process.env.VERCEL_URL; // e.g. starsvacationmanagementv2.vercel.app
+  const v = process.env.VERCEL_URL; // bare host like my-app.vercel.app
   if (v) {
     const url = v.startsWith('http') ? v : `https://${v}`;
     // Ensure we always use the canonical domain
@@ -24,9 +25,14 @@ export function getBaseUrl(): string {
     }
     return url;
   }
-  
-  // Final fallback to canonical domain
-  return 'https://starsvacationmanagementv2.vercel.app';
+
+  // For local dev, do NOT hardcode localhost in code. Call sites should allow relative URLs.
+  return '';
+}
+
+export function absoluteUrl(path: string): string {
+  const base = getBaseUrl();
+  return base ? `${base}${path.startsWith('/') ? path : '/' + path}` : path;
 }
 
 export function adminVacationRequestUrl(id: string, locale = 'en'): string {

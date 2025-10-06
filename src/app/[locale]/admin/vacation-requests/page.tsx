@@ -45,7 +45,7 @@ export default async function AdminVacationRequestsPage() {
     if (requests.length === 0) {
       console.log('[VACATION_REQUESTS] No data from server-side, trying API fallback...');
       try {
-        const baseUrl = process.env.APP_BASE_URL || process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+        const baseUrl = process.env.APP_BASE_URL || process.env.NEXTAUTH_URL || process.env.VERCEL_URL || '';
         const response = await fetch(`${baseUrl}/api/vacation-requests`, { cache: 'no-store' });
         if (response.ok) {
           requests = await response.json();

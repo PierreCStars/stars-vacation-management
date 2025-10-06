@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
 import { PATCH } from '../route';
+import { absoluteUrl } from '@/lib/urls';
 
 // Mock dependencies
 vi.mock('next-auth/next', () => ({
@@ -55,7 +56,7 @@ describe('/api/vacation-requests/[id] PATCH', () => {
     };
     vi.mocked(getVacationRequestsService).mockReturnValue(mockService);
 
-    const request = new NextRequest('http://localhost:3000/api/vacation-requests/test-123', {
+      const request = new NextRequest('http://localhost:3000/api/vacation-requests/test-123', {
       method: 'PATCH',
       body: JSON.stringify({
         status: 'approved',
@@ -106,7 +107,7 @@ describe('/api/vacation-requests/[id] PATCH', () => {
     };
     vi.mocked(getVacationRequestsService).mockReturnValue(mockService);
 
-    const request = new NextRequest('http://localhost:3000/api/vacation-requests/test-123', {
+      const request = new NextRequest('http://localhost:3000/api/vacation-requests/test-123', {
       method: 'PATCH',
       body: JSON.stringify({
         status: 'rejected',
@@ -138,7 +139,7 @@ describe('/api/vacation-requests/[id] PATCH', () => {
     // Mock no session
     vi.mocked(getServerSession).mockResolvedValue(null);
 
-    const request = new NextRequest('http://localhost:3000/api/vacation-requests/test-123', {
+      const request = new NextRequest('http://localhost:3000/api/vacation-requests/test-123', {
       method: 'PATCH',
       body: JSON.stringify({ status: 'approved' })
     });
@@ -158,7 +159,7 @@ describe('/api/vacation-requests/[id] PATCH', () => {
       user: { email: 'admin@stars.mc', name: 'Admin User' }
     } as any);
 
-    const request = new NextRequest('http://localhost:3000/api/vacation-requests/test-123', {
+      const request = new NextRequest('http://localhost:3000/api/vacation-requests/test-123', {
       method: 'PATCH',
       body: JSON.stringify({ invalidField: 'value' })
     });

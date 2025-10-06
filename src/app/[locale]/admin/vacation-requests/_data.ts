@@ -17,7 +17,7 @@ export async function loadVacationRequests(limit = 50) {
       
       // Fallback to API route when Firebase Admin is not available
       try {
-        const baseUrl = process.env.APP_BASE_URL || process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+        const baseUrl = process.env.APP_BASE_URL || process.env.NEXTAUTH_URL || process.env.VERCEL_URL || '';
         const response = await fetch(`${baseUrl}/api/vacation-requests`);
         if (response.ok) {
           const data = await response.json();

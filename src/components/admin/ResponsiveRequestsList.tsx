@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useLocale } from "next-intl";
 import { VacationRequestWithConflicts } from "@/app/[locale]/admin/vacation-requests/_server/getRequestsWithConflicts";
 import { validateRequestAction } from "@/app/[locale]/admin/vacation-requests/actions";
+import { absoluteUrl } from "@/lib/urls";
 
 interface ResponsiveRequestsListProps {
   requests: VacationRequestWithConflicts[];
@@ -158,16 +160,19 @@ function RequestTableRow({
   tVacations,
   showActions = true
 }: RequestRowProps) {
+  const locale = useLocale();
   const isSelected = selectedRequests.has(request.id);
 
   const handleRowClick = (e: React.MouseEvent) => {
     // Only navigate if clicking on non-interactive elements
     const target = e.target as HTMLElement;
-    if (target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.closest('button')) {
+    if (target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.closest('button') || target.closest('a')) {
       return; // Don't navigate if clicking on interactive elements
     }
     onReviewRequest(request.id);
   };
+
+  const moreInfoUrl = absoluteUrl(`/${locale}/admin/vacation-requests/${request.id}`);
 
   return (
     <tr 
@@ -185,26 +190,36 @@ function RequestTableRow({
           className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
         />
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-        {request.userName}
+      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 align-middle">
+        <div className="flex items-center gap-2">
+          <span className="font-medium">{request.userName}</span>
+          <a
+            href={moreInfoUrl}
+            onClick={(e) => e.stopPropagation()}
+            className="text-sm underline text-slate-600 hover:text-slate-900 transition-colors"
+            aria-label={`More information about ${request.userName}'s request`}
+          >
+            More information
+          </a>
+        </div>
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 align-middle">
         {request.company || "—"}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 align-middle">
         {request.type || "—"}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 align-middle">
         {request.startDate}{request.endDate !== request.startDate ? ` to ${request.endDate}` : ""}
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium align-middle">
         <ConflictBadge
           conflicts={request.conflicts}
           onViewConflicts={() => onViewConflicts(request.id)}
           t={t}
         />
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium align-middle">
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -216,15 +231,16 @@ function RequestTableRow({
         </button>
       </td>
       {showActions && (
-        <td className="w-[1%] whitespace-nowrap px-6 py-4">
+        <td className="w-[1%] whitespace-nowrap px-6 py-4 align-middle">
           <div
-            className="flex gap-2"
+            className="flex items-center gap-2"
             onClick={(e) => e.stopPropagation()}
             onMouseDown={(e) => e.stopPropagation()}
             onTouchStart={(e) => e.stopPropagation()}
           >
             <ActionButtons
               requestId={request.id}
+              userName={request.userName}
               onUpdateStatus={onUpdateStatus}
               isProcessing={isProcessing}
               t={t}
@@ -249,16 +265,19 @@ function RequestCard({
   tVacations,
   showActions = true
 }: RequestRowProps) {
+  const locale = useLocale();
   const isSelected = selectedRequests.has(request.id);
 
   const handleCardClick = (e: React.MouseEvent) => {
     // Only navigate if clicking on non-interactive elements
     const target = e.target as HTMLElement;
-    if (target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.closest('button')) {
+    if (target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.closest('button') || target.closest('a')) {
       return; // Don't navigate if clicking on interactive elements
     }
     onReviewRequest(request.id);
   };
+
+  const moreInfoUrl = absoluteUrl(`/${locale}/admin/vacation-requests/${request.id}`);
 
   return (
     <div 
@@ -284,6 +303,14 @@ function RequestCard({
             <p className="text-sm text-gray-500 truncate">
               {request.company || "—"} • {request.type || "—"}
             </p>
+            <a
+              href={moreInfoUrl}
+              onClick={(e) => e.stopPropagation()}
+              className="text-xs underline text-slate-600 hover:text-slate-900 transition-colors"
+              aria-label={`More information about ${request.userName}'s request`}
+            >
+              More information
+            </a>
           </div>
         </div>
         <ConflictBadge
@@ -321,6 +348,7 @@ function RequestCard({
           >
             <ActionButtons
               requestId={request.id}
+              userName={request.userName}
               onUpdateStatus={onUpdateStatus}
               isProcessing={isProcessing}
               t={t}
@@ -367,6 +395,7 @@ function ConflictBadge({ conflicts, onViewConflicts, t, compact = false }: Confl
 
 interface ActionButtonsProps {
   requestId: string;
+  userName: string;
   onUpdateStatus: (id: string, status: "approved" | "rejected") => void;
   isProcessing: boolean;
   t: (key: string) => string;
@@ -376,6 +405,7 @@ interface ActionButtonsProps {
 
 function ActionButtons({
   requestId,
+  userName,
   onUpdateStatus,
   isProcessing,
   t,
@@ -394,7 +424,7 @@ function ActionButtons({
         <button 
           type="submit" 
           disabled={isProcessing}
-          aria-label={`Approve request for ${requestId}`}
+          aria-label={`Approve request for ${userName}`}
           className={`${buttonClass} bg-green-600 hover:bg-green-700 ${
             isProcessing ? 'opacity-50 cursor-not-allowed' : ''
           }`}
@@ -408,7 +438,7 @@ function ActionButtons({
         <button 
           type="submit" 
           disabled={isProcessing}
-          aria-label={`Reject request for ${requestId}`}
+          aria-label={`Deny request for ${userName}`}
           className={`${buttonClass} bg-red-600 hover:bg-red-700 ${
             isProcessing ? 'opacity-50 cursor-not-allowed' : ''
           }`}

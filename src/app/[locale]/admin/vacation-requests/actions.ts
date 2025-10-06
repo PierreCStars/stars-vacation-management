@@ -86,6 +86,7 @@ export async function validateRequestAction(formData: FormData) {
     }
 
     // Revalidate cache tags
+    console.log('[CACHE] revalidate', { tags: ['vacationRequests:list', 'calendar:all'] });
     revalidateTag('vacationRequests:list');
     revalidateTag('calendar:all');
     

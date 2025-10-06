@@ -50,6 +50,11 @@ export default function ResponsiveRequestsList({
 
   return (
     <div className="space-y-4">
+      {/* Debug indicator */}
+      <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-2 rounded text-sm">
+        🔧 DEBUG: ResponsiveRequestsList rendered with {requests.length} requests, showActions: {showActions.toString()}
+      </div>
+      
       {/* Desktop Table View (lg and up) */}
       <div className="hidden lg:block">
         <div className="overflow-x-auto">

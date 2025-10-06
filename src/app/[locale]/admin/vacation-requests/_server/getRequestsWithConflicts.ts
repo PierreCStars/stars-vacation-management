@@ -52,7 +52,23 @@ export async function getRequestsWithConflicts(): Promise<VacationRequestWithCon
     // 1) Get all vacation requests from Firestore
     const db = getFirebaseAdminDb();
     if (!db) {
-      console.log('⚠️ Firebase Admin not available, returning empty array');
+      console.log('⚠️ Firebase Admin not available, falling back to API route');
+      // Fallback to API route when Firebase Admin is not available
+      try {
+        const baseUrl = process.env.APP_BASE_URL || process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+        const response = await fetch(`${baseUrl}/api/vacation-requests`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`📊 Server-side: Got ${data.length} requests from API fallback`);
+          // Convert API data to the expected format with conflicts
+          return data.map((request: any) => ({
+            ...request,
+            conflicts: [] // No conflicts computed in API fallback
+          }));
+        }
+      } catch (apiError) {
+        console.error('❌ API fallback failed:', apiError);
+      }
       return [];
     }
     

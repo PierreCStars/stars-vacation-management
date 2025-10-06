@@ -13,6 +13,21 @@ export async function loadVacationRequests(limit = 50) {
     
     if (error || !db) {
       console.error('[VACATION_REQUESTS] Firebase Admin failed:', error);
+      console.log('[VACATION_REQUESTS] Falling back to API route...');
+      
+      // Fallback to API route when Firebase Admin is not available
+      try {
+        const baseUrl = process.env.APP_BASE_URL || process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+        const response = await fetch(`${baseUrl}/api/vacation-requests`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`[VACATION_REQUESTS] Got ${data.length} requests from API fallback`);
+          return data;
+        }
+      } catch (apiError) {
+        console.error('[VACATION_REQUESTS] API fallback failed:', apiError);
+      }
+      
       throw new Error(`[VACATION_REQUESTS] Admin not ready: ${error ?? 'no db'}`);
     }
     

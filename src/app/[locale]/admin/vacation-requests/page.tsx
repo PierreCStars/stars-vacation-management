@@ -20,13 +20,40 @@ export default async function AdminVacationRequestsPage() {
     
     // First, test basic data loading
     console.log('[VACATION_REQUESTS] Testing basic data load...');
-    const basicRequests = await loadVacationRequests();
-    console.log(`[VACATION_REQUESTS] Basic load successful: ${basicRequests.length} requests`);
+    let basicRequests: any[] = [];
+    try {
+      basicRequests = await loadVacationRequests();
+      console.log(`[VACATION_REQUESTS] Basic load successful: ${basicRequests.length} requests`);
+    } catch (basicError) {
+      console.error('[VACATION_REQUESTS] Basic load failed:', basicError);
+    }
     
     // Then get full data with conflicts
     console.log('[VACATION_REQUESTS] Getting requests with conflicts...');
-    const requests = await getRequestsWithConflicts();
-    console.log(`[VACATION_REQUESTS] Got ${requests.length} requests with conflicts`);
+    let requests: any[] = [];
+    try {
+      requests = await getRequestsWithConflicts();
+      console.log(`[VACATION_REQUESTS] Got ${requests.length} requests with conflicts`);
+    } catch (conflictError) {
+      console.error('[VACATION_REQUESTS] Conflict check failed:', conflictError);
+      // Fallback to basic requests if conflict check fails
+      requests = basicRequests;
+    }
+    
+    // If we still have no data, try API fallback
+    if (requests.length === 0) {
+      console.log('[VACATION_REQUESTS] No data from server-side, trying API fallback...');
+      try {
+        const baseUrl = process.env.APP_BASE_URL || process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+        const response = await fetch(`${baseUrl}/api/vacation-requests`, { cache: 'no-store' });
+        if (response.ok) {
+          requests = await response.json();
+          console.log(`[VACATION_REQUESTS] API fallback successful: ${requests.length} requests`);
+        }
+      } catch (apiError) {
+        console.error('[VACATION_REQUESTS] API fallback failed:', apiError);
+      }
+    }
     
     // Separate pending and reviewed requests (case-insensitive)
     console.log('[VACATION_REQUESTS] Filtering requests by status...');
@@ -35,7 +62,7 @@ export default async function AdminVacationRequestsPage() {
     
     // Count requests with conflicts
     console.log('[VACATION_REQUESTS] Counting conflicts...');
-    const conflictCount = requests.filter(r => r.conflicts.length > 0).length;
+    const conflictCount = requests.filter(r => r.conflicts?.length > 0).length;
     
     console.log(`✅ Server-side: Loaded ${requests.length} requests (${pending.length} pending, ${reviewed.length} reviewed, ${conflictCount} with conflicts)`);
 

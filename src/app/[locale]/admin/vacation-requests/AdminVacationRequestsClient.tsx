@@ -40,6 +40,11 @@ export default function AdminVacationRequestsClient({
   const [showReviewed, setShowReviewed] = useState(true);
   const [selectedConflictRequest, setSelectedConflictRequest] = useState<string | null>(null);
   const [firebaseEnabled, setFirebaseEnabled] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [clientRequests, setClientRequests] = useState<VacationRequestWithConflicts[]>([]);
+  const [clientPending, setClientPending] = useState<VacationRequestWithConflicts[]>([]);
+  const [clientReviewed, setClientReviewed] = useState<VacationRequestWithConflicts[]>([]);
+  const [clientConflictCount, setClientConflictCount] = useState(0);
 
   // Handle browser extension interference and unhandled promise rejections
   useEffect(() => {
@@ -79,6 +84,40 @@ export default function AdminVacationRequestsClient({
     setFirebaseEnabled(process.env.NEXT_PUBLIC_ENABLE_FIREBASE === 'true');
   }, []);
 
+  // Client-side data fetching fallback
+  useEffect(() => {
+    // If we have no server-side data, try to fetch it client-side
+    if (initialRequests.length === 0 && !isLoading) {
+      console.log('[CLIENT] No server-side data, fetching client-side...');
+      setIsLoading(true);
+      
+      fetch('/api/vacation-requests')
+        .then(response => response.json())
+        .then(data => {
+          console.log(`[CLIENT] Fetched ${data.length} requests client-side`);
+          const requests = data.map((request: any) => ({
+            ...request,
+            conflicts: [] // No conflicts computed client-side
+          }));
+          
+          const pending = requests.filter((r: any) => r.status?.toLowerCase() === 'pending');
+          const reviewed = requests.filter((r: any) => r.status?.toLowerCase() !== 'pending');
+          const conflictCount = requests.filter((r: any) => r.conflicts?.length > 0).length;
+          
+          setClientRequests(requests);
+          setClientPending(pending);
+          setClientReviewed(reviewed);
+          setClientConflictCount(conflictCount);
+        })
+        .catch(error => {
+          console.error('[CLIENT] Failed to fetch data:', error);
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
+    }
+  }, [initialRequests.length, isLoading]);
+
   function sortReviewed(list: VacationRequestWithConflicts[]) {
     const copy = [...list];
     copy.sort((a,b)=>{
@@ -110,7 +149,13 @@ export default function AdminVacationRequestsClient({
     return copy;
   }
 
-  const reviewedSorted = useMemo(()=> sortReviewed(reviewed), [reviewed, sortKey, sortDir]);
+  // Use client-side data if server-side data is not available
+  const effectiveRequests = clientRequests.length > 0 ? clientRequests : initialRequests;
+  const effectivePending = clientPending.length > 0 ? clientPending : pending;
+  const effectiveReviewed = clientReviewed.length > 0 ? clientReviewed : reviewed;
+  const effectiveConflictCount = clientConflictCount > 0 ? clientConflictCount : conflictCount;
+
+  const reviewedSorted = useMemo(()=> sortReviewed(effectiveReviewed), [effectiveReviewed, sortKey, sortDir]);
 
   // Handle authentication
   useEffect(() => {
@@ -127,6 +172,20 @@ export default function AdminVacationRequestsClient({
       return;
     }
   }, [session, status, router]);
+
+  // Show loading state
+  if (status === 'loading' || isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">
+            {isLoading ? 'Loading vacation requests...' : 'Loading...'}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   async function updateStatus(id: string, status: "approved"|"rejected") {
     try {
@@ -210,7 +269,7 @@ export default function AdminVacationRequestsClient({
             <h1 className="text-3xl font-bold text-gray-900">{t('vacationRequestsTitle')}</h1>
             <p className="text-gray-600 mt-2">{t('vacationRequestsDescription')}</p>
             <p className="text-sm text-gray-500 mt-1">
-              ✅ Conflicts scanned on load • {conflictCount} request{conflictCount === 1 ? '' : 's'} with conflicts
+              ✅ Conflicts scanned on load • {effectiveConflictCount} request{effectiveConflictCount === 1 ? '' : 's'} with conflicts
             </p>
           </div>
           <div className="flex gap-3">
@@ -244,14 +303,14 @@ export default function AdminVacationRequestsClient({
             </div>
             <div className="flex items-center gap-2">
               <span className="text-xs text-gray-500">
-                {pending.length} {t('pending').toLowerCase()} • {reviewed.length} {t('reviewed').toLowerCase()}
+                {effectivePending.length} {t('pending').toLowerCase()} • {effectiveReviewed.length} {t('reviewed').toLowerCase()}
               </span>
             </div>
           </div>
         </div>
         <div className="p-6">
           <UnifiedVacationCalendar 
-            vacationRequests={initialRequests.filter(r => r.status?.toLowerCase() === 'approved') as any} 
+            vacationRequests={effectiveRequests.filter(r => r.status?.toLowerCase() === 'approved') as any} 
             currentRequestId={undefined}
             showLegend={true}
             compact={false}
@@ -269,16 +328,16 @@ export default function AdminVacationRequestsClient({
               <p className="text-sm text-gray-600 mt-1">Requests awaiting your approval or rejection • Click rows to view details</p>
             </div>
             <div className="flex items-center gap-3">
-              {conflictCount > 0 && (
+              {effectiveConflictCount > 0 && (
                 <span className="inline-flex items-center gap-2 px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded-full">
-                  ⚠️ {conflictCount} {t('conflictsFound')}
+                  ⚠️ {effectiveConflictCount} {t('conflictsFound')}
                 </span>
               )}
             </div>
           </div>
         </div>
         <ResponsiveRequestsList
-          requests={pending}
+          requests={effectivePending}
           onUpdateStatus={updateStatus}
           onViewConflicts={(id) => setSelectedConflictRequest(id)}
           t={t}

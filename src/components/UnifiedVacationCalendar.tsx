@@ -81,14 +81,16 @@ export default function UnifiedVacationCalendar({
     setMounted(true);
   }, []);
 
-  // Fetch company events from the source calendar
+  // Fetch company events from the unified calendar API
   useEffect(() => {
     if (!mounted) return;
     
     const fetchCompanyEvents = async () => {
       try {
         setLoadingEvents(true);
-        const response = await fetch('/api/calendar/source?days=90');
+        const response = await fetch('/api/calendar-events?includeVacationRequests=true', {
+          next: { tags: ['calendar:all'] }
+        });
         if (response.ok) {
           const data = await response.json();
           setCompanyEvents(data.events || []);

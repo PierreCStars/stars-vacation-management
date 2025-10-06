@@ -250,6 +250,23 @@ export async function addEventToCalendar(calendarId: string, event: {
   }
 }
 
+export async function deleteVacationFromCalendar(eventId: string) {
+  const auth = getJwt();
+  const calendar = google.calendar({ version: 'v3', auth });
+  
+  try {
+    console.log('[CALENDAR] delete_event', { eventId, calendarId: CAL_TARGET });
+    await calendar.events.delete({
+      calendarId: CAL_TARGET,
+      eventId: eventId
+    });
+    console.log('[CALENDAR] delete_event success', { eventId });
+  } catch (error) {
+    console.error('[CALENDAR] delete_event fail', { eventId, error: error instanceof Error ? error.message : String(error) });
+    throw error;
+  }
+}
+
 export async function removeEventFromCalendar(calendarId: string, eventId: string) {
   const auth = getJwt();
   const calendar = google.calendar({ version: 'v3', auth });

@@ -11,6 +11,7 @@ import FirebaseDebugPanel from "@/components/FirebaseDebugPanel";
 import FirebaseDiagnostics from "@/components/FirebaseDiagnostics";
 import { isFirebaseEnabled } from "@/lib/firebase/client";
 import { VacationRequestWithConflicts } from './_server/getRequestsWithConflicts';
+import ResponsiveRequestsList from '@/components/admin/ResponsiveRequestsList';
 
 // Handle browser extension interference - moved to useEffect
 
@@ -129,7 +130,14 @@ export default function AdminVacationRequestsClient({
 
   async function updateStatus(id: string, status: "approved"|"rejected") {
     try {
-      const reviewer = {}; // TODO: fill with current admin identity from session
+      console.log('[VALIDATION] start', { id, status, userEmail: session?.user?.email });
+      
+      const reviewer = {
+        id: session?.user?.email || 'unknown',
+        name: session?.user?.name || session?.user?.email || 'Admin',
+        email: session?.user?.email || 'unknown@stars.mc'
+      };
+      
       const res = await fetch(`/api/vacation-requests/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -137,14 +145,19 @@ export default function AdminVacationRequestsClient({
       });
       
       if (!res.ok) {
-        alert("Failed to update status");
-      } else {
-        console.log(`✅ Successfully ${status} vacation request ${id}`);
-        // Refresh the page to show updated data
-        router.refresh();
+        const errorData = await res.json();
+        console.error('[VALIDATION] error', { id, status, error: errorData });
+        alert(`Failed to update status: ${errorData.error || 'Unknown error'}`);
+        return;
       }
+      
+      const result = await res.json();
+      console.log('[VALIDATION] success', { id, status, result });
+      
+      // Refresh the page to show updated data
+      router.refresh();
     } catch (error) {
-      console.error('Error updating status:', error);
+      console.error('[VALIDATION] fatal', { id, status, error: error instanceof Error ? error.message : String(error) });
       alert("Failed to update status");
     }
   }
@@ -264,99 +277,13 @@ export default function AdminVacationRequestsClient({
             </div>
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{tVacations('employee')}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{tVacations('company')}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{tVacations('type')}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('dates')}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('conflict')}</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{t('actions')}</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {pending.map(r => (
-                <tr 
-                  key={r.id} 
-                  className="hover:bg-gray-50 cursor-pointer transition-colors"
-                  onClick={() => handleRowClick(r.id)}
-                >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    <Link 
-                      href={`/en/admin/vacation-requests/${r.id}`}
-                      className="text-blue-600 hover:text-blue-800 hover:underline"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      {r.userName}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{r.company || "—"}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{r.type || "—"}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {r.startDate}{r.endDate!==r.startDate ? ` to ${r.endDate}` : ""}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center gap-2">
-                      {r.conflicts.length > 0 ? (
-                        <>
-                          <span className="inline-flex items-center gap-1 px-2 py-1 bg-red-100 text-red-800 text-xs font-medium rounded-full">
-                            ⚠️ {r.conflicts.length} conflict{r.conflicts.length > 1 ? 's' : ''}
-                          </span>
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedConflictRequest(r.id);
-                            }}
-                            className="text-blue-600 hover:text-blue-800 text-xs underline"
-                          >
-                            {t('viewDetails')}
-                          </button>
-                        </>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                          ✅ No conflicts
-                        </span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        updateStatus(r.id, "approved");
-                      }}
-                      className="mr-2 rounded bg-green-600 px-3 py-1 text-white hover:bg-green-700 transition-colors text-xs"
-                    >
-                      {tVacations('approve')}
-                    </button>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        updateStatus(r.id, "rejected");
-                      }}
-                      className="rounded bg-red-600 px-3 py-1 text-white hover:bg-red-700 transition-colors text-xs"
-                    >
-                      {tVacations('reject')}
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {pending.length===0 && (
-                <tr>
-                  <td className="px-6 py-8 text-center text-gray-500" colSpan={6}>
-                    <div className="text-center">
-                      <div className="text-gray-400 text-4xl mb-2">🎉</div>
-                      <p className="text-lg font-medium text-gray-900">{t('noPendingRequests')}</p>
-                      <p className="text-sm text-gray-500">{t('allVacationRequestsReviewed')}</p>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <ResponsiveRequestsList
+          requests={pending}
+          onUpdateStatus={updateStatus}
+          onViewConflicts={(id) => setSelectedConflictRequest(id)}
+          t={t}
+          tVacations={tVacations}
+        />
       </section>
 
       {/* Reviewed accordion */}

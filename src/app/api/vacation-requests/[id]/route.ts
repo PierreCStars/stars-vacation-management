@@ -3,9 +3,10 @@ import { NextResponse } from 'next/server';
 import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth/next';
 import { getVacationRequestsService } from '@/lib/firebase';
-import { addVacationToCalendar, CAL_TARGET } from '@/lib/google-calendar';
 import { VacationRequest } from '@/lib/firebase';
 import { decideVacation } from '@/lib/vacation-orchestration';
+import { revalidateTag, revalidatePath } from 'next/cache';
+import { syncEventForRequest, refreshCacheTags } from '@/lib/calendar/sync';
 
 // Google Calendar API for Holidays Calendar
 const GOOGLE_CALENDAR_ID = 'c_e98f5350bf743174f87e1a786038cb9d103c306b7246c6200684f81c37a6a764@group.calendar.google.com';
@@ -15,6 +16,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const session = await getServerSession(authOptions) as any;
     
     if (!session?.user?.email) {
+      console.log('[VALIDATION] unauthorized', { userEmail: session?.user?.email });
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -25,6 +27,8 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const newEndDate = body?.endDate;
     const newDurationDays = body?.durationDays;
     const adminComment = body?.adminComment;
+    
+    console.log('[VALIDATION] start', { id, newStatus, userEmail: session.user.email });
     
     const reviewer = {
       id: session.user.email,
@@ -53,6 +57,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         
         // Handle status updates
         if (isStatusUpdate) {
+          console.log('[VALIDATION] updating_status', { id, newStatus, reviewer });
           if (newStatus === 'approved') {
             await vacationService.approveVacationRequest(
               id, 
@@ -60,6 +65,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
               reviewer.email, 
               adminComment
             );
+            console.log('[VALIDATION] approved', { id });
           } else if (newStatus === 'rejected') {
             await vacationService.rejectVacationRequest(
               id, 
@@ -67,6 +73,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
               reviewer.email, 
               adminComment
             );
+            console.log('[VALIDATION] rejected', { id });
           }
         }
         
@@ -89,15 +96,39 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
         console.log('✅ Vacation request updated successfully in Firestore');
 
-        // If approved, sync to Holidays Calendar
-        if (isStatusUpdate && newStatus === 'approved' && requestData) {
+        // Sync calendar event based on new status
+        if (isStatusUpdate && requestData) {
           try {
-            await syncToHolidaysCalendar(requestData, id);
-            console.log('✅ Vacation request synced to Holidays Calendar');
+            const calendarData = {
+              id: requestData.id || id,
+              userName: requestData.userName || 'Unknown',
+              userEmail: requestData.userEmail || 'unknown@stars.mc',
+              startDate: requestData.startDate,
+              endDate: requestData.endDate,
+              type: requestData.type || 'Full day',
+              company: requestData.company || 'Unknown',
+              reason: requestData.reason,
+              status: newStatus as 'pending' | 'approved' | 'rejected'
+            };
+            
+            const calendarResult = await syncEventForRequest(calendarData);
+            if (calendarResult.success) {
+              console.log('[VALIDATION] calendar_sync success', { id, eventId: calendarResult.eventId });
+            } else {
+              console.error('[VALIDATION] calendar_sync fail', { id, error: calendarResult.error });
+              // Don't fail the request if calendar sync fails
+            }
           } catch (calendarError) {
-            console.error('❌ Error syncing to Holidays Calendar:', calendarError);
+            console.error('[VALIDATION] calendar_sync error', { id, error: calendarError instanceof Error ? calendarError.message : String(calendarError) });
             // Don't fail the request if calendar sync fails
           }
+        }
+
+        // Invalidate caches after successful update
+        try {
+          await refreshCacheTags();
+        } catch (cacheError) {
+          console.error('[CACHE] revalidate fail', { error: cacheError instanceof Error ? cacheError.message : String(cacheError) });
         }
 
         // Send decision emails and calendar updates using orchestration
@@ -186,57 +217,5 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       { error: 'Failed to update vacation request' },
       { status: 500 }
     );
-  }
-}
-
-// Function to sync approved vacation request to Holidays Calendar
-async function syncToHolidaysCalendar(requestData: any, requestId: string) {
-  try {
-    // Check if we already have a Google Event ID stored
-    if (requestData.googleEventId) {
-      console.log('📅 Vacation request already has Google Event ID:', requestData.googleEventId);
-      return;
-    }
-
-    console.log('📅 Syncing vacation request to Google Calendar...', {
-      calendarId: CAL_TARGET,
-      requestId,
-      userName: requestData.userName,
-      company: requestData.company,
-      startDate: requestData.startDate,
-      endDate: requestData.endDate,
-      type: requestData.type
-    });
-
-    // Create vacation event for Google Calendar
-    const vacationEvent = {
-      userName: requestData.userName,
-      startDate: requestData.startDate,
-      endDate: requestData.endDate,
-      type: requestData.type,
-      company: requestData.company,
-      reason: requestData.reason
-    };
-
-    // Add event to Google Calendar
-    const googleEventId = await addVacationToCalendar(vacationEvent);
-    
-    console.log('✅ Vacation event created in Google Calendar:', googleEventId);
-
-    // Store the Google Event ID in Firestore for future reference
-    try {
-      const vacationService = getVacationRequestsService();
-      await vacationService.updateVacationRequest(requestId, {
-        googleEventId: googleEventId
-      } as Partial<VacationRequest>);
-      console.log('✅ Google Event ID stored in Firestore');
-    } catch (firestoreError) {
-      console.error('⚠️ Failed to store Google Event ID in Firestore:', firestoreError);
-      // Don't fail the whole operation if Firestore update fails
-    }
-
-  } catch (error) {
-    console.error('❌ Error in syncToHolidaysCalendar:', error);
-    throw error;
   }
 }

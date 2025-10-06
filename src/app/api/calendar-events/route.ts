@@ -5,6 +5,7 @@ export const runtime = 'nodejs';
 import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { safeTrim, safeStartsWith } from '@/lib/strings';
+import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 
 // Utility function to load and parse Google credentials
 function loadGoogleCreds() {
@@ -29,6 +30,8 @@ function loadGoogleCreds() {
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('[CALENDAR_API] start');
+    
     // Handle build-time scenario where request.url might be undefined
     if (!request.url) {
       return NextResponse.json({
@@ -42,6 +45,7 @@ export async function GET(request: NextRequest) {
     const timeMin = searchParams.get('timeMin');
     const timeMax = searchParams.get('timeMax');
     const calendarId = process.env.GOOGLE_CALENDAR_ID || 'primary';
+    const includeVacationRequests = searchParams.get('includeVacationRequests') !== 'false';
 
     // Initialize Google Calendar API
     const auth = new google.auth.GoogleAuth({
@@ -126,11 +130,47 @@ export async function GET(request: NextRequest) {
 
     console.log(`✅ Filtered to ${vacationEvents.length} vacation events`);
 
+    // Add vacation requests from Firestore if requested
+    let firestoreEvents: any[] = [];
+    if (includeVacationRequests) {
+      try {
+        const { db } = getFirebaseAdmin();
+        if (db) {
+          const snapshot = await db
+            .collection('vacationRequests')
+            .where('status', '==', 'approved')
+            .get();
+          
+          firestoreEvents = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: `firestore_${doc.id}`,
+              summary: `${data.userName || 'Unknown'} - ${data.company || 'Unknown'}`,
+              description: `Vacation Request\nName: ${data.userName || 'Unknown'}\nCompany: ${data.company || 'Unknown'}\nType: ${data.type || 'Full day'}\nReason: ${data.reason || 'N/A'}`,
+              start: data.startDate,
+              end: data.endDate,
+              colorId: '2', // Green for approved vacation
+              company: data.company || 'Unknown',
+              userName: data.userName || 'Unknown',
+              source: 'firestore',
+              calendarEventId: data.calendarEventId
+            };
+          });
+          console.log(`✅ Added ${firestoreEvents.length} Firestore vacation events`);
+        }
+      } catch (error) {
+        console.error('[CALENDAR_API] firestore_error', { error: error instanceof Error ? error.message : String(error) });
+      }
+    }
+
+    const allEvents = [...vacationEvents, ...firestoreEvents];
+
     return NextResponse.json({
       success: true,
-      events: vacationEvents,
+      events: allEvents,
       totalEvents: events.length,
       vacationEvents: vacationEvents.length,
+      firestoreEvents: firestoreEvents.length,
       timeRange: {
         start: startDate.toISOString(),
         end: endDate.toISOString(),

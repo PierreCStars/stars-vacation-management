@@ -1,39 +1,39 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeStatus, isPendingStatus, isReviewedStatus, VACATION_STATUS } from '../vacation-status';
+import { normalizeVacationStatus, isPendingStatus, isReviewedStatus, VACATION_STATUS } from '../vacation-status';
 
 describe('vacation-status', () => {
-  describe('normalizeStatus', () => {
+  describe('normalizeVacationStatus', () => {
     it('should normalize pending status correctly', () => {
-      expect(normalizeStatus('pending')).toBe(VACATION_STATUS.PENDING);
-      expect(normalizeStatus('PENDING')).toBe(VACATION_STATUS.PENDING);
-      expect(normalizeStatus('Pending')).toBe(VACATION_STATUS.PENDING);
-      expect(normalizeStatus('  pending  ')).toBe(VACATION_STATUS.PENDING);
+      expect(normalizeVacationStatus('pending')).toBe(VACATION_STATUS.PENDING);
+      expect(normalizeVacationStatus('PENDING')).toBe(VACATION_STATUS.PENDING);
+      expect(normalizeVacationStatus('Pending')).toBe(VACATION_STATUS.PENDING);
+      expect(normalizeVacationStatus('  pending  ')).toBe(VACATION_STATUS.PENDING);
     });
 
     it('should normalize approved status correctly', () => {
-      expect(normalizeStatus('approved')).toBe(VACATION_STATUS.APPROVED);
-      expect(normalizeStatus('APPROVED')).toBe(VACATION_STATUS.APPROVED);
-      expect(normalizeStatus('Approved')).toBe(VACATION_STATUS.APPROVED);
-      expect(normalizeStatus('  approved  ')).toBe(VACATION_STATUS.APPROVED);
+      expect(normalizeVacationStatus('approved')).toBe(VACATION_STATUS.APPROVED);
+      expect(normalizeVacationStatus('APPROVED')).toBe(VACATION_STATUS.APPROVED);
+      expect(normalizeVacationStatus('Approved')).toBe(VACATION_STATUS.APPROVED);
+      expect(normalizeVacationStatus('  approved  ')).toBe(VACATION_STATUS.APPROVED);
     });
 
-    it('should normalize rejected status correctly', () => {
-      expect(normalizeStatus('rejected')).toBe(VACATION_STATUS.REJECTED);
-      expect(normalizeStatus('REJECTED')).toBe(VACATION_STATUS.REJECTED);
-      expect(normalizeStatus('Rejected')).toBe(VACATION_STATUS.REJECTED);
-      expect(normalizeStatus('denied')).toBe(VACATION_STATUS.REJECTED);
-      expect(normalizeStatus('DENIED')).toBe(VACATION_STATUS.REJECTED);
+    it('should normalize denied status correctly', () => {
+      expect(normalizeVacationStatus('denied')).toBe(VACATION_STATUS.DENIED);
+      expect(normalizeVacationStatus('DENIED')).toBe(VACATION_STATUS.DENIED);
+      expect(normalizeVacationStatus('Denied')).toBe(VACATION_STATUS.DENIED);
+      expect(normalizeVacationStatus('rejected')).toBe(VACATION_STATUS.DENIED);
+      expect(normalizeVacationStatus('REJECTED')).toBe(VACATION_STATUS.DENIED);
     });
 
     it('should handle null/undefined values', () => {
-      expect(normalizeStatus(null)).toBe(VACATION_STATUS.PENDING);
-      expect(normalizeStatus(undefined)).toBe(VACATION_STATUS.PENDING);
-      expect(normalizeStatus('')).toBe(VACATION_STATUS.PENDING);
+      expect(normalizeVacationStatus(null)).toBe(VACATION_STATUS.PENDING);
+      expect(normalizeVacationStatus(undefined)).toBe(VACATION_STATUS.PENDING);
+      expect(normalizeVacationStatus('')).toBe(VACATION_STATUS.PENDING);
     });
 
     it('should default to pending for unknown values', () => {
-      expect(normalizeStatus('unknown')).toBe(VACATION_STATUS.PENDING);
-      expect(normalizeStatus('invalid')).toBe(VACATION_STATUS.PENDING);
+      expect(normalizeVacationStatus('unknown')).toBe(VACATION_STATUS.PENDING);
+      expect(normalizeVacationStatus('invalid')).toBe(VACATION_STATUS.PENDING);
     });
   });
 

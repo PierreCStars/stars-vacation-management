@@ -11,7 +11,7 @@ import FirebaseDebugPanel from "@/components/FirebaseDebugPanel";
 import FirebaseDiagnostics from "@/components/FirebaseDiagnostics";
 import { isFirebaseEnabled } from "@/lib/firebase/client";
 import AdminVacationRequestsClient from './AdminVacationRequestsClient';
-import { normalizeStatus, isPendingStatus, isReviewedStatus } from '@/types/vacation-status';
+import { normalizeVacationStatus, isPendingStatus, isReviewedStatus } from '@/types/vacation-status';
 
 export default async function AdminVacationRequestsPage() {
   try {

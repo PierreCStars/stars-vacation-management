@@ -15,7 +15,7 @@ export type VacationRequest = {
   isHalfDay?: boolean;
   halfDayType?: 'morning' | 'afternoon' | null;
   reason?: string;
-  status?: 'pending' | 'approved' | 'rejected' | string;
+  status?: 'pending' | 'approved' | 'denied' | string;
   createdAt?: string | Date;
   updatedAt?: string | Date;
   reviewedAt?: string | Date;
@@ -40,7 +40,7 @@ export type VacationRequestForm = {
 };
 
 export type VacationRequestUpdate = {
-  status: 'approved' | 'rejected';
+  status: 'approved' | 'denied';
   reviewedBy: {
     id: string;
     name: string;

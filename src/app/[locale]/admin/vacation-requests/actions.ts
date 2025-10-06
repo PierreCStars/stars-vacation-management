@@ -4,7 +4,7 @@ import { revalidateTag } from 'next/cache';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { syncEventForRequest } from '@/lib/calendar/sync';
-import { VacationStatusEnum, normalizeVacationStatus } from '@/types/vacation-status';
+import { VACATION_STATUS, normalizeVacationStatus, type VacationStatus } from '@/types/vacation-status';
 
 interface ValidateRequestActionInput {
   id: string;
@@ -29,10 +29,12 @@ export async function validateRequestAction(formData: FormData) {
       throw new Error('Missing required fields');
     }
 
-    const status = action === 'approve' ? 'approved' : 'rejected';
-    const normalizedStatus = normalizeVacationStatus(status);
+    const status: VacationStatus = 
+      action === 'approve' ? VACATION_STATUS.APPROVED :
+      action === 'deny'    ? VACATION_STATUS.DENIED :
+                             VACATION_STATUS.PENDING;
     
-    console.log('[ADMIN_VALIDATE] processing', { id, action, status: normalizedStatus });
+    console.log('[ADMIN_VALIDATE] processing', { id, action, status });
 
     // Import Firebase Admin dynamically to avoid issues
     const { getFirebaseAdmin } = await import('@/lib/firebaseAdmin');
@@ -51,18 +53,34 @@ export async function validateRequestAction(formData: FormData) {
     // Update the vacation request in Firestore
     const vacationRequestRef = db.collection('vacationRequests').doc(id);
     await vacationRequestRef.update({
-      status: normalizedStatus,
+      status: status,
       reviewedBy: reviewer.name,
       reviewerEmail: reviewer.email,
       reviewedAt: new Date()
     });
 
-    console.log('[ADMIN_VALIDATE] firestore updated', { id, status: normalizedStatus });
+    console.log('[ADMIN_VALIDATE] firestore updated', { id, status });
 
     // Sync with calendar
     try {
-      await syncEventForRequest(id, normalizedStatus);
-      console.log('[ADMIN_VALIDATE] calendar synced', { id, status: normalizedStatus });
+      // Get the updated request data for calendar sync
+      const updatedRequest = await vacationRequestRef.get();
+      if (updatedRequest.exists) {
+        const requestData = updatedRequest.data()!;
+        const calendarData = {
+          id: requestData.id || id,
+          userName: requestData.userName || 'Unknown',
+          userEmail: requestData.userEmail || 'unknown@example.com',
+          startDate: requestData.startDate || '',
+          endDate: requestData.endDate || '',
+          type: requestData.type || 'Full day',
+          company: requestData.company || 'Unknown',
+          reason: requestData.reason || '',
+          status: status
+        };
+        await syncEventForRequest(calendarData);
+        console.log('[ADMIN_VALIDATE] calendar synced', { id, status });
+      }
     } catch (calendarError) {
       console.warn('[ADMIN_VALIDATE] calendar sync failed', { id, error: calendarError });
       // Don't fail the whole operation if calendar sync fails
@@ -72,9 +90,9 @@ export async function validateRequestAction(formData: FormData) {
     revalidateTag('vacationRequests:list');
     revalidateTag('calendar:all');
     
-    console.log('[ADMIN_VALIDATE] success', { id, status: normalizedStatus });
+    console.log('[ADMIN_VALIDATE] success', { id, status });
     
-    return { success: true, id, status: normalizedStatus };
+    return;
   } catch (error) {
     console.error('[ADMIN_VALIDATE] error', { 
       error: error instanceof Error ? error.message : String(error),

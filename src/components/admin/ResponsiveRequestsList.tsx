@@ -8,16 +8,24 @@ interface ResponsiveRequestsListProps {
   requests: VacationRequestWithConflicts[];
   onUpdateStatus: (id: string, status: "approved" | "rejected") => void;
   onViewConflicts: (id: string) => void;
+  onReviewRequest: (id: string) => void;
+  onToggleSelection: (id: string) => void;
+  selectedRequests: Set<string>;
   t: (key: string) => string;
   tVacations: (key: string) => string;
+  showActions?: boolean;
 }
 
 export default function ResponsiveRequestsList({
   requests,
   onUpdateStatus,
   onViewConflicts,
+  onReviewRequest,
+  onToggleSelection,
+  selectedRequests,
   t,
-  tVacations
+  tVacations,
+  showActions = true
 }: ResponsiveRequestsListProps) {
   const [processingRequests, setProcessingRequests] = useState<Set<string>>(new Set());
 
@@ -45,6 +53,9 @@ export default function ResponsiveRequestsList({
             <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Select
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {tVacations('employee')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -60,8 +71,13 @@ export default function ResponsiveRequestsList({
                   {t('conflict')}
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  {t('actions')}
+                  Review
                 </th>
+                {showActions && (
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    {t('actions')}
+                  </th>
+                )}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -71,9 +87,13 @@ export default function ResponsiveRequestsList({
                   request={request}
                   onUpdateStatus={handleStatusUpdate}
                   onViewConflicts={onViewConflicts}
+                  onReviewRequest={onReviewRequest}
+                  onToggleSelection={onToggleSelection}
+                  selectedRequests={selectedRequests}
                   isProcessing={isProcessing(request.id)}
                   t={t}
                   tVacations={tVacations}
+                  showActions={showActions}
                 />
               ))}
             </tbody>
@@ -89,9 +109,13 @@ export default function ResponsiveRequestsList({
             request={request}
             onUpdateStatus={handleStatusUpdate}
             onViewConflicts={onViewConflicts}
+            onReviewRequest={onReviewRequest}
+            onToggleSelection={onToggleSelection}
+            selectedRequests={selectedRequests}
             isProcessing={isProcessing(request.id)}
             t={t}
             tVacations={tVacations}
+            showActions={showActions}
           />
         ))}
       </div>
@@ -111,28 +135,41 @@ interface RequestRowProps {
   request: VacationRequestWithConflicts;
   onUpdateStatus: (id: string, status: "approved" | "rejected") => void;
   onViewConflicts: (id: string) => void;
+  onReviewRequest: (id: string) => void;
+  onToggleSelection: (id: string) => void;
+  selectedRequests: Set<string>;
   isProcessing: boolean;
   t: (key: string) => string;
   tVacations: (key: string) => string;
+  showActions?: boolean;
 }
 
 function RequestTableRow({
   request,
   onUpdateStatus,
   onViewConflicts,
+  onReviewRequest,
+  onToggleSelection,
+  selectedRequests,
   isProcessing,
   t,
-  tVacations
+  tVacations,
+  showActions = true
 }: RequestRowProps) {
+  const isSelected = selectedRequests.has(request.id);
+
   return (
     <tr className="hover:bg-gray-50 transition-colors">
+      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={() => onToggleSelection(request.id)}
+          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+        />
+      </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-        <Link
-          href={`/en/admin/vacation-requests/${request.id}`}
-          className="text-blue-600 hover:text-blue-800 hover:underline"
-        >
-          {request.userName}
-        </Link>
+        {request.userName}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
         {request.company || "—"}
@@ -151,14 +188,24 @@ function RequestTableRow({
         />
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-        <ActionButtons
-          requestId={request.id}
-          onUpdateStatus={onUpdateStatus}
-          isProcessing={isProcessing}
-          t={t}
-          tVacations={tVacations}
-        />
+        <button
+          onClick={() => onReviewRequest(request.id)}
+          className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
+        >
+          Review Request
+        </button>
       </td>
+      {showActions && (
+        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+          <ActionButtons
+            requestId={request.id}
+            onUpdateStatus={onUpdateStatus}
+            isProcessing={isProcessing}
+            t={t}
+            tVacations={tVacations}
+          />
+        </td>
+      )}
     </tr>
   );
 }
@@ -167,24 +214,35 @@ function RequestCard({
   request,
   onUpdateStatus,
   onViewConflicts,
+  onReviewRequest,
+  onToggleSelection,
+  selectedRequests,
   isProcessing,
   t,
-  tVacations
+  tVacations,
+  showActions = true
 }: RequestRowProps) {
+  const isSelected = selectedRequests.has(request.id);
+
   return (
     <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-      {/* Header with employee name and company */}
+      {/* Header with checkbox, employee name and company */}
       <div className="flex items-start justify-between mb-3">
-        <div className="flex-1 min-w-0">
-          <Link
-            href={`/en/admin/vacation-requests/${request.id}`}
-            className="text-lg font-medium text-gray-900 hover:text-blue-600 hover:underline block truncate"
-          >
-            {request.userName}
-          </Link>
-          <p className="text-sm text-gray-500 truncate">
-            {request.company || "—"} • {request.type || "—"}
-          </p>
+        <div className="flex items-start gap-3 flex-1 min-w-0">
+          <input
+            type="checkbox"
+            checked={isSelected}
+            onChange={() => onToggleSelection(request.id)}
+            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
+          />
+          <div className="flex-1 min-w-0">
+            <div className="text-lg font-medium text-gray-900 truncate">
+              {request.userName}
+            </div>
+            <p className="text-sm text-gray-500 truncate">
+              {request.company || "—"} • {request.type || "—"}
+            </p>
+          </div>
         </div>
         <ConflictBadge
           conflicts={request.conflicts}
@@ -202,16 +260,24 @@ function RequestCard({
         </p>
       </div>
 
-      {/* Action buttons - full width on mobile */}
+      {/* Review button and action buttons */}
       <div className="flex gap-2">
-        <ActionButtons
-          requestId={request.id}
-          onUpdateStatus={onUpdateStatus}
-          isProcessing={isProcessing}
-          t={t}
-          tVacations={tVacations}
-          fullWidth
-        />
+        <button
+          onClick={() => onReviewRequest(request.id)}
+          className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 font-medium transition-colors"
+        >
+          Review Request
+        </button>
+        {showActions && (
+          <ActionButtons
+            requestId={request.id}
+            onUpdateStatus={onUpdateStatus}
+            isProcessing={isProcessing}
+            t={t}
+            tVacations={tVacations}
+            fullWidth
+          />
+        )}
       </div>
     </div>
   );

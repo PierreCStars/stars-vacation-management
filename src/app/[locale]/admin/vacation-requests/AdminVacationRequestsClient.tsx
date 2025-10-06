@@ -46,6 +46,10 @@ export default function AdminVacationRequestsClient({
   const [clientPending, setClientPending] = useState<VacationRequestWithConflicts[]>([]);
   const [clientReviewed, setClientReviewed] = useState<VacationRequestWithConflicts[]>([]);
   const [clientConflictCount, setClientConflictCount] = useState(0);
+  
+  // New state for tab management
+  const [activeTab, setActiveTab] = useState<"list" | "actions">("list");
+  const [selectedRequests, setSelectedRequests] = useState<Set<string>>(new Set());
 
   // Handle browser extension interference and unhandled promise rejections
   useEffect(() => {
@@ -227,6 +231,44 @@ export default function AdminVacationRequestsClient({
     router.push(`/en/admin/vacation-requests/${requestId}`);
   };
 
+  // Handle request selection for actions tab
+  const toggleRequestSelection = (requestId: string) => {
+    setSelectedRequests(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(requestId)) {
+        newSet.delete(requestId);
+      } else {
+        newSet.add(requestId);
+      }
+      return newSet;
+    });
+  };
+
+  const selectAllRequests = () => {
+    setSelectedRequests(new Set(effectivePending.map(r => r.id)));
+  };
+
+  const clearSelection = () => {
+    setSelectedRequests(new Set());
+  };
+
+  // Handle bulk actions
+  const handleBulkAction = async (action: "approved" | "rejected") => {
+    if (selectedRequests.size === 0) return;
+    
+    const reviewer = {
+      name: session?.user?.name || 'Admin',
+      email: session?.user?.email || 'admin@stars.mc'
+    };
+
+    for (const requestId of selectedRequests) {
+      await updateStatus(requestId, action, reviewer);
+    }
+    
+    // Clear selection after bulk action
+    setSelectedRequests(new Set());
+  };
+
   return (
     <div className="space-y-6">
       {/* Firebase Warning Banner */}
@@ -320,30 +362,123 @@ export default function AdminVacationRequestsClient({
         </div>
       </section>
 
-      {/* Pending table with clickable rows */}
+      {/* Tab Navigation */}
       <section className="bg-white rounded-lg shadow-sm border border-gray-200">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <div className="flex items-center justify-between">
+        <div className="border-b border-gray-200">
+          <nav className="flex space-x-8 px-6" aria-label="Tabs">
+            <button
+              onClick={() => setActiveTab("list")}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === "list"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              📋 {t('pending')} {t('vacationRequestsTitle')} ({effectivePending.length})
+            </button>
+            <button
+              onClick={() => setActiveTab("actions")}
+              className={`py-4 px-1 border-b-2 font-medium text-sm ${
+                activeTab === "actions"
+                  ? "border-blue-500 text-blue-600"
+                  : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+              }`}
+            >
+              ⚡ {t('actions')} ({selectedRequests.size} selected)
+            </button>
+          </nav>
+        </div>
+
+        {/* Tab Content */}
+        <div className="p-6">
+          {activeTab === "list" && (
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">{t('pending')} {t('vacationRequestsTitle')}</h2>
-              <p className="text-sm text-gray-600 mt-1">Requests awaiting your approval or rejection • Click rows to view details</p>
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <p className="text-sm text-gray-600">Click "Review Request" to view details • Select requests for bulk actions</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  {effectiveConflictCount > 0 && (
+                    <span className="inline-flex items-center gap-2 px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded-full">
+                      ⚠️ {effectiveConflictCount} {t('conflictsFound')}
+                    </span>
+                  )}
+                </div>
+              </div>
+              <ResponsiveRequestsList
+                requests={effectivePending}
+                onUpdateStatus={updateStatus}
+                onViewConflicts={(id) => setSelectedConflictRequest(id)}
+                onReviewRequest={handleRowClick}
+                onToggleSelection={toggleRequestSelection}
+                selectedRequests={selectedRequests}
+                t={t}
+                tVacations={tVacations}
+                showActions={false}
+              />
             </div>
-            <div className="flex items-center gap-3">
-              {effectiveConflictCount > 0 && (
-                <span className="inline-flex items-center gap-2 px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded-full">
-                  ⚠️ {effectiveConflictCount} {t('conflictsFound')}
-                </span>
+          )}
+
+          {activeTab === "actions" && (
+            <div>
+              <div className="flex items-center justify-between mb-6">
+                <div>
+                  <h3 className="text-lg font-medium text-gray-900">Bulk Actions</h3>
+                  <p className="text-sm text-gray-600">Select requests from the list tab, then perform bulk actions here</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={selectAllRequests}
+                    className="px-3 py-1 text-sm text-blue-600 hover:text-blue-800 border border-blue-300 rounded-md hover:bg-blue-50"
+                  >
+                    Select All
+                  </button>
+                  <button
+                    onClick={clearSelection}
+                    className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 border border-gray-300 rounded-md hover:bg-gray-50"
+                  >
+                    Clear Selection
+                  </button>
+                </div>
+              </div>
+
+              {selectedRequests.size === 0 ? (
+                <div className="text-center py-8">
+                  <div className="text-gray-400 text-4xl mb-2">📝</div>
+                  <p className="text-lg font-medium text-gray-900">No requests selected</p>
+                  <p className="text-sm text-gray-500">Go to the list tab to select requests for bulk actions</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm text-blue-800">
+                      <strong>{selectedRequests.size}</strong> request{selectedRequests.size === 1 ? '' : 's'} selected
+                    </p>
+                  </div>
+                  
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => handleBulkAction("approved")}
+                      className="flex-1 bg-green-600 text-white px-4 py-3 rounded-md hover:bg-green-700 font-medium transition-colors"
+                    >
+                      ✅ Approve All Selected ({selectedRequests.size})
+                    </button>
+                    <button
+                      onClick={() => handleBulkAction("rejected")}
+                      className="flex-1 bg-red-600 text-white px-4 py-3 rounded-md hover:bg-red-700 font-medium transition-colors"
+                    >
+                      ❌ Reject All Selected ({selectedRequests.size})
+                    </button>
+                  </div>
+
+                  <div className="text-xs text-gray-500">
+                    <p>⚠️ This will apply the action to all selected requests. This action cannot be undone.</p>
+                  </div>
+                </div>
               )}
             </div>
-          </div>
+          )}
         </div>
-        <ResponsiveRequestsList
-          requests={effectivePending}
-          onUpdateStatus={updateStatus}
-          onViewConflicts={(id) => setSelectedConflictRequest(id)}
-          t={t}
-          tVacations={tVacations}
-        />
       </section>
 
       {/* Reviewed accordion */}

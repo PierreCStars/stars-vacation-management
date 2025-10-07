@@ -434,10 +434,24 @@ function ActionButtons({
     ? "flex-1 rounded px-3 py-2 text-white font-medium text-sm transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
     : "rounded px-3 py-1 text-white hover:opacity-90 transition-colors text-xs disabled:opacity-50 disabled:cursor-not-allowed";
 
+  const handleApprove = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🟢 Approve button clicked for request:', requestId);
+    onUpdateStatus(requestId, 'approved');
+  };
+
+  const handleReject = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    console.log('🔴 Reject button clicked for request:', requestId);
+    onUpdateStatus(requestId, 'rejected');
+  };
+
   return (
         <>
           <button 
-            onClick={() => onUpdateStatus(requestId, 'approved')}
+            onClick={handleApprove}
             disabled={isProcessing}
             aria-label={`Approve request for ${userName}`}
             className={`${buttonClass} bg-green-600 hover:bg-green-700 ${
@@ -448,7 +462,7 @@ function ActionButtons({
             {isProcessing ? '...' : tVacations('approve')}
           </button>
           <button 
-            onClick={() => onUpdateStatus(requestId, 'rejected')}
+            onClick={handleReject}
             disabled={isProcessing}
             aria-label={`Deny request for ${userName}`}
             className={`${buttonClass} bg-red-600 hover:bg-red-700 ${

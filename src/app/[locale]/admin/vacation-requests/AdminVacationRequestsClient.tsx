@@ -212,7 +212,7 @@ export default function AdminVacationRequestsClient({
 
   async function updateStatus(id: string, status: "approved"|"rejected") {
     try {
-      console.log('[VALIDATION] start', { id, status, userEmail: session?.user?.email });
+      console.log('🚀 [VALIDATION] updateStatus called', { id, status, userEmail: session?.user?.email, timestamp: new Date().toISOString() });
       
       const reviewer = {
         id: session?.user?.email || 'unknown',

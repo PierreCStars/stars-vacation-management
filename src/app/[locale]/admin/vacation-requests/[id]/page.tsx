@@ -233,7 +233,8 @@ export default function VacationRequestDetailPage() {
         const startDate = new Date(newStartDate);
         const endDate = new Date(newEndDate);
         const timeDiff = endDate.getTime() - startDate.getTime();
-        const durationDays = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+        const millisecondsPerDay = 1000 * 3600 * 24;
+        const durationDays = Math.ceil(timeDiff / millisecondsPerDay) + 1;
 
         const response = await fetch(`/api/vacation-requests/${vacationRequest.id}`, {
           method: 'PATCH',
@@ -667,8 +668,6 @@ export default function VacationRequestDetailPage() {
               data-testid="request-calendar"
             />
           </div>
-        </div>
-      </div>
 
       {/* Toast Notification */}
       {toastMessage && (

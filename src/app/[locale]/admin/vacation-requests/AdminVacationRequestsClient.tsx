@@ -277,9 +277,18 @@ export default function AdminVacationRequestsClient({
 
   return (
     <div className="space-y-6">
-      {/* Debug banner */}
+      {/* Critical debug banner - should be visible even without JS */}
       <div 
         data-test="debug-banner" 
+        className="fixed top-4 left-4 z-[9999] px-4 py-2 rounded bg-red-600 text-white text-sm font-bold border-2 border-yellow-400"
+        style={{ position: 'fixed', top: '16px', left: '16px', zIndex: 9999 }}
+      >
+        🚨 HYDRATION TEST: AdminVacationRequestsClient RENDERED
+      </div>
+      
+      {/* Secondary debug banner */}
+      <div 
+        data-test="debug-banner-2" 
         className="fixed bottom-2 right-2 z-[9999] px-3 py-1 rounded bg-fuchsia-600 text-white text-xs"
       >
         Admin Pending Layout v2 • {version || 'no-ver'}

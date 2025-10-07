@@ -90,13 +90,23 @@ export default async function AdminVacationRequestsPage() {
     console.log(`✅ Server-side: Loaded ${requests.length} requests (${pending.length} pending, ${reviewed.length} reviewed, ${conflictCount} with conflicts)`);
 
     return (
-      <AdminVacationRequestsClient 
-        initialRequests={requests}
-        pending={pending}
-        reviewed={reviewed}
-        conflictCount={conflictCount}
-        version={version}
-      />
+      <div>
+        {/* Server-side debug banner */}
+        <div 
+          className="fixed top-4 right-4 z-[9999] px-4 py-2 rounded bg-blue-600 text-white text-sm font-bold border-2 border-green-400"
+          style={{ position: 'fixed', top: '16px', right: '16px', zIndex: 9999 }}
+        >
+          🟦 SERVER: AdminVacationRequestsPage RENDERED
+        </div>
+        
+        <AdminVacationRequestsClient 
+          initialRequests={requests}
+          pending={pending}
+          reviewed={reviewed}
+          conflictCount={conflictCount}
+          version={version}
+        />
+      </div>
     );
   } catch (error) {
     console.error('VACATION_REQUESTS_RENDER_ERROR', error);

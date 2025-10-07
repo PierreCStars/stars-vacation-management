@@ -64,7 +64,7 @@ export async function getRequestsWithConflicts(): Promise<VacationRequestWithCon
 }
 
 async function fetchDataWithFallback(): Promise<VacationRequestWithConflicts[]> {
-    
+  try {
     // 1) Get all vacation requests from Firestore
     const db = getFirebaseAdminDb();
     if (!db) {
@@ -171,7 +171,7 @@ async function fetchDataWithFallback(): Promise<VacationRequestWithConflicts[]> 
             conflictingRequests: [{
               id: candidate.id || 'unknown',
               userName: candidate.userName,
-              company: candidate.company,
+              company: candidate.company || 'unknown',
               startDate: candidate.startDate,
               endDate: candidate.endDate,
               status: candidate.status
@@ -179,7 +179,7 @@ async function fetchDataWithFallback(): Promise<VacationRequestWithConflicts[]> 
           });
         }
       }
-
+      
       return {
         ...request,
         conflicts
@@ -193,7 +193,6 @@ async function fetchDataWithFallback(): Promise<VacationRequestWithConflicts[]> 
     console.log(`⚠️ Server-side: ${requestsWithConflicts.length} requests have conflicts`);
 
     return enriched;
-
   } catch (error) {
     console.error('❌ Server-side: Error fetching requests with conflicts:', error);
     
@@ -232,8 +231,3 @@ async function fetchDataWithFallback(): Promise<VacationRequestWithConflicts[]> 
     return mockRequests;
   }
 }
-
-
-
-
-

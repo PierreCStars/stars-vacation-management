@@ -454,7 +454,7 @@ export default function AdminVacationRequestsClient({
             <div>
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className="text-sm text-gray-600">Click "Review Request" to view details • Select requests for bulk actions</p>
+                  <p className="text-sm text-gray-600">Select requests for bulk actions • Use "More Information" buttons to view details</p>
                 </div>
                 <div className="flex items-center gap-3">
                   {effectiveConflictCount > 0 && (

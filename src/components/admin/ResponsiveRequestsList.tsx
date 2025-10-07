@@ -88,14 +88,6 @@ export default function ResponsiveRequestsList({
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   {t('conflict')}
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Review
-                </th>
-                {showActions && (
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {t('actions')}
-                  </th>
-                )}
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -179,14 +171,10 @@ function RequestTableRow({
   
   console.log('[LAYOUT] RequestTableRow rendering for', request.userName, 'showActions:', showActions);
 
-  // Row clickability removed - users must use the "More Information" button
-
   const moreInfoUrl = absoluteUrl(`/${locale}/admin/vacation-requests/${request.id}`);
 
   return (
-    <tr 
-      className="hover:bg-gray-50 transition-colors"
-    >
+    <tr className="hover:bg-gray-50 transition-colors">
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
         <input
           type="checkbox"
@@ -199,12 +187,11 @@ function RequestTableRow({
         />
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 align-middle">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <span className="font-medium">{request.userName}</span>
           <a
             href={moreInfoUrl}
-            onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:text-blue-700 transition-colors"
+            className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md hover:bg-blue-700 hover:text-white transition-colors shadow-sm"
             aria-label={`More information about ${request.userName}'s request`}
             data-test="more-info-link"
           >
@@ -228,36 +215,6 @@ function RequestTableRow({
           t={t}
         />
       </td>
-      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium align-middle">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onReviewRequest(request.id);
-          }}
-          className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
-        >
-          Review Request
-        </button>
-      </td>
-      {showActions && (
-        <td className="w-[1%] whitespace-nowrap px-6 py-4 align-middle">
-          <div
-            className="flex items-center gap-2"
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-          >
-            <ActionButtons
-              requestId={request.id}
-              userName={request.userName}
-              onUpdateStatus={onUpdateStatus}
-              isProcessing={isProcessing}
-              t={t}
-              tVacations={tVacations}
-            />
-          </div>
-        </td>
-      )}
     </tr>
   );
 }
@@ -277,14 +234,10 @@ function RequestCard({
   const locale = useLocale();
   const isSelected = selectedRequests.has(request.id);
 
-  // Card clickability removed - users must use the "More Information" button
-
   const moreInfoUrl = absoluteUrl(`/${locale}/admin/vacation-requests/${request.id}`);
 
   return (
-    <div 
-      className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
-    >
+    <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
       {/* Header with checkbox, employee name and company */}
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -306,8 +259,7 @@ function RequestCard({
             </p>
             <a
               href={moreInfoUrl}
-              onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:text-blue-700 transition-colors"
+              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md hover:bg-blue-700 hover:text-white transition-colors shadow-sm mt-2"
               aria-label={`More information about ${request.userName}'s request`}
               data-test="more-info-link"
             >
@@ -329,36 +281,6 @@ function RequestCard({
           <span className="font-medium">Dates:</span> {request.startDate}
           {request.endDate !== request.startDate ? ` to ${request.endDate}` : ""}
         </p>
-      </div>
-
-      {/* Review button and action buttons */}
-      <div className="flex gap-2">
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            onReviewRequest(request.id);
-          }}
-          className="flex-1 bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 font-medium transition-colors"
-        >
-          Review Request
-        </button>
-        {showActions && (
-          <div
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-            onTouchStart={(e) => e.stopPropagation()}
-          >
-            <ActionButtons
-              requestId={request.id}
-              userName={request.userName}
-              onUpdateStatus={onUpdateStatus}
-              isProcessing={isProcessing}
-              t={t}
-              tVacations={tVacations}
-              fullWidth
-            />
-          </div>
-        )}
       </div>
     </div>
   );

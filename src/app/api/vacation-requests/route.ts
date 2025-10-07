@@ -37,9 +37,56 @@ export async function GET() {
     }
     
     // Fallback to mock data if Firebase is not available
-    // No mock data - return empty array if no data from Firebase
-    const mockData: any[] = [];
+    // Return test data for development
+    const mockData = [
+      {
+        id: 'test-request-1',
+        userId: 'test-user-1',
+        userName: 'John Doe',
+        userEmail: 'john.doe@stars.mc',
+        company: 'Stars Monaco',
+        type: 'annual',
+        startDate: '2024-12-15',
+        endDate: '2024-12-20',
+        duration: 5,
+        reason: 'Family vacation',
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        conflicts: []
+      },
+      {
+        id: 'test-request-2',
+        userId: 'test-user-2',
+        userName: 'Jane Smith',
+        userEmail: 'jane.smith@stars.mc',
+        company: 'Stars Monaco',
+        type: 'annual',
+        startDate: '2024-12-25',
+        endDate: '2024-12-30',
+        duration: 5,
+        reason: 'Holiday break',
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        conflicts: []
+      },
+      {
+        id: 'test-request-3',
+        userId: 'test-user-3',
+        userName: 'Bob Johnson',
+        userEmail: 'bob.johnson@stars.mc',
+        company: 'Stars Monaco',
+        type: 'sick',
+        startDate: '2024-12-10',
+        endDate: '2024-12-12',
+        duration: 2,
+        reason: 'Medical appointment',
+        status: 'pending',
+        createdAt: new Date().toISOString(),
+        conflicts: []
+      }
+    ];
 
+    console.log(`📊 Server-side: Got ${mockData.length} requests from API fallback`);
     return NextResponse.json(mockData);
   } catch (error) {
     console.error('❌ Error fetching vacation requests:', error);

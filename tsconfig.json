@@ -42,6 +42,7 @@
     ".next",
     "**/*.test.*",
     "**/*.spec.*",
+    "**/__tests__/**",
     "tests/**",
     "vitest.config.*",
     "vitest/**"

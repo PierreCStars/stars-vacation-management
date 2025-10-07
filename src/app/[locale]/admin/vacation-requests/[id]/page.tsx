@@ -687,6 +687,6 @@ export default function VacationRequestDetailPage() {
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 } 

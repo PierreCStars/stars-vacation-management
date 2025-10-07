@@ -71,7 +71,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
               adminComment
             );
             console.log('[VALIDATION] approved', { id });
-          } else if (newStatus === 'denied') {
+          } else if (newStatus === 'rejected') {
             await vacationService.rejectVacationRequest(
               id, 
               reviewer.name, 
@@ -141,12 +141,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         }
 
         // Send decision emails and calendar updates using orchestration
-        if (isStatusUpdate && newStatus && (newStatus === 'approved' || newStatus === 'denied')) {
+        if (isStatusUpdate && newStatus && (newStatus === 'approved' || newStatus === 'rejected')) {
           try {
             await decideVacation({
               requesterEmail: requestData.userEmail,
               requestId: id,
-              decision: newStatus.toUpperCase() as 'APPROVED' | 'DENIED',
+              decision: newStatus === 'approved' ? 'APPROVED' : 'DENIED',
               startIso: requestData.startDate,
               endIso: requestData.endDate
             });

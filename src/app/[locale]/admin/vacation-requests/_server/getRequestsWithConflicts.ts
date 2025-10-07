@@ -49,14 +49,35 @@ export async function getRequestsWithConflicts(): Promise<VacationRequestWithCon
   try {
     console.log('🔄 Server-side: Fetching vacation requests with conflicts...');
     
+    // Add timeout to prevent hanging
+    const timeoutPromise = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('Request timeout after 10 seconds')), 10000);
+    });
+    
+    const dataPromise = fetchDataWithFallback();
+    
+    return await Promise.race([dataPromise, timeoutPromise]);
+  } catch (error) {
+    console.error('❌ Error in getRequestsWithConflicts:', error);
+    return [];
+  }
+}
+
+async function fetchDataWithFallback(): Promise<VacationRequestWithConflicts[]> {
+    
     // 1) Get all vacation requests from Firestore
     const db = getFirebaseAdminDb();
     if (!db) {
       console.log('⚠️ Firebase Admin not available, falling back to API route');
       // Fallback to API route when Firebase Admin is not available
       try {
-        const baseUrl = process.env.APP_BASE_URL || process.env.NEXTAUTH_URL || process.env.VERCEL_URL || '';
-        const response = await fetch(`${baseUrl}/api/vacation-requests`);
+        const baseUrl = process.env.APP_BASE_URL || process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000';
+        console.log(`🌐 Attempting API fallback to: ${baseUrl}/api/vacation-requests`);
+        const response = await fetch(`${baseUrl}/api/vacation-requests`, {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
         if (response.ok) {
           const data = await response.json();
           console.log(`📊 Server-side: Got ${data.length} requests from API fallback`);
@@ -65,10 +86,13 @@ export async function getRequestsWithConflicts(): Promise<VacationRequestWithCon
             ...request,
             conflicts: [] // No conflicts computed in API fallback
           }));
+        } else {
+          console.error(`❌ API fallback failed with status: ${response.status}`);
         }
       } catch (apiError) {
         console.error('❌ API fallback failed:', apiError);
       }
+      console.log('⚠️ All fallbacks failed, returning empty array');
       return [];
     }
     

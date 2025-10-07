@@ -2,33 +2,33 @@ import { z } from 'zod';
 
 const EnvSchema = z.object({
   // Google OAuth
-  GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID missing'),
-  GOOGLE_CLIENT_SECRET: z.string().min(1, 'GOOGLE_CLIENT_SECRET missing'),
+  GOOGLE_CLIENT_ID: z.string().min(1, 'GOOGLE_CLIENT_ID missing').optional(),
+  GOOGLE_CLIENT_SECRET: z.string().min(1, 'GOOGLE_CLIENT_SECRET missing').optional(),
   
   // NextAuth
-  NEXTAUTH_URL: z.string().url('NEXTAUTH_URL must be a URL'),
-  NEXTAUTH_SECRET: z.string().min(1, 'NEXTAUTH_SECRET missing'),
+  NEXTAUTH_URL: z.string().url('NEXTAUTH_URL must be a URL').optional(),
+  NEXTAUTH_SECRET: z.string().min(1, 'NEXTAUTH_SECRET missing').optional(),
   
   // Firebase (if used)
-  NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string().min(1, 'NEXT_PUBLIC_FIREBASE_PROJECT_ID missing'),
-  NEXT_PUBLIC_FIREBASE_API_KEY: z.string().min(1, 'NEXT_PUBLIC_FIREBASE_API_KEY missing'),
-  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: z.string().min(1, 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN missing'),
-  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: z.string().min(1, 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET missing'),
-  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: z.string().min(1, 'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID missing'),
-  NEXT_PUBLIC_FIREBASE_APP_ID: z.string().min(1, 'NEXT_PUBLIC_FIREBASE_APP_ID missing'),
+  NEXT_PUBLIC_FIREBASE_PROJECT_ID: z.string().min(1, 'NEXT_PUBLIC_FIREBASE_PROJECT_ID missing').optional(),
+  NEXT_PUBLIC_FIREBASE_API_KEY: z.string().min(1, 'NEXT_PUBLIC_FIREBASE_API_KEY missing').optional(),
+  NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: z.string().min(1, 'NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN missing').optional(),
+  NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET: z.string().min(1, 'NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET missing').optional(),
+  NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: z.string().min(1, 'NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID missing').optional(),
+  NEXT_PUBLIC_FIREBASE_APP_ID: z.string().min(1, 'NEXT_PUBLIC_FIREBASE_APP_ID missing').optional(),
   
   // Firebase Admin (server-side)
-  FIREBASE_PROJECT_ID: z.string().min(1, 'FIREBASE_PROJECT_ID missing'),
-  FIREBASE_SERVICE_ACCOUNT_KEY: z.string().min(1, 'FIREBASE_SERVICE_ACCOUNT_KEY missing'),
+  FIREBASE_PROJECT_ID: z.string().min(1, 'FIREBASE_PROJECT_ID missing').optional(),
+  FIREBASE_SERVICE_ACCOUNT_KEY: z.string().min(1, 'FIREBASE_SERVICE_ACCOUNT_KEY missing').optional(),
   
   // Gmail API
-  GMAIL_CLIENT_ID: z.string().min(1, 'GMAIL_CLIENT_ID missing'),
-  GMAIL_CLIENT_SECRET: z.string().min(1, 'GMAIL_CLIENT_SECRET missing'),
-  GMAIL_REFRESH_TOKEN: z.string().min(1, 'GMAIL_REFRESH_TOKEN missing'),
+  GMAIL_CLIENT_ID: z.string().min(1, 'GMAIL_CLIENT_ID missing').optional(),
+  GMAIL_CLIENT_SECRET: z.string().min(1, 'GMAIL_CLIENT_SECRET missing').optional(),
+  GMAIL_REFRESH_TOKEN: z.string().min(1, 'GMAIL_REFRESH_TOKEN missing').optional(),
   
   // Email configuration
   APP_BASE_URL: z.string().url('APP_BASE_URL must be a URL').optional(),
-  NOTIFY_ADMIN_EMAILS: z.string().min(1, 'NOTIFY_ADMIN_EMAILS missing'),
+  NOTIFY_ADMIN_EMAILS: z.string().min(1, 'NOTIFY_ADMIN_EMAILS missing').optional(),
   
   // SMTP configuration (for email notifications)
   SMTP_HOST: z.string().optional(),

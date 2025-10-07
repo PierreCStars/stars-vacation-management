@@ -58,10 +58,12 @@ export default function ResponsiveRequestsList({
         🟢 ResponsiveRequestsList RENDERED: {requests.length} requests, showActions: {showActions.toString()}
       </div>
       
-      {/* Debug indicator */}
-      <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-2 rounded text-sm">
-        🔧 DEBUG: ResponsiveRequestsList rendered with {requests.length} requests, showActions: {showActions.toString()}
-      </div>
+      {/* Debug banner */}
+      {(process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_DEBUG === 'true') && (
+        <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-2 rounded text-sm mb-4">
+          🔧 DEBUG: ResponsiveRequestsList rendered with {requests.length} requests, showActions: {showActions.toString()}
+        </div>
+      )}
       
       {/* Desktop Table View (lg and up) */}
       <div className="hidden lg:block">

@@ -1,23 +1,29 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
+const LOCALES = ['en', 'fr'];
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
-  // Already localized
-  if (pathname === '/en' || pathname.startsWith('/en/')) return NextResponse.next();
-  if (pathname === '/fr' || pathname.startsWith('/fr/')) return NextResponse.next();
-
-  // Redirect root to /en
-  if (pathname === '/') {
-    const url = req.nextUrl.clone();
-    url.pathname = '/en';
-    return NextResponse.redirect(url);
+  // Skip Next internals and assets
+  if (
+    pathname.startsWith('/_next') ||
+    pathname.match(/^.*\.(?:ico|png|jpg|jpeg|svg|gif|webp|css|js|map|txt|xml)$/)
+  ) {
+    return NextResponse.next();
   }
 
-  return NextResponse.next();
+  // Already localized?
+  const isLocalized = LOCALES.some((loc) => pathname === `/${loc}` || pathname.startsWith(`/${loc}/`));
+  if (isLocalized) return NextResponse.next();
+
+  // Redirect any non-localized path to default locale /en
+  const url = req.nextUrl.clone();
+  url.pathname = `/en${pathname === '/' ? '' : pathname}`;
+  return NextResponse.redirect(url);
 }
 
 export const config = {
-  matcher: ['/((?!_next|.*\\..*).*)']
+  matcher: ['/((?!_next).*)']
 };

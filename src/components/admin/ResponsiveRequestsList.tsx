@@ -437,14 +437,12 @@ function ActionButtons({
   const handleApprove = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('🟢 Approve button clicked for request:', requestId);
     onUpdateStatus(requestId, 'approved');
   };
 
   const handleReject = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('🔴 Reject button clicked for request:', requestId);
     onUpdateStatus(requestId, 'rejected');
   };
 

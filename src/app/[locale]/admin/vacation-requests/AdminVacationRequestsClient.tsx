@@ -21,13 +21,15 @@ interface AdminVacationRequestsClientProps {
   pending: VacationRequestWithConflicts[];
   reviewed: VacationRequestWithConflicts[];
   conflictCount: number;
+  version?: string;
 }
 
 export default function AdminVacationRequestsClient({ 
   initialRequests, 
   pending, 
   reviewed, 
-  conflictCount 
+  conflictCount,
+  version
 }: AdminVacationRequestsClientProps) {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -53,6 +55,8 @@ export default function AdminVacationRequestsClient({
 
   // Handle browser extension interference and unhandled promise rejections
   useEffect(() => {
+    console.log('[HYDRATION] AdminVacationRequestsClient mounted');
+    
     // Handle browser extension interference
     const originalConsoleError = console.error;
     console.error = (...args) => {
@@ -269,8 +273,22 @@ export default function AdminVacationRequestsClient({
     setSelectedRequests(new Set());
   };
 
+  const commit = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || process.env.VERCEL_GIT_COMMIT_SHA || 'dev';
+
   return (
     <div className="space-y-6">
+      {/* Debug banner */}
+      <div 
+        data-test="debug-banner" 
+        className="fixed bottom-2 right-2 z-[9999] px-3 py-1 rounded bg-fuchsia-600 text-white text-xs"
+      >
+        Admin Pending Layout v2 • {version || 'no-ver'}
+      </div>
+      
+      {/* Version tag */}
+      <div className="text-xs text-gray-500 text-right">
+        Build: <span data-test="build-commit">{commit.slice(0,7)}</span>
+      </div>
       {/* Firebase Warning Banner */}
       {!isFirebaseEnabled() && (
         <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">

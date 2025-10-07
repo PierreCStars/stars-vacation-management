@@ -1,10 +1,8 @@
 import Link from 'next/link';
+import { unstable_noStore } from 'next/cache';
 import { getRequestsWithConflicts, VacationRequestWithConflicts } from './_server/getRequestsWithConflicts';
 import { loadVacationRequests } from './_data';
 
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
 import UnifiedVacationCalendar from "@/components/UnifiedVacationCalendar";
 import ConflictDetailsDrawer from "@/components/ConflictDetailsDrawer";
 import FirebaseDebugPanel from "@/components/FirebaseDebugPanel";
@@ -13,7 +11,17 @@ import { isFirebaseEnabled } from "@/lib/firebase/client";
 import AdminVacationRequestsClient from './AdminVacationRequestsClient';
 import { isPendingStatus, isReviewedStatus } from '@/types/vacation-status';
 
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export default async function AdminVacationRequestsPage() {
+  // Ensure no caching
+  unstable_noStore();
+  
+  // Set version for debugging
+  const version = process.env.NEXT_PUBLIC_APP_VERSION || new Date().toISOString().slice(0,19);
+  
   try {
     // Server-side: Fetch vacation requests with conflicts computed on load
     console.log('🔄 Server-side: Loading vacation requests with conflicts...');
@@ -87,6 +95,7 @@ export default async function AdminVacationRequestsPage() {
         pending={pending}
         reviewed={reviewed}
         conflictCount={conflictCount}
+        version={version}
       />
     );
   } catch (error) {

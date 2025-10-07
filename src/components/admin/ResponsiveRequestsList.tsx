@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useLocale } from "next-intl";
 import { VacationRequestWithConflicts } from "@/app/[locale]/admin/vacation-requests/_server/getRequestsWithConflicts";
-// import { validateRequestAction } from "@/app/[locale]/admin/vacation-requests/actions";
+import { validateRequestAction } from "@/app/[locale]/admin/vacation-requests/actions";
 import { absoluteUrl } from "@/lib/urls";
 
 interface ResponsiveRequestsListProps {
@@ -49,7 +49,7 @@ export default function ResponsiveRequestsList({
   const isProcessing = (id: string) => processingRequests.has(id);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4" data-test="pending-list-v2">
       {/* Debug indicator */}
       <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-2 rounded text-sm">
         🔧 DEBUG: ResponsiveRequestsList rendered with {requests.length} requests, showActions: {showActions.toString()}
@@ -205,6 +205,7 @@ function RequestTableRow({
             onClick={(e) => e.stopPropagation()}
             className="text-sm underline text-slate-600 hover:text-slate-900 transition-colors"
             aria-label={`More information about ${request.userName}'s request`}
+            data-test="more-info-link"
           >
             More information
           </a>
@@ -315,6 +316,7 @@ function RequestCard({
               onClick={(e) => e.stopPropagation()}
               className="text-xs underline text-slate-600 hover:text-slate-900 transition-colors"
               aria-label={`More information about ${request.userName}'s request`}
+              data-test="more-info-link"
             >
               More information
             </a>
@@ -425,26 +427,36 @@ function ActionButtons({
 
   return (
         <>
-          <button 
-            onClick={() => console.log('Approve clicked for', requestId)}
-            disabled={isProcessing}
-            aria-label={`Approve request for ${userName}`}
-            className={`${buttonClass} bg-green-600 hover:bg-green-700 ${
-              isProcessing ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            {isProcessing ? '...' : tVacations('approve')}
-          </button>
-          <button 
-            onClick={() => console.log('Deny clicked for', requestId)}
-            disabled={isProcessing}
-            aria-label={`Deny request for ${userName}`}
-            className={`${buttonClass} bg-red-600 hover:bg-red-700 ${
-              isProcessing ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            {isProcessing ? '...' : tVacations('reject')}
-          </button>
+          <form action={validateRequestAction}>
+            <input type="hidden" name="id" value={requestId} />
+            <input type="hidden" name="action" value="approve" />
+            <button 
+              type="submit" 
+              disabled={isProcessing}
+              aria-label={`Approve request for ${userName}`}
+              className={`${buttonClass} bg-green-600 hover:bg-green-700 ${
+                isProcessing ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+              data-test="approve-btn"
+            >
+              {isProcessing ? '...' : tVacations('approve')}
+            </button>
+          </form>
+          <form action={validateRequestAction}>
+            <input type="hidden" name="id" value={requestId} />
+            <input type="hidden" name="action" value="deny" />
+            <button 
+              type="submit" 
+              disabled={isProcessing}
+              aria-label={`Deny request for ${userName}`}
+              className={`${buttonClass} bg-red-600 hover:bg-red-700 ${
+                isProcessing ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+              data-test="deny-btn"
+            >
+              {isProcessing ? '...' : tVacations('reject')}
+            </button>
+          </form>
         </>
   );
 }

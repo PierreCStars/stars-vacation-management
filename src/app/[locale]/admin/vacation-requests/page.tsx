@@ -15,15 +15,26 @@ export default async function AdminVacationRequestsPage() {
 
   // Check authentication
   const session = await getServerSession(authOptions);
+  console.log('🔐 Server-side session check:', { 
+    hasSession: !!session, 
+    hasUser: !!session?.user, 
+    email: session?.user?.email,
+    adminEmails: process.env.NOTIFY_ADMIN_EMAILS?.split(',') || []
+  });
+  
   if (!session?.user?.email) {
+    console.log('❌ No session, redirecting to login');
     redirect('/en/login');
   }
 
   // Check if user is admin
   const adminEmails = process.env.NOTIFY_ADMIN_EMAILS?.split(',') || [];
   if (!adminEmails.includes(session.user.email)) {
+    console.log('❌ User not admin, redirecting to dashboard');
     redirect('/en/dashboard');
   }
+  
+  console.log('✅ User authenticated as admin:', session.user.email);
 
   console.log('🔄 Server-side: Loading vacation requests with conflicts...');
   

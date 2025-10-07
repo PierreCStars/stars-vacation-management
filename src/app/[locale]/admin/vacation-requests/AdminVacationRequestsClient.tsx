@@ -168,19 +168,33 @@ export default function AdminVacationRequestsClient({
 
   // Handle authentication
   useEffect(() => {
-    if (status === 'loading') return;
+    console.log('🔐 Client-side session check:', { 
+      status, 
+      hasSession: !!session, 
+      hasUser: !!session?.user, 
+      email: session?.user?.email,
+      initialRequestsLength: initialRequests.length
+    });
+    
+    if (status === 'loading') {
+      console.log('⏳ Session still loading...');
+      return;
+    }
 
     if (!session?.user?.email) {
+      console.log('❌ No client session, redirecting to signin');
       router.push('/auth/signin?callbackUrl=/en/admin/vacation-requests');
       return;
     }
 
     // Check if user has admin access
     if (!session.user.email.endsWith('@stars.mc')) {
-      console.error('Access denied. Only @stars.mc users can access this page.');
+      console.error('❌ Access denied. Only @stars.mc users can access this page.');
       return;
     }
-  }, [session, status, router]);
+    
+    console.log('✅ Client session authenticated:', session.user.email);
+  }, [session, status, router, initialRequests.length]);
 
   // Show loading state
   if (status === 'loading' || isLoading) {
@@ -284,6 +298,15 @@ export default function AdminVacationRequestsClient({
         style={{ position: 'fixed', top: '16px', left: '16px', zIndex: 9999 }}
       >
         🚨 HYDRATION TEST: AdminVacationRequestsClient RENDERED
+      </div>
+      
+      {/* Session debug banner */}
+      <div 
+        data-test="session-debug" 
+        className="fixed top-16 left-4 z-[9999] px-4 py-2 rounded bg-blue-600 text-white text-sm font-bold border-2 border-yellow-400"
+        style={{ position: 'fixed', top: '64px', left: '16px', zIndex: 9999 }}
+      >
+        🔐 SESSION: {status} | {session?.user?.email || 'No email'} | Requests: {initialRequests.length}
       </div>
       
       {/* Secondary debug banner */}

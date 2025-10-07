@@ -1,6 +1,7 @@
 {
   "framework": "nextjs",
-  "buildCommand": "rm -rf .next && npm run build",
+  "buildCommand": "rm -rf .next node_modules/.cache && npm ci && npm run build",
+  "installCommand": "npm ci",
   "redirects": [
     {
       "source": "/(.*)",

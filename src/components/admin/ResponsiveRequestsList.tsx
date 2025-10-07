@@ -179,21 +179,13 @@ function RequestTableRow({
   
   console.log('[LAYOUT] RequestTableRow rendering for', request.userName, 'showActions:', showActions);
 
-  const handleRowClick = (e: React.MouseEvent) => {
-    // Only navigate if clicking on non-interactive elements
-    const target = e.target as HTMLElement;
-    if (target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.closest('button') || target.closest('a')) {
-      return; // Don't navigate if clicking on interactive elements
-    }
-    onReviewRequest(request.id);
-  };
+  // Row clickability removed - users must use the "More Information" button
 
   const moreInfoUrl = absoluteUrl(`/${locale}/admin/vacation-requests/${request.id}`);
 
   return (
     <tr 
-      className="hover:bg-gray-50 transition-colors cursor-pointer"
-      onClick={handleRowClick}
+      className="hover:bg-gray-50 transition-colors"
     >
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
         <input
@@ -212,11 +204,11 @@ function RequestTableRow({
           <a
             href={moreInfoUrl}
             onClick={(e) => e.stopPropagation()}
-            className="text-sm underline text-slate-600 hover:text-slate-900 transition-colors"
+            className="inline-flex items-center px-3 py-1 text-sm font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:text-blue-700 transition-colors"
             aria-label={`More information about ${request.userName}'s request`}
             data-test="more-info-link"
           >
-            More information
+            More Information
           </a>
         </div>
       </td>
@@ -285,21 +277,13 @@ function RequestCard({
   const locale = useLocale();
   const isSelected = selectedRequests.has(request.id);
 
-  const handleCardClick = (e: React.MouseEvent) => {
-    // Only navigate if clicking on non-interactive elements
-    const target = e.target as HTMLElement;
-    if (target.tagName === 'INPUT' || target.tagName === 'BUTTON' || target.closest('button') || target.closest('a')) {
-      return; // Don't navigate if clicking on interactive elements
-    }
-    onReviewRequest(request.id);
-  };
+  // Card clickability removed - users must use the "More Information" button
 
   const moreInfoUrl = absoluteUrl(`/${locale}/admin/vacation-requests/${request.id}`);
 
   return (
     <div 
-      className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm cursor-pointer"
-      onClick={handleCardClick}
+      className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm"
     >
       {/* Header with checkbox, employee name and company */}
       <div className="flex items-start justify-between mb-3">
@@ -323,11 +307,11 @@ function RequestCard({
             <a
               href={moreInfoUrl}
               onClick={(e) => e.stopPropagation()}
-              className="text-xs underline text-slate-600 hover:text-slate-900 transition-colors"
+              className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-600 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 hover:text-blue-700 transition-colors"
               aria-label={`More information about ${request.userName}'s request`}
               data-test="more-info-link"
             >
-              More information
+              More Information
             </a>
           </div>
         </div>

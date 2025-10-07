@@ -363,85 +363,71 @@ export default function VacationRequestDetailPage() {
 
   if (loading) {
     return (
-      <>
-        <div className="min-h-screen bg-gray-50">
-          <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading vacation request...</p>
-              <p className="text-sm text-gray-500 mt-2">Request ID: {requestId}</p>
-              <p className="text-sm text-gray-500">Loading state: {loading.toString()}</p>
-            </div>
-          </div>
+      <div className="py-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading vacation request...</p>
+          <p className="text-sm text-gray-500 mt-2">Request ID: {requestId}</p>
+          <p className="text-sm text-gray-500">Loading state: {loading.toString()}</p>
         </div>
-      </>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <>
-        <div className="min-h-screen bg-gray-50">
-          <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-                <h2 className="text-lg font-semibold mb-2">Error Loading Request</h2>
-                <p className="text-sm">{error}</p>
-                <p className="text-xs mt-2 text-red-600">Check the browser console for more details.</p>
-              </div>
-              <button
-                onClick={handleRetry}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Retry
-              </button>
-              <button
-                onClick={handleUseMockData}
-                className="ml-4 px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
-              >
-                Use Mock Data (Debug)
-              </button>
-              <button
-                onClick={() => router.push('/en/admin/vacation-requests')}
-                className="ml-4 px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
-              >
-                Back to All Requests
-              </button>
-            </div>
+      <div className="py-8">
+        <div className="text-center">
+          <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+            <h2 className="text-lg font-semibold mb-2">Error Loading Request</h2>
+            <p className="text-sm">{error}</p>
+            <p className="text-xs mt-2 text-red-600">Check the browser console for more details.</p>
           </div>
+          <button
+            onClick={handleRetry}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Retry
+          </button>
+          <button
+            onClick={handleUseMockData}
+            className="ml-4 px-4 py-2 bg-yellow-600 text-white rounded hover:bg-yellow-700"
+          >
+            Use Mock Data (Debug)
+          </button>
+          <button
+            onClick={() => router.push('/en/admin/vacation-requests')}
+            className="ml-4 px-4 py-2 border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
+          >
+            Back to All Requests
+          </button>
         </div>
-      </>
+      </div>
     );
   }
 
   if (!vacationRequest) {
     return (
-      <>
-        <div className="min-h-screen bg-gray-50">
-          <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
-            <div className="text-center">
-              <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
-                <h2 className="text-lg font-semibold mb-2">No Request Found</h2>
-                <p className="text-sm">The vacation request could not be loaded.</p>
-                <p className="text-xs mt-2 text-yellow-600">Request ID: {requestId}</p>
-              </div>
-              <button
-                onClick={() => router.push('/en/admin/vacation-requests')}
-                className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
-              >
-                Back to All Requests
-              </button>
-            </div>
+      <div className="py-8">
+        <div className="text-center">
+          <div className="bg-yellow-100 border border-yellow-400 text-yellow-700 px-4 py-3 rounded mb-4">
+            <h2 className="text-lg font-semibold mb-2">No Request Found</h2>
+            <p className="text-sm">The vacation request could not be loaded.</p>
+            <p className="text-xs mt-2 text-yellow-600">Request ID: {requestId}</p>
           </div>
+          <button
+            onClick={() => router.push('/en/admin/vacation-requests')}
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Back to All Requests
+          </button>
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
-      <div className="min-h-screen bg-gray-50">
-        <div className="max-w-4xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+    <div className="py-8">
           {/* Simple Header */}
           <div className="mb-8">
             <button

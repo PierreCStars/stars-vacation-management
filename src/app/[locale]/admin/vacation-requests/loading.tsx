@@ -1,6 +1,6 @@
 export default function Loading() {
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+    <div className="py-8 flex items-center justify-center">
       <div className="text-center">
         <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-blue-100 mb-4">
           <svg className="animate-spin h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24">

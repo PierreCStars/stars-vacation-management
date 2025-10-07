@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { useLocale } from "next-intl";
 import { VacationRequestWithConflicts } from "@/app/[locale]/admin/vacation-requests/_server/getRequestsWithConflicts";
-import { validateRequestAction } from "@/app/[locale]/admin/vacation-requests/actions";
 import { absoluteUrl } from "@/lib/urls";
 
 interface ResponsiveRequestsListProps {
@@ -437,36 +436,28 @@ function ActionButtons({
 
   return (
         <>
-          <form action={validateRequestAction}>
-            <input type="hidden" name="id" value={requestId} />
-            <input type="hidden" name="action" value="approve" />
-            <button 
-              type="submit" 
-              disabled={isProcessing}
-              aria-label={`Approve request for ${userName}`}
-              className={`${buttonClass} bg-green-600 hover:bg-green-700 ${
-                isProcessing ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-              data-test="approve-btn"
-            >
-              {isProcessing ? '...' : tVacations('approve')}
-            </button>
-          </form>
-          <form action={validateRequestAction}>
-            <input type="hidden" name="id" value={requestId} />
-            <input type="hidden" name="action" value="deny" />
-            <button 
-              type="submit" 
-              disabled={isProcessing}
-              aria-label={`Deny request for ${userName}`}
-              className={`${buttonClass} bg-red-600 hover:bg-red-700 ${
-                isProcessing ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
-              data-test="deny-btn"
-            >
-              {isProcessing ? '...' : tVacations('reject')}
-            </button>
-          </form>
+          <button 
+            onClick={() => onUpdateStatus(requestId, 'approved')}
+            disabled={isProcessing}
+            aria-label={`Approve request for ${userName}`}
+            className={`${buttonClass} bg-green-600 hover:bg-green-700 ${
+              isProcessing ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            data-test="approve-btn"
+          >
+            {isProcessing ? '...' : tVacations('approve')}
+          </button>
+          <button 
+            onClick={() => onUpdateStatus(requestId, 'rejected')}
+            disabled={isProcessing}
+            aria-label={`Deny request for ${userName}`}
+            className={`${buttonClass} bg-red-600 hover:bg-red-700 ${
+              isProcessing ? 'opacity-50 cursor-not-allowed' : ''
+            }`}
+            data-test="deny-btn"
+          >
+            {isProcessing ? '...' : tVacations('reject')}
+          </button>
         </>
   );
 }

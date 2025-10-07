@@ -53,6 +53,11 @@ export default async function AdminVacationRequestsPage() {
 
     return (
       <div className="min-h-screen bg-gray-50">
+        {/* Critical debug banner - should always show */}
+        <div className="bg-red-100 border-b border-red-400 text-red-800 px-4 py-2 text-sm font-bold">
+          🚨 CRITICAL: AdminVacationRequestsPage RENDERED - {allRequests.length} requests, {pending.length} pending, {reviewed.length} reviewed
+        </div>
+        
         {/* Debug banner */}
         {process.env.NODE_ENV !== 'production' && (
           <div className="bg-yellow-100 border-b border-yellow-400 text-yellow-800 px-4 py-2 text-sm">

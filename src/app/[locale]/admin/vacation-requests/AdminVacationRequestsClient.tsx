@@ -300,6 +300,11 @@ export default function AdminVacationRequestsClient({
         🚨 HYDRATION TEST: AdminVacationRequestsClient RENDERED
       </div>
       
+      {/* Server-side debug banner */}
+      <div className="bg-green-100 border-b border-green-400 text-green-800 px-4 py-2 text-sm font-bold">
+        ✅ AdminVacationRequestsClient RENDERED - {initialRequests.length} requests, {pending.length} pending, {reviewed.length} reviewed
+      </div>
+      
       {/* Session debug banner */}
       <div 
         data-test="session-debug" 

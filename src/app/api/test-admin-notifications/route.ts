@@ -26,7 +26,6 @@ export async function POST() {
     const snapshot = await db
       .collection('vacationRequests')
       .where('status', '==', 'pending')
-      .orderBy('createdAt', 'desc')
       .get();
 
     const pendingRequests = snapshot.docs.map(doc => ({

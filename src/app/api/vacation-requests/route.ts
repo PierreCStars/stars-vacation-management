@@ -79,7 +79,7 @@ export async function GET() {
       try {
         console.log('🔥 Firebase Admin connected, querying vacationRequests collection...');
         const snapshot = await db.collection('vacationRequests').get();
-        const requests = snapshot.docs.map(doc => ({
+        let requests = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as VacationRequest[];

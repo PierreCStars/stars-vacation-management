@@ -1,9 +1,11 @@
 "use client";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useTranslations } from 'next-intl';
 import { useSession } from 'next-auth/react';
 import { VacationRequestWithConflicts } from '@/app/[locale]/admin/vacation-requests/_server/getRequestsWithConflicts';
 import { absoluteUrl } from '@/lib/urls';
+import { isPendingStatus, isReviewedStatus } from '@/types/vacation-status';
+import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 
 export default function AdminPendingRequestsV2() {
   const [mounted, setMounted] = useState(false);
@@ -11,6 +13,11 @@ export default function AdminPendingRequestsV2() {
   const [isLoading, setIsLoading] = useState(true);
   const [processingRequests, setProcessingRequests] = useState<Set<string>>(new Set());
   const [selectedRequests, setSelectedRequests] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState<'pending' | 'reviewed'>('pending');
+  const [showReviewed, setShowReviewed] = useState(true);
+  const [sortKey, setSortKey] = useState<'userName' | 'company' | 'startDate' | 'reviewedAt'>('startDate');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const [actionMessage, setActionMessage] = useState<{type: 'success' | 'error', message: string} | null>(null);
   
   const { data: session } = useSession();
   const t = useTranslations('admin');
@@ -45,6 +52,8 @@ export default function AdminPendingRequestsV2() {
 
   const handleStatusUpdate = async (id: string, status: "approved" | "rejected") => {
     setProcessingRequests(prev => new Set(prev).add(id));
+    setActionMessage(null); // Clear previous messages
+    
     try {
       const response = await fetch(`/api/vacation-requests/${id}`, {
         method: 'PATCH',
@@ -63,14 +72,41 @@ export default function AdminPendingRequestsV2() {
         // Update the request status locally
         setRequests(prev => prev.map(req => 
           req.id === id 
-            ? { ...req, status: status.toUpperCase() as any, reviewedAt: new Date().toISOString() }
+            ? { 
+                ...req, 
+                status: status.toUpperCase() as any, 
+                reviewedAt: new Date().toISOString(),
+                reviewedBy: {
+                  name: session?.user?.name || 'Admin',
+                  email: session?.user?.email || 'admin@stars.mc'
+                }
+              }
             : req
         ));
+        
+        // Show success message
+        setActionMessage({
+          type: 'success',
+          message: `Request ${status === 'approved' ? 'approved' : 'rejected'} successfully!`
+        });
+        
+        // Auto-hide message after 3 seconds
+        setTimeout(() => setActionMessage(null), 3000);
+        
         console.log(`[V2] Successfully ${status} request ${id}`);
       } else {
+        const errorText = await response.text();
+        setActionMessage({
+          type: 'error',
+          message: `Failed to ${status} request: ${response.status} ${errorText}`
+        });
         console.error(`[V2] Failed to ${status} request:`, response.status);
       }
     } catch (error) {
+      setActionMessage({
+        type: 'error',
+        message: `Error ${status} request: ${error instanceof Error ? error.message : 'Unknown error'}`
+      });
       console.error(`[V2] Error ${status} request:`, error);
     } finally {
       setProcessingRequests(prev => {
@@ -94,7 +130,42 @@ export default function AdminPendingRequestsV2() {
   };
 
   const isProcessing = (id: string) => processingRequests.has(id);
-  const pendingRequests = requests.filter(req => req.status === 'pending');
+  
+  // Filter requests by status
+  const pendingRequests = requests.filter(req => isPendingStatus(req.status));
+  const reviewedRequests = requests.filter(req => isReviewedStatus(req.status));
+  
+  // Sorting function
+  const sortRequests = (list: VacationRequestWithConflicts[]) => {
+    const sorted = [...list];
+    sorted.sort((a, b) => {
+      const dir = sortDir === 'asc' ? 1 : -1;
+      
+      if (sortKey === 'userName' || sortKey === 'company') {
+        const aVal = a[sortKey] || '';
+        const bVal = b[sortKey] || '';
+        return aVal.localeCompare(bVal) * dir;
+      }
+      
+      if (sortKey === 'startDate') {
+        const aDate = new Date(a.startDate);
+        const bDate = new Date(b.startDate);
+        return (aDate.getTime() - bDate.getTime()) * dir;
+      }
+      
+      if (sortKey === 'reviewedAt') {
+        const aDate = a.reviewedAt ? new Date(a.reviewedAt) : new Date(0);
+        const bDate = b.reviewedAt ? new Date(b.reviewedAt) : new Date(0);
+        return (aDate.getTime() - bDate.getTime()) * dir;
+      }
+      
+      return 0;
+    });
+    return sorted;
+  };
+  
+  const pendingSorted = useMemo(() => sortRequests(pendingRequests), [pendingRequests, sortKey, sortDir]);
+  const reviewedSorted = useMemo(() => sortRequests(reviewedRequests), [reviewedRequests, sortKey, sortDir]);
 
   if (!mounted) {
     return (
@@ -120,11 +191,41 @@ export default function AdminPendingRequestsV2() {
         </p>
       </div>
 
+      {/* Action Message */}
+      {actionMessage && (
+        <div className={`mb-4 p-4 rounded-lg ${
+          actionMessage.type === 'success' 
+            ? 'bg-green-50 border border-green-200 text-green-800' 
+            : 'bg-red-50 border border-red-200 text-red-800'
+        }`}>
+          <div className="flex items-center">
+            <div className="flex-shrink-0">
+              {actionMessage.type === 'success' ? (
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              ) : (
+                <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                </svg>
+              )}
+            </div>
+            <div className="ml-3">
+              <p className="text-sm font-medium">{actionMessage.message}</p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-4 rounded-lg shadow-sm border">
           <div className="text-sm font-medium text-gray-500">Pending Requests</div>
           <div className="text-2xl font-bold text-orange-600">{pendingRequests.length}</div>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow-sm border">
+          <div className="text-sm font-medium text-gray-500">Reviewed Requests</div>
+          <div className="text-2xl font-bold text-green-600">{reviewedRequests.length}</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border">
           <div className="text-sm font-medium text-gray-500">Total Requests</div>
@@ -132,7 +233,35 @@ export default function AdminPendingRequestsV2() {
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border">
           <div className="text-sm font-medium text-gray-500">Selected</div>
-          <div className="text-2xl font-bold text-green-600">{selectedRequests.size}</div>
+          <div className="text-2xl font-bold text-purple-600">{selectedRequests.size}</div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div className="mb-6">
+        <div className="border-b border-gray-200">
+          <nav className="-mb-px flex space-x-8">
+            <button
+              onClick={() => setActiveTab('pending')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'pending'
+                  ? 'border-orange-500 text-orange-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              {t('pending')} ({pendingRequests.length})
+            </button>
+            <button
+              onClick={() => setActiveTab('reviewed')}
+              className={`py-2 px-1 border-b-2 font-medium text-sm ${
+                activeTab === 'reviewed'
+                  ? 'border-green-500 text-green-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              }`}
+            >
+              {t('reviewed')} ({reviewedRequests.length})
+            </button>
+          </nav>
         </div>
       </div>
 
@@ -142,195 +271,201 @@ export default function AdminPendingRequestsV2() {
           <div className="animate-spin mx-auto h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></div>
           <p className="text-gray-600">Loading vacation requests...</p>
         </div>
-      ) : pendingRequests.length === 0 ? (
-        <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
-          <div className="text-gray-400 mb-4">
-            <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
+      ) : activeTab === 'pending' ? (
+        pendingRequests.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
+            <div className="text-gray-400 mb-4">
+              <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Pending Requests</h3>
+            <p className="text-gray-600">All vacation requests have been reviewed.</p>
           </div>
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No Pending Requests</h3>
-          <p className="text-gray-600">All vacation requests have been reviewed.</p>
-        </div>
+        ) : (
+          <RequestsTable 
+            requests={pendingSorted}
+            selectedRequests={selectedRequests}
+            onToggleSelection={toggleRequestSelection}
+            onStatusUpdate={handleStatusUpdate}
+            isProcessing={isProcessing}
+            showActions={true}
+            t={t}
+            tCommon={tCommon}
+            tVacations={tVacations}
+          />
+        )
       ) : (
-        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-          {/* Desktop Table */}
-          <div className="hidden md:block overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    <input
-                      type="checkbox"
-                      checked={selectedRequests.size === pendingRequests.length && pendingRequests.length > 0}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedRequests(new Set(pendingRequests.map(req => req.id)));
-                        } else {
-                          setSelectedRequests(new Set());
-                        }
-                      }}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                    />
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {tVacations('employee')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {tVacations('type')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {tCommon('dates')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    {tCommon('conflict')}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {pendingRequests.map((request) => (
-                  <tr key={request.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <input
-                        type="checkbox"
-                        checked={selectedRequests.has(request.id)}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          toggleRequestSelection(request.id);
-                        }}
-                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                      />
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      <div className="flex items-center gap-3">
-                        <span className="font-medium">{request.userName}</span>
-                        <a
-                          href={absoluteUrl(`/en/admin/vacation-requests/${request.id}`)}
-                          className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md hover:bg-blue-700 hover:text-white transition-colors shadow-sm"
-                          aria-label={`More information about ${request.userName}'s request`}
-                          data-test="more-info-link"
-                        >
-                          More Information
-                        </a>
-                      </div>
-                      <div className="text-sm text-gray-500">{request.company}</div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {request.type}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div>
-                        <div className="font-medium">{request.startDate}</div>
-                        <div className="text-gray-500">to {request.endDate}</div>
-                        <div className="text-xs text-gray-400">{request.durationDays} days</div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      {request.conflicts && request.conflicts.length > 0 ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                          {request.conflicts.length} conflicts
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          No conflicts
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStatusUpdate(request.id, 'approved');
-                          }}
-                          disabled={isProcessing(request.id)}
-                          className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                          data-test="approve-btn"
-                        >
-                          {isProcessing(request.id) ? (
-                            <div className="animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full"></div>
-                          ) : (
-                            tVacations('approve')
-                          )}
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleStatusUpdate(request.id, 'rejected');
-                          }}
-                          disabled={isProcessing(request.id)}
-                          className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                          data-test="reject-btn"
-                        >
-                          {isProcessing(request.id) ? (
-                            <div className="animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full"></div>
-                          ) : (
-                            tVacations('reject')
-                          )}
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        reviewedRequests.length === 0 ? (
+          <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
+            <div className="text-gray-400 mb-4">
+              <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">No Reviewed Requests</h3>
+            <p className="text-gray-600">No vacation requests have been reviewed yet.</p>
           </div>
+        ) : (
+          <ReviewedRequestsTable 
+            requests={reviewedSorted}
+            selectedRequests={selectedRequests}
+            onToggleSelection={toggleRequestSelection}
+            t={t}
+            tCommon={tCommon}
+            tVacations={tVacations}
+          />
+        )
+      )}
 
-          {/* Mobile Cards */}
-          <div className="md:hidden">
-            {pendingRequests.map((request) => (
-              <div key={request.id} className="border-b border-gray-200 p-4 last:border-b-0">
-                <div className="flex items-start justify-between mb-3">
-                  <div className="flex items-start gap-3 flex-1 min-w-0">
-                    <input
-                      type="checkbox"
-                      checked={selectedRequests.has(request.id)}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        toggleRequestSelection(request.id);
-                      }}
-                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="text-lg font-medium text-gray-900 truncate">
-                        {request.userName}
-                      </div>
-                      <p className="text-sm text-gray-500 truncate">
-                        {request.company || "—"} • {request.type || "—"}
-                      </p>
-                      <a
-                        href={absoluteUrl(`/en/admin/vacation-requests/${request.id}`)}
-                        className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md hover:bg-blue-700 hover:text-white transition-colors shadow-sm mt-2"
-                        aria-label={`More information about ${request.userName}'s request`}
-                        data-test="more-info-link"
-                      >
-                        More Information
-                      </a>
-                    </div>
+      {/* Calendar View with Conflict Detection */}
+      <div className="mt-8">
+        <div className="bg-white rounded-lg shadow-sm border p-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold text-gray-900 mb-2">
+              🗓️ Vacation Calendar & Conflict Detection
+            </h2>
+            <p className="text-sm text-gray-600">
+              This calendar shows all vacation requests with company colors and conflict warnings. 
+              Look for dates with multiple people requesting time off.
+            </p>
+          </div>
+          
+          {isLoading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin mx-auto h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></div>
+              <p className="text-gray-600">Loading calendar...</p>
+            </div>
+          ) : (
+            <UnifiedVacationCalendar 
+              vacationRequests={requests.filter(r => r.status?.toLowerCase() === 'approved')}
+              className="w-full"
+              showLegend={true}
+              compact={false}
+              data-testid="admin-calendar"
+            />
+          )}
+        </div>
+      </div>
+
+      {/* Debug Info (only in development) */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="mt-4 p-4 bg-gray-100 rounded-lg text-xs">
+          <div className="font-mono">
+            <div>Mounted: {mounted ? 'Yes' : 'No'}</div>
+            <div>Requests: {requests.length}</div>
+            <div>Pending: {pendingRequests.length}</div>
+            <div>Reviewed: {reviewedRequests.length}</div>
+            <div>Selected: {selectedRequests.size}</div>
+            <div>Active Tab: {activeTab}</div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Pending Requests Table Component
+function RequestsTable({ 
+  requests, 
+  selectedRequests, 
+  onToggleSelection, 
+  onStatusUpdate, 
+  isProcessing, 
+  showActions,
+  t, 
+  tCommon, 
+  tVacations 
+}: {
+  requests: VacationRequestWithConflicts[];
+  selectedRequests: Set<string>;
+  onToggleSelection: (id: string) => void;
+  onStatusUpdate: (id: string, status: "approved" | "rejected") => void;
+  isProcessing: (id: string) => boolean;
+  showActions: boolean;
+  t: any;
+  tCommon: any;
+  tVacations: any;
+}) {
+  return (
+    <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <input
+                  type="checkbox"
+                  checked={selectedRequests.size === requests.length && requests.length > 0}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      requests.forEach(req => onToggleSelection(req.id));
+                    } else {
+                      requests.forEach(req => onToggleSelection(req.id));
+                    }
+                  }}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {tVacations('employee')}
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {tVacations('type')}
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {tCommon('dates')}
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {tCommon('conflict')}
+              </th>
+              {showActions && (
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              )}
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {requests.map((request) => (
+              <tr key={request.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    checked={selectedRequests.has(request.id)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      onToggleSelection(request.id);
+                    }}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <div className="flex items-center gap-3">
+                    <span className="font-medium">{request.userName}</span>
+                    <a
+                      href={absoluteUrl(`/en/admin/vacation-requests/${request.id}`)}
+                      className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md hover:bg-blue-700 hover:text-white transition-colors shadow-sm"
+                      aria-label={`More information about ${request.userName}'s request`}
+                      data-test="more-info-link"
+                    >
+                      More Information
+                    </a>
                   </div>
-                </div>
-                
-                <div className="grid grid-cols-2 gap-4 mb-3">
+                  <div className="text-sm text-gray-500">{request.company}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {request.type}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <div>
-                    <div className="text-sm font-medium text-gray-500">Start Date</div>
-                    <div className="text-sm text-gray-900">{request.startDate}</div>
+                    <div className="font-medium">{request.startDate}</div>
+                    <div className="text-gray-500">to {request.endDate}</div>
+                    <div className="text-xs text-gray-400">{request.durationDays} days</div>
                   </div>
-                  <div>
-                    <div className="text-sm font-medium text-gray-500">End Date</div>
-                    <div className="text-sm text-gray-900">{request.endDate}</div>
-                  </div>
-                </div>
-                
-                <div className="mb-3">
-                  <div className="text-sm font-medium text-gray-500">Duration</div>
-                  <div className="text-sm text-gray-900">{request.durationDays} days</div>
-                </div>
-                
-                <div className="mb-3">
-                  <div className="text-sm font-medium text-gray-500">Conflicts</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
                   {request.conflicts && request.conflicts.length > 0 ? (
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
                       {request.conflicts.length} conflicts
@@ -340,57 +475,343 @@ export default function AdminPendingRequestsV2() {
                       No conflicts
                     </span>
                   )}
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleStatusUpdate(request.id, 'approved');
-                    }}
-                    disabled={isProcessing(request.id)}
-                    className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                    data-test="approve-btn"
+                </td>
+                {showActions && (
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onStatusUpdate(request.id, 'approved');
+                        }}
+                        disabled={isProcessing(request.id)}
+                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        data-test="approve-btn"
+                      >
+                        {isProcessing(request.id) ? (
+                          <div className="animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full"></div>
+                        ) : (
+                          tVacations('approve')
+                        )}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onStatusUpdate(request.id, 'rejected');
+                        }}
+                        disabled={isProcessing(request.id)}
+                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        data-test="reject-btn"
+                      >
+                        {isProcessing(request.id) ? (
+                          <div className="animate-spin h-3 w-3 border-2 border-white border-t-transparent rounded-full"></div>
+                        ) : (
+                          tVacations('reject')
+                        )}
+                      </button>
+                    </div>
+                  </td>
+                )}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="md:hidden">
+        {requests.map((request) => (
+          <div key={request.id} className="border-b border-gray-200 p-4 last:border-b-0">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                <input
+                  type="checkbox"
+                  checked={selectedRequests.has(request.id)}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    onToggleSelection(request.id);
+                  }}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="text-lg font-medium text-gray-900 truncate">
+                    {request.userName}
+                  </div>
+                  <p className="text-sm text-gray-500 truncate">
+                    {request.company || "—"} • {request.type || "—"}
+                  </p>
+                  <a
+                    href={absoluteUrl(`/en/admin/vacation-requests/${request.id}`)}
+                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md hover:bg-blue-700 hover:text-white transition-colors shadow-sm mt-2"
+                    aria-label={`More information about ${request.userName}'s request`}
+                    data-test="more-info-link"
                   >
-                    {isProcessing(request.id) ? (
-                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                    ) : (
-                      tVacations('approve')
-                    )}
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleStatusUpdate(request.id, 'rejected');
-                    }}
-                    disabled={isProcessing(request.id)}
-                    className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                    data-test="reject-btn"
-                  >
-                    {isProcessing(request.id) ? (
-                      <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
-                    ) : (
-                      tVacations('reject')
-                    )}
-                  </button>
+                    More Information
+                  </a>
                 </div>
               </div>
-            ))}
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mb-3">
+              <div>
+                <div className="text-sm font-medium text-gray-500">Start Date</div>
+                <div className="text-sm text-gray-900">{request.startDate}</div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-500">End Date</div>
+                <div className="text-sm text-gray-900">{request.endDate}</div>
+              </div>
+            </div>
+            
+            <div className="mb-3">
+              <div className="text-sm font-medium text-gray-500">Duration</div>
+              <div className="text-sm text-gray-900">{request.durationDays} days</div>
+            </div>
+            
+            <div className="mb-3">
+              <div className="text-sm font-medium text-gray-500">Conflicts</div>
+              {request.conflicts && request.conflicts.length > 0 ? (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                  {request.conflicts.length} conflicts
+                </span>
+              ) : (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  No conflicts
+                </span>
+              )}
+            </div>
+            
+            {showActions && (
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusUpdate(request.id, 'approved');
+                  }}
+                  disabled={isProcessing(request.id)}
+                  className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  data-test="approve-btn"
+                >
+                  {isProcessing(request.id) ? (
+                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                  ) : (
+                    tVacations('approve')
+                  )}
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onStatusUpdate(request.id, 'rejected');
+                  }}
+                  disabled={isProcessing(request.id)}
+                  className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  data-test="reject-btn"
+                >
+                  {isProcessing(request.id) ? (
+                    <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full"></div>
+                  ) : (
+                    tVacations('reject')
+                  )}
+                </button>
+              </div>
+            )}
           </div>
-        </div>
-      )}
+        ))}
+      </div>
+    </div>
+  );
+}
 
-      {/* Debug Info (only in development) */}
-      {process.env.NODE_ENV === 'development' && (
-        <div className="mt-4 p-4 bg-gray-100 rounded-lg text-xs">
-          <div className="font-mono">
-            <div>Mounted: {mounted ? 'Yes' : 'No'}</div>
-            <div>Requests: {requests.length}</div>
-            <div>Pending: {pendingRequests.length}</div>
-            <div>Selected: {selectedRequests.size}</div>
+// Reviewed Requests Table Component
+function ReviewedRequestsTable({ 
+  requests, 
+  selectedRequests, 
+  onToggleSelection, 
+  t, 
+  tCommon, 
+  tVacations 
+}: {
+  requests: VacationRequestWithConflicts[];
+  selectedRequests: Set<string>;
+  onToggleSelection: (id: string) => void;
+  t: any;
+  tCommon: any;
+  tVacations: any;
+}) {
+  return (
+    <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+      {/* Desktop Table */}
+      <div className="hidden md:block overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <input
+                  type="checkbox"
+                  checked={selectedRequests.size === requests.length && requests.length > 0}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      requests.forEach(req => onToggleSelection(req.id));
+                    } else {
+                      requests.forEach(req => onToggleSelection(req.id));
+                    }
+                  }}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {tVacations('employee')}
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {tVacations('type')}
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {tCommon('dates')}
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Status
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                {t('reviewedAt')}
+              </th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {requests.map((request) => (
+              <tr key={request.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <input
+                    type="checkbox"
+                    checked={selectedRequests.has(request.id)}
+                    onChange={(e) => {
+                      e.stopPropagation();
+                      onToggleSelection(request.id);
+                    }}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  <div className="flex items-center gap-3">
+                    <span className="font-medium">{request.userName}</span>
+                    <a
+                      href={absoluteUrl(`/en/admin/vacation-requests/${request.id}`)}
+                      className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md hover:bg-blue-700 hover:text-white transition-colors shadow-sm"
+                      aria-label={`More information about ${request.userName}'s request`}
+                      data-test="more-info-link"
+                    >
+                      More Information
+                    </a>
+                  </div>
+                  <div className="text-sm text-gray-500">{request.company}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {request.type}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <div>
+                    <div className="font-medium">{request.startDate}</div>
+                    <div className="text-gray-500">to {request.endDate}</div>
+                    <div className="text-xs text-gray-400">{request.durationDays} days</div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm">
+                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                    request.status === 'APPROVED' 
+                      ? 'bg-green-100 text-green-800'
+                      : 'bg-red-100 text-red-800'
+                  }`}>
+                    {request.status}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <div>
+                    <div className="font-medium">
+                      {request.reviewedAt ? new Date(request.reviewedAt).toLocaleDateString() : '—'}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      by {request.reviewedBy?.name || 'Admin'}
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="md:hidden">
+        {requests.map((request) => (
+          <div key={request.id} className="border-b border-gray-200 p-4 last:border-b-0">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-start gap-3 flex-1 min-w-0">
+                <input
+                  type="checkbox"
+                  checked={selectedRequests.has(request.id)}
+                  onChange={(e) => {
+                    e.stopPropagation();
+                    onToggleSelection(request.id);
+                  }}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="text-lg font-medium text-gray-900 truncate">
+                    {request.userName}
+                  </div>
+                  <p className="text-sm text-gray-500 truncate">
+                    {request.company || "—"} • {request.type || "—"}
+                  </p>
+                  <a
+                    href={absoluteUrl(`/en/admin/vacation-requests/${request.id}`)}
+                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md hover:bg-blue-700 hover:text-white transition-colors shadow-sm mt-2"
+                    aria-label={`More information about ${request.userName}'s request`}
+                    data-test="more-info-link"
+                  >
+                    More Information
+                  </a>
+                </div>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4 mb-3">
+              <div>
+                <div className="text-sm font-medium text-gray-500">Start Date</div>
+                <div className="text-sm text-gray-900">{request.startDate}</div>
+              </div>
+              <div>
+                <div className="text-sm font-medium text-gray-500">End Date</div>
+                <div className="text-sm text-gray-900">{request.endDate}</div>
+              </div>
+            </div>
+            
+            <div className="mb-3">
+              <div className="text-sm font-medium text-gray-500">Duration</div>
+              <div className="text-sm text-gray-900">{request.durationDays} days</div>
+            </div>
+            
+            <div className="mb-3">
+              <div className="text-sm font-medium text-gray-500">Status</div>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                request.status === 'APPROVED' 
+                  ? 'bg-green-100 text-green-800'
+                  : 'bg-red-100 text-red-800'
+              }`}>
+                {request.status}
+              </span>
+            </div>
+            
+            <div className="mb-3">
+              <div className="text-sm font-medium text-gray-500">Reviewed</div>
+              <div className="text-sm text-gray-900">
+                {request.reviewedAt ? new Date(request.reviewedAt).toLocaleDateString() : '—'}
+              </div>
+              <div className="text-xs text-gray-500">
+                by {request.reviewedBy?.name || 'Admin'}
+              </div>
+            </div>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }

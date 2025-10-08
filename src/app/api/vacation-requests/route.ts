@@ -82,6 +82,14 @@ export async function GET() {
           ...doc.data()
         })) as VacationRequest[];
         console.log(`📊 Loaded ${requests.length} vacation requests from Firebase`);
+        
+        // Update mock storage with Firebase data so status updates can work
+        tempVacationRequests.clear();
+        requests.forEach(request => {
+          tempVacationRequests.set(request.id, request);
+        });
+        console.log(`📊 Updated mock storage with ${requests.length} Firebase requests`);
+        
         return NextResponse.json(requests);
       } catch (firebaseError) {
         console.log('⚠️ Firebase error, falling back to mock data:', firebaseError instanceof Error ? firebaseError.message : String(firebaseError));

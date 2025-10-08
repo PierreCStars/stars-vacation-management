@@ -1,9 +1,16 @@
 "use client";
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 export default function AdminPendingRequestsV2() {
+  const [mounted, setMounted] = useState(false);
+  const [randomId, setRandomId] = useState('');
+  const [currentTime, setCurrentTime] = useState('');
+
   useEffect(() => { 
-    console.log("[HYDRATION] AdminPendingV2 mounted - FORCE DEPLOYMENT TEST"); 
+    console.log("[HYDRATION] AdminPendingV2 mounted - FORCE DEPLOYMENT TEST");
+    setMounted(true);
+    setRandomId(Math.random().toString(36).substr(2, 9));
+    setCurrentTime(new Date().toISOString());
   }, []);
   
   return (
@@ -15,9 +22,13 @@ export default function AdminPendingRequestsV2() {
       <p className="text-gray-600 mt-2">
         This is the new layout component. If you can see this, the wiring is working!
         <br />
-        <strong>Current time: {new Date().toISOString()}</strong>
-        <br />
-        <strong>FORCE DEPLOYMENT: {Math.random().toString(36).substr(2, 9)}</strong>
+        {mounted && (
+          <>
+            <strong>Current time: {currentTime}</strong>
+            <br />
+            <strong>FORCE DEPLOYMENT: {randomId}</strong>
+          </>
+        )}
       </p>
     </div>
   );

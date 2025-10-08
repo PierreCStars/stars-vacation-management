@@ -21,17 +21,19 @@ export async function POST() {
       }, { status: 500 });
     }
 
-    // Get all pending vacation requests
-    console.log('🔍 Fetching pending vacation requests...');
+    // Get all vacation requests and filter for pending ones
+    console.log('🔍 Fetching all vacation requests...');
     const snapshot = await db
       .collection('vacationRequests')
-      .where('status', '==', 'pending')
       .get();
 
-    const pendingRequests = snapshot.docs.map(doc => ({
+    const allRequests = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     })) as any[];
+
+    // Filter for pending requests
+    const pendingRequests = allRequests.filter(request => request.status === 'pending');
 
     console.log(`📋 Found ${pendingRequests.length} pending vacation requests`);
 

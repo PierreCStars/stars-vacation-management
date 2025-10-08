@@ -41,7 +41,7 @@ export default function AdminPendingRequestsV2() {
         const data = await response.json();
         setRequests(data);
         console.log('[V2] Fetched', data.length, 'vacation requests');
-        console.log('[V2] Request statuses:', data.map(r => ({ id: r.id, status: r.status, userName: r.userName })));
+        console.log('[V2] Request statuses:', (data as VacationRequest[]).map((r: VacationRequest) => ({ id: r.id, status: r.status, userName: r.userName })));
       } else {
         console.error('[V2] Failed to fetch vacation requests:', response.status);
       }

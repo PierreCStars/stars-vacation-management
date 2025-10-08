@@ -74,6 +74,7 @@ export async function GET() {
     const { db, error } = getFirebaseAdmin();
     if (error || !db) {
       console.log('⚠️ Firebase Admin not available, falling back to mock data:', error);
+      console.log('⚠️ Firebase error details:', JSON.stringify(error, null, 2));
     } else {
       try {
         console.log('🔥 Firebase Admin connected, querying vacationRequests collection...');
@@ -89,7 +90,8 @@ export async function GET() {
         if (requests.length === 0) {
           console.log('📝 Firebase is empty, populating with test data...');
           
-          const testData = [
+          try {
+            const testData = [
             {
               userId: 'user-1',
               userEmail: 'pierre@stars.mc',
@@ -154,6 +156,10 @@ export async function GET() {
             ...doc.data()
           })) as VacationRequest[];
           console.log(`📊 After population: ${requests.length} vacation requests in Firebase`);
+          } catch (populateError) {
+            console.error('❌ Error populating Firebase:', populateError);
+            console.error('❌ Populate error details:', JSON.stringify(populateError, null, 2));
+          }
         }
         
         // Update mock storage with Firebase data only if it's empty (first load)
@@ -173,6 +179,7 @@ export async function GET() {
         return NextResponse.json(mockRequests);
       } catch (firebaseError) {
         console.log('⚠️ Firebase error, falling back to mock data:', firebaseError instanceof Error ? firebaseError.message : String(firebaseError));
+        console.log('⚠️ Firebase error details:', JSON.stringify(firebaseError, null, 2));
       }
     }
     

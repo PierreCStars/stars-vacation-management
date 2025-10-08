@@ -54,7 +54,9 @@ const en = {
     "show": "Show",
     "hide": "Hide",
     "ascending": "Ascending",
-    "descending": "Descending"
+    "descending": "Descending",
+    "dates": "Dates",
+    "conflict": "Conflict"
   },
   "nav": {
     "dashboard": "Dashboard",
@@ -207,7 +209,9 @@ const fr = {
     "show": "Afficher",
     "hide": "Masquer",
     "ascending": "Croissant",
-    "descending": "Décroissant"
+    "descending": "Décroissant",
+    "dates": "Dates",
+    "conflict": "Conflit"
   },
   "nav": {
     "dashboard": "Tableau de bord",
@@ -360,7 +364,9 @@ const it = {
     "show": "Mostra",
     "hide": "Nascondi",
     "ascending": "Crescente",
-    "descending": "Decrescente"
+    "descending": "Decrescente",
+    "dates": "Date",
+    "conflict": "Conflitto"
   },
   "nav": {
     "dashboard": "Dashboard",

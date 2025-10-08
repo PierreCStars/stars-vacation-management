@@ -14,8 +14,7 @@ export default function AdminPendingRequestsV2() {
   const [isLoading, setIsLoading] = useState(true);
   const [processingRequests, setProcessingRequests] = useState<Set<string>>(new Set());
   const [selectedRequests, setSelectedRequests] = useState<Set<string>>(new Set());
-  const [activeTab, setActiveTab] = useState<'pending' | 'reviewed'>('pending');
-  const [showReviewed, setShowReviewed] = useState(true);
+  const [showReviewed, setShowReviewed] = useState(false);
   const [sortKey, setSortKey] = useState<'userName' | 'company' | 'startDate' | 'reviewedAt'>('startDate');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [actionMessage, setActionMessage] = useState<{type: 'success' | 'error', message: string} | null>(null);
@@ -219,14 +218,10 @@ export default function AdminPendingRequestsV2() {
       )}
 
       {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-white p-4 rounded-lg shadow-sm border">
           <div className="text-sm font-medium text-gray-500">Pending Requests</div>
           <div className="text-2xl font-bold text-orange-600">{pendingRequests.length}</div>
-        </div>
-        <div className="bg-white p-4 rounded-lg shadow-sm border">
-          <div className="text-sm font-medium text-gray-500">Reviewed Requests</div>
-          <div className="text-2xl font-bold text-green-600">{reviewedRequests.length}</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border">
           <div className="text-sm font-medium text-gray-500">Total Requests</div>
@@ -238,140 +233,157 @@ export default function AdminPendingRequestsV2() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="mb-6">
-        <div className="border-b border-gray-200">
-          <nav className="-mb-px flex space-x-8">
-            <button
-              onClick={() => setActiveTab('pending')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'pending'
-                  ? 'border-orange-500 text-orange-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              {t('pending')} ({pendingRequests.length})
-            </button>
-            <button
-              onClick={() => setActiveTab('reviewed')}
-              className={`py-2 px-1 border-b-2 font-medium text-sm ${
-                activeTab === 'reviewed'
-                  ? 'border-green-500 text-green-600'
-                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-              }`}
-            >
-              {t('reviewed')} ({reviewedRequests.length})
-            </button>
-          </nav>
-        </div>
-      </div>
+              {/* Pending Requests Header */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-lg font-semibold text-gray-900">
+                    📝 Pending Requests ({pendingRequests.length})
+                  </h2>
+                  {pendingRequests.length > 0 && (
+                    <span className="text-sm text-gray-500">
+                      Review and approve or deny vacation requests
+                    </span>
+                  )}
+                </div>
+              </div>
 
-      {/* Requests Table */}
+      {/* Pending Requests Table */}
       {isLoading ? (
         <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
           <div className="animate-spin mx-auto h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></div>
           <p className="text-gray-600">Loading vacation requests...</p>
         </div>
-      ) : activeTab === 'pending' ? (
-        pendingRequests.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
-            <div className="text-gray-400 mb-4">
-              <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Pending Requests</h3>
-            <p className="text-gray-600">All vacation requests have been reviewed.</p>
+      ) : pendingRequests.length === 0 ? (
+        <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
+          <div className="text-gray-400 mb-4">
+            <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
           </div>
-        ) : (
-          <RequestsTable 
-            requests={pendingSorted}
-            selectedRequests={selectedRequests}
-            onToggleSelection={toggleRequestSelection}
-            onStatusUpdate={handleStatusUpdate}
-            isProcessing={isProcessing}
-            showActions={true}
-            t={t}
-            tCommon={tCommon}
-            tVacations={tVacations}
-          />
-        )
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No Pending Requests</h3>
+          <p className="text-gray-600">All vacation requests have been reviewed.</p>
+        </div>
       ) : (
-        reviewedRequests.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
-            <div className="text-gray-400 mb-4">
-              <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No Reviewed Requests</h3>
-            <p className="text-gray-600">No vacation requests have been reviewed yet.</p>
-          </div>
-        ) : (
-          <ReviewedRequestsTable 
-            requests={reviewedSorted}
-            selectedRequests={selectedRequests}
-            onToggleSelection={toggleRequestSelection}
-            t={t}
-            tCommon={tCommon}
-            tVacations={tVacations}
-          />
-        )
+        <RequestsTable 
+          requests={pendingSorted}
+          selectedRequests={selectedRequests}
+          onToggleSelection={toggleRequestSelection}
+          onStatusUpdate={handleStatusUpdate}
+          isProcessing={isProcessing}
+          showActions={true}
+          t={t}
+          tCommon={tCommon}
+          tVacations={tVacations}
+        />
       )}
 
-      {/* Calendar View with Conflict Detection */}
-      <div className="mt-8">
-        <div className="bg-white rounded-lg shadow-sm border p-6">
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold text-gray-900 mb-2">
-              🗓️ Vacation Calendar & Conflict Detection
-            </h2>
-            <p className="text-sm text-gray-600">
-              This calendar shows all vacation requests with company colors and conflict warnings. 
-              Look for dates with multiple people requesting time off.
-            </p>
-          </div>
-          
-          {isLoading ? (
-            <div className="text-center py-8">
-              <div className="animate-spin mx-auto h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></div>
-              <p className="text-gray-600">Loading calendar...</p>
-            </div>
-          ) : (
-            <UnifiedVacationCalendar 
-              vacationRequests={requests
-                .filter(r => normalizeVacationStatus(r.status) === 'approved')
-                .map((r): VacationRequest => ({
-                  id: r.id,
-                  userId: r.userId,
-                  userEmail: r.userEmail,
-                  userName: r.userName,
-                  startDate: r.startDate,
-                  endDate: r.endDate,
-                  reason: r.reason,
-                  company: r.company || 'Unknown',
-                  type: r.type || 'VACATION',
-                  status: normalizeVacationStatus(r.status),
-                  createdAt: r.createdAt || new Date().toISOString(),
-                  reviewedBy: r.reviewedBy?.name,
-                  reviewerEmail: r.reviewedBy?.email,
-                  reviewedAt: r.reviewedAt || undefined, // Convert null to undefined
-                  adminComment: undefined,
-                  included: true,
-                  openDays: undefined,
-                  isHalfDay: r.isHalfDay,
-                  halfDayType: (r.halfDayType as 'morning' | 'afternoon' | null) || null,
-                  durationDays: r.durationDays,
-                  googleEventId: undefined
-                }))}
-              className="w-full"
-              showLegend={true}
-              compact={false}
-              data-testid="admin-calendar"
-            />
-          )}
-        </div>
-      </div>
+              {/* Calendar View with Conflict Detection */}
+              <div className="mt-8">
+                <div className="bg-white rounded-lg shadow-sm border p-6">
+                  <div className="mb-4">
+                    <h2 className="text-lg font-semibold text-gray-900 mb-2">
+                      🗓️ Vacation Calendar & Conflict Detection
+                    </h2>
+                    <p className="text-sm text-gray-600">
+                      This calendar shows all vacation requests with company colors and conflict warnings. 
+                      Look for dates with multiple people requesting time off.
+                    </p>
+                  </div>
+                  
+                  {isLoading ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin mx-auto h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></div>
+                      <p className="text-gray-600">Loading calendar...</p>
+                    </div>
+                  ) : (
+                    <UnifiedVacationCalendar 
+                      vacationRequests={requests
+                        .filter(r => normalizeVacationStatus(r.status) === 'approved')
+                        .map((r): VacationRequest => ({
+                          id: r.id,
+                          userId: r.userId,
+                          userEmail: r.userEmail,
+                          userName: r.userName,
+                          startDate: r.startDate,
+                          endDate: r.endDate,
+                          reason: r.reason,
+                          company: r.company || 'Unknown',
+                          type: r.type || 'VACATION',
+                          status: normalizeVacationStatus(r.status),
+                          createdAt: r.createdAt || new Date().toISOString(),
+                          reviewedBy: r.reviewedBy?.name,
+                          reviewerEmail: r.reviewedBy?.email,
+                          reviewedAt: r.reviewedAt || undefined, // Convert null to undefined
+                          adminComment: undefined,
+                          included: true,
+                          openDays: undefined,
+                          isHalfDay: r.isHalfDay,
+                          halfDayType: (r.halfDayType as 'morning' | 'afternoon' | null) || null,
+                          durationDays: r.durationDays,
+                          googleEventId: undefined
+                        }))}
+                      className="w-full"
+                      showLegend={true}
+                      compact={false}
+                      data-testid="admin-calendar"
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Reviewed Requests - Foldable Section */}
+              {reviewedRequests.length > 0 && (
+                <div className="mt-8">
+                  <div className="bg-white rounded-lg shadow-sm border">
+                    <button
+                      onClick={() => setShowReviewed(!showReviewed)}
+                      className="w-full px-6 py-4 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        <h2 className="text-lg font-semibold text-gray-900">
+                          📋 Reviewed Requests
+                        </h2>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          {reviewedRequests.length}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm text-gray-500">
+                          {showReviewed ? 'Hide' : 'Show'} reviewed requests
+                        </span>
+                        <svg
+                          className={`w-5 h-5 text-gray-400 transition-transform ${
+                            showReviewed ? 'rotate-180' : ''
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </div>
+                    </button>
+                    
+                    {showReviewed && (
+                      <div className="border-t border-gray-200">
+                        <ReviewedRequestsTable 
+                          requests={reviewedSorted}
+                          selectedRequests={selectedRequests}
+                          onToggleSelection={toggleRequestSelection}
+                          t={t}
+                          tCommon={tCommon}
+                          tVacations={tVacations}
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
       {/* Debug Info (only in development) */}
       {process.env.NODE_ENV === 'development' && (
@@ -382,7 +394,7 @@ export default function AdminPendingRequestsV2() {
             <div>Pending: {pendingRequests.length}</div>
             <div>Reviewed: {reviewedRequests.length}</div>
             <div>Selected: {selectedRequests.size}</div>
-            <div>Active Tab: {activeTab}</div>
+            <div>Show Reviewed: {showReviewed ? 'Yes' : 'No'}</div>
           </div>
         </div>
       )}

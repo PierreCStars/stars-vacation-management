@@ -83,14 +83,21 @@ export async function GET() {
         })) as VacationRequest[];
         console.log(`📊 Loaded ${requests.length} vacation requests from Firebase`);
         
-        // Update mock storage with Firebase data so status updates can work
-        tempVacationRequests.clear();
-        requests.forEach(request => {
-          tempVacationRequests.set(request.id, request);
-        });
-        console.log(`📊 Updated mock storage with ${requests.length} Firebase requests`);
+        // Update mock storage with Firebase data only if it's empty (first load)
+        // This preserves any status updates made to mock storage
+        if (tempVacationRequests.size === 0) {
+          requests.forEach(request => {
+            tempVacationRequests.set(request.id, request);
+          });
+          console.log(`📊 Initialized mock storage with ${requests.length} Firebase requests`);
+        } else {
+          console.log(`📊 Mock storage already has ${tempVacationRequests.size} requests, preserving status updates`);
+        }
         
-        return NextResponse.json(requests);
+        // Return mock storage data (which has any status updates) instead of raw Firebase data
+        const mockRequests = Array.from(tempVacationRequests.values());
+        console.log(`📊 Returning ${mockRequests.length} requests from mock storage (with status updates)`);
+        return NextResponse.json(mockRequests);
       } catch (firebaseError) {
         console.log('⚠️ Firebase error, falling back to mock data:', firebaseError instanceof Error ? firebaseError.message : String(firebaseError));
       }

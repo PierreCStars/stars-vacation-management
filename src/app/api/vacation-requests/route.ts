@@ -76,12 +76,14 @@ export async function GET() {
       console.log('⚠️ Firebase Admin not available, falling back to mock data:', error);
     } else {
       try {
+        console.log('🔥 Firebase Admin connected, querying vacationRequests collection...');
         const snapshot = await db.collection('vacationRequests').get();
         const requests = snapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         })) as VacationRequest[];
         console.log(`📊 Loaded ${requests.length} vacation requests from Firebase`);
+        console.log('📊 Firebase requests:', requests.map(r => ({ id: r.id, userName: r.userName, status: r.status })));
         
         // Update mock storage with Firebase data only if it's empty (first load)
         // This preserves any status updates made to mock storage

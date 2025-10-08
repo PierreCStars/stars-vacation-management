@@ -32,7 +32,16 @@ export function getFirebaseAdmin(): {
   const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
   const privateKey = normalizePrivateKey(process.env.FIREBASE_ADMIN_PRIVATE_KEY);
 
+  console.log('[FIREBASE] Admin init projectId=', projectId);
+  console.log('[FIREBASE] Admin init clientEmail=', clientEmail);
+  console.log('[FIREBASE] Admin init privateKey length=', privateKey?.length || 0);
+
   if (!projectId || !clientEmail || !privateKey) {
+    console.error('[FIREBASE] Missing required environment variables:', {
+      projectId: !!projectId,
+      clientEmail: !!clientEmail,
+      privateKey: !!privateKey
+    });
     return { app: null, db: null, error: 'Missing Firebase Admin envs' };
   }
 
@@ -45,6 +54,7 @@ export function getFirebaseAdmin(): {
 
     const db = getFirestore(app);
     console.log('✅ Firebase Admin initialized successfully');
+    console.log('[FIREBASE] Admin connected to project:', projectId);
     return { app, db, error: null };
   } catch (error) {
     console.error('❌ Firebase Admin initialization failed:', error);

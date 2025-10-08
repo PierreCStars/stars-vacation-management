@@ -13,184 +13,39 @@ import { getFirebaseAdmin } from '@/lib/firebase/admin';
 import { VacationRequest } from '@/types/vacation';
 import { submitVacation } from '@/lib/vacation-orchestration';
 
-// Temporary in-memory storage for testing
-export const tempVacationRequests = new Map();
-
-// Initialize with mock data if not already present
-if (tempVacationRequests.size === 0) {
-  const mockData = [
-    {
-      id: 'mock-1',
-      userId: 'user-1',
-      userEmail: 'pierre@stars.mc',
-      userName: 'Pierre Corbucci',
-      company: 'STARS_MC',
-      type: 'VACATION',
-      startDate: '2025-01-15',
-      endDate: '2025-01-17',
-      status: 'pending',
-      reason: 'Family vacation',
-      createdAt: new Date().toISOString(),
-      durationDays: 3
-    },
-    {
-      id: 'mock-2',
-      userId: 'user-2',
-      userEmail: 'daniel@stars.mc',
-      userName: 'Daniel Smith',
-      company: 'STARS_MC',
-      type: 'VACATION',
-      startDate: '2025-01-20',
-      endDate: '2025-01-22',
-      status: 'pending',
-      reason: 'Personal time off',
-      createdAt: new Date().toISOString(),
-      durationDays: 3
-    },
-    {
-      id: 'mock-3',
-      userId: 'user-3',
-      userEmail: 'johnny@stars.mc',
-      userName: 'Johnny Doe',
-      company: 'STARS_MC',
-      type: 'SICK_LEAVE',
-      startDate: '2025-01-25',
-      endDate: '2025-01-25',
-      status: 'pending',
-      reason: 'Medical appointment',
-      createdAt: new Date().toISOString(),
-      durationDays: 1
-    }
-  ];
-  
-  mockData.forEach(request => {
-    tempVacationRequests.set(request.id, request);
-  });
-}
+// No mock data - Firebase only
 
 export async function GET() {
   try {
-    // Try to load from Firebase first
+    console.log('[REQS] Source=FIRESTORE, projectId=', process.env.FIREBASE_PROJECT_ID);
+    
+    // Firebase is required - no fallbacks
     const { db, error } = getFirebaseAdmin();
     if (error || !db) {
-      console.log('⚠️ Firebase Admin not available, falling back to mock data:', error);
-      console.log('⚠️ Firebase error details:', JSON.stringify(error, null, 2));
-    } else {
-      try {
-        console.log('🔥 Firebase Admin connected, querying vacationRequests collection...');
-        const snapshot = await db.collection('vacationRequests').get();
-        let requests = snapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as VacationRequest[];
-        console.log(`📊 Loaded ${requests.length} vacation requests from Firebase`);
-        console.log('📊 Firebase requests:', requests.map(r => ({ id: r.id, userName: r.userName, status: r.status })));
-        
-        // If Firebase is empty, populate it with test data
-        if (requests.length === 0) {
-          console.log('📝 Firebase is empty, populating with test data...');
-          
-          try {
-            const testData = [
-            {
-              userId: 'user-1',
-              userEmail: 'pierre@stars.mc',
-              userName: 'Pierre Corbucci',
-              company: 'STARS_MC',
-              type: 'VACATION',
-              startDate: '2025-01-15',
-              endDate: '2025-01-17',
-              status: 'pending',
-              reason: 'Family vacation',
-              createdAt: new Date().toISOString(),
-              durationDays: 3
-            },
-            {
-              userId: 'user-2',
-              userEmail: 'daniel@stars.mc',
-              userName: 'Daniel Smith',
-              company: 'STARS_MC',
-              type: 'VACATION',
-              startDate: '2025-01-20',
-              endDate: '2025-01-22',
-              status: 'approved',
-              reason: 'Personal time off',
-              createdAt: new Date().toISOString(),
-              durationDays: 3,
-              reviewedAt: new Date().toISOString(),
-              reviewedBy: {
-                name: 'Admin',
-                email: 'admin@stars.mc'
-              }
-            },
-            {
-              userId: 'user-3',
-              userEmail: 'johnny@stars.mc',
-              userName: 'Johnny Doe',
-              company: 'STARS_MC',
-              type: 'SICK_LEAVE',
-              startDate: '2025-01-25',
-              endDate: '2025-01-25',
-              status: 'denied',
-              reason: 'Medical appointment',
-              createdAt: new Date().toISOString(),
-              durationDays: 1,
-              reviewedAt: new Date().toISOString(),
-              reviewedBy: {
-                name: 'Admin',
-                email: 'admin@stars.mc'
-              }
-            }
-          ];
-          
-          // Add test data to Firebase
-          for (const data of testData) {
-            const docRef = await db.collection('vacationRequests').add(data);
-            console.log(`✅ Added test request: ${data.userName} (${data.status}) - ${docRef.id}`);
-          }
-          
-          // Re-fetch the data after populating
-          const newSnapshot = await db.collection('vacationRequests').get();
-          requests = newSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })) as VacationRequest[];
-          console.log(`📊 After population: ${requests.length} vacation requests in Firebase`);
-          } catch (populateError) {
-            console.error('❌ Error populating Firebase:', populateError);
-            console.error('❌ Populate error details:', JSON.stringify(populateError, null, 2));
-          }
-        }
-        
-        // Update mock storage with Firebase data only if it's empty (first load)
-        // This preserves any status updates made to mock storage
-        if (tempVacationRequests.size === 0) {
-          requests.forEach(request => {
-            tempVacationRequests.set(request.id, request);
-          });
-          console.log(`📊 Initialized mock storage with ${requests.length} Firebase requests`);
-        } else {
-          console.log(`📊 Mock storage already has ${tempVacationRequests.size} requests, preserving status updates`);
-        }
-        
-        // Return mock storage data (which has any status updates) instead of raw Firebase data
-        const mockRequests = Array.from(tempVacationRequests.values());
-        console.log(`📊 Returning ${mockRequests.length} requests from mock storage (with status updates)`);
-        return NextResponse.json(mockRequests);
-      } catch (firebaseError) {
-        console.log('⚠️ Firebase error, falling back to mock data:', firebaseError instanceof Error ? firebaseError.message : String(firebaseError));
-        console.log('⚠️ Firebase error details:', JSON.stringify(firebaseError, null, 2));
-      }
+      console.error('❌ Firebase Admin not available:', error);
+      return NextResponse.json({ 
+        error: 'Firebase not available', 
+        details: error 
+      }, { status: 500 });
     }
+
+    console.log('🔥 Firebase Admin connected, querying vacationRequests collection...');
+    const snapshot = await db.collection('vacationRequests').get();
+    const requests = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    })) as VacationRequest[];
     
-    // Fallback to persistent mock data if Firebase is not available
-    const requests = Array.from(tempVacationRequests.values());
-    console.log(`📊 Returning ${requests.length} vacation requests from persistent storage`);
-    console.log(`📊 Request statuses in storage:`, requests.map(r => ({ id: r.id, status: r.status, userName: r.userName })));
+    console.log(`📊 Loaded ${requests.length} vacation requests from Firebase`);
+    console.log('📊 Firebase requests:', requests.map(r => ({ id: r.id, userName: r.userName, status: r.status })));
+    
     return NextResponse.json(requests);
   } catch (error) {
     console.error('❌ Error fetching vacation requests:', error);
-    return NextResponse.json([], { status: 500 });
+    return NextResponse.json({ 
+      error: 'Failed to fetch vacation requests',
+      details: error instanceof Error ? error.message : String(error)
+    }, { status: 500 });
   }
 }
 
@@ -249,44 +104,23 @@ export async function POST(request: Request) {
       durationDays: durationDays
     };
 
-    let requestId: string | undefined;
-    
-    // Try to save to Firebase first
+    // Firebase is required - no fallbacks
     const { db, error } = getFirebaseAdmin();
     if (error || !db) {
-      console.log('⚠️ Firebase Admin not available, using temporary storage:', error);
-    } else {
-      try {
-        const docRef = await db.collection('vacationRequests').add({
-          ...vacationRequest,
-          createdAt: new Date(),
-          updatedAt: new Date()
-        });
-        requestId = docRef.id;
-        console.log(`✅ Vacation request saved to Firebase with ID: ${requestId}`);
-      } catch (firebaseError) {
-        console.log('⚠️ Firebase error, using temporary storage:', firebaseError instanceof Error ? firebaseError.message : String(firebaseError));
-        // Fallback to temporary storage
-        requestId = `temp-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-        tempVacationRequests.set(requestId, {
-          ...vacationRequest,
-          id: requestId,
-          status: 'pending',
-          createdAt: new Date().toISOString()
-        });
-      }
+      console.error('❌ Firebase Admin not available:', error);
+      return NextResponse.json({ 
+        error: 'Firebase not available', 
+        details: error 
+      }, { status: 500 });
     }
-    
-    if (!requestId) {
-      // Fallback to temporary storage if Firebase failed
-      requestId = `temp-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-      tempVacationRequests.set(requestId, {
-        ...vacationRequest,
-        id: requestId,
-        status: 'pending',
-        createdAt: new Date().toISOString()
-      });
-    }
+
+    const docRef = await db.collection('vacationRequests').add({
+      ...vacationRequest,
+      createdAt: new Date(),
+      updatedAt: new Date()
+    });
+    const requestId = docRef.id;
+    console.log(`✅ Vacation request saved to Firebase with ID: ${requestId}`);
 
     console.log('🔧 Adding vacation request with ½-day support...', {
       isHalfDay: vacationRequest.isHalfDay,

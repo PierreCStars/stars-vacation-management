@@ -74,20 +74,26 @@ export default function AdminPendingRequestsV2() {
       console.log('[V2] API response status:', response.status);
 
       if (response.ok) {
+        console.log(`[V2] API response OK, updating local state for request ${id} to status ${status}`);
+        
         // Update the request status locally
-        setRequests(prev => prev.map(req => 
-          req.id === id 
-            ? { 
-                ...req, 
-                status: status, // Keep lowercase to match API
-                reviewedAt: new Date().toISOString(),
-                reviewedBy: {
-                  name: session?.user?.name || 'Admin',
-                  email: session?.user?.email || 'admin@stars.mc'
+        setRequests(prev => {
+          const updated = prev.map(req => 
+            req.id === id 
+              ? { 
+                  ...req, 
+                  status: status, // Keep lowercase to match API
+                  reviewedAt: new Date().toISOString(),
+                  reviewedBy: {
+                    name: session?.user?.name || 'Admin',
+                    email: session?.user?.email || 'admin@stars.mc'
+                  }
                 }
-              }
-            : req
-        ));
+              : req
+          );
+          console.log(`[V2] Local state updated:`, updated.map(r => ({ id: r.id, status: r.status, userName: r.userName })));
+          return updated;
+        });
         
         // Show success message
         setActionMessage({
@@ -192,6 +198,14 @@ export default function AdminPendingRequestsV2() {
   // Filter requests by status
   const pendingRequests = requests.filter(req => isPendingStatus(req.status));
   const reviewedRequests = requests.filter(req => isReviewedStatus(req.status));
+  
+  // Debug logging for filtering
+  console.log('[V2] Filtering debug:', {
+    totalRequests: requests.length,
+    pendingCount: pendingRequests.length,
+    reviewedCount: reviewedRequests.length,
+    requestStatuses: requests.map(r => ({ id: r.id, status: r.status, userName: r.userName }))
+  });
   
   // Sorting function
   const sortRequests = (list: VacationRequestWithConflicts[]) => {

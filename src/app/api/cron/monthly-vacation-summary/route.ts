@@ -124,7 +124,7 @@ export async function GET(req: Request) {
         if (db && !error) {
           // Pull approved/rejected requests whose startDate is in prev month
           const snap = await db.collection("vacationRequests")
-            .where("status", "in", ["approved", "rejected"])
+            .where("status", "in", ["approved", "denied"])
             .get();
 
           all = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
@@ -161,7 +161,7 @@ export async function GET(req: Request) {
     }));
 
     const approved = flat.filter(r => r.status === "approved");
-    const rejected = flat.filter(r => r.status === "rejected");
+    const rejected = flat.filter(r => r.status === "denied");
     const totalDays = approved.reduce((s, r) => s + Number(r.days || 0), 0);
 
     // Build email

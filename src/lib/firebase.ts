@@ -424,7 +424,7 @@ export class VacationRequestsService {
     try {
       const docRef = doc(this.db, VACATION_REQUESTS_COLLECTION, id);
       const updateData: any = {
-        status: 'rejected',
+        status: 'denied', // Use 'denied' to match AdminPendingRequestsV2
         reviewedBy,
         reviewerEmail,
         reviewedAt: serverTimestamp(),
@@ -436,7 +436,7 @@ export class VacationRequestsService {
         updateData.adminComment = adminComment;
       }
       
-      console.log('[FIREBASE] rejectVacationRequest', { id, status: 'rejected', reviewedBy, reviewerEmail });
+      console.log('[FIREBASE] rejectVacationRequest', { id, status: 'denied', reviewedBy, reviewerEmail });
       await updateDoc(docRef, updateData);
       console.log('[FIREBASE] rejectVacationRequest success', { id });
     } catch (error) {

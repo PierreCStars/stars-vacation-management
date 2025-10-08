@@ -27,7 +27,7 @@ type StackRow = {
 };
 
 export default function AnalyticsPage() {
-  const [status, setStatus] = useState<"approved"|"pending"|"rejected"|"all">("approved");
+  const [status, setStatus] = useState<"approved"|"pending"|"denied"|"all">("approved");
   const [data, setData] = useState<{
     meta: { 
       statusFilter: string; 
@@ -148,7 +148,7 @@ export default function AnalyticsPage() {
             >
               <option value="approved">Approved Only</option>
               <option value="pending">Pending Only</option>
-              <option value="rejected">Rejected Only</option>
+              <option value="denied">Denied Only</option>
               <option value="all">All Statuses</option>
             </select>
             <a

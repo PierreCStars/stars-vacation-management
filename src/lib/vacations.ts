@@ -15,7 +15,7 @@ export interface VacationRequest {
   type?: string;
   isHalfDay?: boolean;
   halfDayType?: HalfDayType;
-  status?: "pending" | "approved" | "rejected" | "cancelled" | string;
+  status?: "pending" | "approved" | "denied" | "cancelled" | string;
   durationDays?: number;
   // Optional server timestamps if present
   startTs?: any;

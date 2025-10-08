@@ -140,31 +140,7 @@ export async function GET(req: Request) {
       console.log('⚠️  Falling back to mock data for monthly summary...');
     }
 
-    // Fallback to mock data if Firestore fails or is not available
-    if (all.length === 0) {
-      all = [
-        {
-          id: 'mock-1',
-          userName: 'Test User 1',
-          company: 'Stars Yachting',
-          type: 'Full day',
-          status: 'approved',
-          isHalfDay: false,
-          startDate: '2025-01-15',
-          endDate: '2025-01-17'
-        },
-        {
-          id: 'mock-2',
-          userName: 'Test User 2',
-          company: 'Stars Real Estate',
-          type: 'Half day',
-          status: 'rejected',
-          isHalfDay: true,
-          startDate: '2025-01-20',
-          endDate: '2025-01-20'
-        }
-      ];
-    }
+    // No mock data fallback - Firebase only
 
     // Filter requests in the date range
     const inRange = all.filter(r => {

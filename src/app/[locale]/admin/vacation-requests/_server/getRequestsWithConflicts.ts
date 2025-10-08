@@ -196,39 +196,6 @@ async function fetchDataWithFallback(): Promise<VacationRequestWithConflicts[]> 
     return enriched;
   } catch (error) {
     console.error('❌ Server-side: Error fetching requests with conflicts:', error);
-    
-    // Fallback to mock data for development
-    const mockRequests: VacationRequestWithConflicts[] = [
-      {
-        id: 'mock-1',
-        userId: 'user-1',
-        userEmail: 'test@example.com',
-        userName: 'Test User',
-        company: 'STARS_MC',
-        type: 'VACATION',
-        startDate: '2025-01-15',
-        endDate: '2025-01-17',
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-        conflicts: [
-          {
-            type: 'same-company' as const,
-            severity: 'high' as const,
-            details: 'Overlap with Test User\'s VACATION from 2025-01-16 to 2025-01-16',
-            conflictingRequests: [{
-              id: 'mock-conflict-1',
-              userName: 'Test User 2',
-              company: 'STARS_MC',
-              startDate: '2025-01-16',
-              endDate: '2025-01-16',
-              status: 'approved'
-            }]
-          }
-        ]
-      }
-    ];
-
-    console.log('🎭 Server-side: Using mock data due to error');
-    return mockRequests;
+    throw error; // Re-throw instead of returning mock data
   }
 }

@@ -25,7 +25,7 @@ export async function POST() {
     const requests = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }));
+    })) as Array<{ id: string; status?: string; userName?: string; [key: string]: any }>;
     
     console.log(`📊 Found ${requests.length} total vacation requests`);
     

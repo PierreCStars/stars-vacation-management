@@ -62,10 +62,20 @@ export function assertFirebaseEnv(): void {
 }
 
 export function getEnvStatus() {
+  const firebaseEnabledValue = process.env.NEXT_PUBLIC_ENABLE_FIREBASE;
+  console.log('🔍 Debug: NEXT_PUBLIC_ENABLE_FIREBASE value:', JSON.stringify(firebaseEnabledValue));
+  console.log('🔍 Debug: typeof:', typeof firebaseEnabledValue);
+  console.log('🔍 Debug: === "true":', firebaseEnabledValue === 'true');
+  
   const status = {
     required: {} as Record<string, boolean>,
     firebase: {} as Record<string, boolean>,
-    firebaseEnabled: process.env.NEXT_PUBLIC_ENABLE_FIREBASE === 'true',
+    firebaseEnabled: firebaseEnabledValue === 'true',
+    debug: {
+      firebaseEnabledValue,
+      type: typeof firebaseEnabledValue,
+      strictEqual: firebaseEnabledValue === 'true'
+    }
   };
   
   for (const envVar of REQUIRED_ENV_VARS) {

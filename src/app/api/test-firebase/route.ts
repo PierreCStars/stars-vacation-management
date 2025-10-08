@@ -1,45 +1,54 @@
 import { NextResponse } from 'next/server';
-import { getFirebaseAdmin } from '@/lib/firebase/admin';
-
-export const runtime = 'nodejs';
+import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 
 export async function GET() {
   try {
+    console.log('🧪 Testing Firebase connection...');
+    
     const { db, error } = getFirebaseAdmin();
     
     if (error || !db) {
-      return NextResponse.json({ 
-        ok: false, 
-        error: error || 'Firestore not ready',
-        timestamp: new Date().toISOString()
+      console.log('❌ Firebase connection failed:', error);
+      return NextResponse.json({
+        success: false,
+        error: 'Firebase connection failed',
+        details: error,
+        message: 'Firebase Admin SDK could not be initialized'
       }, { status: 500 });
     }
 
-    // Test write and read
-    const testDoc = await db.collection('_diagnostics').doc('ping').set({
-      timestamp: new Date(),
-      test: 'firebase-connection'
-    });
-
-    const testRead = await db.collection('_diagnostics').doc('ping').get();
+    console.log('✅ Firebase Admin SDK initialized successfully');
     
-    return NextResponse.json({ 
-      ok: true, 
-      message: 'Firebase connection successful',
-      data: {
-        writeSuccess: !!testDoc,
-        readSuccess: testRead.exists,
-        readData: testRead.data(),
-        timestamp: new Date().toISOString()
-      }
-    });
-
-  } catch (e: any) {
-    console.error('FIREBASE_TEST_ERROR', e);
-    return NextResponse.json({ 
-      ok: false, 
-      error: e?.message ?? String(e),
-      timestamp: new Date().toISOString()
+    // Try to query a collection
+    try {
+      const snapshot = await db.collection('vacationRequests').get();
+      console.log(`📊 Firebase query successful: ${snapshot.docs.length} documents found`);
+      
+      return NextResponse.json({
+        success: true,
+        message: 'Firebase connection successful',
+        documentCount: snapshot.docs.length,
+        documents: snapshot.docs.map(doc => ({
+          id: doc.id,
+          data: doc.data()
+        }))
+      });
+    } catch (queryError) {
+      console.error('❌ Firebase query failed:', queryError);
+      return NextResponse.json({
+        success: false,
+        error: 'Firebase query failed',
+        details: queryError instanceof Error ? queryError.message : String(queryError),
+        message: 'Could not query Firebase collection'
+      }, { status: 500 });
+    }
+    
+  } catch (error) {
+    console.error('❌ Test Firebase error:', error);
+    return NextResponse.json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      message: 'Firebase test failed'
     }, { status: 500 });
   }
 }

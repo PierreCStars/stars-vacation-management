@@ -353,9 +353,8 @@ export default function VacationRequestPage() {
                     >
                       <option value="">Select leave type</option>
                       <option value="PAID_VACATION">Paid Vacation</option>
-                      <option value="SICK_LEAVE">Sick Leave</option>
                       <option value="PERSONAL_DAY">Personal Day</option>
-                      <option value="BUSINESS_TRIP">Business Trip</option>
+                      <option value="RECUPERATION">Récupération</option>
                       <option value="OTHER">Other</option>
                     </select>
                   </div>

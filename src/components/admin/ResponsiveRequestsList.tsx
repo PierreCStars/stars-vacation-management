@@ -29,7 +29,6 @@ export default function ResponsiveRequestsList({
   tVacations,
   showActions = true
 }: ResponsiveRequestsListProps) {
-  console.log('[LAYOUT] ResponsiveRequestsList mounted with', requests.length, 'requests, showActions:', showActions);
   const [processingRequests, setProcessingRequests] = useState<Set<string>>(new Set());
 
   const handleStatusUpdate = async (id: string, status: "approved" | "denied") => {
@@ -49,20 +48,6 @@ export default function ResponsiveRequestsList({
 
   return (
     <div className="space-y-4" data-test="pending-list-v2">
-      {/* Critical debug banner */}
-      <div 
-        className="fixed top-20 left-4 z-[9999] px-4 py-2 rounded bg-green-600 text-white text-sm font-bold border-2 border-yellow-400"
-        style={{ position: 'fixed', top: '80px', left: '16px', zIndex: 9999 }}
-      >
-        🟢 ResponsiveRequestsList RENDERED: {requests.length} requests, showActions: {showActions.toString()}
-      </div>
-      
-      {/* Debug banner */}
-      {(process.env.NODE_ENV !== 'production' || process.env.NEXT_PUBLIC_DEBUG === 'true') && (
-        <div className="bg-yellow-100 border border-yellow-400 text-yellow-800 px-4 py-2 rounded text-sm mb-4">
-          🔧 DEBUG: ResponsiveRequestsList rendered with {requests.length} requests, showActions: {showActions.toString()}
-        </div>
-      )}
       
       {/* Desktop Table View (lg and up) */}
       <div className="hidden lg:block">
@@ -169,7 +154,6 @@ function RequestTableRow({
   const locale = useLocale();
   const isSelected = selectedRequests.has(request.id);
   
-  console.log('[LAYOUT] RequestTableRow rendering for', request.userName, 'showActions:', showActions);
 
   const moreInfoUrl = absoluteUrl(`/${locale}/admin/vacation-requests/${request.id}`);
 

@@ -1,8 +1,6 @@
 import { setRequestLocale } from 'next-intl/server';
 import IntlProvider from '../../i18n/intl-provider'; // keep relative path
 import { Topbar } from '../../components/nav/Topbar';
-import { AdminSidebar } from '../../components/nav/AdminSidebar';
-import DebugBanner from '../../components/DebugBanner';
 
 export default async function LocaleLayout({
   children,
@@ -25,14 +23,10 @@ export default async function LocaleLayout({
   return (
     <IntlProvider messages={messages} locale={safeLocale}>
       <div className="min-h-screen bg-gray-50">
-        <DebugBanner />
         <Topbar />
-        <div className="flex">
-          <AdminSidebar />
-          <main className="flex-1 min-h-screen">
-            {children}
-          </main>
-        </div>
+        <main className="min-h-screen">
+          {children}
+        </main>
       </div>
     </IntlProvider>
   );

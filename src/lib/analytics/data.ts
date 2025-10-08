@@ -85,8 +85,12 @@ export async function getVacationRequests(status?: string): Promise<VacationRequ
   let snapshot;
   try {
     if (status && status !== 'all') {
-      console.log('🔍 Debug: Querying with status filter:', status);
-      snapshot = await collection.where('status', '==', status).get();
+      // Normalize status to match database values
+      const normalizedStatus = status === 'approved' ? 'APPROVED' : 
+                              status === 'denied' ? 'denied' : 
+                              status === 'pending' ? 'pending' : status;
+      console.log('🔍 Debug: Querying with status filter:', normalizedStatus);
+      snapshot = await collection.where('status', '==', normalizedStatus).get();
     } else {
       console.log('🔍 Debug: Querying all documents');
       snapshot = await collection.get();

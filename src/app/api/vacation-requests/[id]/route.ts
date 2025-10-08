@@ -157,13 +157,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         }
       } catch (firebaseError) {
         console.log('⚠️  Firebase not available - using mock update:', firebaseError);
-        
-        // Fallback: Update the persistent mock storage
-        if (isStatusUpdate && newStatus) {
+      }
+      
+      // Always update mock storage as fallback (regardless of Firebase success/failure)
+      if (isStatusUpdate && newStatus) {
+        console.log(`🔄 Updating mock storage for request ${id} with status ${newStatus}`);
+        try {
           // Import the persistent storage from the main route
           const { tempVacationRequests } = await import('../route');
           
           const existingRequest = tempVacationRequests.get(id);
+          console.log(`🔍 Existing request in mock storage:`, existingRequest ? 'found' : 'not found');
+          
           if (existingRequest) {
             const updatedRequest = {
               ...existingRequest,
@@ -174,12 +179,13 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
               adminComment: adminComment
             };
             tempVacationRequests.set(id, updatedRequest);
-            console.log(`✅ Updated mock request ${id} with status ${newStatus}`);
+            console.log(`✅ Updated mock request ${id} with status ${newStatus}:`, updatedRequest);
+          } else {
+            console.log(`❌ Request ${id} not found in mock storage`);
           }
+        } catch (mockError) {
+          console.error('❌ Failed to update mock storage:', mockError);
         }
-        
-        // Don't throw error, just log it
-        console.log('⚠️  Continuing with mock data update');
       }
 
       const updatedRequest = {

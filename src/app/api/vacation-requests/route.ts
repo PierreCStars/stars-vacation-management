@@ -91,6 +91,7 @@ export async function GET() {
     // Fallback to persistent mock data if Firebase is not available
     const requests = Array.from(tempVacationRequests.values());
     console.log(`📊 Returning ${requests.length} vacation requests from persistent storage`);
+    console.log(`📊 Request statuses in storage:`, requests.map(r => ({ id: r.id, status: r.status, userName: r.userName })));
     return NextResponse.json(requests);
   } catch (error) {
     console.error('❌ Error fetching vacation requests:', error);

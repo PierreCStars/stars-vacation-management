@@ -15,7 +15,7 @@ export function getFirebaseAdmin(): {
   error: string | null;
 } {
   // Check if Firebase is enabled
-  if (process.env.NEXT_PUBLIC_ENABLE_FIREBASE !== 'true') {
+  if (process.env.NEXT_PUBLIC_ENABLE_FIREBASE?.trim() !== 'true') {
     console.log('🔧 Firebase Admin is disabled (NEXT_PUBLIC_ENABLE_FIREBASE !== true)');
     return { app: null, db: null, error: 'Firebase is disabled' };
   }

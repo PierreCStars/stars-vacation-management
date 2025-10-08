@@ -37,7 +37,7 @@ export function assertRequiredEnv(): void {
 }
 
 export function assertFirebaseEnv(): void {
-  if (process.env.NEXT_PUBLIC_ENABLE_FIREBASE !== 'true') {
+  if (process.env.NEXT_PUBLIC_ENABLE_FIREBASE?.trim() !== 'true') {
     console.log('🔧 Firebase is disabled (NEXT_PUBLIC_ENABLE_FIREBASE !== true)');
     return;
   }
@@ -62,7 +62,7 @@ export function assertFirebaseEnv(): void {
 }
 
 export function getEnvStatus() {
-  const firebaseEnabledValue = process.env.NEXT_PUBLIC_ENABLE_FIREBASE;
+  const firebaseEnabledValue = process.env.NEXT_PUBLIC_ENABLE_FIREBASE?.trim();
   console.log('🔍 Debug: NEXT_PUBLIC_ENABLE_FIREBASE value:', JSON.stringify(firebaseEnabledValue));
   console.log('🔍 Debug: typeof:', typeof firebaseEnabledValue);
   console.log('🔍 Debug: === "true":', firebaseEnabledValue === 'true');

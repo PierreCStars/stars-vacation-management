@@ -338,7 +338,31 @@ export default function AdminPendingRequestsV2() {
             </div>
           ) : (
             <UnifiedVacationCalendar 
-              vacationRequests={requests.filter(r => r.status?.toLowerCase() === 'approved')}
+              vacationRequests={requests
+                .filter(r => r.status?.toLowerCase() === 'approved')
+                .map(r => ({
+                  id: r.id,
+                  userId: r.userId,
+                  userEmail: r.userEmail,
+                  userName: r.userName,
+                  startDate: r.startDate,
+                  endDate: r.endDate,
+                  reason: r.reason,
+                  company: r.company || 'Unknown',
+                  type: r.type || 'VACATION',
+                  status: r.status,
+                  createdAt: r.createdAt || new Date().toISOString(),
+                  reviewedBy: r.reviewedBy?.name,
+                  reviewerEmail: r.reviewedBy?.email,
+                  reviewedAt: r.reviewedAt,
+                  adminComment: undefined,
+                  included: true,
+                  openDays: undefined,
+                  isHalfDay: r.isHalfDay,
+                  halfDayType: r.halfDayType,
+                  durationDays: r.durationDays,
+                  googleEventId: undefined
+                }))}
               className="w-full"
               showLegend={true}
               compact={false}

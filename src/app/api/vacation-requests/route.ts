@@ -14,7 +14,59 @@ import { VacationRequest } from '@/types/vacation';
 import { submitVacation } from '@/lib/vacation-orchestration';
 
 // Temporary in-memory storage for testing
-const tempVacationRequests = new Map();
+export const tempVacationRequests = new Map();
+
+// Initialize with mock data if not already present
+if (tempVacationRequests.size === 0) {
+  const mockData = [
+    {
+      id: 'mock-1',
+      userId: 'user-1',
+      userEmail: 'pierre@stars.mc',
+      userName: 'Pierre Corbucci',
+      company: 'STARS_MC',
+      type: 'VACATION',
+      startDate: '2025-01-15',
+      endDate: '2025-01-17',
+      status: 'pending',
+      reason: 'Family vacation',
+      createdAt: new Date().toISOString(),
+      durationDays: 3
+    },
+    {
+      id: 'mock-2',
+      userId: 'user-2',
+      userEmail: 'daniel@stars.mc',
+      userName: 'Daniel Smith',
+      company: 'STARS_MC',
+      type: 'VACATION',
+      startDate: '2025-01-20',
+      endDate: '2025-01-22',
+      status: 'pending',
+      reason: 'Personal time off',
+      createdAt: new Date().toISOString(),
+      durationDays: 3
+    },
+    {
+      id: 'mock-3',
+      userId: 'user-3',
+      userEmail: 'johnny@stars.mc',
+      userName: 'Johnny Doe',
+      company: 'STARS_MC',
+      type: 'SICK_LEAVE',
+      startDate: '2025-01-25',
+      endDate: '2025-01-25',
+      status: 'pending',
+      reason: 'Medical appointment',
+      createdAt: new Date().toISOString(),
+      durationDays: 1
+    }
+  ];
+  
+  mockData.forEach(request => {
+    tempVacationRequests.set(request.id, request);
+  });
+}
 
 export async function GET() {
   try {
@@ -36,55 +88,10 @@ export async function GET() {
       }
     }
     
-    // Fallback to mock data if Firebase is not available
-    // Return mock data for development/testing
-    const mockData: any[] = [
-      {
-        id: 'mock-1',
-        userId: 'user-1',
-        userEmail: 'pierre@stars.mc',
-        userName: 'Pierre Corbucci',
-        company: 'STARS_MC',
-        type: 'VACATION',
-        startDate: '2025-01-15',
-        endDate: '2025-01-17',
-        status: 'pending',
-        reason: 'Family vacation',
-        createdAt: new Date().toISOString(),
-        durationDays: 3
-      },
-      {
-        id: 'mock-2',
-        userId: 'user-2',
-        userEmail: 'daniel@stars.mc',
-        userName: 'Daniel Smith',
-        company: 'STARS_MC',
-        type: 'VACATION',
-        startDate: '2025-01-20',
-        endDate: '2025-01-22',
-        status: 'pending',
-        reason: 'Personal time off',
-        createdAt: new Date().toISOString(),
-        durationDays: 3
-      },
-      {
-        id: 'mock-3',
-        userId: 'user-3',
-        userEmail: 'johnny@stars.mc',
-        userName: 'Johnny Doe',
-        company: 'STARS_MC',
-        type: 'SICK_LEAVE',
-        startDate: '2025-01-25',
-        endDate: '2025-01-25',
-        status: 'pending',
-        reason: 'Medical appointment',
-        createdAt: new Date().toISOString(),
-        durationDays: 1
-      }
-    ];
-
-    console.log(`📊 Returning ${mockData.length} mock vacation requests`);
-    return NextResponse.json(mockData);
+    // Fallback to persistent mock data if Firebase is not available
+    const requests = Array.from(tempVacationRequests.values());
+    console.log(`📊 Returning ${requests.length} vacation requests from persistent storage`);
+    return NextResponse.json(requests);
   } catch (error) {
     console.error('❌ Error fetching vacation requests:', error);
     return NextResponse.json([], { status: 500 });

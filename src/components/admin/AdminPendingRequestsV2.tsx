@@ -41,6 +41,7 @@ export default function AdminPendingRequestsV2() {
         const data = await response.json();
         setRequests(data);
         console.log('[V2] Fetched', data.length, 'vacation requests');
+        console.log('[V2] Request statuses:', data.map(r => ({ id: r.id, status: r.status, userName: r.userName })));
       } else {
         console.error('[V2] Failed to fetch vacation requests:', response.status);
       }
@@ -52,6 +53,7 @@ export default function AdminPendingRequestsV2() {
   };
 
   const handleStatusUpdate = async (id: string, status: "approved" | "denied") => {
+    console.log('[V2] Starting status update:', { id, status });
     setProcessingRequests(prev => new Set(prev).add(id));
     setActionMessage(null); // Clear previous messages
     
@@ -68,6 +70,8 @@ export default function AdminPendingRequestsV2() {
           adminComment: status === 'approved' ? 'Approved via admin panel' : 'Rejected via admin panel'
         }),
       });
+      
+      console.log('[V2] API response status:', response.status);
 
       if (response.ok) {
         // Update the request status locally
@@ -75,7 +79,7 @@ export default function AdminPendingRequestsV2() {
           req.id === id 
             ? { 
                 ...req, 
-                status: status.toUpperCase() as any, 
+                status: status, // Keep lowercase to match API
                 reviewedAt: new Date().toISOString(),
                 reviewedBy: {
                   name: session?.user?.name || 'Admin',
@@ -95,6 +99,12 @@ export default function AdminPendingRequestsV2() {
         setTimeout(() => setActionMessage(null), 3000);
         
         console.log(`[V2] Successfully ${status} request ${id}`);
+        
+        // Refetch data to ensure consistency with server
+        console.log('[V2] Refetching data after status update...');
+        setTimeout(() => {
+          fetchVacationRequests();
+        }, 1000);
       } else {
         const errorText = await response.text();
         setActionMessage({

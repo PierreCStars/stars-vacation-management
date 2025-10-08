@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth';
 import { getRequestsWithConflicts } from './_server/getRequestsWithConflicts';
 import AdminVacationRequestsClient from './AdminVacationRequestsClient';
 import { isPendingStatus, isReviewedStatus } from '@/types/vacation-status';
+import AdminPendingRequestsV2 from '@/components/admin/AdminPendingRequestsV2';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -12,6 +13,11 @@ export const revalidate = 0;
 
 export default async function AdminVacationRequestsPage() {
   unstable_noStore(); // Ensure no caching
+
+  // Get commit hash for debugging
+  const COMMIT = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA
+    || process.env.VERCEL_GIT_COMMIT_SHA
+    || 'dev';
 
   // Check authentication
   const session = await getServerSession(authOptions);
@@ -36,68 +42,12 @@ export default async function AdminVacationRequestsPage() {
   
   console.log('✅ User authenticated as admin:', session.user.email);
 
-  console.log('🔄 Server-side: Loading vacation requests with conflicts...');
-  
-  try {
-    // Load vacation requests with conflicts
-    const allRequests = await getRequestsWithConflicts();
-    console.log(`✅ Server-side: Loaded ${allRequests.length} requests (${allRequests.filter(r => isPendingStatus(r.status)).length} pending, ${allRequests.filter(r => isReviewedStatus(r.status)).length} reviewed, ${allRequests.filter(r => r.conflicts?.length > 0).length} with conflicts)`);
-
-    // Filter requests by status
-    const pending = allRequests.filter(request => isPendingStatus(request.status));
-    const reviewed = allRequests.filter(request => isReviewedStatus(request.status));
-    const conflictCount = allRequests.filter(request => request.conflicts?.length > 0).length;
-
-    // Get version info for debugging
-    const version = process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA || process.env.VERCEL_GIT_COMMIT_SHA || 'dev';
-
-    return (
-      <div className="space-y-6">
-        {/* Critical debug banner - should always show */}
-        <div className="bg-red-100 border-b border-red-400 text-red-800 px-4 py-2 text-sm font-bold">
-          🚨 CRITICAL: AdminVacationRequestsPage RENDERED - {allRequests.length} requests, {pending.length} pending, {reviewed.length} reviewed
-        </div>
-        
-        {/* Debug banner */}
-        {process.env.NODE_ENV !== 'production' && (
-          <div className="bg-yellow-100 border-b border-yellow-400 text-yellow-800 px-4 py-2 text-sm">
-            🔧 DEBUG: Admin page loaded with {allRequests.length} requests, {pending.length} pending, {reviewed.length} reviewed
-          </div>
-        )}
-        
-        <AdminVacationRequestsClient
-          initialRequests={allRequests}
-          pending={pending}
-          reviewed={reviewed}
-          conflictCount={conflictCount}
-          version={version}
-        />
+  return (
+    <div>
+      <div data-test="commit" className="bg-blue-100 text-blue-800 px-2 py-1 text-xs font-mono">
+        Commit: {COMMIT?.slice(0,7)}
       </div>
-    );
-  } catch (error) {
-    console.error('❌ Server-side: Failed to load vacation requests:', error);
-    
-    // Fallback to empty state
-    return (
-      <div className="py-8">
-        <div className="bg-red-50 border border-red-200 rounded-md p-4">
-          <div className="flex">
-            <div className="flex-shrink-0">
-              <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
-              </svg>
-            </div>
-            <div className="ml-3">
-              <h3 className="text-sm font-medium text-red-800">
-                Error loading vacation requests
-              </h3>
-              <div className="mt-2 text-sm text-red-700">
-                <p>Unable to load vacation requests. Please try refreshing the page.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+      <AdminPendingRequestsV2 />
+    </div>
+  );
 }

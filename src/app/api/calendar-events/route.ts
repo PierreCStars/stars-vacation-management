@@ -28,6 +28,54 @@ function loadGoogleCreds() {
   return { client_email: process.env.GOOGLE_CLIENT_EMAIL!, private_key: pem };
 }
 
+// Fallback function to get only Firestore events when Google Calendar is not available
+async function getFirestoreEventsOnly(includeVacationRequests: boolean) {
+  let firestoreEvents: any[] = [];
+  
+  if (includeVacationRequests) {
+    try {
+      const { db } = getFirebaseAdmin();
+      if (db) {
+        const snapshot = await db
+          .collection('vacationRequests')
+          .where('status', '==', 'approved')
+          .get();
+        
+        firestoreEvents = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: `firestore_${doc.id}`,
+            summary: `${data.userName || 'Unknown'} - ${data.company || 'Unknown'}`,
+            description: `Vacation Request\nName: ${data.userName || 'Unknown'}\nCompany: ${data.company || 'Unknown'}\nType: ${data.type || 'Full day'}\nReason: ${data.reason || 'N/A'}`,
+            start: data.startDate,
+            end: data.endDate,
+            colorId: '2', // Green for approved vacation
+            company: data.company || 'Unknown',
+            userName: data.userName || 'Unknown',
+            source: 'firestore',
+            calendarEventId: data.calendarEventId
+          };
+        });
+        console.log(`✅ Added ${firestoreEvents.length} Firestore vacation events`);
+      }
+    } catch (error) {
+      console.error('[CALENDAR_API] firestore_error', { error: error instanceof Error ? error.message : String(error) });
+    }
+  }
+
+  return NextResponse.json({
+    success: true,
+    events: firestoreEvents,
+    totalEvents: firestoreEvents.length,
+    vacationEvents: 0,
+    firestoreEvents: firestoreEvents.length,
+    timeRange: {
+      start: new Date().toISOString(),
+      end: new Date().toISOString(),
+    },
+  });
+}
+
 export async function GET(request: NextRequest) {
   try {
     console.log('[CALENDAR_API] start');
@@ -47,13 +95,25 @@ export async function GET(request: NextRequest) {
     const calendarId = process.env.GOOGLE_CALENDAR_ID || 'primary';
     const includeVacationRequests = searchParams.get('includeVacationRequests') !== 'false';
 
-    // Initialize Google Calendar API
-    const auth = new google.auth.GoogleAuth({
-      credentials: loadGoogleCreds(),
-      scopes: ['https://www.googleapis.com/auth/calendar.readonly'],
-    });
+    // Check if Google Calendar credentials are available
+    if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+      console.log('[CALENDAR_API] Google Calendar credentials not available, returning Firestore events only');
+      return await getFirestoreEventsOnly(includeVacationRequests);
+    }
 
-    const calendar = google.calendar({ version: 'v3', auth });
+    // Initialize Google Calendar API
+    let auth, calendar;
+    try {
+      auth = new google.auth.GoogleAuth({
+        credentials: loadGoogleCreds(),
+        scopes: ['https://www.googleapis.com/auth/calendar.readonly'],
+      });
+
+      calendar = google.calendar({ version: 'v3', auth });
+    } catch (authError) {
+      console.error('[CALENDAR_API] Google Auth failed:', authError);
+      return await getFirestoreEventsOnly(includeVacationRequests);
+    }
 
     // Set default time range if not provided
     const now = new Date();
@@ -64,16 +124,23 @@ export async function GET(request: NextRequest) {
     console.log('📅 Calendar ID:', calendarId);
     console.log('📅 Time range:', startDate.toISOString(), 'to', endDate.toISOString());
 
-    const response = await calendar.events.list({
-      calendarId: calendarId,
-      timeMin: startDate.toISOString(),
-      timeMax: endDate.toISOString(),
-      singleEvents: true,
-      orderBy: 'startTime',
-    });
+    let events: any[] = [];
+    try {
+      const response = await calendar.events.list({
+        calendarId: calendarId,
+        timeMin: startDate.toISOString(),
+        timeMax: endDate.toISOString(),
+        singleEvents: true,
+        orderBy: 'startTime',
+      });
 
-    const events = response.data.items || [];
-    console.log(`✅ Found ${events.length} calendar events`);
+      events = response.data.items || [];
+      console.log(`✅ Found ${events.length} calendar events`);
+    } catch (calendarError) {
+      console.error('[CALENDAR_API] Google Calendar API failed:', calendarError);
+      // Continue with Firestore events only
+      events = [];
+    }
 
     // Filter and format events to only show vacation events
     const vacationEvents = events

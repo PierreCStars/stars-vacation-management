@@ -476,7 +476,7 @@ export default function AdminVacationRequestsClient({
               
               {/* Simple test replacement */}
               <div className="bg-purple-100 border border-purple-400 text-purple-800 px-4 py-2 rounded text-sm mb-4">
-                🧪 TEST: Simple div replacement for ResponsiveRequestsList
+                🧪 TEST: Simple div replacement for ResponsiveRequestsList - FORCE DEPLOYMENT
               </div>
               
               <ResponsiveRequestsList

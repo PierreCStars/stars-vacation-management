@@ -85,6 +85,77 @@ export async function GET() {
         console.log(`📊 Loaded ${requests.length} vacation requests from Firebase`);
         console.log('📊 Firebase requests:', requests.map(r => ({ id: r.id, userName: r.userName, status: r.status })));
         
+        // If Firebase is empty, populate it with test data
+        if (requests.length === 0) {
+          console.log('📝 Firebase is empty, populating with test data...');
+          
+          const testData = [
+            {
+              userId: 'user-1',
+              userEmail: 'pierre@stars.mc',
+              userName: 'Pierre Corbucci',
+              company: 'STARS_MC',
+              type: 'VACATION',
+              startDate: '2025-01-15',
+              endDate: '2025-01-17',
+              status: 'pending',
+              reason: 'Family vacation',
+              createdAt: new Date().toISOString(),
+              durationDays: 3
+            },
+            {
+              userId: 'user-2',
+              userEmail: 'daniel@stars.mc',
+              userName: 'Daniel Smith',
+              company: 'STARS_MC',
+              type: 'VACATION',
+              startDate: '2025-01-20',
+              endDate: '2025-01-22',
+              status: 'approved',
+              reason: 'Personal time off',
+              createdAt: new Date().toISOString(),
+              durationDays: 3,
+              reviewedAt: new Date().toISOString(),
+              reviewedBy: {
+                name: 'Admin',
+                email: 'admin@stars.mc'
+              }
+            },
+            {
+              userId: 'user-3',
+              userEmail: 'johnny@stars.mc',
+              userName: 'Johnny Doe',
+              company: 'STARS_MC',
+              type: 'SICK_LEAVE',
+              startDate: '2025-01-25',
+              endDate: '2025-01-25',
+              status: 'denied',
+              reason: 'Medical appointment',
+              createdAt: new Date().toISOString(),
+              durationDays: 1,
+              reviewedAt: new Date().toISOString(),
+              reviewedBy: {
+                name: 'Admin',
+                email: 'admin@stars.mc'
+              }
+            }
+          ];
+          
+          // Add test data to Firebase
+          for (const data of testData) {
+            const docRef = await db.collection('vacationRequests').add(data);
+            console.log(`✅ Added test request: ${data.userName} (${data.status}) - ${docRef.id}`);
+          }
+          
+          // Re-fetch the data after populating
+          const newSnapshot = await db.collection('vacationRequests').get();
+          requests = newSnapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })) as VacationRequest[];
+          console.log(`📊 After population: ${requests.length} vacation requests in Firebase`);
+        }
+        
         // Update mock storage with Firebase data only if it's empty (first load)
         // This preserves any status updates made to mock storage
         if (tempVacationRequests.size === 0) {

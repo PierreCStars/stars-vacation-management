@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic";
 import { NextResponse } from 'next/server';
 import { authOptions } from '@/lib/auth';
 import { getServerSession } from 'next-auth/next';
-import { getVacationRequestsService } from '@/lib/firebase';
+import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { VacationRequest } from '@/lib/firebase';
 import { decideVacation } from '@/lib/vacation-orchestration';
 import { revalidateTag, revalidatePath } from 'next/cache';
@@ -67,129 +67,132 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     }
 
     try {
-      // Use Firestore to update the vacation request if available
-      try {
-        const vacationService = getVacationRequestsService();
+      // Use Firebase Admin SDK to update the vacation request
+      const { db, error } = getFirebaseAdmin();
+      if (error || !db) {
+        console.error('❌ [INVESTIGATION] Firebase Admin not available:', error);
+        return NextResponse.json({ 
+          error: 'Firebase Admin not available', 
+          details: error 
+        }, { status: 500 });
+      }
+
+      // Get the current vacation request data
+      const docRef = db.collection('vacationRequests').doc(id);
+      const docSnap = await docRef.get();
+      
+      if (!docSnap.exists) {
+        return NextResponse.json({ error: 'Vacation request not found' }, { status: 404 });
+      }
+      
+      const requestData = { id: docSnap.id, ...docSnap.data() } as VacationRequest;
+      
+      // Handle status updates
+      if (isStatusUpdate) {
+        console.log('🔍 [INVESTIGATION] Starting status update:', { id, newStatus, reviewer });
         
-        // Get the current vacation request data
-        const requestData = await vacationService.getVacationRequestById(id);
-        if (!requestData) {
-          return NextResponse.json({ error: 'Vacation request not found' }, { status: 404 });
+        // Get current status before update for debugging
+        const currentData = { id: docSnap.id, ...docSnap.data() } as VacationRequest;
+        console.log('🔍 [INVESTIGATION] Current status before update:', { id, currentStatus: currentData?.status });
+        
+        const updateData: any = {
+          status: newStatus,
+          reviewedBy: reviewer.name,
+          reviewerEmail: reviewer.email,
+          reviewedAt: new Date(),
+          updatedAt: new Date()
+        };
+        
+        // Only include adminComment if it's provided and not undefined
+        if (adminComment !== undefined && adminComment !== null && adminComment !== '') {
+          updateData.adminComment = adminComment;
         }
         
-        // Handle status updates
-        if (isStatusUpdate) {
-          console.log('🔍 [INVESTIGATION] Starting status update:', { id, newStatus, reviewer });
-          
-          // Get current status before update for debugging
-          const currentData = await vacationService.getVacationRequestById(id);
-          console.log('🔍 [INVESTIGATION] Current status before update:', { id, currentStatus: currentData?.status });
-          
-          if (newStatus === 'approved') {
-            console.log('🔍 [INVESTIGATION] Calling approveVacationRequest...');
-            await vacationService.approveVacationRequest(
-              id, 
-              reviewer.name, 
-              reviewer.email, 
-              adminComment
-            );
-            console.log('🔍 [INVESTIGATION] approveVacationRequest completed');
-          } else if (newStatus === 'denied') {
-            console.log('🔍 [INVESTIGATION] Calling rejectVacationRequest...');
-            await vacationService.rejectVacationRequest(
-              id, 
-              reviewer.name, 
-              reviewer.email, 
-              adminComment
-            );
-            console.log('🔍 [INVESTIGATION] rejectVacationRequest completed');
-          }
-          
-          // Verify status after update
-          const updatedData = await vacationService.getVacationRequestById(id);
-          console.log('🔍 [INVESTIGATION] Status after update verification:', { 
-            id, 
-            expectedStatus: newStatus, 
-            actualStatus: updatedData?.status,
-            success: updatedData?.status === newStatus
-          });
+        console.log('🔍 [INVESTIGATION] Firebase Admin updateData:', updateData);
+        console.log('🔍 [INVESTIGATION] Firebase Admin docRef:', docRef.path);
+        
+        await docRef.update(updateData);
+        console.log('🔍 [INVESTIGATION] Firebase Admin updateDoc completed successfully');
+        
+        // Verify status after update
+        const updatedDocSnap = await docRef.get();
+        const updatedData = { id: updatedDocSnap.id, ...updatedDocSnap.data() } as VacationRequest;
+        console.log('🔍 [INVESTIGATION] Status after update verification:', { 
+          id, 
+          expectedStatus: newStatus, 
+          actualStatus: updatedData?.status,
+          success: updatedData?.status === newStatus
+        });
+      }
+      
+      // Handle date updates
+      if (isDateUpdate) {
+        const updateData: any = {
+          startDate: newStartDate,
+          endDate: newEndDate,
+          durationDays: newDurationDays,
+          updatedAt: new Date()
+        };
+        
+        if (adminComment) {
+          updateData.adminComment = adminComment;
         }
         
-        // Handle date updates
-        if (isDateUpdate) {
-          const updateData: any = {
-            startDate: newStartDate,
-            endDate: newEndDate,
-            durationDays: newDurationDays,
-            updatedAt: new Date().toISOString()
+        await docRef.update(updateData);
+        console.log('✅ Vacation request dates updated successfully in Firestore');
+      }
+
+      console.log('✅ Vacation request updated successfully in Firestore');
+
+      // Sync calendar event based on new status
+      if (isStatusUpdate && requestData) {
+        try {
+          const calendarData = {
+            id: requestData.id || id,
+            userName: requestData.userName || 'Unknown',
+            userEmail: requestData.userEmail || 'unknown@stars.mc',
+            startDate: requestData.startDate,
+            endDate: requestData.endDate,
+            type: requestData.type || 'Full day',
+            company: requestData.company || 'Unknown',
+            reason: requestData.reason,
+            status: newStatus as 'pending' | 'approved' | 'denied'
           };
           
-          if (adminComment) {
-            updateData.adminComment = adminComment;
-          }
-          
-          await vacationService.updateVacationRequest(id, updateData);
-          console.log('✅ Vacation request dates updated successfully in Firestore');
-        }
-
-        console.log('✅ Vacation request updated successfully in Firestore');
-
-        // Sync calendar event based on new status
-        if (isStatusUpdate && requestData) {
-          try {
-            const calendarData = {
-              id: requestData.id || id,
-              userName: requestData.userName || 'Unknown',
-              userEmail: requestData.userEmail || 'unknown@stars.mc',
-              startDate: requestData.startDate,
-              endDate: requestData.endDate,
-              type: requestData.type || 'Full day',
-              company: requestData.company || 'Unknown',
-              reason: requestData.reason,
-              status: newStatus as 'pending' | 'approved' | 'denied'
-            };
-            
-            const calendarResult = await syncEventForRequest(calendarData);
-            if (calendarResult.success) {
-              console.log('[VALIDATION] calendar_sync success', { id, eventId: calendarResult.eventId });
-            } else {
-              console.error('[VALIDATION] calendar_sync fail', { id, error: calendarResult.error });
-              // Don't fail the request if calendar sync fails
-            }
-          } catch (calendarError) {
-            console.error('[VALIDATION] calendar_sync error', { id, error: calendarError instanceof Error ? calendarError.message : String(calendarError) });
+          const calendarResult = await syncEventForRequest(calendarData);
+          if (calendarResult.success) {
+            console.log('[VALIDATION] calendar_sync success', { id, eventId: calendarResult.eventId });
+          } else {
+            console.error('[VALIDATION] calendar_sync fail', { id, error: calendarResult.error });
             // Don't fail the request if calendar sync fails
           }
+        } catch (calendarError) {
+          console.error('[VALIDATION] calendar_sync error', { id, error: calendarError instanceof Error ? calendarError.message : String(calendarError) });
+          // Don't fail the request if calendar sync fails
         }
+      }
 
-        // Invalidate caches after successful update
+      // Invalidate caches after successful update
+      try {
+        await refreshCacheTags();
+      } catch (cacheError) {
+        console.error('[CACHE] revalidate fail', { error: cacheError instanceof Error ? cacheError.message : String(cacheError) });
+      }
+
+      // Send decision emails and calendar updates using orchestration
+      if (isStatusUpdate && newStatus && (newStatus === 'approved' || newStatus === 'denied')) {
         try {
-          await refreshCacheTags();
-        } catch (cacheError) {
-          console.error('[CACHE] revalidate fail', { error: cacheError instanceof Error ? cacheError.message : String(cacheError) });
+          await decideVacation({
+            requesterEmail: requestData.userEmail,
+            requestId: id,
+            decision: newStatus === 'approved' ? 'APPROVED' : 'DENIED',
+            startIso: requestData.startDate,
+            endIso: requestData.endDate
+          });
+          console.log(`✅ Decision emails and calendar updates sent for ${newStatus} request`);
+        } catch (orchestrationError) {
+          console.error('❌ Failed to send decision emails/calendar updates:', orchestrationError);
         }
-
-        // Send decision emails and calendar updates using orchestration
-        if (isStatusUpdate && newStatus && (newStatus === 'approved' || newStatus === 'denied')) {
-          try {
-            await decideVacation({
-              requesterEmail: requestData.userEmail,
-              requestId: id,
-              decision: newStatus === 'approved' ? 'APPROVED' : 'DENIED',
-              startIso: requestData.startDate,
-              endIso: requestData.endDate
-            });
-            console.log(`✅ Decision emails and calendar updates sent for ${newStatus} request`);
-          } catch (orchestrationError) {
-            console.error('❌ Failed to send decision emails/calendar updates:', orchestrationError);
-          }
-        }
-      } catch (firebaseError) {
-        console.error('❌ [INVESTIGATION] Firebase operation failed:', firebaseError);
-        return NextResponse.json({ 
-          error: 'Firebase operation failed', 
-          details: firebaseError instanceof Error ? firebaseError.message : String(firebaseError) 
-        }, { status: 500 });
       }
 
       const updatedRequest = {
@@ -216,14 +219,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         request: updatedRequest,
         message
       });
-
-    } catch (firebaseError) {
-      console.error('❌ [INVESTIGATION] Firebase operation failed:', firebaseError);
-      return NextResponse.json({ 
-        error: 'Firebase operation failed', 
-        details: firebaseError instanceof Error ? firebaseError.message : String(firebaseError) 
-      }, { status: 500 });
-    }
 
   } catch (error) {
     console.error('❌ Error updating vacation request:', error);

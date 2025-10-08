@@ -1,4 +1,5 @@
 import { getFirebaseAdminDb } from '@/lib/firebase/index';
+import { VacationStatus } from '@/types/vacation-status';
 
 export interface VacationRequestWithConflicts {
   id: string;
@@ -9,7 +10,7 @@ export interface VacationRequestWithConflicts {
   type?: string;
   startDate: string;
   endDate: string;
-  status: "pending" | "approved" | "rejected";
+  status: VacationStatus;
   reviewedAt?: string | null;
   reviewedBy?: { id?: string; name?: string; email?: string } | null;
   createdAt?: string;

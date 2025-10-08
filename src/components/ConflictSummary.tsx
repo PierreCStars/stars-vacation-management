@@ -16,9 +16,9 @@ interface ConflictSummaryProps {
 export default function ConflictSummary({ conflicts, vacationRequests }: ConflictSummaryProps) {
   // Calculate statistics
   const totalRequests = vacationRequests.length;
-  const pendingRequests = vacationRequests.filter(req => req.status === 'PENDING').length;
-  const approvedRequests = vacationRequests.filter(req => req.status === 'APPROVED').length;
-  const rejectedRequests = vacationRequests.filter(req => req.status === 'REJECTED').length;
+  const pendingRequests = vacationRequests.filter(req => req.status === 'pending').length;
+  const approvedRequests = vacationRequests.filter(req => req.status === 'approved').length;
+  const deniedRequests = vacationRequests.filter(req => req.status === 'denied').length;
 
   // Find high-conflict periods
   const getConflictPeriods = () => {
@@ -64,8 +64,8 @@ export default function ConflictSummary({ conflicts, vacationRequests }: Conflic
           <div className="text-sm text-green-600">Approved</div>
         </div>
         <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-          <div className="text-2xl font-bold text-red-600">{rejectedRequests}</div>
-          <div className="text-sm text-red-600">Rejected</div>
+          <div className="text-2xl font-bold text-red-600">{deniedRequests}</div>
+          <div className="text-sm text-red-600">Denied</div>
         </div>
       </div>
 
@@ -158,8 +158,8 @@ export default function ConflictSummary({ conflicts, vacationRequests }: Conflic
                       <div>
                         <span className="font-medium">Status:</span> 
                         <span className={`ml-1 px-2 py-1 rounded text-xs ${
-                          conflict.request1.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                          conflict.request1.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                          conflict.request1.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          conflict.request1.status === 'approved' ? 'bg-green-100 text-green-800' :
                           'bg-red-100 text-red-800'
                         }`}>
                           {conflict.request1.status}
@@ -180,8 +180,8 @@ export default function ConflictSummary({ conflicts, vacationRequests }: Conflic
                       <div>
                         <span className="font-medium">Status:</span> 
                         <span className={`ml-1 px-2 py-1 rounded text-xs ${
-                          conflict.request2.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                          conflict.request2.status === 'APPROVED' ? 'bg-green-100 text-green-800' :
+                          conflict.request2.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                          conflict.request2.status === 'approved' ? 'bg-green-100 text-green-800' :
                           'bg-red-100 text-red-800'
                         }`}>
                           {conflict.request2.status}

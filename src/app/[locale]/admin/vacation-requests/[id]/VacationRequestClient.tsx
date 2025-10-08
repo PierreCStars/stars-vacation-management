@@ -70,7 +70,7 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
     }
   };
 
-  const handleDecision = async (status: 'APPROVED' | 'REJECTED') => {
+  const handleDecision = async (status: 'approved' | 'denied') => {
     if (!request) return;
 
     try {
@@ -194,7 +194,7 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
             <p style={{ color: '#000000' }}>Status: {request.status}</p>
           </div>
 
-          {request.status === 'PENDING' && (
+          {request.status === 'pending' && (
             <div style={{ textAlign: 'center' }}>
               <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#000000', marginBottom: 16 }}>Make a Decision</h2>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -222,7 +222,7 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
                 
                 <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
                   <button
-                    onClick={() => handleDecision('APPROVED')}
+                    onClick={() => handleDecision('approved')}
                     disabled={submitting}
                     style={{
                       flex: 1,
@@ -241,7 +241,7 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
                     {submitting ? 'Processing...' : 'Approve'}
                   </button>
                   <button
-                    onClick={() => handleDecision('REJECTED')}
+                    onClick={() => handleDecision('denied')}
                     disabled={submitting}
                     style={{
                       flex: 1,

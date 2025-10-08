@@ -22,7 +22,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const { id } = await params;
     const body = await req.json();
-    const newStatus = body?.status; // "approved" | "rejected"
+    const newStatus = body?.status; // "approved" | "denied"
     const newStartDate = body?.startDate;
     const newEndDate = body?.endDate;
     const newDurationDays = body?.durationDays;
@@ -37,7 +37,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     };
 
     // Check if this is a status update or a general update
-    const isStatusUpdate = newStatus && ["approved", "rejected"].includes(newStatus);
+    const isStatusUpdate = newStatus && ["approved", "denied"].includes(newStatus);
     const isDateUpdate = newStartDate && newEndDate;
     
     if (!isStatusUpdate && !isDateUpdate) {
@@ -71,14 +71,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
               adminComment
             );
             console.log('[VALIDATION] approved', { id });
-          } else if (newStatus === 'rejected') {
+          } else if (newStatus === 'denied') {
             await vacationService.rejectVacationRequest(
               id, 
               reviewer.name, 
               reviewer.email, 
               adminComment
             );
-            console.log('[VALIDATION] rejected', { id });
+            console.log('[VALIDATION] denied', { id });
           }
           
           // Verify status after update
@@ -141,7 +141,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         }
 
         // Send decision emails and calendar updates using orchestration
-        if (isStatusUpdate && newStatus && (newStatus === 'approved' || newStatus === 'rejected')) {
+        if (isStatusUpdate && newStatus && (newStatus === 'approved' || newStatus === 'denied')) {
           try {
             await decideVacation({
               requesterEmail: requestData.userEmail,

@@ -4,26 +4,11 @@ import { useEffect, useState, useTransition } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
+import { VacationRequest } from '@/types/vacation';
+import { normalizeVacationStatus } from '@/types/vacation-status';
 // import PageHeader from '@/components/ui/PageHeader';
 // import Card from '@/components/ui/Card';
 // import Badge from '@/components/ui/Badge';
-
-interface VacationRequest {
-  id: string;
-  userId: string;
-  userName: string;
-  userEmail: string;
-  startDate: string;
-  endDate: string;
-  reason: string;
-  company: string;
-  type: string;
-  status: string;
-  isHalfDay: boolean;
-  halfDayType: "morning" | "afternoon" | null;
-  durationDays: number;
-  createdAt: string;
-}
 
 interface ConflictEvent {
   id: string;
@@ -87,7 +72,30 @@ export default function VacationRequestDetailPage() {
       const response = await fetch('/api/vacation-requests');
       if (response.ok) {
         const data = await response.json();
-        setAllVacationRequests(Array.isArray(data) ? data : []);
+        const transformedData = Array.isArray(data) ? data.map((r: any): VacationRequest => ({
+          id: r.id,
+          userId: r.userId,
+          userEmail: r.userEmail,
+          userName: r.userName,
+          startDate: r.startDate,
+          endDate: r.endDate,
+          reason: r.reason || '',
+          company: r.company || 'Unknown',
+          type: r.type || 'VACATION',
+          status: normalizeVacationStatus(r.status),
+          createdAt: r.createdAt || new Date().toISOString(),
+          reviewedBy: r.reviewedBy?.name,
+          reviewerEmail: r.reviewedBy?.email,
+          reviewedAt: r.reviewedAt || undefined,
+          adminComment: r.adminComment,
+          included: r.included,
+          openDays: r.openDays,
+          isHalfDay: r.isHalfDay || false,
+          halfDayType: (r.halfDayType as 'morning' | 'afternoon' | null) || null,
+          durationDays: r.durationDays || 0,
+          googleEventId: r.googleEventId
+        })) : [];
+        setAllVacationRequests(transformedData);
       } else {
         console.error('Failed to fetch all vacation requests:', response.status);
         setAllVacationRequests([]);
@@ -484,9 +492,9 @@ export default function VacationRequestDetailPage() {
                 </div>
                 <div className="text-right">
                   <span className={`inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold border ${
-                    vacationRequest.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
-                    vacationRequest.status === 'APPROVED' ? 'bg-green-100 text-green-800 border-green-200' :
-                    vacationRequest.status === 'REJECTED' ? 'bg-red-100 text-red-800 border-red-200' :
+                    vacationRequest.status === 'pending' ? 'bg-yellow-100 text-yellow-800 border-yellow-200' :
+                    vacationRequest.status === 'approved' ? 'bg-green-100 text-green-800 border-green-200' :
+                    vacationRequest.status === 'denied' ? 'bg-red-100 text-red-800 border-red-200' :
                     'bg-gray-100 text-gray-800 border-gray-200'
                   }`}>
                     {vacationRequest.status}
@@ -628,7 +636,7 @@ export default function VacationRequestDetailPage() {
                     Status: <span className="font-medium capitalize">{vacationRequest.status}</span>
                   </p>
                   <p className="text-sm text-gray-500 mt-1">
-                    This request has been {vacationRequest.status === 'approved' ? 'approved' : 'rejected'}.
+                    This request has been {vacationRequest.status === 'approved' ? 'approved' : 'denied'}.
                   </p>
                 </div>
               )}

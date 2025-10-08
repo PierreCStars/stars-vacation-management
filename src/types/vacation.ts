@@ -1,5 +1,7 @@
 export type HalfDayType = "morning" | "afternoon" | null;
 
+import { VacationStatus } from './vacation-status';
+
 export interface VacationRequest {
   id: string;
   userId: string;
@@ -10,11 +12,11 @@ export interface VacationRequest {
   reason?: string;
   company: string;
   type: string;
-  status: string;
+  status: VacationStatus;
   createdAt: string;
   reviewedBy?: string;
   reviewerEmail?: string;
-  reviewedAt?: string;
+  reviewedAt?: string | null;  // Allow null from Firestore
   adminComment?: string;
   included?: boolean;
   openDays?: string;

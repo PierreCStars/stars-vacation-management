@@ -4,7 +4,8 @@ import { useTranslations } from 'next-intl';
 import { useSession } from 'next-auth/react';
 import { VacationRequestWithConflicts } from '@/app/[locale]/admin/vacation-requests/_server/getRequestsWithConflicts';
 import { absoluteUrl } from '@/lib/urls';
-import { isPendingStatus, isReviewedStatus } from '@/types/vacation-status';
+import { isPendingStatus, isReviewedStatus, normalizeVacationStatus } from '@/types/vacation-status';
+import { VacationRequest } from '@/types/vacation';
 import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 
 export default function AdminPendingRequestsV2() {
@@ -50,7 +51,7 @@ export default function AdminPendingRequestsV2() {
     }
   };
 
-  const handleStatusUpdate = async (id: string, status: "approved" | "rejected") => {
+  const handleStatusUpdate = async (id: string, status: "approved" | "denied") => {
     setProcessingRequests(prev => new Set(prev).add(id));
     setActionMessage(null); // Clear previous messages
     
@@ -87,7 +88,7 @@ export default function AdminPendingRequestsV2() {
         // Show success message
         setActionMessage({
           type: 'success',
-          message: `Request ${status === 'approved' ? 'approved' : 'rejected'} successfully!`
+          message: `Request ${status === 'approved' ? 'approved' : 'denied'} successfully!`
         });
         
         // Auto-hide message after 3 seconds
@@ -339,8 +340,8 @@ export default function AdminPendingRequestsV2() {
           ) : (
             <UnifiedVacationCalendar 
               vacationRequests={requests
-                .filter(r => r.status?.toLowerCase() === 'approved')
-                .map(r => ({
+                .filter(r => normalizeVacationStatus(r.status) === 'approved')
+                .map((r): VacationRequest => ({
                   id: r.id,
                   userId: r.userId,
                   userEmail: r.userEmail,
@@ -350,16 +351,16 @@ export default function AdminPendingRequestsV2() {
                   reason: r.reason,
                   company: r.company || 'Unknown',
                   type: r.type || 'VACATION',
-                  status: r.status,
+                  status: normalizeVacationStatus(r.status),
                   createdAt: r.createdAt || new Date().toISOString(),
                   reviewedBy: r.reviewedBy?.name,
                   reviewerEmail: r.reviewedBy?.email,
-                  reviewedAt: r.reviewedAt,
+                  reviewedAt: r.reviewedAt || undefined, // Convert null to undefined
                   adminComment: undefined,
                   included: true,
                   openDays: undefined,
                   isHalfDay: r.isHalfDay,
-                  halfDayType: r.halfDayType,
+                  halfDayType: (r.halfDayType as 'morning' | 'afternoon' | null) || null,
                   durationDays: r.durationDays,
                   googleEventId: undefined
                 }))}
@@ -404,7 +405,7 @@ function RequestsTable({
   requests: VacationRequestWithConflicts[];
   selectedRequests: Set<string>;
   onToggleSelection: (id: string) => void;
-  onStatusUpdate: (id: string, status: "approved" | "rejected") => void;
+  onStatusUpdate: (id: string, status: "approved" | "denied") => void;
   isProcessing: (id: string) => boolean;
   showActions: boolean;
   t: any;
@@ -521,7 +522,7 @@ function RequestsTable({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          onStatusUpdate(request.id, 'rejected');
+                          onStatusUpdate(request.id, 'denied');
                         }}
                         disabled={isProcessing(request.id)}
                         className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -625,7 +626,7 @@ function RequestsTable({
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    onStatusUpdate(request.id, 'rejected');
+                     onStatusUpdate(request.id, 'denied');
                   }}
                   disabled={isProcessing(request.id)}
                   className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -740,7 +741,7 @@ function ReviewedRequestsTable({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    request.status === 'APPROVED' 
+                    request.status === 'approved' 
                       ? 'bg-green-100 text-green-800'
                       : 'bg-red-100 text-red-800'
                   }`}>
@@ -816,7 +817,7 @@ function ReviewedRequestsTable({
             <div className="mb-3">
               <div className="text-sm font-medium text-gray-500">Status</div>
               <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                request.status === 'APPROVED' 
+                request.status === 'approved' 
                   ? 'bg-green-100 text-green-800'
                   : 'bg-red-100 text-red-800'
               }`}>

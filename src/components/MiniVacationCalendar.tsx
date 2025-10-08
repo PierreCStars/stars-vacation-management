@@ -1,6 +1,8 @@
 'use client';
 
 import UnifiedVacationCalendar from './UnifiedVacationCalendar';
+import { VacationRequest } from '@/types/vacation';
+import { VacationStatus } from '@/types/vacation-status';
 
 interface MiniVacationCalendarProps {
   startDate: string;
@@ -18,7 +20,7 @@ export default function MiniVacationCalendar({
   type 
 }: MiniVacationCalendarProps) {
   // Create a mock vacation request for the unified calendar
-  const mockVacationRequest = {
+  const mockVacationRequest: VacationRequest = {
     id: 'mini-calendar',
     userId: 'mini',
     userEmail: 'mini@example.com',
@@ -27,7 +29,7 @@ export default function MiniVacationCalendar({
     endDate,
     company,
     type,
-    status: 'pending',
+    status: 'pending' as VacationStatus,
     createdAt: new Date().toISOString(),
     reason: ''
   };

@@ -12,14 +12,7 @@ export function adminRecipients(): string[] {
     return ["pierre@stars.mc"];
   }
   
-  // Temporarily deactivated email addresses (until further notice)
-  const deactivatedEmails = [
-    'johnny@stars.mc',
-    'daniel@stars.mc', 
-    'compta@stars.mc'
-  ];
-  
-  return list.filter(email => !deactivatedEmails.includes(email.toLowerCase()));
+  return list;
 }
 
 export function mailer() {

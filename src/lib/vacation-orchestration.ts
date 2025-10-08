@@ -2,8 +2,8 @@ import { emailAdapter } from '@/lib/email';
 import { RealCalendarGateway } from '@/lib/calendar/real';
 import { FakeCalendarGateway } from '@/lib/calendar/fake';
 import { ADMINS } from '../../config/admins';
-import { sendAdminNotification, sendEmailToRecipients } from '@/lib/email-notifications';
-import { generateAdminNotificationEmail, generateRequestConfirmationEmail, generateDecisionEmail } from '@/lib/email-templates';
+import { sendAdminNotification, sendEmailToRecipients, getAdminEmails } from '@/lib/email-notifications';
+import { generateAdminNotificationEmail, generateRequestConfirmationEmail, generateDecisionEmail, generateAdminReviewNotificationEmail } from '@/lib/email-templates';
 import type { VacationRequestData } from '@/lib/email-templates';
 
 // On submission:
@@ -134,6 +134,49 @@ export async function decideVacation({
         requestId, 
         decision 
       });
+    }
+
+    // Send admin-to-admin notification (exclude the reviewer from the notification)
+    if (vacationRequestData && reviewedBy) {
+      try {
+        const adminEmails = getAdminEmails();
+        const otherAdmins = adminEmails.filter(email => 
+          email.toLowerCase() !== reviewedBy.toLowerCase()
+        );
+        
+        if (otherAdmins.length > 0) {
+          const adminReviewEmail = generateAdminReviewNotificationEmail({
+            ...vacationRequestData,
+            decision: decision.toLowerCase() as 'approved' | 'denied',
+            reviewedBy,
+            reviewerEmail: reviewedBy, // Assuming reviewedBy is the email
+            reviewedAt: new Date().toISOString(),
+            adminComment
+          });
+          
+          const adminReviewResult = await sendEmailToRecipients(
+            otherAdmins,
+            adminReviewEmail.subject,
+            adminReviewEmail.html,
+            adminReviewEmail.text
+          );
+          
+          if (adminReviewResult.success) {
+            console.log('✅ Admin-to-admin notification sent successfully', { 
+              provider: adminReviewResult.provider, 
+              messageId: adminReviewResult.messageId,
+              recipients: otherAdmins.length
+            });
+          } else {
+            console.error('❌ Failed to send admin-to-admin notification:', adminReviewResult.error);
+          }
+        } else {
+          console.log('ℹ️ No other admins to notify (only reviewer in admin list)');
+        }
+      } catch (error) {
+        console.error('❌ Error sending admin-to-admin notification:', error);
+        // Don't fail the main process if admin notification fails
+      }
     }
 
     // Embedded calendar write (app DB): add or remove depending on decision

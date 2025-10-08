@@ -20,6 +20,26 @@ export interface VacationRequestData {
   locale?: string;
 }
 
+export interface AdminReviewNotificationData {
+  id: string;
+  userName: string;
+  userEmail: string;
+  startDate: string;
+  endDate: string;
+  reason: string;
+  company: string;
+  type: string;
+  isHalfDay: boolean;
+  halfDayType?: 'morning' | 'afternoon' | null;
+  durationDays: number;
+  decision: 'approved' | 'denied';
+  reviewedBy: string;
+  reviewerEmail: string;
+  reviewedAt: string;
+  adminComment?: string;
+  locale?: string;
+}
+
 /**
  * Generate admin notification email for new vacation request
  */
@@ -426,6 +446,196 @@ ${isApproved
   ? 'Your vacation request has been approved. Please ensure you have completed any necessary handover tasks before your vacation begins.'
   : 'If you have any questions about this decision, please contact your manager or HR department.'
 }
+
+---
+Stars Vacation Management System
+`;
+
+  return { subject, html, text };
+}
+/**
+ * Generate admin-to-admin notification email when a request is reviewed
+ */
+export function generateAdminReviewNotificationEmail(data: AdminReviewNotificationData): { subject: string; html: string; text: string } {
+  const adminUrl = adminVacationRequestUrl(data.id, data.locale || 'en');
+  const formattedStartDate = new Date(data.startDate).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  const formattedEndDate = new Date(data.endDate).toLocaleDateString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  });
+  const formattedReviewedAt = new Date(data.reviewedAt).toLocaleString('en-US', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  const isApproved = data.decision === 'approved';
+  const subject = `Vacation Request ${isApproved ? 'Approved' : 'Denied'} by ${data.reviewedBy} - #${data.id}`;
+  
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vacation Request ${isApproved ? 'Approved' : 'Denied'}</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; background-color: #f8fafc; }
+    .container { max-width: 600px; margin: 0 auto; background-color: white; border-radius: 8px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); }
+    .header { background: linear-gradient(135deg, ${isApproved ? '#10b981' : '#ef4444'}, ${isApproved ? '#059669' : '#dc2626'}); color: white; padding: 30px; text-align: center; }
+    .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
+    .header p { margin: 8px 0 0; opacity: 0.9; font-size: 16px; }
+    .content { padding: 30px; }
+    .status-badge { display: inline-block; padding: 8px 16px; border-radius: 20px; font-weight: 600; font-size: 14px; margin-bottom: 20px; }
+    .status-approved { background-color: #d1fae5; color: #065f46; }
+    .status-denied { background-color: #fee2e2; color: #991b1b; }
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+    .info-item { background-color: #f8fafc; padding: 15px; border-radius: 6px; border-left: 4px solid #3b82f6; }
+    .info-label { font-weight: 600; color: #4a5568; font-size: 14px; margin-bottom: 5px; }
+    .info-value { color: #2d3748; font-size: 16px; }
+    .admin-comment { background-color: #f7fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 20px; margin: 20px 0; }
+    .footer { background-color: #f8fafc; padding: 20px; text-align: center; color: #6b7280; font-size: 14px; border-top: 1px solid #e2e8f0; }
+    .reviewer-info { background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 15px; margin: 20px 0; }
+    @media (max-width: 600px) {
+      .info-grid { grid-template-columns: 1fr; }
+      .content { padding: 20px; }
+      .header { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Vacation Request ${isApproved ? 'Approved' : 'Denied'}</h1>
+      <p>Request #${data.id} has been reviewed by another administrator</p>
+    </div>
+    
+    <div class="content">
+      <div class="status-badge ${isApproved ? 'status-approved' : 'status-denied'}">
+        ${isApproved ? '✅ Approved' : '❌ Denied'}
+      </div>
+      
+      <div class="info-grid">
+        <div class="info-item">
+          <div class="info-label">Employee</div>
+          <div class="info-value">${data.userName}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Email</div>
+          <div class="info-value">${data.userEmail}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Company</div>
+          <div class="info-value">${data.company}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Type</div>
+          <div class="info-value">${data.type}${data.isHalfDay ? ` (Half Day - ${data.halfDayType})` : ''}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Start Date</div>
+          <div class="info-value">${formattedStartDate}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">End Date</div>
+          <div class="info-value">${formattedEndDate}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Duration</div>
+          <div class="info-value">${data.durationDays} day${data.durationDays !== 1 ? 's' : ''}</div>
+        </div>
+        <div class="info-item">
+          <div class="info-label">Reason</div>
+          <div class="info-value">${data.reason || 'No reason provided'}</div>
+        </div>
+      </div>
+      
+      <div class="reviewer-info">
+        <h3 style="margin-top: 0; color: #1e40af;">Review Details</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Reviewed by</div>
+            <div class="info-value">${data.reviewedBy}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Reviewer Email</div>
+            <div class="info-value">${data.reviewerEmail}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Reviewed at</div>
+            <div class="info-value">${formattedReviewedAt}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Decision</div>
+            <div class="info-value">${isApproved ? 'Approved' : 'Denied'}</div>
+          </div>
+        </div>
+      </div>
+      
+      ${data.adminComment ? `
+      <div class="admin-comment">
+        <h3 style="margin-top: 0; color: #4a5568;">Admin Comment:</h3>
+        <p style="margin-bottom: 0; color: #2d3748;">${data.adminComment}</p>
+      </div>
+      ` : ''}
+      
+      <p style="margin-top: 30px; color: #6b7280; font-size: 14px;">
+        This vacation request has been ${isApproved ? 'approved' : 'denied'} by ${data.reviewedBy}. 
+        ${isApproved 
+          ? 'The employee has been notified of the approval and the vacation has been added to the calendar.'
+          : 'The employee has been notified of the denial.'
+        }
+      </p>
+    </div>
+    
+    <div class="footer">
+      <p>Stars Vacation Management System</p>
+      <p>View request details: <a href="${adminUrl}">${adminUrl}</a></p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  const text = `
+Vacation Request ${isApproved ? 'Approved' : 'Denied'} by ${data.reviewedBy} - #${data.id}
+
+A vacation request has been reviewed and ${isApproved ? 'approved' : 'denied'} by another administrator.
+
+Request Details:
+- Request ID: #${data.id}
+- Employee: ${data.userName} (${data.userEmail})
+- Company: ${data.company}
+- Type: ${data.type}${data.isHalfDay ? ` (Half Day - ${data.halfDayType})` : ''}
+- Start Date: ${formattedStartDate}
+- End Date: ${formattedEndDate}
+- Duration: ${data.durationDays} day${data.durationDays !== 1 ? 's' : ''}
+- Reason: ${data.reason || 'No reason provided'}
+
+Review Details:
+- Reviewed by: ${data.reviewedBy}
+- Reviewer Email: ${data.reviewerEmail}
+- Reviewed at: ${formattedReviewedAt}
+- Decision: ${isApproved ? 'Approved' : 'Denied'}
+
+${data.adminComment ? `Admin Comment: ${data.adminComment}` : ''}
+
+This vacation request has been ${isApproved ? 'approved' : 'denied'} by ${data.reviewedBy}. 
+${isApproved 
+  ? 'The employee has been notified of the approval and the vacation has been added to the calendar.'
+  : 'The employee has been notified of the denial.'
+}
+
+View request details: ${adminUrl}
 
 ---
 Stars Vacation Management System

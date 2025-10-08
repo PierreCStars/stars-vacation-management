@@ -18,6 +18,7 @@ export default function AdminPendingRequestsV2() {
   const [sortKey, setSortKey] = useState<'userName' | 'company' | 'startDate' | 'reviewedAt'>('startDate');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [actionMessage, setActionMessage] = useState<{type: 'success' | 'error', message: string} | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   
   const { data: session } = useSession();
   const t = useTranslations('admin');
@@ -129,6 +130,53 @@ export default function AdminPendingRequestsV2() {
     });
   };
 
+  const handleCSVExport = async () => {
+    if (isExporting) return;
+    
+    setIsExporting(true);
+    setActionMessage(null);
+    
+    try {
+      const response = await fetch('/api/analytics/vacations.csv?status=all');
+      
+      if (!response.ok) {
+        throw new Error(`Export failed: ${response.status} ${response.statusText}`);
+      }
+      
+      // Get the CSV content
+      const csvContent = await response.text();
+      
+      // Create and download the file
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      const url = URL.createObjectURL(blob);
+      
+      link.setAttribute('href', url);
+      link.setAttribute('download', `vacation-requests-${new Date().toISOString().split('T')[0]}.csv`);
+      link.style.visibility = 'hidden';
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      setActionMessage({
+        type: 'success',
+        message: 'CSV export completed successfully!'
+      });
+      
+      setTimeout(() => setActionMessage(null), 3000);
+      
+    } catch (error) {
+      console.error('CSV export error:', error);
+      setActionMessage({
+        type: 'error',
+        message: `Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const isProcessing = (id: string) => processingRequests.has(id);
   
   // Filter requests by status
@@ -236,14 +284,37 @@ export default function AdminPendingRequestsV2() {
               {/* Pending Requests Header */}
               <div className="mb-6">
                 <div className="flex items-center justify-between">
-                  <h2 className="text-lg font-semibold text-gray-900">
-                    📝 Pending Requests ({pendingRequests.length})
-                  </h2>
-                  {pendingRequests.length > 0 && (
-                    <span className="text-sm text-gray-500">
-                      Review and approve or deny vacation requests
-                    </span>
-                  )}
+                  <div>
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      📝 Pending Requests ({pendingRequests.length})
+                    </h2>
+                    {pendingRequests.length > 0 && (
+                      <p className="text-sm text-gray-500 mt-1">
+                        Review and approve or deny vacation requests
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleCSVExport}
+                      disabled={isExporting || requests.length === 0}
+                      className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isExporting ? (
+                        <>
+                          <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-transparent rounded-full mr-2"></div>
+                          Exporting...
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                          </svg>
+                          Export CSV
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
 

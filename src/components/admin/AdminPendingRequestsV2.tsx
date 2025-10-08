@@ -253,8 +253,22 @@ export default function AdminPendingRequestsV2() {
     );
   }
 
+  console.log('[V2] Rendering UI with', requests.length, 'requests');
+  console.log('[V2] Pending requests:', pendingRequests.length);
+  console.log('[V2] Reviewed requests:', reviewedRequests.length);
+  
   return (
     <div data-test="pending-list-v2" className="p-6">
+      {/* DEBUG: V2 Component Active */}
+      <div className="mb-4 p-3 bg-fuchsia-100 border-2 border-fuchsia-300 rounded-lg">
+        <div className="text-sm font-bold text-fuchsia-800">
+          🚀 ADMIN V2 COMPONENT ACTIVE - {requests.length} requests loaded
+        </div>
+        <div className="text-xs text-fuchsia-600">
+          Pending: {pendingRequests.length} | Reviewed: {reviewedRequests.length}
+        </div>
+      </div>
+      
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">

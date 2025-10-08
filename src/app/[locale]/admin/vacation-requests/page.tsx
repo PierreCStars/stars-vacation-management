@@ -1,10 +1,4 @@
 import { unstable_noStore } from 'next/cache';
-import { getServerSession } from 'next-auth';
-import { redirect } from 'next/navigation';
-import { authOptions } from '@/lib/auth';
-import { getRequestsWithConflicts } from './_server/getRequestsWithConflicts';
-import AdminVacationRequestsClient from './AdminVacationRequestsClient';
-import { isPendingStatus, isReviewedStatus } from '@/types/vacation-status';
 import AdminPendingRequestsV2 from '@/components/admin/AdminPendingRequestsV2';
 
 export const runtime = 'nodejs';

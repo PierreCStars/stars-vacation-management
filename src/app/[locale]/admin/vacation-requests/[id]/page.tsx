@@ -185,7 +185,7 @@ export default function VacationRequestDetailPage() {
   };
 
   // Handle status update (approve/reject)
-  const handleStatusUpdate = async (newStatus: 'approved' | 'rejected') => {
+  const handleStatusUpdate = async (newStatus: 'approved' | 'denied') => {
     if (!vacationRequest || actionLoading) return;
     
     startTransition(async () => {
@@ -574,7 +574,7 @@ export default function VacationRequestDetailPage() {
                       Approve Request
                     </button>
                     <button 
-                      onClick={() => handleStatusUpdate('rejected')}
+                      onClick={() => handleStatusUpdate('denied')}
                       disabled={actionLoading || isPending}
                       className="px-6 py-2 border border-red-300 text-red-700 rounded hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                       data-testid="deny-button"

@@ -210,7 +210,7 @@ export default function AdminVacationRequestsClient({
     );
   }
 
-  async function updateStatus(id: string, status: "approved"|"rejected") {
+  async function updateStatus(id: string, status: "approved"|"denied") {
     try {
       
       const reviewer = {
@@ -270,7 +270,7 @@ export default function AdminVacationRequestsClient({
   };
 
   // Handle bulk actions
-  const handleBulkAction = async (action: "approved" | "rejected") => {
+  const handleBulkAction = async (action: "approved" | "denied") => {
     if (selectedRequests.size === 0) return;
     
     const reviewer = {
@@ -538,7 +538,7 @@ export default function AdminVacationRequestsClient({
                       ✅ Approve All Selected ({selectedRequests.size})
                     </button>
                     <button
-                      onClick={() => handleBulkAction("rejected")}
+                      onClick={() => handleBulkAction("denied")}
                       className="flex-1 bg-red-600 text-white px-4 py-3 rounded-md hover:bg-red-700 font-medium transition-colors"
                     >
                       ❌ Reject All Selected ({selectedRequests.size})
@@ -561,7 +561,7 @@ export default function AdminVacationRequestsClient({
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-lg font-semibold text-gray-900">{t('reviewed')}</h2>
-              <p className="text-sm text-gray-600 mt-1">Requests that have been approved or rejected</p>
+              <p className="text-sm text-gray-600 mt-1">Requests that have been approved or denied</p>
             </div>
             <button 
               onClick={()=>setShowReviewed(s=>!s)} 

@@ -627,7 +627,7 @@ export async function updateVacationRequest(id: string, updates: Partial<Vacatio
     const docRef = doc(db, VACATION_REQUESTS_COLLECTION, id);
     await updateDoc(docRef, {
       ...updates,
-      ...(updates.status === 'approved' || updates.status === 'rejected' ? {
+      ...(updates.status === 'approved' || updates.status === 'denied' ? {
         reviewedAt: serverTimestamp(),
       } : {}),
     });

@@ -8,7 +8,7 @@ import { absoluteUrl } from "@/lib/urls";
 
 interface ResponsiveRequestsListProps {
   requests: VacationRequestWithConflicts[];
-  onUpdateStatus: (id: string, status: "approved" | "rejected") => void;
+  onUpdateStatus: (id: string, status: "approved" | "denied") => void;
   onViewConflicts: (id: string) => void;
   onReviewRequest: (id: string) => void;
   onToggleSelection: (id: string) => void;
@@ -32,7 +32,7 @@ export default function ResponsiveRequestsList({
   console.log('[LAYOUT] ResponsiveRequestsList mounted with', requests.length, 'requests, showActions:', showActions);
   const [processingRequests, setProcessingRequests] = useState<Set<string>>(new Set());
 
-  const handleStatusUpdate = async (id: string, status: "approved" | "rejected") => {
+  const handleStatusUpdate = async (id: string, status: "approved" | "denied") => {
     setProcessingRequests(prev => new Set(prev).add(id));
     try {
       await onUpdateStatus(id, status);
@@ -143,7 +143,7 @@ export default function ResponsiveRequestsList({
 
 interface RequestRowProps {
   request: VacationRequestWithConflicts;
-  onUpdateStatus: (id: string, status: "approved" | "rejected") => void;
+  onUpdateStatus: (id: string, status: "approved" | "denied") => void;
   onViewConflicts: (id: string) => void;
   onReviewRequest: (id: string) => void;
   onToggleSelection: (id: string) => void;
@@ -320,7 +320,7 @@ function ConflictBadge({ conflicts, onViewConflicts, t, compact = false }: Confl
 interface ActionButtonsProps {
   requestId: string;
   userName: string;
-  onUpdateStatus: (id: string, status: "approved" | "rejected") => void;
+  onUpdateStatus: (id: string, status: "approved" | "denied") => void;
   isProcessing: boolean;
   t: (key: string) => string;
   tVacations: (key: string) => string;
@@ -349,7 +349,7 @@ function ActionButtons({
   const handleReject = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    onUpdateStatus(requestId, 'rejected');
+    onUpdateStatus(requestId, 'denied');
   };
 
   return (

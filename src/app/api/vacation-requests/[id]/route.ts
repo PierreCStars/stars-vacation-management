@@ -185,10 +185,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
           }
         }
       } catch (firebaseError) {
-        console.log('⚠️  Firebase not available - using mock update:', firebaseError);
+        console.error('❌ [INVESTIGATION] Firebase operation failed:', firebaseError);
+        return NextResponse.json({ 
+          error: 'Firebase operation failed', 
+          details: firebaseError instanceof Error ? firebaseError.message : String(firebaseError) 
+        }, { status: 500 });
       }
-      
-      // Firebase is the only source of truth - no mock storage fallback
 
       const updatedRequest = {
         id,
@@ -216,38 +218,11 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       });
 
     } catch (firebaseError) {
-      console.error('❌ Firebase error:', firebaseError);
-      
-      // Fallback to mock data if Firebase fails
-      console.log('⚠️  Falling back to mock data update...');
-      
-      const updatedRequest = {
-        id,
-        ...(isStatusUpdate ? {
-          status: newStatus,
-          reviewedAt: new Date().toISOString(),
-          reviewedBy: reviewer
-        } : {}),
-        ...(isDateUpdate ? {
-          startDate: newStartDate,
-          endDate: newEndDate,
-          durationDays: newDurationDays,
-          updatedAt: new Date().toISOString()
-        } : {})
-      };
-
-      console.log('✅ Vacation request updated successfully (mock)');
-      console.log('📧 Status emails would be sent here (when SMTP configured)');
-
-      const message = isStatusUpdate 
-        ? `Vacation request ${newStatus} successfully`
-        : 'Vacation request dates updated successfully';
-
+      console.error('❌ [INVESTIGATION] Firebase operation failed:', firebaseError);
       return NextResponse.json({ 
-        ok: true, 
-        request: updatedRequest,
-        message
-      });
+        error: 'Firebase operation failed', 
+        details: firebaseError instanceof Error ? firebaseError.message : String(firebaseError) 
+      }, { status: 500 });
     }
 
   } catch (error) {

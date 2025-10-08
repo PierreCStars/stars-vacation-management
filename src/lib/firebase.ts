@@ -205,7 +205,7 @@ export interface VacationRequest {
   reason?: string;
   company: string;
   type: string;
-  status: 'pending' | 'approved' | 'rejected';
+  status: 'pending' | 'approved' | 'denied';
   isHalfDay?: boolean;
   halfDayType?: 'morning' | 'afternoon' | null;
   durationDays?: number;
@@ -323,7 +323,7 @@ export class VacationRequestsService {
   }
 
   // Get vacation requests by status
-  async getVacationRequestsByStatus(status: 'pending' | 'approved' | 'rejected'): Promise<VacationRequest[]> {
+  async getVacationRequestsByStatus(status: 'pending' | 'approved' | 'denied'): Promise<VacationRequest[]> {
     try {
       const vacationRequestsRef = collection(this.db, VACATION_REQUESTS_COLLECTION);
       const q = query(
@@ -642,7 +642,7 @@ export async function updateVacationRequest(id: string, updates: Partial<Vacatio
 // Update vacation request status
 export async function updateVacationRequestStatus(
   id: string,
-  status: 'pending' | 'approved' | 'rejected',
+  status: 'pending' | 'approved' | 'denied',
   comment?: string,
   reviewerName?: string,
   reviewerEmail?: string
@@ -653,7 +653,7 @@ export async function updateVacationRequestStatus(
     updates.adminComment = comment;
   }
   
-  if (status === 'approved' || status === 'rejected') {
+  if (status === 'approved' || status === 'denied') {
     updates.reviewedBy = reviewerName || 'Unknown';
     updates.reviewerEmail = reviewerEmail || '';
   }

@@ -32,7 +32,7 @@ export async function POST() {
     const pendingRequests = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }));
+    })) as any[];
 
     console.log(`📋 Found ${pendingRequests.length} pending vacation requests`);
 

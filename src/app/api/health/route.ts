@@ -18,6 +18,8 @@ export async function GET() {
         required: envStatus.required,
         firebase: envStatus.firebase,
       },
+      debug: envStatus.debug || null,
+      rawEnvVar: process.env.NEXT_PUBLIC_ENABLE_FIREBASE,
     };
 
     return NextResponse.json(healthData, { 

@@ -12,11 +12,17 @@ import { syncEventForRequest, refreshCacheTags } from '@/lib/calendar/sync';
 const GOOGLE_CALENDAR_ID = 'c_e98f5350bf743174f87e1a786038cb9d103c306b7246c6200684f81c37a6a764@group.calendar.google.com';
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  console.log('🔍 [INVESTIGATION] API PATCH route called');
   try {
     const session = await getServerSession(authOptions) as any;
+    console.log('🔍 [INVESTIGATION] Session data:', { 
+      hasSession: !!session, 
+      userEmail: session?.user?.email, 
+      userName: session?.user?.name 
+    });
     
     if (!session?.user?.email) {
-      console.log('[VALIDATION] unauthorized', { userEmail: session?.user?.email });
+      console.log('🔍 [INVESTIGATION] Unauthorized - no session or email');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -28,7 +34,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const newDurationDays = body?.durationDays;
     const adminComment = body?.adminComment;
     
-    console.log('[VALIDATION] start', { id, newStatus, userEmail: session.user.email });
+    console.log('🔍 [INVESTIGATION] Request body parsed:', { 
+      id, 
+      newStatus, 
+      newStartDate, 
+      newEndDate, 
+      newDurationDays, 
+      adminComment,
+      userEmail: session.user.email 
+    });
     
     const reviewer = {
       id: session.user.email,
@@ -40,7 +54,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     const isStatusUpdate = newStatus && ["approved", "denied"].includes(newStatus);
     const isDateUpdate = newStartDate && newEndDate;
     
+    console.log('🔍 [INVESTIGATION] Update type check:', { 
+      isStatusUpdate, 
+      isDateUpdate, 
+      newStatus, 
+      validStatuses: ["approved", "denied"].includes(newStatus) 
+    });
+    
     if (!isStatusUpdate && !isDateUpdate) {
+      console.log('🔍 [INVESTIGATION] Invalid update request - returning 400');
       return NextResponse.json({ error: 'Invalid update request - must be status update or date update' }, { status: 400 });
     }
 
@@ -57,33 +79,40 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         
         // Handle status updates
         if (isStatusUpdate) {
-          console.log('[VALIDATION] updating_status', { id, newStatus, reviewer });
+          console.log('🔍 [INVESTIGATION] Starting status update:', { id, newStatus, reviewer });
           
           // Get current status before update for debugging
           const currentData = await vacationService.getVacationRequestById(id);
-          console.log('[VALIDATION] current_status_before', { id, currentStatus: currentData?.status });
+          console.log('🔍 [INVESTIGATION] Current status before update:', { id, currentStatus: currentData?.status });
           
           if (newStatus === 'approved') {
+            console.log('🔍 [INVESTIGATION] Calling approveVacationRequest...');
             await vacationService.approveVacationRequest(
               id, 
               reviewer.name, 
               reviewer.email, 
               adminComment
             );
-            console.log('[VALIDATION] approved', { id });
+            console.log('🔍 [INVESTIGATION] approveVacationRequest completed');
           } else if (newStatus === 'denied') {
+            console.log('🔍 [INVESTIGATION] Calling rejectVacationRequest...');
             await vacationService.rejectVacationRequest(
               id, 
               reviewer.name, 
               reviewer.email, 
               adminComment
             );
-            console.log('[VALIDATION] denied', { id });
+            console.log('🔍 [INVESTIGATION] rejectVacationRequest completed');
           }
           
           // Verify status after update
           const updatedData = await vacationService.getVacationRequestById(id);
-          console.log('[VALIDATION] status_after_update', { id, newStatus, actualStatus: updatedData?.status });
+          console.log('🔍 [INVESTIGATION] Status after update verification:', { 
+            id, 
+            expectedStatus: newStatus, 
+            actualStatus: updatedData?.status,
+            success: updatedData?.status === newStatus
+          });
         }
         
         // Handle date updates

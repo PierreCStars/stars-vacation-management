@@ -54,29 +54,48 @@ export default function AdminPendingRequestsV2() {
   };
 
   const handleStatusUpdate = async (id: string, status: "approved" | "denied") => {
-    console.log('[V2] Starting status update:', { id, status });
-    console.log('[V2] Current requests state:', requests.map(r => ({ id: r.id, status: r.status, userName: r.userName })));
+    console.log('🔍 [INVESTIGATION] CLICK approve/reject button:', { id, status });
+    console.log('🔍 [INVESTIGATION] Session data:', { 
+      hasSession: !!session, 
+      userEmail: session?.user?.email, 
+      userName: session?.user?.name 
+    });
+    console.log('🔍 [INVESTIGATION] Current requests state:', requests.map(r => ({ id: r.id, status: r.status, userName: r.userName })));
     setProcessingRequests(prev => new Set(prev).add(id));
     setActionMessage(null); // Clear previous messages
     
     try {
+      const requestPayload = {
+        status,
+        reviewerName: session?.user?.name || 'Admin',
+        reviewerEmail: session?.user?.email || 'admin@stars.mc',
+        adminComment: status === 'approved' ? 'Approved via admin panel' : 'Rejected via admin panel'
+      };
+      
+      console.log('🔍 [INVESTIGATION] Making API request:', {
+        url: `/api/vacation-requests/${id}`,
+        method: 'PATCH',
+        payload: requestPayload
+      });
+      
       const response = await fetch(`/api/vacation-requests/${id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          status,
-          reviewerName: session?.user?.name || 'Admin',
-          reviewerEmail: session?.user?.email || 'admin@stars.mc',
-          adminComment: status === 'approved' ? 'Approved via admin panel' : 'Rejected via admin panel'
-        }),
+        body: JSON.stringify(requestPayload),
       });
       
-      console.log('[V2] API response status:', response.status);
+      console.log('🔍 [INVESTIGATION] API response received:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok
+      });
 
       if (response.ok) {
-        console.log(`[V2] API response OK, updating local state for request ${id} to status ${status}`);
+        const responseData = await response.json();
+        console.log('🔍 [INVESTIGATION] API response data:', responseData);
+        console.log('🔍 [INVESTIGATION] API response OK, updating local state for request', { id, status });
         
         // Update the request status locally
         setRequests(prev => {
@@ -93,7 +112,7 @@ export default function AdminPendingRequestsV2() {
                 }
               : req
           );
-          console.log(`[V2] Local state updated:`, updated.map(r => ({ id: r.id, status: r.status, userName: r.userName })));
+          console.log('🔍 [INVESTIGATION] Local state updated:', updated.map(r => ({ id: r.id, status: r.status, userName: r.userName })));
           return updated;
         });
         
@@ -115,6 +134,11 @@ export default function AdminPendingRequestsV2() {
         }, 1000);
       } else {
         const errorText = await response.text();
+        console.error('🔍 [INVESTIGATION] API error response:', {
+          status: response.status,
+          statusText: response.statusText,
+          errorText: errorText
+        });
         setActionMessage({
           type: 'error',
           message: `Failed to ${status} request: ${response.status} ${errorText}`
@@ -122,6 +146,7 @@ export default function AdminPendingRequestsV2() {
         console.error(`[V2] Failed to ${status} request:`, response.status);
       }
     } catch (error) {
+      console.error('🔍 [INVESTIGATION] Network/parsing error:', error);
       setActionMessage({
         type: 'error',
         message: `Error ${status} request: ${error instanceof Error ? error.message : 'Unknown error'}`

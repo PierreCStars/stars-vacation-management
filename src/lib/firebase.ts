@@ -396,6 +396,7 @@ export class VacationRequestsService {
   // Approve vacation request
   async approveVacationRequest(id: string, reviewedBy: string, reviewerEmail: string, adminComment?: string): Promise<void> {
     try {
+      console.log('🔍 [INVESTIGATION] Firebase approveVacationRequest called:', { id, reviewedBy, reviewerEmail, adminComment });
       const docRef = doc(this.db, VACATION_REQUESTS_COLLECTION, id);
       const updateData: any = {
         status: 'approved', // Use lowercase canonical format
@@ -410,11 +411,12 @@ export class VacationRequestsService {
         updateData.adminComment = adminComment;
       }
       
-      console.log('[FIREBASE] approveVacationRequest', { id, status: 'approved', reviewedBy, reviewerEmail });
+      console.log('🔍 [INVESTIGATION] Firebase updateData:', updateData);
+      console.log('🔍 [INVESTIGATION] Firebase docRef:', docRef.path);
       await updateDoc(docRef, updateData);
-      console.log('[FIREBASE] approveVacationRequest success', { id });
+      console.log('🔍 [INVESTIGATION] Firebase updateDoc completed successfully');
     } catch (error) {
-      console.error('Error approving vacation request:', error);
+      console.error('🔍 [INVESTIGATION] Firebase approveVacationRequest error:', error);
       throw new Error('Failed to approve vacation request');
     }
   }
@@ -422,6 +424,7 @@ export class VacationRequestsService {
   // Reject vacation request
   async rejectVacationRequest(id: string, reviewedBy: string, reviewerEmail: string, adminComment?: string): Promise<void> {
     try {
+      console.log('🔍 [INVESTIGATION] Firebase rejectVacationRequest called:', { id, reviewedBy, reviewerEmail, adminComment });
       const docRef = doc(this.db, VACATION_REQUESTS_COLLECTION, id);
       const updateData: any = {
         status: 'denied', // Use 'denied' to match AdminPendingRequestsV2
@@ -436,11 +439,12 @@ export class VacationRequestsService {
         updateData.adminComment = adminComment;
       }
       
-      console.log('[FIREBASE] rejectVacationRequest', { id, status: 'denied', reviewedBy, reviewerEmail });
+      console.log('🔍 [INVESTIGATION] Firebase updateData:', updateData);
+      console.log('🔍 [INVESTIGATION] Firebase docRef:', docRef.path);
       await updateDoc(docRef, updateData);
-      console.log('[FIREBASE] rejectVacationRequest success', { id });
+      console.log('🔍 [INVESTIGATION] Firebase updateDoc completed successfully');
     } catch (error) {
-      console.error('Error rejecting vacation request:', error);
+      console.error('🔍 [INVESTIGATION] Firebase rejectVacationRequest error:', error);
       throw new Error('Failed to reject vacation request');
     }
   }

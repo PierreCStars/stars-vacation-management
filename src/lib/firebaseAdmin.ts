@@ -32,9 +32,11 @@ export function getFirebaseAdmin(): {
   const clientEmail = process.env.FIREBASE_ADMIN_CLIENT_EMAIL;
   const privateKey = normalizePrivateKey(process.env.FIREBASE_ADMIN_PRIVATE_KEY);
 
-  console.log('[FIREBASE] Admin init projectId=', projectId);
-  console.log('[FIREBASE] Admin init clientEmail=', clientEmail);
-  console.log('[FIREBASE] Admin init privateKey length=', privateKey?.length || 0);
+          console.log('🔍 [INVESTIGATION] Firebase Admin init projectId=', projectId);
+          console.log('🔍 [INVESTIGATION] Firebase Admin init clientEmail=', clientEmail);
+          console.log('🔍 [INVESTIGATION] Firebase Admin init privateKey length=', privateKey?.length || 0);
+          console.log('🔍 [INVESTIGATION] Firebase Admin runtime=', process.env.NEXT_RUNTIME || 'unknown');
+          console.log('🔍 [INVESTIGATION] Firebase Admin Vercel region=', process.env.VERCEL_REGION || 'unknown');
 
   if (!projectId || !clientEmail || !privateKey) {
     console.error('[FIREBASE] Missing required environment variables:', {
@@ -52,10 +54,11 @@ export function getFirebaseAdmin(): {
           credential: cert({ projectId, clientEmail, privateKey }),
         });
 
-    const db = getFirestore(app);
-    console.log('✅ Firebase Admin initialized successfully');
-    console.log('[FIREBASE] Admin connected to project:', projectId);
-    return { app, db, error: null };
+            const db = getFirestore(app);
+            console.log('🔍 [INVESTIGATION] ✅ Firebase Admin initialized successfully');
+            console.log('🔍 [INVESTIGATION] Firebase Admin connected to project:', projectId);
+            console.log('🔍 [INVESTIGATION] Firebase Admin collection path: vacationRequests');
+            return { app, db, error: null };
   } catch (error) {
     console.error('❌ Firebase Admin initialization failed:', error);
     return { app: null, db: null, error: (error as Error).message };

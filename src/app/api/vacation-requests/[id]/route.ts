@@ -182,12 +182,36 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       // Send decision emails and calendar updates using orchestration
       if (isStatusUpdate && newStatus && (newStatus === 'approved' || newStatus === 'denied')) {
         try {
+          // Prepare vacation request data for email
+          const vacationRequestData = {
+            id: requestData.id || id,
+            userName: requestData.userName || 'Unknown',
+            userEmail: requestData.userEmail || 'unknown@stars.mc',
+            startDate: requestData.startDate,
+            endDate: requestData.endDate,
+            reason: requestData.reason || 'No reason provided',
+            company: requestData.company || 'Unknown',
+            type: requestData.type || 'Full day',
+            isHalfDay: requestData.isHalfDay || false,
+            halfDayType: requestData.halfDayType || null,
+            durationDays: requestData.durationDays || 1,
+            status: newStatus,
+            createdAt: requestData.createdAt || new Date().toISOString(),
+            reviewedBy: reviewer.name,
+            reviewerEmail: reviewer.email,
+            reviewedAt: new Date().toISOString(),
+            adminComment: adminComment
+          };
+
           await decideVacation({
             requesterEmail: requestData.userEmail,
             requestId: id,
             decision: newStatus === 'approved' ? 'APPROVED' : 'DENIED',
             startIso: requestData.startDate,
-            endIso: requestData.endDate
+            endIso: requestData.endDate,
+            vacationRequestData,
+            adminComment,
+            reviewedBy: reviewer.name
           });
           console.log(`✅ Decision emails and calendar updates sent for ${newStatus} request`);
         } catch (orchestrationError) {

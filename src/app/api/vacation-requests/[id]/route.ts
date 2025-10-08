@@ -196,7 +196,9 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             halfDayType: requestData.halfDayType || null,
             durationDays: requestData.durationDays || 1,
             status: newStatus,
-            createdAt: requestData.createdAt || new Date().toISOString(),
+            createdAt: typeof requestData.createdAt === 'string' 
+              ? requestData.createdAt 
+              : requestData.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
             reviewedBy: reviewer.name,
             reviewerEmail: reviewer.email,
             reviewedAt: new Date().toISOString(),

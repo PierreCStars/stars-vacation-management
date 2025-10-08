@@ -220,6 +220,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         message
       });
 
+    } catch (error) {
+      console.error('❌ Firebase operation failed:', error);
+      return NextResponse.json({ 
+        error: 'Firebase operation failed', 
+        details: error instanceof Error ? error.message : String(error) 
+      }, { status: 500 });
+    }
+
   } catch (error) {
     console.error('❌ Error updating vacation request:', error);
     return NextResponse.json(

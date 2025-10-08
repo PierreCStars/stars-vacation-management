@@ -41,7 +41,8 @@ export default function AdminPendingRequestsV2() {
         const data = await response.json();
         setRequests(data);
         console.log('[V2] Fetched', data.length, 'vacation requests');
-        console.log('[V2] Request statuses:', (data as VacationRequest[]).map((r: VacationRequest) => ({ id: r.id, status: r.status, userName: r.userName })));
+        console.log('[V2] Request IDs and statuses:', (data as VacationRequest[]).map((r: VacationRequest) => ({ id: r.id, status: r.status, userName: r.userName })));
+        console.log('[V2] Full request data:', data);
       } else {
         console.error('[V2] Failed to fetch vacation requests:', response.status);
       }
@@ -54,6 +55,7 @@ export default function AdminPendingRequestsV2() {
 
   const handleStatusUpdate = async (id: string, status: "approved" | "denied") => {
     console.log('[V2] Starting status update:', { id, status });
+    console.log('[V2] Current requests state:', requests.map(r => ({ id: r.id, status: r.status, userName: r.userName })));
     setProcessingRequests(prev => new Set(prev).add(id));
     setActionMessage(null); // Clear previous messages
     

@@ -10,8 +10,25 @@ import { normalizeVacationStatus } from '@/types/vacation-status';
 
 // Utility function to load and parse Google credentials
 function loadGoogleCreds() {
+  // Try base64 encoded key first (recommended)
+  const base64Key = process.env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64;
+  if (base64Key) {
+    try {
+      const decoded = Buffer.from(base64Key, 'base64').toString('utf-8');
+      const obj = JSON.parse(decoded);
+      if (!obj.client_email || !obj.private_key) {
+        throw new Error("Clé de service Google invalide (champs manquants)");
+      }
+      obj.private_key = String(obj.private_key).replace(/\\n/g, "\n");
+      return { client_email: obj.client_email, private_key: obj.private_key };
+    } catch (error) {
+      console.error('Failed to decode base64 key:', error);
+    }
+  }
+
+  // Fallback to raw key
   const raw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-  if (!raw) throw new Error("GOOGLE_SERVICE_ACCOUNT_KEY manquante");
+  if (!raw) throw new Error("No Google service account key found");
 
   // 1) Si c'est du JSON (cas recommandé en .env)
   if (safeStartsWith(raw, "{")) {
@@ -103,8 +120,8 @@ export async function GET(request: NextRequest) {
     const includeVacationRequests = searchParams.get('includeVacationRequests') !== 'false';
 
     // Check if Google Calendar credentials are available
-    const hasGoogleCreds = process.env.GOOGLE_SERVICE_ACCOUNT_KEY || 
-                          process.env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64 ||
+    const hasGoogleCreds = process.env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64 ||
+                          process.env.GOOGLE_SERVICE_ACCOUNT_KEY || 
                           (process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY);
     
     if (!hasGoogleCreds) {

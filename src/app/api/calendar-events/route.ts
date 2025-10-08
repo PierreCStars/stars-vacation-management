@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
     try {
       auth = new google.auth.GoogleAuth({
         credentials: loadGoogleCreds(),
-        scopes: ['https://www.googleapis.com/auth/calendar.readonly'],
+        scopes: ['https://www.googleapis.com/auth/calendar'],
       });
 
       calendar = google.calendar({ version: 'v3', auth });

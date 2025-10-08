@@ -30,10 +30,18 @@ export function getAdminEmails(): string[] {
     return ['pierre@stars.mc']; // Fallback
   }
   
+  // Temporarily deactivated email addresses (until further notice)
+  const deactivatedEmails = [
+    'johnny@stars.mc',
+    'daniel@stars.mc', 
+    'compta@stars.mc'
+  ];
+  
   return adminEmails
     .split(',')
     .map(email => email.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .filter(email => !deactivatedEmails.includes(email.toLowerCase()));
 }
 
 /**

@@ -6,11 +6,20 @@ export function adminRecipients(): string[] {
     .split(",")
     .map(s => safeTrim(s, ''))
     .filter(Boolean);
+  
   if (list.length === 0) {
     // Fallback: ensure at least pierre gets the alert
     return ["pierre@stars.mc"];
   }
-  return list;
+  
+  // Temporarily deactivated email addresses (until further notice)
+  const deactivatedEmails = [
+    'johnny@stars.mc',
+    'daniel@stars.mc', 
+    'compta@stars.mc'
+  ];
+  
+  return list.filter(email => !deactivatedEmails.includes(email.toLowerCase()));
 }
 
 export function mailer() {

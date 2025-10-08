@@ -1,13 +1,16 @@
 import { AuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
+import { assertRequiredEnv } from "@/lib/env/required";
+
+// Validate required environment variables at module load time
+assertRequiredEnv();
 
 // Ensure we have a valid secret
 const getSecret = () => {
   const secret = process.env.NEXTAUTH_SECRET;
   if (!secret) {
-    console.warn('NEXTAUTH_SECRET is missing; using fallback only in DEV.');
-    return "fallback-secret-for-development-only";
+    throw new Error('NEXTAUTH_SECRET is required but not set');
   }
   return secret;
 };

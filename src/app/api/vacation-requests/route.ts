@@ -37,9 +37,53 @@ export async function GET() {
     }
     
     // Fallback to mock data if Firebase is not available
-    // Return empty array for production
-    const mockData: any[] = [];
+    // Return mock data for development/testing
+    const mockData: any[] = [
+      {
+        id: 'mock-1',
+        userId: 'user-1',
+        userEmail: 'pierre@stars.mc',
+        userName: 'Pierre Corbucci',
+        company: 'STARS_MC',
+        type: 'VACATION',
+        startDate: '2025-01-15',
+        endDate: '2025-01-17',
+        status: 'pending',
+        reason: 'Family vacation',
+        createdAt: new Date().toISOString(),
+        durationDays: 3
+      },
+      {
+        id: 'mock-2',
+        userId: 'user-2',
+        userEmail: 'daniel@stars.mc',
+        userName: 'Daniel Smith',
+        company: 'STARS_MC',
+        type: 'VACATION',
+        startDate: '2025-01-20',
+        endDate: '2025-01-22',
+        status: 'pending',
+        reason: 'Personal time off',
+        createdAt: new Date().toISOString(),
+        durationDays: 3
+      },
+      {
+        id: 'mock-3',
+        userId: 'user-3',
+        userEmail: 'johnny@stars.mc',
+        userName: 'Johnny Doe',
+        company: 'STARS_MC',
+        type: 'SICK_LEAVE',
+        startDate: '2025-01-25',
+        endDate: '2025-01-25',
+        status: 'pending',
+        reason: 'Medical appointment',
+        createdAt: new Date().toISOString(),
+        durationDays: 1
+      }
+    ];
 
+    console.log(`📊 Returning ${mockData.length} mock vacation requests`);
     return NextResponse.json(mockData);
   } catch (error) {
     console.error('❌ Error fetching vacation requests:', error);

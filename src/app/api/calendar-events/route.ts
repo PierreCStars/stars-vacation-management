@@ -216,10 +216,16 @@ export async function GET(request: NextRequest) {
         if (db) {
           const snapshot = await db
             .collection('vacationRequests')
-            .where('status', '==', 'approved')
             .get();
           
-          firestoreEvents = snapshot.docs.map(doc => {
+          // Filter approved requests using normalization
+          const approvedRequests = snapshot.docs.filter(doc => {
+            const data = doc.data();
+            const normalizedStatus = normalizeVacationStatus(data.status);
+            return normalizedStatus === 'approved';
+          });
+          
+          firestoreEvents = approvedRequests.map(doc => {
             const data = doc.data();
             return {
               id: `firestore_${doc.id}`,
@@ -231,7 +237,7 @@ export async function GET(request: NextRequest) {
               company: data.company || 'Unknown',
               userName: data.userName || 'Unknown',
               source: 'firestore',
-              calendarEventId: data.calendarEventId
+              calendarEventId: data.calendarEventId || data.googleCalendarEventId
             };
           });
           console.log(`✅ Added ${firestoreEvents.length} Firestore vacation events`);

@@ -6,6 +6,7 @@
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { addVacationToCalendar, deleteVacationFromCalendar, CAL_TARGET } from '@/lib/google-calendar';
 import { revalidateTag, revalidatePath } from 'next/cache';
+import { normalizeVacationStatus } from '@/types/vacation-status';
 
 export interface CalendarEventData {
   id: string;
@@ -43,8 +44,9 @@ export async function ensureEventForRequest(
     });
 
     // Only create/update events for approved requests
-    if (requestDoc.status !== 'approved') {
-      console.log('[CALENDAR] ensure_event skip', { id: requestDoc.id, status: requestDoc.status });
+    const normalizedStatus = normalizeVacationStatus(requestDoc.status);
+    if (normalizedStatus !== 'approved') {
+      console.log('[CALENDAR] ensure_event skip', { id: requestDoc.id, status: requestDoc.status, normalizedStatus });
       return { success: true };
     }
 
@@ -52,7 +54,7 @@ export async function ensureEventForRequest(
     const docRef = db.collection('vacationRequests').doc(requestDoc.id);
     const doc = await docRef.get();
     const existingData = doc.data();
-    const existingEventId = existingData?.calendarEventId;
+    const existingEventId = existingData?.calendarEventId || existingData?.googleCalendarEventId;
 
     if (existingEventId) {
       console.log('[CALENDAR] ensure_event exists', { id: requestDoc.id, eventId: existingEventId });
@@ -75,6 +77,7 @@ export async function ensureEventForRequest(
     // Store the event ID in Firestore for idempotency
     await docRef.update({
       calendarEventId: eventId,
+      googleCalendarEventId: eventId, // Also store in legacy field for compatibility
       calendarSyncedAt: new Date().toISOString()
     });
 
@@ -111,7 +114,7 @@ export async function deleteEventForRequest(
     const docRef = db.collection('vacationRequests').doc(requestDoc.id);
     const doc = await docRef.get();
     const existingData = doc.data();
-    const existingEventId = existingData?.calendarEventId;
+    const existingEventId = existingData?.calendarEventId || existingData?.googleCalendarEventId;
 
     if (!existingEventId) {
       console.log('[CALENDAR] delete_event skip', { id: requestDoc.id, reason: 'no_event_id' });
@@ -125,6 +128,7 @@ export async function deleteEventForRequest(
     // Clear the event ID from Firestore
     await docRef.update({
       calendarEventId: null,
+      googleCalendarEventId: null, // Also clear legacy field
       calendarSyncedAt: new Date().toISOString()
     });
 
@@ -181,7 +185,8 @@ export async function syncEventForRequest(
     };
   }
 
-  if (requestDoc.status === 'approved') {
+  const normalizedStatus = normalizeVacationStatus(requestDoc.status);
+  if (normalizedStatus === 'approved') {
     return await ensureEventForRequest(db, requestDoc);
   } else {
     return await deleteEventForRequest(db, requestDoc);

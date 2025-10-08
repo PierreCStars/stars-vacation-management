@@ -6,6 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { google } from 'googleapis';
 import { safeTrim, safeStartsWith } from '@/lib/strings';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
+import { normalizeVacationStatus } from '@/types/vacation-status';
 
 // Utility function to load and parse Google credentials
 function loadGoogleCreds() {
@@ -38,10 +39,16 @@ async function getFirestoreEventsOnly(includeVacationRequests: boolean) {
       if (db) {
         const snapshot = await db
           .collection('vacationRequests')
-          .where('status', '==', 'approved')
           .get();
         
-        firestoreEvents = snapshot.docs.map(doc => {
+        // Filter approved requests using normalization
+        const approvedRequests = snapshot.docs.filter(doc => {
+          const data = doc.data();
+          const normalizedStatus = normalizeVacationStatus(data.status);
+          return normalizedStatus === 'approved';
+        });
+        
+        firestoreEvents = approvedRequests.map(doc => {
           const data = doc.data();
           return {
             id: `firestore_${doc.id}`,
@@ -53,7 +60,7 @@ async function getFirestoreEventsOnly(includeVacationRequests: boolean) {
             company: data.company || 'Unknown',
             userName: data.userName || 'Unknown',
             source: 'firestore',
-            calendarEventId: data.calendarEventId
+            calendarEventId: data.calendarEventId || data.googleCalendarEventId
           };
         });
         console.log(`✅ Added ${firestoreEvents.length} Firestore vacation events`);
@@ -96,7 +103,11 @@ export async function GET(request: NextRequest) {
     const includeVacationRequests = searchParams.get('includeVacationRequests') !== 'false';
 
     // Check if Google Calendar credentials are available
-    if (!process.env.GOOGLE_SERVICE_ACCOUNT_KEY) {
+    const hasGoogleCreds = process.env.GOOGLE_SERVICE_ACCOUNT_KEY || 
+                          process.env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64 ||
+                          (process.env.GOOGLE_CLIENT_EMAIL && process.env.GOOGLE_PRIVATE_KEY);
+    
+    if (!hasGoogleCreds) {
       console.log('[CALENDAR_API] Google Calendar credentials not available, returning Firestore events only');
       return await getFirestoreEventsOnly(includeVacationRequests);
     }

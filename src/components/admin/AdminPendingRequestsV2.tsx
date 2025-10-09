@@ -832,10 +832,10 @@ function ReviewedRequestsTable({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <div className="font-medium">
-                    {request.reviewedBy?.name || request.reviewedBy || 'Admin'}
+                    {request.approvedByName || request.reviewedBy?.name || 'Admin'}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {request.reviewerEmail || ''}
+                    {request.approvedByEmail || request.reviewedBy?.email || ''}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -844,7 +844,7 @@ function ReviewedRequestsTable({
                       {request.reviewedAt ? new Date(request.reviewedAt).toLocaleDateString() : '—'}
                     </div>
                     <div className="text-xs text-gray-500">
-                      by {request.reviewedBy?.name || 'Admin'}
+                      {request.reviewedAt ? new Date(request.reviewedAt).toLocaleTimeString() : ''}
                     </div>
                   </div>
                 </td>
@@ -918,10 +918,10 @@ function ReviewedRequestsTable({
             <div className="mb-3">
               <div className="text-sm font-medium text-gray-500">Approved by</div>
               <div className="text-sm text-gray-900">
-                {request.reviewedBy?.name || request.reviewedBy || 'Admin'}
+                {request.approvedByName || request.reviewedBy?.name || 'Admin'}
               </div>
               <div className="text-xs text-gray-500">
-                {request.reviewerEmail || ''}
+                {request.approvedByEmail || request.reviewedBy?.email || ''}
               </div>
             </div>
             
@@ -931,7 +931,7 @@ function ReviewedRequestsTable({
                 {request.reviewedAt ? new Date(request.reviewedAt).toLocaleDateString() : '—'}
               </div>
               <div className="text-xs text-gray-500">
-                by {request.reviewedBy?.name || 'Admin'}
+                {request.reviewedAt ? new Date(request.reviewedAt).toLocaleTimeString() : ''}
               </div>
             </div>
           </div>

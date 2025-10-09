@@ -5,26 +5,29 @@
 
 export type VacationRequest = {
   id: string;
-  userId?: string;
-  userName?: string;
-  userEmail?: string;
-  company?: string;
-  type?: string;
-  startDate?: string;
-  endDate?: string;
+  userId: string;
+  userEmail: string;
+  userName: string;
+  startDate: string; // ISO
+  endDate: string;   // ISO
+  company: string;
+  type: string;
+  status: "pending" | "approved" | "denied"; // (no 'rejected')
+  createdAt: string;            // ISO
+  updatedAt?: string;           // ISO optional
+  reviewedAt?: string | null;   // allow null
+  approvedByName?: string | null;
+  approvedByEmail?: string | null;
+  googleEventId?: string;
+  // Legacy fields for backward compatibility
   isHalfDay?: boolean;
   halfDayType?: 'morning' | 'afternoon' | null;
   reason?: string;
-  status?: 'pending' | 'approved' | 'denied' | string;
-  createdAt?: string | Date;
-  updatedAt?: string | Date;
-  reviewedAt?: string | Date;
   reviewedBy?: {
     id: string;
     name: string;
     email: string;
   };
-  googleEventId?: string;
 };
 
 export type VacationRequestForm = {

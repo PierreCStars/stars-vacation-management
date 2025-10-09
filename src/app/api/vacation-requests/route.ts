@@ -11,6 +11,7 @@ import { sendAdminNotification } from '@/lib/mailer';
 import { getBaseUrl } from '@/lib/base-url';
 import { getFirebaseAdmin } from '@/lib/firebase/admin';
 import { VacationRequest } from '@/types/vacation';
+import { mapFromFirestore } from '@/lib/requests/mapFromFirestore';
 import { submitVacation } from '@/lib/vacation-orchestration';
 
 // No mock data - Firebase only
@@ -32,18 +33,8 @@ export async function GET() {
     console.log('🔥 Firebase Admin connected, querying vacationRequests collection...');
     const snapshot = await db.collection('vacationRequests').get();
     const requests = snapshot.docs.map(doc => {
-      const data = doc.data();
-      // Convert Firestore Timestamps to ISO strings
-      const convertedData = {
-        ...data,
-        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
-        reviewedAt: data.reviewedAt?.toDate?.()?.toISOString() || data.reviewedAt,
-        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
-      };
-      return {
-        id: doc.id,
-        ...convertedData
-      } as VacationRequest;
+      const data = doc.data() as any;
+      return mapFromFirestore(doc.id, data);
     });
     
     console.log(`📊 Loaded ${requests.length} vacation requests from Firebase`);

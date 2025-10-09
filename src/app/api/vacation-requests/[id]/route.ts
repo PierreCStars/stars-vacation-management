@@ -95,13 +95,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         const currentData = { id: docSnap.id, ...docSnap.data() } as VacationRequest;
         console.log('🔍 [INVESTIGATION] Current status before update:', { id, currentStatus: currentData?.status });
         
-        const updateData: any = {
-          status: newStatus,
-          reviewedBy: reviewer.name,
-          reviewerEmail: reviewer.email,
-          reviewedAt: new Date(),
-          updatedAt: new Date()
-        };
+                const updateData: any = {
+                  status: newStatus,
+                  reviewedBy: reviewer.name,
+                  reviewerEmail: reviewer.email,
+                  reviewedAt: new Date(),
+                  approvedByName: reviewer.name,
+                  approvedByEmail: reviewer.email,
+                  updatedAt: new Date()
+                };
         
         // Only include adminComment if it's provided and not undefined
         if (adminComment !== undefined && adminComment !== null && adminComment !== '') {

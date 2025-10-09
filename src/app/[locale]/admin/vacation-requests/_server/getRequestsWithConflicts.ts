@@ -13,6 +13,8 @@ export interface VacationRequestWithConflicts {
   status: VacationStatus;
   reviewedAt?: string | null;
   reviewedBy?: { id?: string; name?: string; email?: string } | null;
+  approvedByName?: string | null;
+  approvedByEmail?: string | null;
   createdAt?: string;
   reason?: string;
   isHalfDay?: boolean;

@@ -776,6 +776,9 @@ function ReviewedRequestsTable({
                 Status
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Approved by
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {t('reviewedAt')}
               </th>
             </tr>
@@ -826,6 +829,14 @@ function ReviewedRequestsTable({
                   }`}>
                     {request.status}
                   </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <div className="font-medium">
+                    {request.reviewedBy?.name || request.reviewedBy || 'Admin'}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {request.reviewerEmail || ''}
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <div>
@@ -902,6 +913,16 @@ function ReviewedRequestsTable({
               }`}>
                 {request.status}
               </span>
+            </div>
+            
+            <div className="mb-3">
+              <div className="text-sm font-medium text-gray-500">Approved by</div>
+              <div className="text-sm text-gray-900">
+                {request.reviewedBy?.name || request.reviewedBy || 'Admin'}
+              </div>
+              <div className="text-xs text-gray-500">
+                {request.reviewerEmail || ''}
+              </div>
             </div>
             
             <div className="mb-3">

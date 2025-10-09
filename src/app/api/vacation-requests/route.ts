@@ -31,10 +31,20 @@ export async function GET() {
 
     console.log('🔥 Firebase Admin connected, querying vacationRequests collection...');
     const snapshot = await db.collection('vacationRequests').get();
-    const requests = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    })) as VacationRequest[];
+    const requests = snapshot.docs.map(doc => {
+      const data = doc.data();
+      // Convert Firestore Timestamps to ISO strings
+      const convertedData = {
+        ...data,
+        createdAt: data.createdAt?.toDate?.()?.toISOString() || data.createdAt,
+        reviewedAt: data.reviewedAt?.toDate?.()?.toISOString() || data.reviewedAt,
+        updatedAt: data.updatedAt?.toDate?.()?.toISOString() || data.updatedAt,
+      };
+      return {
+        id: doc.id,
+        ...convertedData
+      };
+    }) as VacationRequest[];
     
     console.log(`📊 Loaded ${requests.length} vacation requests from Firebase`);
     console.log('📊 Firebase requests:', requests.map(r => ({ id: r.id, userName: r.userName, status: r.status })));

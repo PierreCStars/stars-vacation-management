@@ -39,12 +39,27 @@ export type VacationRequestRaw = {
   createdAt?: FSTimestamp;
   updatedAt?: FSTimestamp;
   reviewedAt?: FSTimestamp | null;
+  reviewedBy?: string | { name?: string; email?: string } | null;
   approvedByName?: string | null;
   approvedByEmail?: string | null;
   googleEventId?: string | null;
 };
 
 export function mapFromFirestore(id: string, data: VacationRequestRaw) {
+  // Handle both string and object formats for reviewedBy
+  let reviewerName = data.approvedByName;
+  let reviewerEmail = data.approvedByEmail;
+  
+  // If new fields are not available, try to extract from reviewedBy
+  if (!reviewerName && data.reviewedBy) {
+    if (typeof data.reviewedBy === 'string') {
+      reviewerName = data.reviewedBy;
+    } else if (typeof data.reviewedBy === 'object' && data.reviewedBy?.name) {
+      reviewerName = data.reviewedBy.name;
+      reviewerEmail = data.reviewedBy.email || reviewerEmail;
+    }
+  }
+
   return {
     id,
     userId: data.userId ?? "",
@@ -58,8 +73,8 @@ export function mapFromFirestore(id: string, data: VacationRequestRaw) {
     createdAt: tsToIso(data.createdAt) ?? new Date().toISOString(),
     updatedAt: tsToIso(data.updatedAt),
     reviewedAt: tsToIso(data.reviewedAt ?? undefined) ?? null,
-    approvedByName: data.approvedByName ?? null,
-    approvedByEmail: data.approvedByEmail ?? null,
+    approvedByName: reviewerName ?? null,
+    approvedByEmail: reviewerEmail ?? null,
     googleEventId: data.googleEventId ?? undefined,
   } satisfies import("@/types/vacations").VacationRequest;
 }

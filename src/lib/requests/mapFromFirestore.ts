@@ -52,13 +52,18 @@ export function mapFromFirestore(id: string, data: VacationRequestRaw) {
   
   // If new fields are not available, try to extract from reviewedBy
   if (!reviewerName && data.reviewedBy) {
+    console.log(`[MAPPER] Extracting reviewer from reviewedBy:`, { id, reviewedBy: data.reviewedBy, type: typeof data.reviewedBy });
     if (typeof data.reviewedBy === 'string') {
       reviewerName = data.reviewedBy;
+      console.log(`[MAPPER] Extracted reviewer name from string:`, reviewerName);
     } else if (typeof data.reviewedBy === 'object' && data.reviewedBy?.name) {
       reviewerName = data.reviewedBy.name;
       reviewerEmail = data.reviewedBy.email || reviewerEmail;
+      console.log(`[MAPPER] Extracted reviewer name from object:`, reviewerName);
     }
   }
+
+  console.log(`[MAPPER] Final reviewer info:`, { id, reviewerName, reviewerEmail });
 
   return {
     id,

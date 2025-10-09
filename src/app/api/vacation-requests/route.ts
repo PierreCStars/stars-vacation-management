@@ -43,8 +43,8 @@ export async function GET() {
       return {
         id: doc.id,
         ...convertedData
-      };
-    }) as VacationRequest[];
+      } as VacationRequest;
+    });
     
     console.log(`📊 Loaded ${requests.length} vacation requests from Firebase`);
     console.log('📊 Firebase requests:', requests.map(r => ({ id: r.id, userName: r.userName, status: r.status })));

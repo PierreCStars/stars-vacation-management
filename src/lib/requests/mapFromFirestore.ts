@@ -9,8 +9,17 @@ export function tsToIso(ts: FSTimestamp): string | undefined {
     return isNaN(d.getTime()) ? undefined : d.toISOString();
   }
   if (ts instanceof Date) return ts.toISOString();
+  
+  // Handle Firestore Timestamp with _seconds/_nanoseconds
+  if (ts && typeof ts === 'object' && '_seconds' in ts) {
+    const seconds = (ts as any)._seconds;
+    const nanoseconds = (ts as any)._nanoseconds || 0;
+    const date = new Date(seconds * 1000 + nanoseconds / 1000000);
+    return isNaN(date.getTime()) ? undefined : date.toISOString();
+  }
+  
   try {
-    // Firestore Timestamp-like
+    // Firestore Timestamp-like with toDate method
     const d = (ts as any).toDate?.();
     if (d instanceof Date && !isNaN(d.getTime())) return d.toISOString();
   } catch {}

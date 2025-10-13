@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useMemo, useEffect } from 'react';
+import { useTranslations } from 'next-intl';
 import { VacationRequest } from '@/types/vacation';
 import { getCompanyHexColor } from '@/lib/company-colors';
 
@@ -75,6 +76,9 @@ export default function UnifiedVacationCalendar({
   const [companyEvents, setCompanyEvents] = useState<CompanyEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [mounted, setMounted] = useState(false);
+
+  // Use next-intl translations
+  const tCalendar = useTranslations('calendar');
 
   // Set mounted state after component mounts
   useEffect(() => {
@@ -243,19 +247,19 @@ export default function UnifiedVacationCalendar({
         <div className="flex items-center justify-between">
           <div className="flex-1 min-w-0">
             <h2 className={`font-bold ${compact ? 'text-lg' : 'text-lg sm:text-xl'} truncate`}>
-              🗓️ <span className="hidden sm:inline">Vacation & Company Calendar</span>
-              <span className="sm:hidden">Calendar</span>
+              🗓️ <span className="hidden sm:inline">{tCalendar('vacationCompanyCalendar')}</span>
+              <span className="sm:hidden">{tCalendar('calendar')}</span>
               <span className="ml-2 text-xs bg-yellow-200 text-yellow-800 px-1.5 py-0.5 rounded" data-version="responsive-v1">📱</span>
             </h2>
             <p className="text-blue-100 text-xs sm:text-sm mt-1">
-              {compact ? 'Team availability & company events' : 'Monitor team availability, company events, and detect scheduling conflicts'}
+              {compact ? tCalendar('teamAvailabilityCompanyEvents') : tCalendar('monitorTeamAvailability')}
             </p>
           </div>
           <div className="flex items-center space-x-1 sm:space-x-2">
             <button
               onClick={goToPreviousMonth}
               className="p-1.5 sm:p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-all duration-200"
-              title="Previous month"
+              title={tCalendar('previousMonth')}
             >
               <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -266,14 +270,14 @@ export default function UnifiedVacationCalendar({
               onClick={goToToday}
               className="px-2 sm:px-3 py-1 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-all duration-200 font-semibold text-xs sm:text-sm"
             >
-              <span className="hidden sm:inline">Today</span>
+              <span className="hidden sm:inline">{tCalendar('today')}</span>
               <span className="sm:hidden">Now</span>
             </button>
             
             <button
               onClick={goToNextMonth}
               className="p-1.5 sm:p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-all duration-200"
-              title="Next month"
+              title={tCalendar('nextMonth')}
             >
               <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />

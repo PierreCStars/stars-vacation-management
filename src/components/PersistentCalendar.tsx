@@ -1,8 +1,11 @@
 'use client';
 
+import { useTranslations } from 'next-intl';
 import GoogleCalendar from './GoogleCalendar';
 
 export default function PersistentCalendar() {
+  const tCalendar = useTranslations('calendar');
+  
   // Show the calendar in a centered container below page content
   return (
     <div
@@ -34,7 +37,7 @@ export default function PersistentCalendar() {
             margin: 0,
           }}
         >
-          Stars Vacation Calendar
+          {tCalendar('starsVacationCalendar')}
         </h3>
       </div>
       

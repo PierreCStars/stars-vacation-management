@@ -19,6 +19,7 @@ export default function DashboardClient() {
   const tCommon = useTranslations('common');
   const tNav = useTranslations('nav');
   const tVacations = useTranslations('vacations');
+  const tCalendar = useTranslations('calendar');
 
   // Check if user is admin
   const isAdmin = session?.user?.email === 'pierre@stars.mc';
@@ -105,13 +106,13 @@ export default function DashboardClient() {
             color: '#111827',
             marginBottom: '1.5rem'
           }}>
-            Global Vacation & Company Calendar
+            {tCalendar('globalVacationCompanyCalendar')}
           </h2>
           <div className="text-center py-8">
             {loading ? (
               <>
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading vacation calendar...</p>
+                <p className="text-gray-600">{tCalendar('loadingVacationCalendar')}</p>
               </>
             ) : (
               <UnifiedVacationCalendar vacationRequests={vacationRequests.filter(r => r.status?.toLowerCase() === 'approved')} />

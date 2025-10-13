@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useLanguage } from '../contexts/LanguageContext';
+import { useTranslations } from 'next-intl';
 import CompanyLegend from './ui/CompanyLegend';
 
 // Specific calendar ID for the Stars vacation calendar
@@ -20,7 +20,7 @@ export default function GoogleCalendar({
   title = 'Stars Vacation Calendar',
   _userEmail
 }: GoogleCalendarProps) {
-  const { t } = useLanguage();
+  const tCalendar = useTranslations('calendar');
   const [currentDate] = useState(new Date());
   const [viewMode, setViewMode] = useState<'WEEK' | 'MONTH'>('WEEK');
 
@@ -153,7 +153,7 @@ export default function GoogleCalendar({
             onMouseOver={(e) => e.currentTarget.style.background = '#2563eb'}
             onMouseOut={(e) => e.currentTarget.style.background = '#3b82f6'}
           >
-            Open Full Calendar
+            {tCalendar('openFullCalendar')}
           </button>
         </div>
 
@@ -164,13 +164,13 @@ export default function GoogleCalendar({
           fontSize: '12px'
         }}>
           <p style={{ margin: '0 0 8px 0' }}>
-            <strong>Team Vacation Calendar</strong> - Week of {getDisplayText()}
+            <strong>{tCalendar('teamVacationCalendar')}</strong> - {tCalendar('weekOf')} {getDisplayText()}
           </p>
           <p style={{ margin: '0 0 8px 0' }}>
-            Click "Open Full Calendar" to view in Google Calendar directly.
+            {tCalendar('clickOpenFullCalendar')}
           </p>
           <p style={{ margin: 0 }}>
-            This provides the best experience and full functionality.
+            {tCalendar('bestExperience')}
           </p>
         </div>
 
@@ -201,7 +201,7 @@ export default function GoogleCalendar({
           color: '#1e40af',
           fontWeight: '500'
         }}>
-          Switch to Full Mode
+          {tCalendar('switchToFullMode')}
         </p>
       </div>
 
@@ -228,7 +228,7 @@ export default function GoogleCalendar({
             color: '#64748b',
             fontStyle: 'italic'
           }}>
-            Calendar preview - Events are color-coded by company
+            {tCalendar('calendarPreview')}
           </p>
         </div>
         

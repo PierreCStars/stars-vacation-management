@@ -71,7 +71,7 @@ export async function sendGmailSMTP(to: string[], subject: string, body: string)
     });
 
     const info = await transporter.sendMail({
-      from: `"hr@stars.mc" <${process.env.SMTP_FROM || gmailUser}>`,
+      from: `"hr@stars.mc" <${process.env.SMTP_FROM || 'hr@stars.mc'}>`,
       to: to.join(', '),
       subject: subject,
       html: body,
@@ -151,7 +151,7 @@ export async function sendCustomSMTP(to: string[], subject: string, body: string
     });
 
     const info = await transporter.sendMail({
-      from: `"hr@stars.mc" <${process.env.SMTP_FROM}>`,
+      from: `"hr@stars.mc" <${process.env.SMTP_FROM || 'hr@stars.mc'}>`,
       to: to.join(', '),
       subject,
       html: body,

@@ -12,8 +12,10 @@ Add these to your `.env.local` file and Vercel environment variables:
 # SMTP Settings
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
-SMTP_USER=notifications@stars.mc
+SMTP_USER=pierre@stars.mc
 SMTP_PASS=your_app_password
+SMTP_FROM=hr@stars.mc
+FROM_EMAIL=hr@stars.mc
 
 # App Configuration
 APP_BASE_URL=http://localhost:3000  # or your production URL
@@ -38,7 +40,9 @@ ADMIN_EMAILS=daniel@stars.mc,johnny@stars.mc,compta@stars.mc,pierre@stars.mc
 
 ### 3. Update Environment Variables
 - Set `SMTP_PASS` to the generated app password
-- Ensure `SMTP_USER` is your Gmail address
+- Set `SMTP_USER` to pierre@stars.mc (for authentication)
+- Set `SMTP_FROM` to hr@stars.mc (for sender display)
+- Set `FROM_EMAIL` to hr@stars.mc (for email service)
 
 ## Vercel Deployment
 

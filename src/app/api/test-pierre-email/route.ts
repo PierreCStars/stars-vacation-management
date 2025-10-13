@@ -51,7 +51,7 @@ export async function GET(req: Request) {
       });
 
       const info = await transporter.sendMail({
-        from: `"hr@stars.mc" <${process.env.SMTP_FROM || 'hr@stars.mc'}>`,
+        from: `"rh@stars.mc" <${process.env.SMTP_FROM || 'rh@stars.mc'}>`,
         to: testEmail, // Only send to pierre@stars.mc
         subject: `[TEST] ${subject}`,
         html,

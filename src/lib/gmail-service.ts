@@ -41,7 +41,7 @@ try {
       email: credentials.client_email,
       key: credentials.private_key,
       scopes: GMAIL_SCOPES,
-      subject: 'hr@stars.mc' // Use domain-wide delegation with hr@stars.mc
+      subject: 'rh@stars.mc' // Use domain-wide delegation with rh@stars.mc
     });
     
     gmail = google.gmail({ version: 'v1', auth });
@@ -73,8 +73,8 @@ export async function sendEmail(to: string[], subject: string, body: string) {
       return true;
     }
 
-    // Create email message - use hr@stars.mc as both sender and display name
-    const fromEmail = 'hr@stars.mc';
+    // Create email message - use rh@stars.mc as both sender and display name
+    const fromEmail = 'rh@stars.mc';
     const message = createEmailMessage(fromEmail, to, subject, body);
 
     try {
@@ -114,7 +114,7 @@ export async function sendEmail(to: string[], subject: string, body: string) {
 // Helper function to create email message in base64 format
 function createEmailMessage(from: string, to: string[], subject: string, body: string): string {
   const emailLines = [
-    `From: "HR Stars" <hr@stars.mc>`,
+    `From: "RH Stars" <rh@stars.mc>`,
     `Reply-To: pierre@stars.mc`,
     `Sender: pierre@stars.mc`,
     `To: ${to.join(', ')}`,

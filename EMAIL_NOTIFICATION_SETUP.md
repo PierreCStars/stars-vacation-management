@@ -14,8 +14,8 @@ SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
 SMTP_USER=pierre@stars.mc
 SMTP_PASS=your_app_password
-SMTP_FROM=hr@stars.mc
-FROM_EMAIL=hr@stars.mc
+SMTP_FROM=rh@stars.mc
+FROM_EMAIL=rh@stars.mc
 
 # App Configuration
 APP_BASE_URL=http://localhost:3000  # or your production URL
@@ -41,8 +41,8 @@ ADMIN_EMAILS=pierre@stars.mc
 ### 3. Update Environment Variables
 - Set `SMTP_PASS` to the generated app password
 - Set `SMTP_USER` to pierre@stars.mc (for authentication)
-- Set `SMTP_FROM` to hr@stars.mc (for sender display)
-- Set `FROM_EMAIL` to hr@stars.mc (for email service)
+- Set `SMTP_FROM` to rh@stars.mc (for sender display)
+- Set `FROM_EMAIL` to rh@stars.mc (for email service)
 
 ## Vercel Deployment
 

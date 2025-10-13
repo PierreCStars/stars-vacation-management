@@ -40,7 +40,7 @@ export function getAdminEmails(): string[] {
  * Get sender email from environment
  */
 export function getFromEmail(): string {
-  return process.env.FROM_EMAIL || 'hr@stars.mc';
+  return process.env.FROM_EMAIL || 'rh@stars.mc';
 }
 
 /**
@@ -59,7 +59,7 @@ export async function sendViaResend(config: EmailConfig): Promise<EmailResult> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: '"HR Stars" <hr@stars.mc>',
+        from: '"RH Stars" <rh@stars.mc>',
         replyTo: 'pierre@stars.mc',
         to: config.to,
         subject: config.subject,

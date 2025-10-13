@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ADMINS, isAdmin, isReadOnlyAdmin, isFullAdmin } from '../../config/admins';
+import { ADMINS, isAdmin, isReadOnlyAdmin, isFullAdmin } from '../../src/config/admins';
 
 describe('Admin configuration', () => {
   it('has correct admin list', () => {

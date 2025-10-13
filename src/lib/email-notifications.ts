@@ -111,9 +111,9 @@ export async function sendViaSMTP(config: EmailConfig): Promise<EmailResult> {
     });
 
     const info = await transporter.sendMail({
-      from: '"HR Stars" <hr@stars.mc>',
+      from: '"RH Stars" <rh@stars.mc>',
       replyTo: 'pierre@stars.mc',
-      sender: 'pierre@stars.mc',
+      sender: 'rh@stars.mc',
       to: config.to.join(', '),
       subject: config.subject,
       html: config.html,

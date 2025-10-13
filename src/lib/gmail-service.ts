@@ -116,7 +116,7 @@ function createEmailMessage(from: string, to: string[], subject: string, body: s
   const emailLines = [
     `From: "RH Stars" <rh@stars.mc>`,
     `Reply-To: pierre@stars.mc`,
-    `Sender: pierre@stars.mc`,
+    `Sender: rh@stars.mc`,
     `To: ${to.join(', ')}`,
     `Subject: ${subject}`,
     'MIME-Version: 1.0',

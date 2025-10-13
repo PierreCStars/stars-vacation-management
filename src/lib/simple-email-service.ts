@@ -25,7 +25,7 @@ export async function sendSimpleEmail(to: string[], subject: string, body: strin
     const info = await transporter.sendMail({
       from: '"RH Stars" <rh@stars.mc>',
       replyTo: 'pierre@stars.mc',
-      sender: 'pierre@stars.mc',
+      sender: 'rh@stars.mc',
       to: to.join(', '),
       subject: subject,
       html: body,
@@ -75,7 +75,7 @@ export async function sendGmailSMTP(to: string[], subject: string, body: string)
     const info = await transporter.sendMail({
       from: '"RH Stars" <rh@stars.mc>',
       replyTo: 'pierre@stars.mc',
-      sender: 'pierre@stars.mc',
+      sender: 'rh@stars.mc',
       to: to.join(', '),
       subject: subject,
       html: body,
@@ -158,7 +158,7 @@ export async function sendCustomSMTP(to: string[], subject: string, body: string
     const info = await transporter.sendMail({
       from: '"RH Stars" <rh@stars.mc>',
       replyTo: 'pierre@stars.mc',
-      sender: 'pierre@stars.mc',
+      sender: 'rh@stars.mc',
       to: to.join(', '),
       subject,
       html: body,

@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { useSession } from 'next-auth/react';
 import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 import { VacationRequest } from '@/types/vacation';
+import { createLocaleUrl } from '@/i18n/routing';
 
 export default function DashboardClient() {
   const pathname = usePathname();
@@ -23,6 +24,9 @@ export default function DashboardClient() {
 
   // Check if user is admin
   const isAdmin = session?.user?.email === 'pierre@stars.mc';
+  
+  // Get current locale from pathname
+  const currentLocale = pathname?.split('/')[1] || 'en';
 
   // Fetch vacation requests on component mount
   useEffect(() => {
@@ -50,7 +54,7 @@ export default function DashboardClient() {
       <div className="max-w-6xl mx-auto">
         {/* Header Section */}
         <div className="text-center mb-12" style={{textAlign: 'center', marginBottom: '3rem'}}>
-          <Link href="/en/dashboard">
+          <Link href={createLocaleUrl('/dashboard', currentLocale)}>
             <Image
               src="/stars-logo.png"
               alt="Stars Logo"
@@ -169,7 +173,7 @@ export default function DashboardClient() {
               </p>
             </div>
             <Link 
-              href="/en/vacation-request"
+              href={createLocaleUrl('/vacation-request', currentLocale)}
               className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200"
               style={{
                 display: 'inline-block',
@@ -231,7 +235,7 @@ export default function DashboardClient() {
               </div>
               <div className="space-y-3">
                 <Link 
-                  href="/en/admin/vacation-requests"
+                  href={createLocaleUrl('/admin/vacation-requests', currentLocale)}
                   className="inline-block bg-purple-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-purple-700 transition-colors duration-200"
                   style={{
                     display: 'inline-block',
@@ -248,7 +252,7 @@ export default function DashboardClient() {
                 </Link>
                 <br />
                 <Link 
-                  href="/en/admin/analytics"
+                  href={createLocaleUrl('/admin/analytics', currentLocale)}
                   className="inline-block bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200"
                   style={{
                     display: 'inline-block',

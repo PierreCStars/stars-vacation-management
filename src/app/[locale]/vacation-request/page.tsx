@@ -7,6 +7,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { VacationRequest } from '@/types/vacation';
 import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
+import { createLocaleUrl } from '@/i18n/routing';
 
 export default function VacationRequestPage() {
   const [formData, setFormData] = useState({
@@ -172,7 +173,7 @@ export default function VacationRequestPage() {
         <div className="w-full max-w-6xl mx-auto px-6">
           {/* Header with Navigation - REMOVED as Navigation component handles it */}
           <div className="text-center mb-8">
-            <Link href="/dashboard">
+            <Link href={createLocaleUrl('/dashboard', currentLocale)}>
               <Image
                 src="/stars-logo.png"
                 alt="Stars Logo"
@@ -206,7 +207,7 @@ export default function VacationRequestPage() {
                 </p>
                 <div className="flex justify-center space-x-4">
                   <Link
-                    href="/dashboard"
+                    href={createLocaleUrl('/dashboard', currentLocale)}
                     className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200"
                   >
                     {tVacations('backToDashboard')}
@@ -386,7 +387,7 @@ export default function VacationRequestPage() {
                 {/* Form Actions */}
                 <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
                   <Link
-                    href="/dashboard"
+                    href={createLocaleUrl('/dashboard', currentLocale)}
                     className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
                   >
                     {tCommon('cancel')}

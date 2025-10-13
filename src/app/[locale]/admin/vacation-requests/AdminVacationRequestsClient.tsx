@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useEffect } from "react";
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -13,6 +13,7 @@ import { isFirebaseEnabled } from "@/lib/firebase/client";
 import { VacationRequestWithConflicts } from './_server/getRequestsWithConflicts';
 import ResponsiveRequestsList from '@/components/admin/ResponsiveRequestsList';
 import { isPendingStatus, isReviewedStatus } from '@/types/vacation-status';
+import { createLocaleUrl } from '@/i18n/routing';
 
 // Handle browser extension interference - moved to useEffect
 
@@ -32,10 +33,14 @@ export default function AdminVacationRequestsClient({
   version
 }: AdminVacationRequestsClientProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const { data: session, status } = useSession();
   const t = useTranslations('admin');
   const tCommon = useTranslations('common');
   const tVacations = useTranslations('vacations');
+  
+  // Get current locale from pathname
+  const currentLocale = pathname?.split('/')[1] || 'en';
 
   // Client-side state for interactive features
   const [sortKey, setSortKey] = useState<"date"|"employee"|"company"|"type"|"status">("date");
@@ -617,7 +622,7 @@ export default function AdminVacationRequestsClient({
                     >
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                         <Link 
-                          href={`/en/admin/vacation-requests/${r.id}`}
+                          href={createLocaleUrl(`/admin/vacation-requests/${r.id}`, currentLocale)}
                           className="text-blue-600 hover:text-blue-800 hover:underline"
                           onClick={(e) => e.stopPropagation()}
                         >

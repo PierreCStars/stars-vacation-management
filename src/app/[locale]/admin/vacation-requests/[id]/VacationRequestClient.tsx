@@ -2,11 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 import CalendarConflictsPanel from '@/components/CalendarConflictsPanel';
+import { createLocaleUrl } from '@/i18n/routing';
 
 import { VacationRequest } from '@/types/vacation';
 
@@ -17,7 +18,11 @@ interface VacationRequestClientProps {
 export default function VacationRequestClient({ id }: VacationRequestClientProps) {
   const { data: session, status } = useSession();
   const router = useRouter();
+  const pathname = usePathname();
   const [request, setRequest] = useState<VacationRequest | null>(null);
+  
+  // Get current locale from pathname
+  const currentLocale = pathname?.split('/')[1] || 'en';
   const [allVacationRequests, setAllVacationRequests] = useState<VacationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -132,7 +137,7 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
             {error || 'Request not found'}
           </h2>
           <Link 
-            href="/admin/vacation-requests"
+            href={createLocaleUrl('/admin/vacation-requests', currentLocale)}
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -159,7 +164,7 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
         {/* Centered Stars Logo */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 32 }}>
-          <Link href="/dashboard">
+          <Link href={createLocaleUrl('/dashboard', currentLocale)}>
             <Image
               src="/stars-logo.png"
               alt="Stars Logo"
@@ -294,7 +299,7 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
         {/* Back to Requests Button */}
         <div style={{ marginTop: 32, textAlign: 'center' }}>
           <Link 
-            href="/admin/vacation-requests"
+            href={createLocaleUrl('/admin/vacation-requests', currentLocale)}
             style={{
               display: 'inline-flex',
               alignItems: 'center',

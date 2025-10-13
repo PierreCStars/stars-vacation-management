@@ -22,7 +22,7 @@ APP_BASE_URL=http://localhost:3000  # or your production URL
 APP_TIMEZONE=Europe/Monaco
 
 # Admin Recipients
-ADMIN_EMAILS=daniel@stars.mc,johnny@stars.mc,compta@stars.mc,pierre@stars.mc
+ADMIN_EMAILS=pierre@stars.mc
 ```
 
 ## Gmail Setup Instructions

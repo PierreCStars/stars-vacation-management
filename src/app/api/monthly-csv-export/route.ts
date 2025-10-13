@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if user is admin
-    const adminEmails = ['pierre@stars.mc', 'johnny@stars.mc', 'daniel@stars.mc', 'compta@stars.mc'];
+    const adminEmails = ['pierre@stars.mc'];
     if (!adminEmails.includes(session.user.email)) {
       return NextResponse.json({ error: 'Access denied. Admin privileges required.' }, { status: 403 });
     }
@@ -93,10 +93,10 @@ Vacation Management System</p>
 ${csvContent}
 </pre>`;
 
-    const result = await sendEmailWithFallbacks(['compta@stars.mc'], emailSubject, emailWithCSV);
+    const result = await sendEmailWithFallbacks(['pierre@stars.mc'], emailSubject, emailWithCSV);
 
     if (result.success) {
-      console.log(`✅ Monthly CSV export sent successfully to compta@stars.mc`);
+      console.log(`✅ Monthly CSV export sent successfully to pierre@stars.mc`);
       console.log(`📧 Subject: ${emailSubject}`);
       console.log(`📊 Records: ${reviewedRequests.length}`);
     } else {
@@ -195,10 +195,10 @@ ${csvContent}
 </pre>`;
 
     // Send email
-    const result = await sendEmailWithFallbacks(['compta@stars.mc'], emailSubject, emailBody);
+    const result = await sendEmailWithFallbacks(['pierre@stars.mc'], emailSubject, emailBody);
 
     if (result.success) {
-      console.log(`✅ Automatic monthly CSV export sent successfully to compta@stars.mc`);
+      console.log(`✅ Automatic monthly CSV export sent successfully to pierre@stars.mc`);
       console.log(`📧 Subject: ${emailSubject}`);
       console.log(`📊 Records: ${reviewedRequests.length}`);
     } else {

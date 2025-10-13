@@ -1,9 +1,7 @@
 export type AdminAccess = 'ALL';
 
 export const ADMINS: { email: string; access: AdminAccess }[] = [
-  { email: 'Daniel@stars.mc', access: 'ALL' },
-  { email: 'Johnny@stars.mc', access: 'ALL' },
-  { email: 'Compta@stars.mc', access: 'ALL' },
+  { email: 'Pierre@stars.mc', access: 'ALL' },
 ];
 
 // Utility

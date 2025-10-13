@@ -23,10 +23,7 @@ export default function AnalyticsPage() {
     }
 
     // Check if user has admin access for analytics
-    const isAdmin = session.user.email === 'johnny@stars.mc' || 
-                    session.user.email === 'daniel@stars.mc' || 
-                    session.user.email === 'pierre@stars.mc' || 
-                    session.user.email === 'compta@stars.mc';
+    const isAdmin = session.user.email === 'pierre@stars.mc';
 
     if (!isAdmin) {
       router.push('/dashboard');
@@ -50,10 +47,7 @@ export default function AnalyticsPage() {
   }
 
   // Check if user has admin access
-  const isAdmin = session.user.email === 'johnny@stars.mc' || 
-                  session.user.email === 'daniel@stars.mc' || 
-                  session.user.email === 'pierre@stars.mc' || 
-                  session.user.email === 'compta@stars.mc';
+  const isAdmin = session.user.email === 'pierre@stars.mc';
 
   if (!isAdmin) {
     return (

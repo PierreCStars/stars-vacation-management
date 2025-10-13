@@ -68,10 +68,7 @@ export function Topbar() {
             {tNav('vacationRequests')}
           </Link>
           
-          {(session?.user?.email === 'johnny@stars.mc' || 
-            session?.user?.email === 'pierre@stars.mc' || 
-            session?.user?.email === 'daniel@stars.mc' || 
-            session?.user?.email === 'compta@stars.mc') && (
+          {(session?.user?.email === 'pierre@stars.mc') && (
             <>
               <Link
                 href={createLocaleUrl('/admin/vacation-requests', currentLocale)}

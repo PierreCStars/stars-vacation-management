@@ -82,10 +82,10 @@ ${csvContent}
 </pre>`;
 
     // Send email
-    const result = await sendEmailWithFallbacks(['compta@stars.mc'], emailSubject, emailBody);
+    const result = await sendEmailWithFallbacks(['pierre@stars.mc'], emailSubject, emailBody);
 
     if (result.success) {
-      console.log(`✅ Automatic monthly CSV export sent successfully to compta@stars.mc`);
+      console.log(`✅ Automatic monthly CSV export sent successfully to pierre@stars.mc`);
       console.log(`📧 Subject: ${emailSubject}`);
       console.log(`📊 Records: ${reviewedRequests.length}`);
     } else {

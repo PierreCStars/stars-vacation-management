@@ -3,21 +3,17 @@ import { ADMINS, isAdmin } from '../../config/admins';
 
 describe('Admin configuration', () => {
   it('has correct admin list', () => {
-    expect(ADMINS).toHaveLength(3);
+    expect(ADMINS).toHaveLength(1);
     expect(ADMINS.map(a => a.email)).toEqual([
-      'Daniel@stars.mc',
-      'Johnny@stars.mc', 
-      'Compta@stars.mc'
+      'Pierre@stars.mc'
     ]);
     expect(ADMINS.every(a => a.access === 'ALL')).toBe(true);
   });
   
   it('correctly identifies admins', () => {
-    expect(isAdmin('Daniel@stars.mc')).toBe(true);
-    expect(isAdmin('Johnny@stars.mc')).toBe(true);
-    expect(isAdmin('Compta@stars.mc')).toBe(true);
-    expect(isAdmin('daniel@stars.mc')).toBe(true); // case insensitive
-    expect(isAdmin('JOHNNY@STARS.MC')).toBe(true); // case insensitive
+    expect(isAdmin('Pierre@stars.mc')).toBe(true);
+    expect(isAdmin('pierre@stars.mc')).toBe(true); // case insensitive
+    expect(isAdmin('PIERRE@STARS.MC')).toBe(true); // case insensitive
   });
   
   it('rejects non-admins', () => {

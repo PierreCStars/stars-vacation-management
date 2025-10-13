@@ -15,10 +15,7 @@ export function AdminSidebar() {
   const isActive = (href: string) => pathname?.includes(href) || false;
 
   // Only show admin sidebar for admin users
-  const isAdmin = session?.user?.email === 'johnny@stars.mc' || 
-                  session?.user?.email === 'pierre@stars.mc' || 
-                  session?.user?.email === 'daniel@stars.mc' || 
-                  session?.user?.email === 'compta@stars.mc';
+  const isAdmin = session?.user?.email === 'pierre@stars.mc';
 
   if (!isAdmin) {
     return null;

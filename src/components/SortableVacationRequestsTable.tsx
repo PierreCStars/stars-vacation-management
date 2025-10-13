@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { getVacationTypeLabel } from '@/lib/vacation-types';
 
 interface VacationRequest {
   id: string;
@@ -23,9 +24,10 @@ interface SortableVacationRequestsTableProps {
   requests: VacationRequest[];
   type: 'pending' | 'reviewed';
   onRefresh?: () => void;
+  locale?: 'en' | 'fr' | 'it';
 }
 
-export default function SortableVacationRequestsTable({ requests, type, onRefresh }: SortableVacationRequestsTableProps) {
+export default function SortableVacationRequestsTable({ requests, type, onRefresh, locale = 'en' }: SortableVacationRequestsTableProps) {
   const [sortField, setSortField] = useState<'userName' | 'company'>('userName');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [processingRequests, setProcessingRequests] = useState<Set<string>>(new Set());
@@ -68,11 +70,7 @@ export default function SortableVacationRequestsTable({ requests, type, onRefres
           const baseRow = [
             `"${req.userName || ''}"`,
             `"${req.company || ''}"`,
-          `"${req.type === 'PAID_VACATION' ? 'Paid Vacation' :
-             req.type === 'UNPAID_VACATION' ? 'Unpaid Vacation' :
-             req.type === 'SICK_LEAVE' ? 'Sick Leave' :
-               req.type === 'OTHER' ? 'Other' : 
-               req.type || 'Not specified'}"`,
+          `"${getVacationTypeLabel(req.type || '', locale)}"`,
             `"${req.startDate ? new Date(req.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }) : ''}"`,
             `"${req.endDate ? new Date(req.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }) : ''}"`,
             `"${req.status || ''}"`,
@@ -368,11 +366,7 @@ export default function SortableVacationRequestsTable({ requests, type, onRefres
                   </td>
                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap' }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: 12, fontSize: 12, fontWeight: 500, background: '#dbeafe', color: '#1e40af' }}>
-                      {req.type === 'PAID_VACATION' || req.type === 'VACATION' ? 'Paid Vacation' :
-                       req.type === 'UNPAID_VACATION' ? 'Unpaid Vacation' :
-                       req.type === 'SICK_LEAVE' ? 'Sick Leave' :
-                     req.type === 'OTHER' ? 'Other' : 
-                     req.type || 'Not specified'}
+                      {getVacationTypeLabel(req.type || '', locale)}
                     </span>
                   </td>
                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap', fontSize: 14, color: '#111827' }}>

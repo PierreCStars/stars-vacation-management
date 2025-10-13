@@ -8,6 +8,8 @@ import Link from 'next/link';
 import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 import CalendarConflictsPanel from '@/components/CalendarConflictsPanel';
 import { createLocaleUrl } from '@/i18n/routing';
+import { useTranslations } from 'next-intl';
+import { getVacationTypeLabelFromTranslations } from '@/lib/vacation-types';
 
 import { VacationRequest } from '@/types/vacation';
 
@@ -23,6 +25,9 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
   
   // Get current locale from pathname
   const currentLocale = pathname?.split('/')[1] || 'en';
+  
+  // Get translations
+  const tVacations = useTranslations('vacations');
   const [allVacationRequests, setAllVacationRequests] = useState<VacationRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -190,10 +195,7 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
             <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#000000', marginBottom: 12 }}>Request Details</h2>
             <p style={{ color: '#000000', marginBottom: 8 }}>Start Date: {new Date(request.startDate).toLocaleDateString()}</p>
             <p style={{ color: '#000000', marginBottom: 8 }}>End Date: {new Date(request.endDate).toLocaleDateString()}</p>
-            <p style={{ color: '#000000', marginBottom: 8 }}>Type: {request.type === 'PAID_VACATION' ? 'Paid Vacation' :
-                                             request.type === 'UNPAID_VACATION' ? 'Unpaid Vacation' :
-                                             request.type === 'SICK_LEAVE' ? 'Sick Leave' :
-                                             request.type === 'OTHER' ? 'Other' : request.type}</p>
+            <p style={{ color: '#000000', marginBottom: 8 }}>Type: {getVacationTypeLabelFromTranslations(request.type, tVacations)}</p>
             <p style={{ color: '#000000', marginBottom: 8 }}>Reason: {request.reason || 'No reason provided'}</p>
             <p style={{ color: '#000000', marginBottom: 8 }}>Company: {request.company}</p>
             <p style={{ color: '#000000' }}>Status: {request.status}</p>

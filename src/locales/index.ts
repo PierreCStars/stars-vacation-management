@@ -137,7 +137,12 @@ const en = {
     "submitting": "Submitting...",
     "submitRequest": "Submit Request",
     "selectCompany": "Select a company",
-    "selectLeaveType": "Select leave type"
+    "selectLeaveType": "Select leave type",
+    "paidVacation": "Paid Vacation",
+    "personalDay": "Personal Day",
+    "recuperation": "Récupération",
+    "other": "Other",
+    "unpaidVacation": "Unpaid Vacation"
   },
   "calendar": {
     "globalVacationCompanyCalendar": "Global Vacation & Company Calendar",
@@ -326,7 +331,12 @@ const fr = {
     "submitting": "Envoi en cours...",
     "submitRequest": "Soumettre la demande",
     "selectCompany": "Sélectionner une entreprise",
-    "selectLeaveType": "Sélectionner le type de congé"
+    "selectLeaveType": "Sélectionner le type de congé",
+    "paidVacation": "Congés payés",
+    "personalDay": "Jour personnel",
+    "recuperation": "Récupération",
+    "other": "Autre",
+    "unpaidVacation": "Congé sans solde"
   },
   "calendar": {
     "globalVacationCompanyCalendar": "Calendrier Global des Congés & Entreprise",
@@ -515,7 +525,12 @@ const it = {
     "submitting": "Invio in corso...",
     "submitRequest": "Invia richiesta",
     "selectCompany": "Seleziona un'azienda",
-    "selectLeaveType": "Seleziona il tipo di congedo"
+    "selectLeaveType": "Seleziona il tipo di congedo",
+    "paidVacation": "Ferie pagate",
+    "personalDay": "Giorno personale",
+    "recuperation": "Recupero",
+    "other": "Altro",
+    "unpaidVacation": "Permesso non retribuito"
   },
   "calendar": {
     "globalVacationCompanyCalendar": "Calendario Globale Vacanze & Azienda",

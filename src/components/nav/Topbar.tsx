@@ -8,6 +8,7 @@ import { LanguageSwitcher } from './LanguageSwitcher';
 import { useSession } from 'next-auth/react';
 import { SignOutButton } from '../SignOutButton';
 import Avatar from '../Avatar';
+import { isAdmin } from '@/config/admins';
 
 export function Topbar() {
   const pathname = usePathname();
@@ -68,7 +69,7 @@ export function Topbar() {
             {tNav('vacationRequests')}
           </Link>
           
-          {(session?.user?.email === 'pierre@stars.mc') && (
+          {isAdmin(session?.user?.email) && (
             <>
               <Link
                 href={createLocaleUrl('/admin/vacation-requests', currentLocale)}

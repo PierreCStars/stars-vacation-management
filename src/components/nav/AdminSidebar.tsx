@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { createLocaleUrl } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
 import { useSession } from 'next-auth/react';
+import { isAdmin } from '@/config/admins';
 
 export function AdminSidebar() {
   const pathname = usePathname();
@@ -15,9 +16,9 @@ export function AdminSidebar() {
   const isActive = (href: string) => pathname?.includes(href) || false;
 
   // Only show admin sidebar for admin users
-  const isAdmin = session?.user?.email === 'pierre@stars.mc';
+  const isAdminUser = isAdmin(session?.user?.email);
 
-  if (!isAdmin) {
+  if (!isAdminUser) {
     return null;
   }
 

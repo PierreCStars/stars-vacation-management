@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import VacationAnalytics from '@/components/VacationAnalytics';
 // import Navigation from '@/components/Navigation';
 import PageHeader from '@/components/ui/PageHeader';
+import { isAdmin } from '@/config/admins';
 
 // Disable static generation for this page
 export const dynamic = 'force-dynamic';
@@ -23,9 +24,9 @@ export default function AnalyticsPage() {
     }
 
     // Check if user has admin access for analytics
-    const isAdmin = session.user.email === 'pierre@stars.mc';
+    const isAdminUser = isAdmin(session.user.email);
 
-    if (!isAdmin) {
+    if (!isAdminUser) {
       router.push('/dashboard');
       return;
     }

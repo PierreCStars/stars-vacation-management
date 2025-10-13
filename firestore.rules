@@ -33,7 +33,10 @@ service cloud.firestore {
     function isAdmin(email) {
       return email in [
         'pierre@stars.mc',
-        'admin@stars.mc'
+        'admin@stars.mc',
+        'johnny@stars.mc',
+        'daniel@stars.mc',
+        'compta@stars.mc'
       ];
     }
   }

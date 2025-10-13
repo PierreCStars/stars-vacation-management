@@ -9,6 +9,7 @@ import { useSession } from 'next-auth/react';
 import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 import { VacationRequest } from '@/types/vacation';
 import { createLocaleUrl } from '@/i18n/routing';
+import { isAdmin } from '@/config/admins';
 
 export default function DashboardClient() {
   const pathname = usePathname();
@@ -23,7 +24,7 @@ export default function DashboardClient() {
   const tCalendar = useTranslations('calendar');
 
   // Check if user is admin
-  const isAdmin = session?.user?.email === 'pierre@stars.mc';
+  const isAdminUser = isAdmin(session?.user?.email);
   
   // Get current locale from pathname
   const currentLocale = pathname?.split('/')[1] || 'en';
@@ -191,7 +192,7 @@ export default function DashboardClient() {
           </div>
 
           {/* Administration Card - Only visible to admins */}
-          {isAdmin && (
+          {isAdminUser && (
             <div className="card text-center hover:shadow-xl transition-shadow duration-300" style={{
               backgroundColor: 'rgba(255, 255, 255, 0.95)',
               borderRadius: '1rem',

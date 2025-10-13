@@ -6,6 +6,15 @@ import { useLocale } from "next-intl";
 import { VacationRequestWithConflicts } from "@/app/[locale]/admin/vacation-requests/_server/getRequestsWithConflicts";
 import { absoluteUrl } from "@/lib/urls";
 
+// Helper function to calculate days between dates
+function calculateDays(startDate: string, endDate: string): number {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const diffTime = Math.abs(end.getTime() - start.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
+  return diffDays;
+}
+
 interface ResponsiveRequestsListProps {
   requests: VacationRequestWithConflicts[];
   onUpdateStatus: (id: string, status: "approved" | "denied") => void;
@@ -264,6 +273,7 @@ function RequestCard({
         <p className="text-sm text-gray-600">
           <span className="font-medium">Dates:</span> From {new Date(request.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
           {request.endDate !== request.startDate ? ` to ${new Date(request.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}` : ""}
+          <span className="text-xs text-gray-400 ml-2">({request.durationDays || calculateDays(request.startDate, request.endDate)} days)</span>
         </p>
       </div>
     </div>

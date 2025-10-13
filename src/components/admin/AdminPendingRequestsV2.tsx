@@ -8,6 +8,15 @@ import { isPendingStatus, isReviewedStatus, normalizeVacationStatus } from '@/ty
 import { VacationRequest } from '@/types/vacation';
 import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 
+// Helper function to calculate days between dates
+function calculateDays(startDate: string, endDate: string): number {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  const diffTime = Math.abs(end.getTime() - start.getTime());
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
+  return diffDays;
+}
+
 export default function AdminPendingRequestsV2() {
   const [mounted, setMounted] = useState(false);
   const [requests, setRequests] = useState<VacationRequestWithConflicts[]>([]);
@@ -566,7 +575,7 @@ function RequestsTable({
                   <div>
                     <div className="font-medium">From {new Date(request.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
                     <div className="text-gray-500">to {new Date(request.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
-                    <div className="text-xs text-gray-400">{request.durationDays} days</div>
+                    <div className="text-xs text-gray-400">{request.durationDays || calculateDays(request.startDate, request.endDate)} days</div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -818,7 +827,7 @@ function ReviewedRequestsTable({
                   <div>
                     <div className="font-medium">From {new Date(request.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
                     <div className="text-gray-500">to {new Date(request.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
-                    <div className="text-xs text-gray-400">{request.durationDays} days</div>
+                    <div className="text-xs text-gray-400">{request.durationDays || calculateDays(request.startDate, request.endDate)} days</div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">

@@ -58,7 +58,7 @@ export function generateAdminNotificationEmail(data: VacationRequestData): { sub
     day: 'numeric'
   });
 
-  const subject = `New Vacation Request #${data.id} - ${data.userName}`;
+  const subject = `New Vacation request from ${data.userEmail} - ${data.company}`;
   
   const html = `
 <!DOCTYPE html>

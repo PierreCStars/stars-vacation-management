@@ -190,7 +190,7 @@ function RequestTableRow({
         {request.type || "—"}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 align-middle">
-        {request.startDate}{request.endDate !== request.startDate ? ` to ${request.endDate}` : ""}
+        From {new Date(request.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}{request.endDate !== request.startDate ? ` to ${new Date(request.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}` : ""}
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium align-middle">
         <ConflictBadge
@@ -262,8 +262,8 @@ function RequestCard({
       {/* Dates */}
       <div className="mb-3">
         <p className="text-sm text-gray-600">
-          <span className="font-medium">Dates:</span> {request.startDate}
-          {request.endDate !== request.startDate ? ` to ${request.endDate}` : ""}
+          <span className="font-medium">Dates:</span> From {new Date(request.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+          {request.endDate !== request.startDate ? ` to ${new Date(request.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}` : ""}
         </p>
       </div>
     </div>

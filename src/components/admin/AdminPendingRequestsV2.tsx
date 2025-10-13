@@ -564,8 +564,8 @@ function RequestsTable({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <div>
-                    <div className="font-medium">{request.startDate}</div>
-                    <div className="text-gray-500">to {request.endDate}</div>
+                    <div className="font-medium">From {new Date(request.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
+                    <div className="text-gray-500">to {new Date(request.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
                     <div className="text-xs text-gray-400">{request.durationDays} days</div>
                   </div>
                 </td>
@@ -659,11 +659,11 @@ function RequestsTable({
             <div className="grid grid-cols-2 gap-4 mb-3">
               <div>
                 <div className="text-sm font-medium text-gray-500">Start Date</div>
-                <div className="text-sm text-gray-900">{request.startDate}</div>
+                <div className="text-sm text-gray-900">{new Date(request.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
               </div>
               <div>
                 <div className="text-sm font-medium text-gray-500">End Date</div>
-                <div className="text-sm text-gray-900">{request.endDate}</div>
+                <div className="text-sm text-gray-900">{new Date(request.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
               </div>
             </div>
             
@@ -816,8 +816,8 @@ function ReviewedRequestsTable({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <div>
-                    <div className="font-medium">{request.startDate}</div>
-                    <div className="text-gray-500">to {request.endDate}</div>
+                    <div className="font-medium">From {new Date(request.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
+                    <div className="text-gray-500">to {new Date(request.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
                     <div className="text-xs text-gray-400">{request.durationDays} days</div>
                   </div>
                 </td>
@@ -891,11 +891,11 @@ function ReviewedRequestsTable({
             <div className="grid grid-cols-2 gap-4 mb-3">
               <div>
                 <div className="text-sm font-medium text-gray-500">Start Date</div>
-                <div className="text-sm text-gray-900">{request.startDate}</div>
+                <div className="text-sm text-gray-900">{new Date(request.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
               </div>
               <div>
                 <div className="text-sm font-medium text-gray-500">End Date</div>
-                <div className="text-sm text-gray-900">{request.endDate}</div>
+                <div className="text-sm text-gray-900">{new Date(request.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
               </div>
             </div>
             

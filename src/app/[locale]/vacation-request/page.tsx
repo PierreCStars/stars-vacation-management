@@ -186,8 +186,7 @@ export default function VacationRequestPage() {
               {tVacations('title')}
             </h1>
             <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              Submit your vacation request with company details and leave type.
-              You can request full days or half days (morning/afternoon).
+              {tVacations('subtitle')}
             </p>
           </div>
 
@@ -224,7 +223,7 @@ export default function VacationRequestPage() {
               <form onSubmit={handleSubmit} className="space-y-8">
                 {/* Duration Type */}
                 <div className="bg-gray-50 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">Duration Type</h3>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">{tVacations('durationType')}</h3>
                   <div className="flex gap-6">
                     <label className="inline-flex items-center gap-3">
                       <input
@@ -235,7 +234,7 @@ export default function VacationRequestPage() {
                         onChange={handleInputChange}
                         className="text-blue-600 focus:ring-blue-500 w-5 h-5"
                       />
-                      <span className="text-gray-700 font-medium">Full day(s)</span>
+                      <span className="text-gray-700 font-medium">{tVacations('fullDay')}</span>
                     </label>
                     <label className="inline-flex items-center gap-3">
                       <input
@@ -246,7 +245,7 @@ export default function VacationRequestPage() {
                         onChange={handleInputChange}
                         className="text-blue-600 focus:ring-blue-500 w-5 h-5"
                       />
-                      <span className="text-gray-700 font-medium">Half day</span>
+                      <span className="text-gray-700 font-medium">{tVacations('halfDay')}</span>
                     </label>
                   </div>
                 </div>
@@ -254,7 +253,7 @@ export default function VacationRequestPage() {
                 {/* Half Day Type */}
                 {formData.isHalfDay && (
                   <div className="bg-blue-50 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">Half Day Type</h3>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-4">{tVacations('halfDayType')}</h3>
                     <div className="flex gap-6">
                       <label className="inline-flex items-center gap-3">
                         <input
@@ -265,7 +264,7 @@ export default function VacationRequestPage() {
                           onChange={handleInputChange}
                           className="text-blue-600 focus:ring-blue-500 w-5 h-5"
                         />
-                        <span className="text-gray-700 font-medium">Morning (AM) - 09:00 to 13:00</span>
+                        <span className="text-gray-700 font-medium">{tVacations('morning')}</span>
                       </label>
                       <label className="inline-flex items-center gap-3">
                         <input
@@ -276,7 +275,7 @@ export default function VacationRequestPage() {
                           onChange={handleInputChange}
                           className="text-blue-600 focus:ring-blue-500 w-5 h-5"
                         />
-                        <span className="text-gray-700 font-medium">Afternoon (PM) - 14:00 to 18:00</span>
+                        <span className="text-gray-700 font-medium">{tVacations('afternoon')}</span>
                       </label>
                     </div>
                   </div>
@@ -286,7 +285,7 @@ export default function VacationRequestPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Start Date *
+                      {tVacations('startDate')} *
                     </label>
                     <input
                       type="date"
@@ -300,7 +299,7 @@ export default function VacationRequestPage() {
                   </div>
                   <div>
                     <label className={`block text-sm font-medium mb-2 ${formData.isHalfDay ? 'text-gray-400' : 'text-gray-700'}`}>
-                      End Date {formData.isHalfDay ? '(Auto-filled for half day)' : '*'}
+                      {tVacations('endDate')} {formData.isHalfDay ? tVacations('autoFilledForHalfDay') : '*'}
                     </label>
                     <input
                       type="date"
@@ -322,7 +321,7 @@ export default function VacationRequestPage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Company *
+                      {tVacations('company')} *
                     </label>
                     <select
                       name="company"
@@ -331,7 +330,7 @@ export default function VacationRequestPage() {
                       required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="">Select a company</option>
+                      <option value="">{tVacations('selectCompany')}</option>
                       <option value="STARS_MC">Stars MC</option>
                       <option value="STARS_YACHTING">Stars Yachting</option>
                       <option value="STARS_REAL_ESTATE">Stars Real Estate</option>
@@ -342,7 +341,7 @@ export default function VacationRequestPage() {
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Type of Leave *
+                      {tVacations('typeOfLeave')} *
                     </label>
                     <select
                       name="type"
@@ -351,7 +350,7 @@ export default function VacationRequestPage() {
                       required
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
-                      <option value="">Select leave type</option>
+                      <option value="">{tVacations('selectLeaveType')}</option>
                       <option value="PAID_VACATION">Paid Vacation</option>
                       <option value="PERSONAL_DAY">Personal Day</option>
                       <option value="RECUPERATION">Récupération</option>
@@ -363,14 +362,14 @@ export default function VacationRequestPage() {
                 {/* Reason */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Reason (Optional)
+                    {tVacations('reasonOptional')}
                   </label>
                   <textarea
                     name="reason"
                     value={formData.reason}
                     onChange={handleInputChange}
                     rows={4}
-                    placeholder="Please provide a reason for your request..."
+                    placeholder={tVacations('reasonPlaceholder')}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
                   />
                 </div>
@@ -390,7 +389,7 @@ export default function VacationRequestPage() {
                     href="/dashboard"
                     className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
                   >
-                    Cancel
+                    {tCommon('cancel')}
                   </Link>
                   <button
                     type="submit"
@@ -398,7 +397,7 @@ export default function VacationRequestPage() {
                     className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 font-medium"
                     data-testid="submit-button"
                   >
-                    {isSubmitting ? 'Submitting...' : 'Submit Request'}
+                    {isSubmitting ? tVacations('submitting') : tVacations('submitRequest')}
                   </button>
                 </div>
               </form>

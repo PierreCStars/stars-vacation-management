@@ -126,9 +126,9 @@ export default function DashboardClient() {
         </div>
 
         {/* Action Cards */}
-        <div className={`grid gap-6 ${isAdmin ? 'md:grid-cols-2' : 'md:grid-cols-1'}`} style={{
+        <div className={`grid gap-6 ${isAdminUser ? 'md:grid-cols-2' : 'md:grid-cols-1'}`} style={{
           display: 'grid',
-          gridTemplateColumns: isAdmin ? 'repeat(auto-fit, minmax(300px, 1fr))' : '1fr',
+          gridTemplateColumns: isAdminUser ? 'repeat(auto-fit, minmax(300px, 1fr))' : '1fr',
           gap: '1.5rem'
         }}>
           {/* Request Vacation Card */}

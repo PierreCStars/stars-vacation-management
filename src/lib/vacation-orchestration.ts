@@ -1,7 +1,7 @@
 import { emailAdapter } from '@/lib/email';
 import { RealCalendarGateway } from '@/lib/calendar/real';
 import { FakeCalendarGateway } from '@/lib/calendar/fake';
-import { ADMINS } from '../../config/admins';
+import { ADMINS } from '@/config/admins';
 import { sendAdminNotification, sendEmailToRecipients, getAdminEmails } from '@/lib/email-notifications';
 import { generateAdminNotificationEmail, generateRequestConfirmationEmail, generateDecisionEmail, generateAdminReviewNotificationEmail } from '@/lib/email-templates';
 import type { VacationRequestData } from '@/lib/email-templates';

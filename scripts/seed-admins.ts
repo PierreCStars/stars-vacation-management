@@ -1,5 +1,5 @@
 import 'ts-node/register';
-import { ADMINS } from '../config/admins';
+import { ADMINS } from '../src/config/admins';
 // TODO: replace with your ORM/repo
 // import { db } from '../server/db';
 

@@ -41,7 +41,7 @@ try {
       email: credentials.client_email,
       key: credentials.private_key,
       scopes: GMAIL_SCOPES,
-      subject: 'pierre@stars.mc' // Use domain-wide delegation
+      subject: 'hr@stars.mc' // Use domain-wide delegation with hr@stars.mc
     });
     
     gmail = google.gmail({ version: 'v1', auth });
@@ -73,8 +73,8 @@ export async function sendEmail(to: string[], subject: string, body: string) {
       return true;
     }
 
-    // Create email message - use service account email directly but display hr@stars.mc as sender
-    const fromEmail = 'vacation-db@holiday-461710.iam.gserviceaccount.com';
+    // Create email message - use hr@stars.mc as both sender and display name
+    const fromEmail = 'hr@stars.mc';
     const message = createEmailMessage(fromEmail, to, subject, body);
 
     try {
@@ -114,7 +114,7 @@ export async function sendEmail(to: string[], subject: string, body: string) {
 // Helper function to create email message in base64 format
 function createEmailMessage(from: string, to: string[], subject: string, body: string): string {
   const emailLines = [
-    `From: "hr@stars.mc" <${from}>`,
+    `From: "hr@stars.mc" <hr@stars.mc>`,
     `To: ${to.join(', ')}`,
     `Subject: ${subject}`,
     'MIME-Version: 1.0',

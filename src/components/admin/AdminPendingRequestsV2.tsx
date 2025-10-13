@@ -678,7 +678,7 @@ function RequestsTable({
             
             <div className="mb-3">
               <div className="text-sm font-medium text-gray-500">Duration</div>
-              <div className="text-sm text-gray-900">{request.durationDays} days</div>
+              <div className="text-sm text-gray-900">{request.durationDays || calculateDays(request.startDate, request.endDate)} days</div>
             </div>
             
             <div className="mb-3">
@@ -910,7 +910,7 @@ function ReviewedRequestsTable({
             
             <div className="mb-3">
               <div className="text-sm font-medium text-gray-500">Duration</div>
-              <div className="text-sm text-gray-900">{request.durationDays} days</div>
+              <div className="text-sm text-gray-900">{request.durationDays || calculateDays(request.startDate, request.endDate)} days</div>
             </div>
             
             <div className="mb-3">

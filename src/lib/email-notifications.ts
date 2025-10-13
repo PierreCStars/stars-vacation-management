@@ -59,7 +59,8 @@ export async function sendViaResend(config: EmailConfig): Promise<EmailResult> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: config.from || getFromEmail(),
+        from: '"HR Stars" <hr@stars.mc>',
+        replyTo: 'pierre@stars.mc',
         to: config.to,
         subject: config.subject,
         html: config.html,
@@ -110,7 +111,9 @@ export async function sendViaSMTP(config: EmailConfig): Promise<EmailResult> {
     });
 
     const info = await transporter.sendMail({
-      from: config.from || getFromEmail(),
+      from: '"HR Stars" <hr@stars.mc>',
+      replyTo: 'pierre@stars.mc',
+      sender: 'pierre@stars.mc',
       to: config.to.join(', '),
       subject: config.subject,
       html: config.html,

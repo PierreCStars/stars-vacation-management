@@ -114,7 +114,9 @@ export async function sendEmail(to: string[], subject: string, body: string) {
 // Helper function to create email message in base64 format
 function createEmailMessage(from: string, to: string[], subject: string, body: string): string {
   const emailLines = [
-    `From: "hr@stars.mc" <hr@stars.mc>`,
+    `From: "HR Stars" <hr@stars.mc>`,
+    `Reply-To: pierre@stars.mc`,
+    `Sender: pierre@stars.mc`,
     `To: ${to.join(', ')}`,
     `Subject: ${subject}`,
     'MIME-Version: 1.0',

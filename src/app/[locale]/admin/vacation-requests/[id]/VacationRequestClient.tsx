@@ -12,6 +12,7 @@ import { useTranslations } from 'next-intl';
 import { getVacationTypeLabelFromTranslations } from '@/lib/vacation-types';
 
 import { VacationRequest } from '@/types/vacation';
+import { VacationRequestWithConflicts } from '@/app/[locale]/admin/vacation-requests/_server/getRequestsWithConflicts';
 
 interface VacationRequestClientProps {
   id: string;
@@ -21,14 +22,14 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
   const { data: session, status } = useSession();
   const router = useRouter();
   const pathname = usePathname();
-  const [request, setRequest] = useState<VacationRequest | null>(null);
+  const [request, setRequest] = useState<VacationRequestWithConflicts | null>(null);
   
   // Get current locale from pathname
   const currentLocale = pathname?.split('/')[1] || 'en';
   
   // Get translations
   const tVacations = useTranslations('vacations');
-  const [allVacationRequests, setAllVacationRequests] = useState<VacationRequest[]>([]);
+  const [allVacationRequests, setAllVacationRequests] = useState<VacationRequestWithConflicts[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [comment, setComment] = useState('');
@@ -57,6 +58,7 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
       setLoading(true);
       setError(null);
 
+      // Load the specific request
       const response = await fetch('/api/vacation-requests');
       if (!response.ok) {
         throw new Error('Failed to load vacation requests');
@@ -70,8 +72,37 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
         return;
       }
 
-      setRequest(foundRequest);
-      setAllVacationRequests(data); // Store all requests for conflict analysis
+      // Load conflicts for this request
+      const conflictsResponse = await fetch(`/api/conflicts/vacation?company=${encodeURIComponent(foundRequest.company)}&start=${foundRequest.startDate}&end=${foundRequest.endDate}&id=${id}`);
+      let conflicts = [];
+      if (conflictsResponse.ok) {
+        const conflictsData = await conflictsResponse.json();
+        conflicts = conflictsData.map((conflict: any) => ({
+          type: 'same-company' as const,
+          severity: 'high' as const,
+          details: `Overlap with ${conflict.userName}'s ${conflict.type || 'VACATION'} from ${conflict.startDate} to ${conflict.endDate}`,
+          conflictingRequests: [{
+            id: conflict.id || 'unknown',
+            userName: conflict.userName,
+            company: conflict.company || 'unknown',
+            startDate: conflict.startDate,
+            endDate: conflict.endDate,
+            status: conflict.status
+          }]
+        }));
+      }
+
+      // Create request with conflicts
+      const requestWithConflicts: VacationRequestWithConflicts = {
+        ...foundRequest,
+        conflicts
+      };
+
+      setRequest(requestWithConflicts);
+      setAllVacationRequests(data.map((req: VacationRequest) => ({
+        ...req,
+        conflicts: req.id === id ? conflicts : []
+      })));
     } catch (err) {
       console.error('Error loading vacation request:', err);
       setError(err instanceof Error ? err.message : 'Failed to load vacation request');
@@ -291,10 +322,15 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
             This calendar shows all vacation requests with company colors and conflict warnings. Look for dates with multiple people requesting time off.
           </p>
           <UnifiedVacationCalendar 
-            vacationRequests={allVacationRequests.filter(r => r.status?.toLowerCase() === 'approved')} 
+            vacationRequests={allVacationRequests.filter(r => ['approved', 'pending'].includes(r.status?.toLowerCase()))} 
             currentRequestId={request.id}
             showLegend={true}
             compact={false}
+            conflicts={request.conflicts || []}
+            initialRange={request ? { 
+              start: new Date(request.startDate), 
+              end: new Date(request.endDate) 
+            } : undefined}
           />
         </div>
 

@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl';
 import { VacationRequest } from '@/types/vacation';
 import { VacationRequestWithConflicts, ConflictEvent } from '@/app/[locale]/admin/vacation-requests/_server/getRequestsWithConflicts';
 import { getCompanyHexColor } from '@/lib/company-colors';
+import { getMonacoHolidaysInRange, MonacoHoliday } from '@/lib/monaco-holidays';
 
 interface CompanyEvent {
   id: string;
@@ -36,6 +37,7 @@ interface CalendarDay {
   isToday: boolean;
   vacations: VacationRequest[];
   companyEvents: CompanyEvent[];
+  monacoHolidays: MonacoHoliday[];
   conflictCount: number;
   hasConflict: boolean;
   severity: 'none' | 'low' | 'medium' | 'high';
@@ -116,7 +118,10 @@ export default function UnifiedVacationCalendar({
     const currentYear = currentDate.getFullYear();
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
     const startDate = new Date(firstDayOfMonth);
-    startDate.setDate(startDate.getDate() - firstDayOfMonth.getDay());
+    // Fix Monday start: getDay() returns 0 for Sunday, 1 for Monday, etc.
+    // To start on Monday, we need to go back (getDay() + 6) % 7 days
+    const daysToSubtract = (firstDayOfMonth.getDay() + 6) % 7;
+    startDate.setDate(startDate.getDate() - daysToSubtract);
     
     return { currentMonth, currentYear, firstDayOfMonth, startDate };
   }, [currentDate]);
@@ -137,6 +142,12 @@ export default function UnifiedVacationCalendar({
         const start = new Date(request.startDate);
         const end = new Date(request.endDate);
         return date >= start && date <= end;
+      });
+
+      // Find Monaco holidays for this date
+      const dayMonacoHolidays = getMonacoHolidaysInRange(date, date).filter(holiday => {
+        const holidayDate = new Date(holiday.date);
+        return holidayDate.toDateString() === date.toDateString();
       });
 
       // Find company events for this date
@@ -194,6 +205,7 @@ export default function UnifiedVacationCalendar({
         isToday: date.toDateString() === currentDateObj.toDateString(),
         vacations: dayVacations,
         companyEvents: dayCompanyEvents,
+        monacoHolidays: dayMonacoHolidays,
         conflictCount: totalEvents,
         hasConflict,
         severity,
@@ -369,6 +381,21 @@ export default function UnifiedVacationCalendar({
                       +{day.companyEvents.length - (compact ? 1 : 2)} more events
                     </div>
                   )}
+                </div>
+              )}
+              
+              {/* Monaco Holidays */}
+              {day.monacoHolidays.length > 0 && (
+                <div className="mt-1 space-y-1">
+                  {day.monacoHolidays.map((holiday, holidayIndex) => (
+                    <div
+                      key={`holiday-${holidayIndex}`}
+                      className="text-xs p-1 rounded truncate font-medium bg-blue-100 border border-blue-300 text-blue-800"
+                      title={`${holiday.title}${holiday.description ? ` • ${holiday.description}` : ''}`}
+                    >
+                      {compact ? '🏛️' : `🏛️ ${holiday.title.substring(0, 8)}...`}
+                    </div>
+                  ))}
                 </div>
               )}
               
@@ -582,6 +609,10 @@ export default function UnifiedVacationCalendar({
               <div className="flex items-center space-x-1 sm:space-x-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 bg-purple-100 border border-purple-300 rounded"></div>
                 <span className="text-xs sm:text-sm text-gray-600">Company Events</span>
+              </div>
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-100 border border-blue-300 rounded"></div>
+                <span className="text-xs sm:text-sm text-gray-600">Monaco Holidays</span>
               </div>
               <div className="flex items-center space-x-1 sm:space-x-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded"></div>

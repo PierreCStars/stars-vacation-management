@@ -352,10 +352,10 @@ export default function VacationRequestPage() {
                       className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     >
                       <option value="">{tVacations('selectLeaveType')}</option>
-                      <option value="PAID_VACATION">{tVacations('paidVacation')}</option>
-                      <option value="PERSONAL_DAY">{tVacations('personalDay')}</option>
-                      <option value="RECUPERATION">{tVacations('recuperation')}</option>
-                      <option value="OTHER">{tVacations('other')}</option>
+                      <option value="PAID_LEAVE">{tVacations('paidLeave')}</option>
+                      <option value="UNPAID_LEAVE">{tVacations('unpaidLeave')}</option>
+                      <option value="FAMILY_EVENT_LEAVE">{tVacations('familyEventLeave')}</option>
+                      <option value="OVERTIME_COMPENSATION">{tVacations('overtimeCompensation')}</option>
                     </select>
                   </div>
                 </div>

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { getVacationTypeLabel } from '@/lib/vacation-types';
+import { getVacationTypeLabel, parseVacationType } from '@/lib/vacation-types';
 
 interface VacationRequest {
   id: string;
@@ -70,7 +70,7 @@ export default function SortableVacationRequestsTable({ requests, type, onRefres
           const baseRow = [
             `"${req.userName || ''}"`,
             `"${req.company || ''}"`,
-          `"${getVacationTypeLabel(req.type || '', locale)}"`,
+            `"${getVacationTypeLabel(parseVacationType(req.type || ''), locale)}"`,
             `"${req.startDate ? new Date(req.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }) : ''}"`,
             `"${req.endDate ? new Date(req.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: '2-digit' }) : ''}"`,
             `"${req.status || ''}"`,
@@ -366,7 +366,7 @@ export default function SortableVacationRequestsTable({ requests, type, onRefres
                   </td>
                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap' }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', padding: '2px 10px', borderRadius: 12, fontSize: 12, fontWeight: 500, background: '#dbeafe', color: '#1e40af' }}>
-                      {getVacationTypeLabel(req.type || '', locale)}
+                      {getVacationTypeLabel(parseVacationType(req.type || ''), locale)}
                     </span>
                   </td>
                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap', fontSize: 14, color: '#111827' }}>

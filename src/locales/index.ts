@@ -134,11 +134,20 @@ const en = {
     "submitRequest": "Submit Request",
     "selectCompany": "Select a company",
     "selectLeaveType": "Select leave type",
-    "paidVacation": "Paid Vacation",
-    "personalDay": "Personal Day",
-    "recuperation": "Récupération",
-    "other": "Other",
-    "unpaidVacation": "Unpaid Vacation"
+    "paidLeave": "Paid leave",
+    "unpaidLeave": "Unpaid leave", 
+    "familyEventLeave": "Family event leave (marriage or bereavement — specify in notes)",
+    "overtimeCompensation": "Overtime compensation (time off)"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Welcome to Stars Vacation Management",
+    "vacationRequest": "Vacation Request",
+    "viewCalendar": "View Calendar",
+    "adminPanel": "Administration",
+    "notice": "Please check your paid leave (CP) balance on your latest payslip. Paid leave is approved by management subject to Accounting & HR verification of your CP balance. If your balance does not allow it, the request may be cancelled or reclassified as unpaid leave.",
+    "calendarTitle": "Global Vacation & Company Calendar",
+    "loadingCalendar": "Loading vacation calendar..."
   },
   "calendar": {
     "globalVacationCompanyCalendar": "Global Vacation & Company Calendar",
@@ -260,6 +269,16 @@ const fr = {
     "vacationRequests": "Demandes de congés",
     "administration": "Administration"
   },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "welcome": "Bienvenue dans la gestion des congés Stars",
+    "vacationRequest": "Demande de congé",
+    "viewCalendar": "Voir le calendrier",
+    "adminPanel": "Administration",
+    "notice": "Merci de vérifier votre contingent de congés payés (CP) sur votre dernier bulletin de salaire. Les CP sont validés par la direction sous réserve de vérification par le service comptabilité et RH de votre solde de CP. Si votre solde de congés ne le permet pas, la demande pourra être annulée ou requalifiée en congé sans solde.",
+    "calendarTitle": "Calendrier global des congés et de l'entreprise",
+    "loadingCalendar": "Chargement du calendrier des congés..."
+  },
   "vacations": {
     "title": "Gestion des congés",
     "request": "Demander un congé",
@@ -324,11 +343,10 @@ const fr = {
     "submitRequest": "Soumettre la demande",
     "selectCompany": "Sélectionner une entreprise",
     "selectLeaveType": "Sélectionner le type de congé",
-    "paidVacation": "Congés payés",
-    "personalDay": "Jour personnel",
-    "recuperation": "Récupération",
-    "other": "Autre",
-    "unpaidVacation": "Congé sans solde"
+    "paidLeave": "Congés payés",
+    "unpaidLeave": "Congés sans solde",
+    "familyEventLeave": "Congés pour événements familiaux (mariage ou décès — à préciser dans les observations)",
+    "overtimeCompensation": "Récupération d'heures supplémentaires"
   },
   "calendar": {
     "globalVacationCompanyCalendar": "Calendrier Global des Congés & Entreprise",
@@ -450,6 +468,16 @@ const it = {
     "vacationRequests": "Richieste di vacanza",
     "administration": "Amministrazione"
   },
+  "dashboard": {
+    "title": "Dashboard",
+    "welcome": "Benvenuto nella gestione delle vacanze Stars",
+    "vacationRequest": "Richiesta di vacanza",
+    "viewCalendar": "Visualizza calendario",
+    "adminPanel": "Amministrazione",
+    "notice": "Si prega di verificare il saldo dei congedi retribuiti (CP) sull'ultima busta paga. I CP sono convalidati dalla direzione previa verifica, da parte di Contabilità e HR, del tuo saldo. Se il saldo non lo consente, la richiesta potrà essere annullata o riclassificata come congedo non retribuito.",
+    "calendarTitle": "Calendario globale delle vacanze e dell'azienda",
+    "loadingCalendar": "Caricamento calendario delle vacanze..."
+  },
   "vacations": {
     "title": "Gestione Vacanze",
     "request": "Richiedi Vacanza",
@@ -514,11 +542,10 @@ const it = {
     "submitRequest": "Invia richiesta",
     "selectCompany": "Seleziona un'azienda",
     "selectLeaveType": "Seleziona il tipo di congedo",
-    "paidVacation": "Ferie pagate",
-    "personalDay": "Giorno personale",
-    "recuperation": "Recupero",
-    "other": "Altro",
-    "unpaidVacation": "Permesso non retribuito"
+    "paidLeave": "Congedi retribuiti",
+    "unpaidLeave": "Congedi non retribuiti",
+    "familyEventLeave": "Congedo per eventi familiari (matrimonio o lutto — specificare nelle note)",
+    "overtimeCompensation": "Recupero ore straordinarie"
   },
   "calendar": {
     "globalVacationCompanyCalendar": "Calendario Globale Vacanze & Azienda",

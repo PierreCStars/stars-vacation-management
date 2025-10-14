@@ -1,25 +1,8 @@
 import { getFirebaseAdminDb } from '@/lib/firebase/index';
 import { VacationStatus } from '@/types/vacation-status';
+import { VacationRequest } from '@/types/vacation';
 
-export interface VacationRequestWithConflicts {
-  id: string;
-  userId: string;
-  userEmail: string;
-  userName: string;
-  company?: string;
-  type?: string;
-  startDate: string;
-  endDate: string;
-  status: VacationStatus;
-  reviewedAt?: string | null;
-  reviewedBy?: { id?: string; name?: string; email?: string } | null;
-  approvedByName?: string | null;
-  approvedByEmail?: string | null;
-  createdAt?: string;
-  reason?: string;
-  isHalfDay?: boolean;
-  halfDayType?: string | null;
-  durationDays?: number;
+export interface VacationRequestWithConflicts extends VacationRequest {
   conflicts: ConflictEvent[];
 }
 

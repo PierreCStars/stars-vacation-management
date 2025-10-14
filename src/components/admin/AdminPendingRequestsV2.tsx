@@ -89,10 +89,7 @@ export default function AdminPendingRequestsV2() {
                   ...req, 
                   status: status, // Keep lowercase to match API
                   reviewedAt: new Date().toISOString(),
-                  reviewedBy: {
-                    name: session?.user?.name || 'Admin',
-                    email: session?.user?.email || 'admin@stars.mc'
-                  }
+                  reviewedBy: session?.user?.name || 'Admin',
                 }
               : req
           );
@@ -400,8 +397,8 @@ export default function AdminPendingRequestsV2() {
                           type: r.type || 'VACATION',
                           status: normalizeVacationStatus(r.status),
                           createdAt: r.createdAt || new Date().toISOString(),
-                          reviewedBy: r.reviewedBy?.name,
-                          reviewerEmail: r.reviewedBy?.email,
+                           reviewedBy: r.reviewedBy,
+                          reviewerEmail: undefined,
                           reviewedAt: r.reviewedAt || undefined, // Convert null to undefined
                           adminComment: undefined,
                           included: true,
@@ -841,10 +838,10 @@ function ReviewedRequestsTable({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <div className="font-medium">
-                    {request.approvedByName || request.reviewedBy?.name || 'Admin'}
+                    {request.reviewedBy || 'Admin'}
                   </div>
                   <div className="text-xs text-gray-500">
-                    {request.approvedByEmail || request.reviewedBy?.email || ''}
+                    {request.reviewerEmail || ''}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -927,10 +924,10 @@ function ReviewedRequestsTable({
             <div className="mb-3">
               <div className="text-sm font-medium text-gray-500">Approved by</div>
               <div className="text-sm text-gray-900">
-                {request.approvedByName || request.reviewedBy?.name || 'Admin'}
+                {request.reviewedBy || 'Admin'}
               </div>
               <div className="text-xs text-gray-500">
-                {request.approvedByEmail || request.reviewedBy?.email || ''}
+                {request.reviewerEmail || ''}
               </div>
             </div>
             

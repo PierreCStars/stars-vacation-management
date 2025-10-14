@@ -642,7 +642,7 @@ export default function AdminVacationRequestsClient({
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-xs text-gray-600">
-                        {r.reviewedBy?.name || 'Admin'}
+                        {r.reviewedBy || 'Admin'}
                       </td>
                     </tr>
                   ))}

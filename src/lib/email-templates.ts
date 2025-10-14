@@ -11,7 +11,7 @@ export interface VacationRequestData {
   startDate: string;
   endDate: string;
   reason: string;
-  company: string;
+  company?: string;
   type: string;
   isHalfDay: boolean;
   halfDayType?: 'morning' | 'afternoon' | null;
@@ -27,7 +27,7 @@ export interface AdminReviewNotificationData {
   startDate: string;
   endDate: string;
   reason: string;
-  company: string;
+  company?: string;
   type: string;
   isHalfDay: boolean;
   halfDayType?: 'morning' | 'afternoon' | null;
@@ -58,7 +58,7 @@ export function generateAdminNotificationEmail(data: VacationRequestData): { sub
     day: 'numeric'
   });
 
-  const subject = `New Vacation request from ${data.userEmail} - ${data.company}`;
+  const subject = `New Vacation request from ${data.userEmail} - ${data.company || 'Unknown'}`;
   
   const html = `
 <!DOCTYPE html>
@@ -105,7 +105,7 @@ export function generateAdminNotificationEmail(data: VacationRequestData): { sub
         </div>
         <div class="info-row">
           <span class="info-label">Company:</span>
-          <span class="info-value">${data.company}</span>
+          <span class="info-value">${data.company || 'Unknown'}</span>
         </div>
         <div class="info-row">
           <span class="info-label">Type:</span>
@@ -157,7 +157,7 @@ export function generateAdminNotificationEmail(data: VacationRequestData): { sub
 New Vacation Request #${data.id}
 
 Employee: ${data.userName} (${data.userEmail})
-Company: ${data.company}
+Company: ${data.company || 'Unknown'}
 Type: ${data.type}
 Start Date: ${formattedStartDate}
 End Date: ${formattedEndDate}
@@ -536,7 +536,7 @@ export function generateAdminReviewNotificationEmail(data: AdminReviewNotificati
         </div>
         <div class="info-item">
           <div class="info-label">Company</div>
-          <div class="info-value">${data.company}</div>
+          <div class="info-value">${data.company || 'Unknown'}</div>
         </div>
         <div class="info-item">
           <div class="info-label">Type</div>
@@ -614,7 +614,7 @@ A vacation request has been reviewed and ${isApproved ? 'approved' : 'denied'} b
 Request Details:
 - Request ID: #${data.id}
 - Employee: ${data.userName} (${data.userEmail})
-- Company: ${data.company}
+- Company: ${data.company || 'Unknown'}
 - Type: ${data.type}${data.isHalfDay ? ` (Half Day - ${data.halfDayType})` : ''}
 - Start Date: ${formattedStartDate}
 - End Date: ${formattedEndDate}

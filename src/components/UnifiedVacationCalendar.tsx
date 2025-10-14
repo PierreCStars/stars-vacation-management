@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { VacationRequest } from '@/types/vacation';
-import { VacationRequestWithConflicts } from '@/app/[locale]/admin/vacation-requests/_server/getRequestsWithConflicts';
+import { VacationRequestWithConflicts, ConflictEvent } from '@/app/[locale]/admin/vacation-requests/_server/getRequestsWithConflicts';
 import { getCompanyHexColor } from '@/lib/company-colors';
 
 interface CompanyEvent {
@@ -14,20 +14,6 @@ interface CompanyEvent {
   location: string;
 }
 
-interface ConflictEvent {
-  id: string;
-  userName: string;
-  userEmail: string;
-  startDate: string;
-  endDate: string;
-  status: string;
-  type: string;
-  isHalfDay: boolean;
-  halfDayType: string | null;
-  reason?: string;
-  company: string;
-  createdAt: string;
-}
 
 interface UnifiedVacationCalendarProps {
   vacationRequests: (VacationRequest | VacationRequestWithConflicts)[];
@@ -55,7 +41,17 @@ interface CalendarDay {
   severity: 'none' | 'low' | 'medium' | 'high';
   // New properties for conflict highlighting
   isInSelectedRange?: boolean;
-  conflictEvents?: ConflictEvent[];
+  conflictEvents?: Array<{
+    id: string;
+    userName: string;
+    company: string;
+    startDate: string;
+    endDate: string;
+    status: string;
+    type: string;
+    severity: string;
+    details: string;
+  }>;
 }
 
 export default function UnifiedVacationCalendar({ 
@@ -152,10 +148,28 @@ export default function UnifiedVacationCalendar({
 
       // Find conflict events for this date
       const dayConflictEvents = conflicts.filter(conflict => {
-        const start = new Date(conflict.startDate);
-        const end = new Date(conflict.endDate);
-        return date >= start && date <= end;
+        // Check if any conflicting requests overlap with this date
+        return conflict.conflictingRequests?.some(req => {
+          const start = new Date(req.startDate);
+          const end = new Date(req.endDate);
+          return date >= start && date <= end;
+        }) || false;
       });
+
+      // Flatten conflicting requests for easier access
+      const flattenedConflicts = dayConflictEvents.flatMap(conflict => 
+        conflict.conflictingRequests?.map(req => ({
+          id: req.id,
+          userName: req.userName,
+          company: req.company,
+          startDate: req.startDate,
+          endDate: req.endDate,
+          status: req.status,
+          type: conflict.type,
+          severity: conflict.severity,
+          details: conflict.details
+        })) || []
+      );
 
       // Check if date is in selected range
       const isInSelectedRange = initialRange && 
@@ -184,7 +198,7 @@ export default function UnifiedVacationCalendar({
         hasConflict,
         severity,
         isInSelectedRange,
-        conflictEvents: dayConflictEvents
+        conflictEvents: flattenedConflicts
       });
     }
 
@@ -365,7 +379,7 @@ export default function UnifiedVacationCalendar({
                     <div
                       key={`conflict-${conflictIndex}`}
                       className="text-xs p-1 rounded truncate font-medium bg-red-100 border border-red-300 text-red-800"
-                      title={`CONFLICT: ${conflict.userName} - ${conflict.company} (${conflict.status})`}
+                      title={`CONFLICT: ${conflict.userName} - ${conflict.company || 'Unknown'} (${conflict.status})`}
                     >
                       {compact ? '⚠️' : `⚠️ ${conflict.userName.substring(0, 8)}...`}
                     </div>
@@ -382,7 +396,7 @@ export default function UnifiedVacationCalendar({
               {day.vacations.length > 0 && (
                 <div className="mt-1 space-y-1">
                   {day.vacations.slice(0, compact ? 1 : 2).map((vacation, reqIndex) => {
-                    const companyColor = getCompanyHexColor(vacation.company);
+                    const companyColor = getCompanyHexColor(vacation.company || 'UNKNOWN');
                     const textColor = vacation.company === 'STARS_MC' || vacation.company === 'LE_PNEU' ? '#ffffff' : '#000000';
                     
                     return (
@@ -393,7 +407,7 @@ export default function UnifiedVacationCalendar({
                           backgroundColor: companyColor,
                           color: textColor
                         }}
-                        title={`${vacation.userName} - ${vacation.company} (${vacation.status})`}
+                        title={`${vacation.userName} - ${vacation.company || 'Unknown'} (${vacation.status})`}
                       >
                         {compact ? vacation.userName.substring(0, 3) : vacation.userName}
                       </div>
@@ -477,9 +491,6 @@ export default function UnifiedVacationCalendar({
                             `${conflict.startDate} - ${conflict.endDate}`
                           }
                         </p>
-                        {conflict.reason && (
-                          <p className="text-sm text-red-500 mt-1">{conflict.reason}</p>
-                        )}
                       </div>
                       <div className="flex items-center space-x-2">
                         <span className={`px-2 py-1 text-xs rounded-full font-semibold ${getStatusColor(conflict.status)} text-white`}>
@@ -525,9 +536,9 @@ export default function UnifiedVacationCalendar({
                           <span className="font-bold text-gray-800">{vacation.userName}</span>
                           <span 
                             className="text-sm px-2 py-1 rounded text-white font-medium"
-                            style={{ backgroundColor: getCompanyHexColor(vacation.company) }}
+                            style={{ backgroundColor: getCompanyHexColor(vacation.company || 'UNKNOWN') }}
                           >
-                            {vacation.company}
+                            {vacation.company || 'Unknown'}
                           </span>
                           <span className="text-xs text-gray-400">{vacation.type}</span>
                         </div>

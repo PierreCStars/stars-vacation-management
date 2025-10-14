@@ -73,7 +73,7 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
       }
 
       // Load conflicts for this request
-      const conflictsResponse = await fetch(`/api/conflicts/vacation?company=${encodeURIComponent(foundRequest.company)}&start=${foundRequest.startDate}&end=${foundRequest.endDate}&id=${id}`);
+      const conflictsResponse = await fetch(`/api/conflicts/vacation?company=${encodeURIComponent(foundRequest.company || '')}&start=${foundRequest.startDate}&end=${foundRequest.endDate}&id=${id}`);
       let conflicts = [];
       if (conflictsResponse.ok) {
         const conflictsData = await conflictsResponse.json();
@@ -228,7 +228,7 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
             <p style={{ color: '#000000', marginBottom: 8 }}>End Date: {new Date(request.endDate).toLocaleDateString()}</p>
             <p style={{ color: '#000000', marginBottom: 8 }}>Type: {getVacationTypeLabelFromTranslations(request.type || '', tVacations)}</p>
             <p style={{ color: '#000000', marginBottom: 8 }}>Reason: {request.reason || 'No reason provided'}</p>
-            <p style={{ color: '#000000', marginBottom: 8 }}>Company: {request.company}</p>
+            <p style={{ color: '#000000', marginBottom: 8 }}>Company: {request.company || '—'}</p>
             <p style={{ color: '#000000' }}>Status: {request.status}</p>
           </div>
 

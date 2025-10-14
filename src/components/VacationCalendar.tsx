@@ -172,8 +172,8 @@ export default function VacationCalendar({ vacationRequests, className = '' }: V
                 {hasRequests && (
                   <div className="mt-1 space-y-1">
                     {requests.slice(0, 2).map((request, reqIndex) => {
-                      const companyColor = getCompanyHexColor(request.company);
-                      const textColor = request.company === 'STARS_MC' || request.company === 'LE_PNEU' ? '#ffffff' : '#000000';
+                       const companyColor = getCompanyHexColor(request.company || 'UNKNOWN');
+                       const textColor = request.company === 'STARS_MC' || request.company === 'LE_PNEU' ? '#ffffff' : '#000000';
                       
                       return (
                         <div

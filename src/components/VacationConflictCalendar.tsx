@@ -312,9 +312,9 @@ export default function VacationConflictCalendar({
                         <span className="font-bold text-gray-800">{vacation.userName}</span>
                         <span 
                           className="text-sm px-2 py-1 rounded text-white font-medium"
-                          style={{ backgroundColor: getCompanyHexColor(vacation.company) }}
+                           style={{ backgroundColor: getCompanyHexColor(vacation.company || 'UNKNOWN') }}
                         >
-                          {vacation.company}
+                          {vacation.company || 'Unknown'}
                         </span>
                         <span className="text-xs text-gray-400">{vacation.type}</span>
                       </div>

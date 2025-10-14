@@ -7,23 +7,8 @@ import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 import { VacationRequest } from '@/types/vacation';
 import { normalizeVacationStatus } from '@/types/vacation-status';
 // import PageHeader from '@/components/ui/PageHeader';
-// import Card from '@/components/ui/Card';
-// import Badge from '@/components/ui/Badge';
+import { ConflictEvent } from '@/app/[locale]/admin/vacation-requests/_server/getRequestsWithConflicts';
 
-interface ConflictEvent {
-  id: string;
-  userName: string;
-  userEmail: string;
-  startDate: string;
-  endDate: string;
-  status: string;
-  type: string;
-  isHalfDay: boolean;
-  halfDayType: string | null;
-  reason?: string;
-  company: string;
-  createdAt: string;
-}
 
 export default function VacationRequestDetailPage() {
   const router = useRouter();
@@ -48,7 +33,7 @@ export default function VacationRequestDetailPage() {
   const fetchConflicts = async (request: VacationRequest) => {
     try {
       setConflictsLoading(true);
-      const url = `/api/conflicts/vacation?company=${encodeURIComponent(request.company)}&start=${request.startDate}&end=${request.endDate}&id=${request.id}`;
+      const url = `/api/conflicts/vacation?company=${encodeURIComponent(request.company || '')}&start=${request.startDate}&end=${request.endDate}&id=${request.id}`;
       const response = await fetch(url);
       
       if (response.ok) {

@@ -10,7 +10,7 @@ export interface VacationRequest {
   startDate: string;
   endDate: string;
   reason?: string;
-  company: string;
+  company?: string;
   type: string;
   status: VacationStatus;
   createdAt: string;

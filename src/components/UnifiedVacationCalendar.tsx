@@ -3,6 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
 import { VacationRequest } from '@/types/vacation';
+import { VacationRequestWithConflicts } from '@/app/[locale]/admin/vacation-requests/_server/getRequestsWithConflicts';
 import { getCompanyHexColor } from '@/lib/company-colors';
 
 interface CompanyEvent {
@@ -29,7 +30,7 @@ interface ConflictEvent {
 }
 
 interface UnifiedVacationCalendarProps {
-  vacationRequests: VacationRequest[];
+  vacationRequests: (VacationRequest | VacationRequestWithConflicts)[];
   currentRequestId?: string;
   showLegend?: boolean;
   compact?: boolean;

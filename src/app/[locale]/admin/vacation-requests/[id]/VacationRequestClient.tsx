@@ -226,6 +226,7 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
             <h2 style={{ fontSize: '18px', fontWeight: 600, color: '#000000', marginBottom: 12 }}>Request Details</h2>
             <p style={{ color: '#000000', marginBottom: 8 }}>Start Date: {new Date(request.startDate).toLocaleDateString()}</p>
             <p style={{ color: '#000000', marginBottom: 8 }}>End Date: {new Date(request.endDate).toLocaleDateString()}</p>
+            <p style={{ color: '#000000', marginBottom: 8 }}>Duration: {request.durationDays || 1} day{request.durationDays !== 1 ? 's' : ''}</p>
             <p style={{ color: '#000000', marginBottom: 8 }}>Type: {getVacationTypeLabelFromTranslations(request.type || '', tVacations)}</p>
             <p style={{ color: '#000000', marginBottom: 8 }}>Reason: {request.reason || 'No reason provided'}</p>
             <p style={{ color: '#000000', marginBottom: 8 }}>Company: {request.company || '—'}</p>

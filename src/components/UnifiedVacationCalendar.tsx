@@ -137,11 +137,12 @@ export default function UnifiedVacationCalendar({
       const date = new Date(monthInfo.startDate);
       date.setDate(monthInfo.startDate.getDate() + i);
       
-      // Find vacations for this date
+      // Find vacations for this date (exclude rejected)
       const dayVacations = vacationRequests.filter(request => {
         const start = new Date(request.startDate);
         const end = new Date(request.endDate);
-        return date >= start && date <= end;
+        const isRejected = (request.status || '').toLowerCase() === 'rejected';
+        return date >= start && date <= end && !isRejected;
       });
 
       // Find Monaco holidays for this date

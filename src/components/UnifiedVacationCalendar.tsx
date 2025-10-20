@@ -145,10 +145,7 @@ export default function UnifiedVacationCalendar({
       });
 
       // Find Monaco holidays for this date
-      const dayMonacoHolidays = getMonacoHolidaysInRange(date, date).filter(holiday => {
-        const holidayDate = new Date(holiday.date);
-        return holidayDate.toDateString() === date.toDateString();
-      });
+      const dayMonacoHolidays = getMonacoHolidaysInRange(date, date);
 
       // Find company events for this date
       const dayCompanyEvents = companyEvents.filter(event => {
@@ -423,15 +420,19 @@ export default function UnifiedVacationCalendar({
               {day.vacations.length > 0 && (
                 <div className="mt-1 space-y-1">
                   {day.vacations.slice(0, compact ? 1 : 2).map((vacation, reqIndex) => {
+                    const isPending = (vacation.status || '').toLowerCase() === 'pending';
                     const companyColor = getCompanyHexColor(vacation.company || 'UNKNOWN');
-                    const textColor = vacation.company === 'STARS_MC' || vacation.company === 'LE_PNEU' ? '#ffffff' : '#000000';
+                    const backgroundColor = isPending ? '#FF5C00' : companyColor;
+                    const textColor = isPending
+                      ? '#ffffff'
+                      : (vacation.company === 'STARS_MC' || vacation.company === 'LE_PNEU' ? '#ffffff' : '#000000');
                     
                     return (
                       <div
                         key={reqIndex}
                         className="text-xs p-1 rounded truncate font-medium"
                         style={{
-                          backgroundColor: companyColor,
+                          backgroundColor: backgroundColor,
                           color: textColor
                         }}
                         title={`${vacation.userName} - ${vacation.company || 'Unknown'} (${vacation.status})`}
@@ -613,6 +614,10 @@ export default function UnifiedVacationCalendar({
               <div className="flex items-center space-x-1 sm:space-x-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-100 border border-blue-300 rounded"></div>
                 <span className="text-xs sm:text-sm text-gray-600">Monaco Holidays</span>
+              </div>
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#FF5C00' }}></div>
+                <span className="text-xs sm:text-sm text-gray-600">Pending Requests</span>
               </div>
               <div className="flex items-center space-x-1 sm:space-x-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded"></div>

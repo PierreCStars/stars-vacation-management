@@ -45,7 +45,7 @@ export default function MiniVacationCalendar({
       <UnifiedVacationCalendar
         vacationRequests={[mockVacationRequest]}
         currentRequestId={undefined}
-        showLegend={false}
+        showLegend={true}
         compact={true}
         className="mini-calendar"
       />

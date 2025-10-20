@@ -60,6 +60,11 @@ export async function POST(request: Request) {
 
     const vacationRequestData = await request.json();
     
+    // Extract locale from request headers or default to 'en'
+    const acceptLanguage = request.headers.get('accept-language') || '';
+    const locale = acceptLanguage.includes('fr') ? 'fr' : 
+                   acceptLanguage.includes('it') ? 'it' : 'en';
+    
     // Calculate duration if not provided or invalid
     let durationDays = vacationRequestData.durationDays;
     console.log('🔍 Raw durationDays from frontend:', durationDays);
@@ -150,7 +155,7 @@ export async function POST(request: Request) {
         halfDayType: vacationRequest.halfDayType || null,
         durationDays: vacationRequest.durationDays || 1,
         createdAt: new Date().toISOString(),
-        locale: 'en' // Default locale, could be extracted from request headers if needed
+        locale: locale // Use detected locale from request headers
       };
 
       await submitVacation({

@@ -117,6 +117,7 @@ export default function VacationRequestPage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept-Language': currentLocale, // Send current locale to API
         },
         body: JSON.stringify(payload),
       });

@@ -195,6 +195,48 @@ const en = {
     "show": "Show",
     "hide": "Hide",
     "vacationRequestDetails": "Vacation Request Details"
+  },
+  "emails": {
+    "submissionConfirmation": {
+      "subject": "Vacation Request Submitted - {type}",
+      "greeting": "Dear {name},",
+      "body": "Your vacation request has been successfully submitted and is pending approval.",
+      "details": "Request Details:",
+      "type": "Type: {type}",
+      "dates": "Dates: {startDate} to {endDate}",
+      "duration": "Duration: {duration} days",
+      "reason": "Reason: {reason}",
+      "status": "Status: Pending approval",
+      "footer": "You will receive a notification once your request has been reviewed.",
+      "signature": "Best regards,<br>HR Team"
+    },
+    "approvalNotice": {
+      "subject": "Vacation Request Approved - {type}",
+      "greeting": "Dear {name},",
+      "body": "Great news! Your vacation request has been approved.",
+      "details": "Approved Request Details:",
+      "type": "Type: {type}",
+      "dates": "Dates: {startDate} to {endDate}",
+      "duration": "Duration: {duration} days",
+      "reason": "Reason: {reason}",
+      "approvedBy": "Approved by: {approvedBy}",
+      "footer": "Please ensure your work is properly handed over before your vacation begins.",
+      "signature": "Best regards,<br>HR Team"
+    },
+    "denialNotice": {
+      "subject": "Vacation Request Update - {type}",
+      "greeting": "Dear {name},",
+      "body": "We regret to inform you that your vacation request could not be approved at this time.",
+      "details": "Request Details:",
+      "type": "Type: {type}",
+      "dates": "Dates: {startDate} to {endDate}",
+      "duration": "Duration: {duration} days",
+      "reason": "Reason: {reason}",
+      "deniedBy": "Reviewed by: {deniedBy}",
+      "adminComment": "Admin Comment: {adminComment}",
+      "footer": "Please contact HR if you have any questions or would like to discuss alternative dates.",
+      "signature": "Best regards,<br>HR Team"
+    }
   }
 };
 
@@ -394,6 +436,48 @@ const fr = {
     "show": "Afficher",
     "hide": "Masquer",
     "vacationRequestDetails": "Détails de la demande de congé"
+  },
+  "emails": {
+    "submissionConfirmation": {
+      "subject": "Demande de congé soumise - {type}",
+      "greeting": "Cher/Chère {name},",
+      "body": "Votre demande de congé a été soumise avec succès et est en attente d'approbation.",
+      "details": "Détails de la demande :",
+      "type": "Type : {type}",
+      "dates": "Dates : du {startDate} au {endDate}",
+      "duration": "Durée : {duration} jours",
+      "reason": "Raison : {reason}",
+      "status": "Statut : En attente d'approbation",
+      "footer": "Vous recevrez une notification une fois que votre demande aura été examinée.",
+      "signature": "Cordialement,<br>Équipe RH"
+    },
+    "approvalNotice": {
+      "subject": "Demande de congé approuvée - {type}",
+      "greeting": "Cher/Chère {name},",
+      "body": "Excellente nouvelle ! Votre demande de congé a été approuvée.",
+      "details": "Détails de la demande approuvée :",
+      "type": "Type : {type}",
+      "dates": "Dates : du {startDate} au {endDate}",
+      "duration": "Durée : {duration} jours",
+      "reason": "Raison : {reason}",
+      "approvedBy": "Approuvé par : {approvedBy}",
+      "footer": "Veuillez vous assurer que votre travail est correctement transmis avant le début de vos congés.",
+      "signature": "Cordialement,<br>Équipe RH"
+    },
+    "denialNotice": {
+      "subject": "Mise à jour de la demande de congé - {type}",
+      "greeting": "Cher/Chère {name},",
+      "body": "Nous regrettons de vous informer que votre demande de congé ne peut pas être approuvée pour le moment.",
+      "details": "Détails de la demande :",
+      "type": "Type : {type}",
+      "dates": "Dates : du {startDate} au {endDate}",
+      "duration": "Durée : {duration} jours",
+      "reason": "Raison : {reason}",
+      "deniedBy": "Examiné par : {deniedBy}",
+      "adminComment": "Commentaire admin : {adminComment}",
+      "footer": "Veuillez contacter les RH si vous avez des questions ou souhaitez discuter d'autres dates.",
+      "signature": "Cordialement,<br>Équipe RH"
+    }
   }
 };
 
@@ -593,6 +677,48 @@ const it = {
     "show": "Mostra",
     "hide": "Nascondi",
     "vacationRequestDetails": "Dettagli richiesta vacanza"
+  },
+  "emails": {
+    "submissionConfirmation": {
+      "subject": "Richiesta di vacanza inviata - {type}",
+      "greeting": "Caro/a {name},",
+      "body": "La tua richiesta di vacanza è stata inviata con successo ed è in attesa di approvazione.",
+      "details": "Dettagli della richiesta:",
+      "type": "Tipo: {type}",
+      "dates": "Date: dal {startDate} al {endDate}",
+      "duration": "Durata: {duration} giorni",
+      "reason": "Motivo: {reason}",
+      "status": "Stato: In attesa di approvazione",
+      "footer": "Riceverai una notifica una volta che la tua richiesta sarà stata esaminata.",
+      "signature": "Cordiali saluti,<br>Team HR"
+    },
+    "approvalNotice": {
+      "subject": "Richiesta di vacanza approvata - {type}",
+      "greeting": "Caro/a {name},",
+      "body": "Ottime notizie! La tua richiesta di vacanza è stata approvata.",
+      "details": "Dettagli della richiesta approvata:",
+      "type": "Tipo: {type}",
+      "dates": "Date: dal {startDate} al {endDate}",
+      "duration": "Durata: {duration} giorni",
+      "reason": "Motivo: {reason}",
+      "approvedBy": "Approvato da: {approvedBy}",
+      "footer": "Assicurati che il tuo lavoro sia correttamente trasferito prima dell'inizio delle tue vacanze.",
+      "signature": "Cordiali saluti,<br>Team HR"
+    },
+    "denialNotice": {
+      "subject": "Aggiornamento richiesta di vacanza - {type}",
+      "greeting": "Caro/a {name},",
+      "body": "Ci dispiace informarti che la tua richiesta di vacanza non può essere approvata al momento.",
+      "details": "Dettagli della richiesta:",
+      "type": "Tipo: {type}",
+      "dates": "Date: dal {startDate} al {endDate}",
+      "duration": "Durata: {duration} giorni",
+      "reason": "Motivo: {reason}",
+      "deniedBy": "Esaminato da: {deniedBy}",
+      "adminComment": "Commento admin: {adminComment}",
+      "footer": "Contatta l'HR se hai domande o vuoi discutere date alternative.",
+      "signature": "Cordiali saluti,<br>Team HR"
+    }
   }
 };
 

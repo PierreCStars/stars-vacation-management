@@ -9,7 +9,7 @@ interface Translations {
   nav: Record<string, string>;
   vacations: Record<string, string>;
   analytics?: Record<string, string>;
-  emails?: Record<string, string>;
+  emails?: Record<string, any>; // Allow nested objects for email templates
   calendar?: Record<string, string>;
   admin?: Record<string, string>;
   dashboard?: Record<string, string>;

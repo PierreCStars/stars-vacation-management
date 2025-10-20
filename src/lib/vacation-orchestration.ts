@@ -4,6 +4,7 @@ import { FakeCalendarGateway } from '@/lib/calendar/fake';
 import { ADMINS } from '@/config/admins';
 import { sendAdminNotification, sendEmailToRecipients, getAdminEmails } from '@/lib/email-notifications';
 import { generateAdminNotificationEmail, generateRequestConfirmationEmail, generateDecisionEmail, generateAdminReviewNotificationEmail } from '@/lib/email-templates';
+import { sendLocalizedEmail } from '@/lib/localized-email-service';
 import type { VacationRequestData } from '@/lib/email-templates';
 
 // On submission:
@@ -45,7 +46,34 @@ export async function submitVacation({
     }
     
     // Send confirmation to requester
-    if (vacationRequestData) {
+    if (vacationRequestData && vacationRequestData.locale) {
+      // Use localized email service for confirmation
+      try {
+        await sendLocalizedEmail(
+          'submissionConfirmation',
+          vacationRequestData as any, // Cast to include locale
+          [requesterEmail]
+        );
+        console.log('✅ Localized confirmation email sent successfully');
+      } catch (error) {
+        console.error('❌ Failed to send localized confirmation email:', error);
+        // Fallback to non-localized email
+        const confirmationEmail = generateRequestConfirmationEmail(vacationRequestData);
+        const confirmationResult = await sendEmailToRecipients(
+          [requesterEmail],
+          confirmationEmail.subject, 
+          confirmationEmail.html, 
+          confirmationEmail.text
+        );
+        
+        if (confirmationResult.success) {
+          console.log('✅ Fallback confirmation email sent successfully', { provider: confirmationResult.provider, messageId: confirmationResult.messageId });
+        } else {
+          console.error('❌ Failed to send fallback confirmation email:', confirmationResult.error);
+        }
+      }
+    } else if (vacationRequestData) {
+      // Fallback to non-localized email if no locale
       const confirmationEmail = generateRequestConfirmationEmail(vacationRequestData);
       const confirmationResult = await sendEmailToRecipients(
         [requesterEmail],
@@ -104,7 +132,47 @@ export async function decideVacation({
 
   try {
     // Send decision email to requester
-    if (vacationRequestData) {
+    if (vacationRequestData && vacationRequestData.locale) {
+      // Use localized email service for decision
+      try {
+        const templateKey = decision.toLowerCase() === 'approved' ? 'approvalNotice' : 'denialNotice';
+        await sendLocalizedEmail(
+          templateKey,
+          {
+            ...vacationRequestData,
+            decision: decision.toLowerCase() as 'approved' | 'denied',
+            approvedBy: decision.toLowerCase() === 'approved' ? reviewedBy : undefined,
+            deniedBy: decision.toLowerCase() === 'denied' ? reviewedBy : undefined,
+            adminComment
+          } as any, // Cast to include locale
+          [requesterEmail]
+        );
+        console.log('✅ Localized decision email sent successfully');
+      } catch (error) {
+        console.error('❌ Failed to send localized decision email:', error);
+        // Fallback to non-localized email
+        const decisionEmail = generateDecisionEmail({
+          ...vacationRequestData,
+          decision: decision.toLowerCase() as 'approved' | 'denied',
+          adminComment,
+          reviewedBy
+        });
+        
+        const decisionResult = await sendEmailToRecipients(
+          [requesterEmail],
+          decisionEmail.subject,
+          decisionEmail.html,
+          decisionEmail.text
+        );
+        
+        if (decisionResult.success) {
+          console.log('✅ Fallback decision email sent successfully', { provider: decisionResult.provider, messageId: decisionResult.messageId });
+        } else {
+          console.error('❌ Failed to send fallback decision email:', decisionResult.error);
+        }
+      }
+    } else if (vacationRequestData) {
+      // Fallback to non-localized email if no locale
       const decisionEmail = generateDecisionEmail({
         ...vacationRequestData,
         decision: decision.toLowerCase() as 'approved' | 'denied',

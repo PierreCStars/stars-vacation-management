@@ -43,6 +43,12 @@ export type VacationRequestRaw = {
   approvedByName?: string | null;
   approvedByEmail?: string | null;
   googleEventId?: string | null;
+  // New duration fields
+  durationDays?: number;
+  isHalfDay?: boolean;
+  halfDayType?: "morning" | "afternoon" | null;
+  reason?: string;
+  adminComment?: string;
 };
 
 export function mapFromFirestore(id: string, data: VacationRequestRaw) {
@@ -71,10 +77,15 @@ export function mapFromFirestore(id: string, data: VacationRequestRaw) {
     type: data.type ?? "vacation",
     status: normalizeVacationStatus(data.status ?? "pending"),
     createdAt: tsToIso(data.createdAt) ?? new Date().toISOString(),
-    updatedAt: tsToIso(data.updatedAt),
+    reviewedBy: reviewerName ?? undefined,
+    reviewerEmail: reviewerEmail ?? undefined,
     reviewedAt: tsToIso(data.reviewedAt ?? undefined) ?? null,
-    approvedByName: reviewerName ?? null,
-    approvedByEmail: reviewerEmail ?? null,
     googleEventId: data.googleEventId ?? undefined,
-  } satisfies import("@/types/vacations").VacationRequest;
+    // New duration fields
+    durationDays: data.durationDays ?? undefined,
+    isHalfDay: data.isHalfDay ?? false,
+    halfDayType: data.halfDayType ?? null,
+    reason: data.reason ?? undefined,
+    adminComment: data.adminComment ?? undefined,
+  } satisfies import("@/types/vacation").VacationRequest;
 }

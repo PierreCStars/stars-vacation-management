@@ -194,7 +194,23 @@ const en = {
     "descending": "Descending",
     "show": "Show",
     "hide": "Hide",
-    "vacationRequestDetails": "Vacation Request Details"
+    "vacationRequestDetails": "Vacation Request Details",
+    "createVacation": {
+      "button": "Create Vacation",
+      "title": "Create a vacation",
+      "firstName": "First Name",
+      "lastName": "Last Name",
+      "phone": "Phone Number",
+      "email": "Email (optional)",
+      "company": "Company",
+      "startDate": "Start date",
+      "endDate": "End date",
+      "type": "Vacation type",
+      "validateCreate": "Validate & Create",
+      "cancel": "Cancel",
+      "success": "Vacation created and validated.",
+      "error": "Unable to create vacation."
+    }
   },
   "emails": {
     "submissionConfirmation": {
@@ -235,6 +251,19 @@ const en = {
       "deniedBy": "Reviewed by: {deniedBy}",
       "adminComment": "Admin Comment: {adminComment}",
       "footer": "Please contact HR if you have any questions or would like to discuss alternative dates.",
+      "signature": "Best regards,<br>HR Team"
+    },
+    "adminCreatedVacation": {
+      "subject": "Your vacation has been validated",
+      "greeting": "Dear {name},",
+      "body": "A vacation has been created and validated for you by the administration.",
+      "details": "Vacation Details:",
+      "type": "Type: {type}",
+      "dates": "Dates: {startDate} to {endDate}",
+      "duration": "Duration: {duration} days",
+      "reason": "Reason: {reason}",
+      "createdBy": "Created by: {createdBy}",
+      "footer": "Please ensure your work is properly handed over before your vacation begins.",
       "signature": "Best regards,<br>HR Team"
     }
   }
@@ -435,7 +464,23 @@ const fr = {
     "descending": "Décroissant",
     "show": "Afficher",
     "hide": "Masquer",
-    "vacationRequestDetails": "Détails de la demande de congé"
+    "vacationRequestDetails": "Détails de la demande de congé",
+    "createVacation": {
+      "button": "Créer un congé",
+      "title": "Créer un congé",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "phone": "Numéro de téléphone",
+      "email": "E‑mail (facultatif)",
+      "company": "Société",
+      "startDate": "Date de début",
+      "endDate": "Date de fin",
+      "type": "Type de congé",
+      "validateCreate": "Valider et créer",
+      "cancel": "Annuler",
+      "success": "Congé créé et validé.",
+      "error": "Impossible de créer le congé."
+    }
   },
   "emails": {
     "submissionConfirmation": {
@@ -476,6 +521,19 @@ const fr = {
       "deniedBy": "Examiné par : {deniedBy}",
       "adminComment": "Commentaire admin : {adminComment}",
       "footer": "Veuillez contacter les RH si vous avez des questions ou souhaitez discuter d'autres dates.",
+      "signature": "Cordialement,<br>Équipe RH"
+    },
+    "adminCreatedVacation": {
+      "subject": "Votre congé a été validé",
+      "greeting": "Cher/Chère {name},",
+      "body": "Un congé a été créé et validé pour vous par l'administration.",
+      "details": "Détails du congé :",
+      "type": "Type : {type}",
+      "dates": "Dates : du {startDate} au {endDate}",
+      "duration": "Durée : {duration} jours",
+      "reason": "Raison : {reason}",
+      "createdBy": "Créé par : {createdBy}",
+      "footer": "Veuillez vous assurer que votre travail est correctement transmis avant le début de vos congés.",
       "signature": "Cordialement,<br>Équipe RH"
     }
   }
@@ -676,7 +734,23 @@ const it = {
     "descending": "Decrescente",
     "show": "Mostra",
     "hide": "Nascondi",
-    "vacationRequestDetails": "Dettagli richiesta vacanza"
+    "vacationRequestDetails": "Dettagli richiesta vacanza",
+    "createVacation": {
+      "button": "Crea ferie",
+      "title": "Crea ferie",
+      "firstName": "Nome",
+      "lastName": "Cognome",
+      "phone": "Numero di telefono",
+      "email": "Email (facoltativa)",
+      "company": "Azienda",
+      "startDate": "Data di inizio",
+      "endDate": "Data di fine",
+      "type": "Tipo di ferie",
+      "validateCreate": "Conferma e crea",
+      "cancel": "Annulla",
+      "success": "Ferie create e confermate.",
+      "error": "Impossibile creare le ferie."
+    }
   },
   "emails": {
     "submissionConfirmation": {
@@ -717,6 +791,19 @@ const it = {
       "deniedBy": "Esaminato da: {deniedBy}",
       "adminComment": "Commento admin: {adminComment}",
       "footer": "Contatta l'HR se hai domande o vuoi discutere date alternative.",
+      "signature": "Cordiali saluti,<br>Team HR"
+    },
+    "adminCreatedVacation": {
+      "subject": "Le tue ferie sono state confermate",
+      "greeting": "Caro/a {name},",
+      "body": "Una vacanza è stata creata e confermata per te dall'amministrazione.",
+      "details": "Dettagli della vacanza:",
+      "type": "Tipo: {type}",
+      "dates": "Date: dal {startDate} al {endDate}",
+      "duration": "Durata: {duration} giorni",
+      "reason": "Motivo: {reason}",
+      "createdBy": "Creato da: {createdBy}",
+      "footer": "Assicurati che il tuo lavoro sia correttamente trasferito prima dell'inizio delle tue vacanze.",
       "signature": "Cordiali saluti,<br>Team HR"
     }
   }

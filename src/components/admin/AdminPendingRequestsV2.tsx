@@ -7,6 +7,7 @@ import { absoluteUrl } from '@/lib/urls';
 import { isPendingStatus, isReviewedStatus, normalizeVacationStatus } from '@/types/vacation-status';
 import { VacationRequest } from '@/types/vacation';
 import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
+import CreateVacationModal from './CreateVacationModal';
 
 // Helper function to calculate days between dates
 function calculateDays(startDate: string, endDate: string): number {
@@ -28,6 +29,7 @@ export default function AdminPendingRequestsV2() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [actionMessage, setActionMessage] = useState<{type: 'success' | 'error', message: string} | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [showCreateModal, setShowCreateModal] = useState(false);
   
   const { data: session } = useSession();
   const t = useTranslations('admin');
@@ -191,6 +193,20 @@ export default function AdminPendingRequestsV2() {
     }
   };
 
+  const handleVacationCreated = () => {
+    // Show success message
+    setActionMessage({
+      type: 'success',
+      message: 'Vacation created and validated successfully!'
+    });
+    
+    // Auto-hide message after 3 seconds
+    setTimeout(() => setActionMessage(null), 3000);
+    
+    // Refresh the requests list
+    fetchVacationRequests();
+  };
+
   const isProcessing = (id: string) => processingRequests.has(id);
   
   // Filter requests by status
@@ -310,6 +326,15 @@ export default function AdminPendingRequestsV2() {
                     )}
                   </div>
                   <div className="flex items-center gap-3">
+                    <button
+                      onClick={() => setShowCreateModal(true)}
+                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                      </svg>
+                      {t('createVacation.button')}
+                    </button>
                     <button
                       onClick={handleCSVExport}
                       disabled={isExporting || requests.length === 0}
@@ -470,6 +495,13 @@ export default function AdminPendingRequestsV2() {
                   </div>
                 </div>
               )}
+
+              {/* Create Vacation Modal */}
+              <CreateVacationModal
+                isOpen={showCreateModal}
+                onClose={() => setShowCreateModal(false)}
+                onSuccess={handleVacationCreated}
+              />
 
     </div>
   );

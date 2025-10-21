@@ -11,7 +11,7 @@ interface Translations {
   analytics?: Record<string, string>;
   emails?: Record<string, any>; // Allow nested objects for email templates
   calendar?: Record<string, string>;
-  admin?: Record<string, string>;
+  admin?: Record<string, any>; // Allow nested objects for admin section
   dashboard?: Record<string, string>;
 }
 

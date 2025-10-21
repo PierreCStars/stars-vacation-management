@@ -2,6 +2,7 @@ import { AuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { assertRequiredEnv } from "@/lib/env/required";
+import { isAdmin } from '@/config/admins';
 
 // Validate required environment variables at module load time
 assertRequiredEnv();
@@ -34,8 +35,8 @@ export const authOptions: AuthOptions = {
               password: { label: 'Password', type: 'password' }
             },
             async authorize(creds) {
-              // For development, allow any @stars.mc email with any password
-              if (creds?.username?.endsWith('@stars.mc')) {
+              // For development, only allow specific admin emails
+              if (creds?.username && isAdmin(creds.username)) {
                 return { 
                   id: 'dev-user', 
                   name: 'Development User', 
@@ -66,12 +67,13 @@ export const authOptions: AuthOptions = {
       // In preview or development, credentials provider already validated
       if (isPreview || isDevelopment) return true;
       const email = profile?.email || user?.email;
-      const domain = email?.split('@')[1];
-      if (domain !== "stars.mc") {
-        console.log(`Access denied for domain: ${domain}`);
+      
+      // Only allow specific admin emails
+      if (!isAdmin(email)) {
+        console.log(`Access denied for email: ${email}`);
         return false;
       }
-      console.log(`Access granted for user: ${email}`);
+      console.log(`Access granted for admin: ${email}`);
       return true;
     },
     async session({ session, token }: any) {

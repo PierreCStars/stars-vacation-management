@@ -13,6 +13,7 @@ import { isFirebaseEnabled } from "@/lib/firebase/client";
 import { VacationRequestWithConflicts } from './_server/getRequestsWithConflicts';
 import ResponsiveRequestsList from '@/components/admin/ResponsiveRequestsList';
 import { isPendingStatus, isReviewedStatus } from '@/types/vacation-status';
+import { isAdmin } from '@/config/admins';
 import { createLocaleUrl } from '@/i18n/routing';
 
 // Handle browser extension interference - moved to useEffect
@@ -193,8 +194,9 @@ export default function AdminVacationRequestsClient({
     }
 
     // Check if user has admin access
-    if (!session.user.email.endsWith('@stars.mc')) {
-      console.error('❌ Access denied. Only @stars.mc users can access this page.');
+    if (!isAdmin(session.user.email)) {
+      console.error('❌ Access denied. Only authorized admins can access this page.');
+      router.push('/auth/signin?callbackUrl=/en/admin/vacation-requests');
       return;
     }
     

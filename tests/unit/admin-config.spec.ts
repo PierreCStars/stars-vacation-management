@@ -5,7 +5,7 @@ describe('Admin configuration', () => {
   it('has correct admin list', () => {
     expect(ADMINS).toHaveLength(4);
     expect(ADMINS.map(a => a.email)).toEqual([
-      'Pierre@stars.mc',
+      'pierre@stars.mc',
       'johnny@stars.mc',
       'daniel@stars.mc',
       'compta@stars.mc'
@@ -13,8 +13,8 @@ describe('Admin configuration', () => {
   });
   
   it('correctly identifies admins', () => {
-    expect(isAdmin('Pierre@stars.mc')).toBe(true);
-    expect(isAdmin('pierre@stars.mc')).toBe(true); // case insensitive
+    expect(isAdmin('pierre@stars.mc')).toBe(true);
+    expect(isAdmin('Pierre@stars.mc')).toBe(true); // case insensitive
     expect(isAdmin('PIERRE@STARS.MC')).toBe(true); // case insensitive
     expect(isAdmin('johnny@stars.mc')).toBe(true);
     expect(isAdmin('daniel@stars.mc')).toBe(true);
@@ -22,7 +22,7 @@ describe('Admin configuration', () => {
   });
   
   it('correctly identifies full admins', () => {
-    expect(isFullAdmin('Pierre@stars.mc')).toBe(true);
+    expect(isFullAdmin('pierre@stars.mc')).toBe(true);
     expect(isFullAdmin('johnny@stars.mc')).toBe(true);
     expect(isFullAdmin('daniel@stars.mc')).toBe(true);
     expect(isFullAdmin('compta@stars.mc')).toBe(false);
@@ -30,7 +30,7 @@ describe('Admin configuration', () => {
   
   it('correctly identifies read-only admins', () => {
     expect(isReadOnlyAdmin('compta@stars.mc')).toBe(true);
-    expect(isReadOnlyAdmin('Pierre@stars.mc')).toBe(false);
+    expect(isReadOnlyAdmin('pierre@stars.mc')).toBe(false);
     expect(isReadOnlyAdmin('johnny@stars.mc')).toBe(false);
     expect(isReadOnlyAdmin('daniel@stars.mc')).toBe(false);
   });

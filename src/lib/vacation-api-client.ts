@@ -236,5 +236,4 @@ export class LegacyCodeMigrator {
   }
 }
 
-// Export all utilities
-export { VacationApiClient, useSafeEmailApi, LegacyCodeMigrator };
+// All utilities are already exported above as classes and functions

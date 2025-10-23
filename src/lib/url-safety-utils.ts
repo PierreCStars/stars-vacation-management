@@ -153,4 +153,4 @@ export function useEmailValidation() {
 }
 
 // Export all utilities
-export { SafeUrlBuilder, SafeApiClient };
+// SafeUrlBuilder and SafeApiClient are already exported above as classes

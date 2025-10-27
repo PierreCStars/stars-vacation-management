@@ -407,37 +407,59 @@ export default function AdminPendingRequestsV2() {
                       <p className="text-gray-600">Loading calendar...</p>
                     </div>
                   ) : (
-                    <UnifiedVacationCalendar 
-                      vacationRequests={requests
-                        .filter(r => normalizeVacationStatus(r.status) === 'approved')
-                        .map((r): VacationRequest => ({
-                          id: r.id,
-                          userId: r.userId,
-                          userEmail: r.userEmail,
-                          userName: r.userName,
-                          startDate: r.startDate,
-                          endDate: r.endDate,
-                          reason: r.reason,
-                          company: r.company || 'Unknown',
-                          type: r.type || 'VACATION',
-                          status: normalizeVacationStatus(r.status),
-                          createdAt: r.createdAt || new Date().toISOString(),
-                           reviewedBy: r.reviewedBy,
-                          reviewerEmail: undefined,
-                          reviewedAt: r.reviewedAt || undefined, // Convert null to undefined
-                          adminComment: undefined,
-                          included: true,
-                          openDays: undefined,
-                          isHalfDay: r.isHalfDay,
-                          halfDayType: (r.halfDayType as 'morning' | 'afternoon' | null) || null,
-                          durationDays: r.durationDays,
-                          googleEventId: undefined
-                        }))}
-                      className="w-full"
-                      showLegend={true}
-                      compact={false}
-                      data-testid="admin-calendar"
-                    />
+                    <>
+                      {/* Debug info - show in development */}
+                      {process.env.NODE_ENV === 'development' && (
+                        <div className="mb-4 p-4 bg-blue-50 rounded border border-blue-200">
+                          <h4 className="font-semibold mb-2">🔧 Calendar Debug (Dev Only)</h4>
+                          <div className="text-sm space-y-1">
+                            <p><strong>Total requests:</strong> {requests.length}</p>
+                            <p><strong>Pending:</strong> {requests.filter(r => normalizeVacationStatus(r.status) === 'pending').length}</p>
+                            <p><strong>Approved/Validated:</strong> {requests.filter(r => normalizeVacationStatus(r.status) === 'approved').length}</p>
+                            <p><strong>Rejected:</strong> {requests.filter(r => normalizeVacationStatus(r.status) === 'denied').length}</p>
+                            <p><strong>Passed to calendar:</strong> {requests.filter(r => {
+                              const status = normalizeVacationStatus(r.status);
+                              return status === 'pending' || status === 'approved';
+                            }).length}</p>
+                          </div>
+                        </div>
+                      )}
+                      <UnifiedVacationCalendar 
+                        vacationRequests={requests
+                          .filter(r => {
+                            const status = normalizeVacationStatus(r.status);
+                            // Include pending AND approved/validated - exclude denied/rejected
+                            return status === 'pending' || status === 'approved';
+                          })
+                          .map((r): VacationRequest => ({
+                            id: r.id,
+                            userId: r.userId,
+                            userEmail: r.userEmail,
+                            userName: r.userName,
+                            startDate: r.startDate,
+                            endDate: r.endDate,
+                            reason: r.reason,
+                            company: r.company || 'Unknown',
+                            type: r.type || 'VACATION',
+                            status: normalizeVacationStatus(r.status),
+                            createdAt: r.createdAt || new Date().toISOString(),
+                             reviewedBy: r.reviewedBy,
+                            reviewerEmail: undefined,
+                            reviewedAt: r.reviewedAt || undefined, // Convert null to undefined
+                            adminComment: undefined,
+                            included: true,
+                            openDays: undefined,
+                            isHalfDay: r.isHalfDay,
+                            halfDayType: (r.halfDayType as 'morning' | 'afternoon' | null) || null,
+                            durationDays: r.durationDays,
+                            googleEventId: undefined
+                          }))}
+                        className="w-full"
+                        showLegend={true}
+                        compact={false}
+                        data-testid="admin-calendar"
+                      />
+                    </>
                   )}
                 </div>
               </div>

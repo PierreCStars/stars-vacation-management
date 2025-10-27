@@ -6,6 +6,8 @@ import { VacationRequest } from '@/types/vacation';
 import { VacationRequestWithConflicts, ConflictEvent } from '@/app/[locale]/admin/vacation-requests/_server/getRequestsWithConflicts';
 import { getCompanyHexColor } from '@/lib/company-colors';
 import { getMonacoHolidaysInRange, MonacoHoliday } from '@/lib/monaco-holidays';
+import { getStatusColor, detectConflictsForEmployee } from '@/lib/statusColor';
+import { parseISODate, parseLocalDate, getFirstDayOfCalendarGrid, isToday, isInMonth, formatISODate } from '@/lib/dates';
 
 interface CompanyEvent {
   id: string;
@@ -117,11 +119,9 @@ export default function UnifiedVacationCalendar({
     const currentMonth = currentDate.getMonth();
     const currentYear = currentDate.getFullYear();
     const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
-    const startDate = new Date(firstDayOfMonth);
-    // Fix Monday start: getDay() returns 0 for Sunday, 1 for Monday, etc.
-    // To start on Monday, we need to go back (getDay() + 6) % 7 days
-    const daysToSubtract = (firstDayOfMonth.getDay() + 6) % 7;
-    startDate.setDate(startDate.getDate() - daysToSubtract);
+    
+    // Use date utility to get first day of calendar grid (Monday start)
+    const startDate = getFirstDayOfCalendarGrid(currentYear, currentMonth, 1);
     
     return { currentMonth, currentYear, firstDayOfMonth, startDate };
   }, [currentDate]);
@@ -139,10 +139,20 @@ export default function UnifiedVacationCalendar({
       
       // Find vacations for this date (exclude rejected)
       const dayVacations = vacationRequests.filter(request => {
-        const start = new Date(request.startDate);
-        const end = new Date(request.endDate);
-        const isRejected = (request.status || '').toLowerCase() === 'rejected';
-        return date >= start && date <= end && !isRejected;
+        const isRejected = (request.status || '').toLowerCase() === 'rejected' || (request.status || '').toLowerCase() === 'denied';
+        if (isRejected) return false;
+        
+        try {
+          // Use safe local date parsing to prevent timezone issues
+          const start = parseLocalDate(request.startDate);
+          const end = parseLocalDate(request.endDate);
+          
+          // Include the full range (inclusive on both ends)
+          return date >= start && date <= end;
+        } catch (error) {
+          console.error('Error parsing dates:', error, request);
+          return false;
+        }
       });
 
       // Find Monaco holidays for this date
@@ -150,18 +160,26 @@ export default function UnifiedVacationCalendar({
 
       // Find company events for this date
       const dayCompanyEvents = companyEvents.filter(event => {
-        const start = new Date(event.startDate);
-        const end = new Date(event.endDate);
-        return date >= start && date <= end;
+        try {
+          const start = parseLocalDate(event.startDate);
+          const end = parseLocalDate(event.endDate);
+          return date >= start && date <= end;
+        } catch (error) {
+          return false;
+        }
       });
 
       // Find conflict events for this date
       const dayConflictEvents = conflicts.filter(conflict => {
         // Check if any conflicting requests overlap with this date
         return conflict.conflictingRequests?.some(req => {
-          const start = new Date(req.startDate);
-          const end = new Date(req.endDate);
-          return date >= start && date <= end;
+          try {
+            const start = parseLocalDate(req.startDate);
+            const end = parseLocalDate(req.endDate);
+            return date >= start && date <= end;
+          } catch (error) {
+            return false;
+          }
         }) || false;
       });
 
@@ -199,8 +217,8 @@ export default function UnifiedVacationCalendar({
       days.push({
         date,
         dayNumber: date.getDate(),
-        isCurrentMonth: date.getMonth() === monthInfo.currentMonth,
-        isToday: date.toDateString() === currentDateObj.toDateString(),
+        isCurrentMonth: isInMonth(date, monthInfo.currentYear, monthInfo.currentMonth),
+        isToday: isToday(date),
         vacations: dayVacations,
         companyEvents: dayCompanyEvents,
         monacoHolidays: dayMonacoHolidays,
@@ -328,9 +346,9 @@ export default function UnifiedVacationCalendar({
 
       {/* Calendar Grid */}
       <div className="p-2 sm:p-4">
-        {/* Day headers */}
+        {/* Day headers - Monday start */}
         <div className="grid grid-cols-7 gap-1 mb-2">
-          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+          {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => (
             <div key={day} className="p-1 sm:p-2 text-center text-xs font-medium text-gray-500">
               <span className="hidden sm:inline">{day}</span>
               <span className="sm:hidden">{day.charAt(0)}</span>
@@ -362,23 +380,18 @@ export default function UnifiedVacationCalendar({
                 {day.dayNumber}
               </div>
               
-              {/* Company Events (displayed first with different styling) */}
+              {/* Company Events - Show ALL without limits */}
               {day.companyEvents.length > 0 && (
-                <div className="mt-1 space-y-1">
-                  {day.companyEvents.slice(0, compact ? 1 : 2).map((event, eventIndex) => (
+                <div className="mt-1 space-y-0.5">
+                  {day.companyEvents.map((event, eventIndex) => (
                     <div
                       key={`event-${eventIndex}`}
                       className="text-xs p-1 rounded truncate font-medium bg-purple-100 border border-purple-300 text-purple-800"
                       title={`${event.title}${event.location ? ` • ${event.location}` : ''}`}
                     >
-                      {compact ? '📅' : `📅 ${event.title.substring(0, 8)}...`}
+                      📅 {event.title}
                     </div>
                   ))}
-                  {day.companyEvents.length > (compact ? 1 : 2) && (
-                    <div className="text-xs text-purple-600 font-medium">
-                      +{day.companyEvents.length - (compact ? 1 : 2)} more events
-                    </div>
-                  )}
                 </div>
               )}
               
@@ -397,56 +410,57 @@ export default function UnifiedVacationCalendar({
                 </div>
               )}
               
-              {/* Conflict events (displayed first with distinct styling) */}
+              {/* Conflict events - Show ALL without limits */}
               {day.conflictEvents && day.conflictEvents.length > 0 && (
-                <div className="mt-1 space-y-1">
-                  {day.conflictEvents.slice(0, compact ? 1 : 2).map((conflict, conflictIndex) => (
+                <div className="mt-1 space-y-0.5">
+                  {day.conflictEvents.map((conflict, conflictIndex) => (
                     <div
                       key={`conflict-${conflictIndex}`}
                       className="text-xs p-1 rounded truncate font-medium bg-red-100 border border-red-300 text-red-800"
                       title={`CONFLICT: ${conflict.userName} - ${conflict.company || 'Unknown'} (${conflict.status})`}
                     >
-                      {compact ? '⚠️' : `⚠️ ${conflict.userName.substring(0, 8)}...`}
+                      ⚠️ {conflict.userName}
                     </div>
                   ))}
-                  {day.conflictEvents.length > (compact ? 1 : 2) && (
-                    <div className="text-xs text-red-600 font-medium">
-                      +{day.conflictEvents.length - (compact ? 1 : 2)} conflicts
-                    </div>
-                  )}
                 </div>
               )}
 
-              {/* Vacation indicators */}
+              {/* Vacation indicators - Show ALL requests without limits */}
               {day.vacations.length > 0 && (
-                <div className="mt-1 space-y-1">
-                  {day.vacations.slice(0, compact ? 1 : 2).map((vacation, reqIndex) => {
-                    const isPending = (vacation.status || '').toLowerCase() === 'pending';
-                    const companyColor = getCompanyHexColor(vacation.company || 'UNKNOWN');
-                    const backgroundColor = isPending ? '#FF5C00' : companyColor;
-                    const textColor = isPending
-                      ? '#ffffff'
-                      : (vacation.company === 'STARS_MC' || vacation.company === 'LE_PNEU' ? '#ffffff' : '#000000');
+                <div className="mt-1 space-y-0.5 max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300">
+                  {day.vacations.map((vacation, reqIndex) => {
+                    // Detect if this request has conflicts (overlapping with another for same employee)
+                    const hasConflict = detectConflictsForEmployee(
+                      vacation.userId,
+                      vacation.startDate,
+                      vacation.endDate,
+                      vacationRequests.map(vr => ({
+                        id: vr.id,
+                        userId: vr.userId,
+                        startDate: vr.startDate,
+                        endDate: vr.endDate
+                      }))
+                    );
+                    
+                    // Get status-based color (conflict overrides)
+                    const backgroundColor = getStatusColor(vacation.status, hasConflict);
+                    const textColor = '#ffffff'; // Always use white text for visibility
                     
                     return (
                       <div
                         key={reqIndex}
-                        className="text-xs p-1 rounded truncate font-medium"
+                        className="text-xs p-1 rounded truncate font-medium border border-opacity-20"
                         style={{
                           backgroundColor: backgroundColor,
-                          color: textColor
+                          color: textColor,
+                          borderColor: `${backgroundColor}cc`
                         }}
-                        title={`${vacation.userName} - ${vacation.company || 'Unknown'} (${vacation.status})`}
+                        title={`${vacation.userName} - ${vacation.company || 'Unknown'} (${vacation.status})${hasConflict ? ' ⚠️ CONFLICT' : ''}`}
                       >
-                        {compact ? vacation.userName.substring(0, 3) : vacation.userName}
+                        {vacation.userName} {hasConflict ? '⚠️' : ''}
                       </div>
                     );
                   })}
-                  {day.vacations.length > (compact ? 1 : 2) && (
-                    <div className="text-xs text-gray-600 font-medium">
-                      +{day.vacations.length - (compact ? 1 : 2)} more
-                    </div>
-                  )}
                 </div>
               )}
 
@@ -617,12 +631,16 @@ export default function UnifiedVacationCalendar({
                 <span className="text-xs sm:text-sm text-gray-600">Monaco Holidays</span>
               </div>
               <div className="flex items-center space-x-1 sm:space-x-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#FF5C00' }}></div>
-                <span className="text-xs sm:text-sm text-gray-600">Pending Requests</span>
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#5af542' }}></div>
+                <span className="text-xs sm:text-sm text-gray-600">Validated (Green)</span>
               </div>
               <div className="flex items-center space-x-1 sm:space-x-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-500 rounded"></div>
-                <span className="text-xs sm:text-sm text-gray-600">Vacation Requests</span>
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#f59b42' }}></div>
+                <span className="text-xs sm:text-sm text-gray-600">Pending (Orange)</span>
+              </div>
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#c92b12' }}></div>
+                <span className="text-xs sm:text-sm text-gray-600">Conflict (Red)</span>
               </div>
             </div>
           </div>

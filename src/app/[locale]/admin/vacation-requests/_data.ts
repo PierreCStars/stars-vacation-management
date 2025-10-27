@@ -2,7 +2,7 @@ export const runtime = 'nodejs';
 
 import { getFirebaseAdmin } from '@/lib/firebase/admin';
 
-export async function loadVacationRequests(limit = 50) {
+export async function loadVacationRequests(limit = 500) {
   console.log('[VACATION_REQUESTS] start');
   console.time('[VACATION_REQUESTS] fetch');
   

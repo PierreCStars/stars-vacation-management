@@ -209,7 +209,9 @@ export function getMonacoHolidaysInRange(startDate: Date, endDate: Date): Monaco
   for (let year = startYear; year <= endYear; year++) {
     const yearHolidays = getMonacoHolidays(year);
     holidays.push(...yearHolidays.filter(holiday => {
-      const holidayDate = new Date(holiday.date);
+      // Parse holiday date as local time to match calendar date comparison
+      const [year, month, day] = holiday.date.split('-').map(Number);
+      const holidayDate = new Date(year, month - 1, day);
       return holidayDate >= startDate && holidayDate <= endDate;
     }));
   }

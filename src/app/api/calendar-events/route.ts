@@ -116,7 +116,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const timeMin = searchParams.get('timeMin');
     const timeMax = searchParams.get('timeMax');
-    const calendarId = process.env.GOOGLE_CALENDAR_ID || 'primary';
+    
+    // Define calendar IDs - company events calendar
+    const companyEventsCalendarId = 'c_1ee147e8254f6b2d5985d9ce6c4f9b39983d00cdcfe3c3732fa3aa33a1e30e0e@group.calendar.google.com';
+    const fallbackCalendarId = process.env.GOOGLE_CALENDAR_ID || companyEventsCalendarId;
     const includeVacationRequests = searchParams.get('includeVacationRequests') !== 'false';
 
     // Check if Google Calendar credentials are available
@@ -149,34 +152,56 @@ export async function GET(request: NextRequest) {
     const endDate = timeMax ? new Date(timeMax) : new Date(now.getFullYear(), now.getMonth() + 1, 0);
 
     console.log('📅 Fetching calendar events...');
-    console.log('📅 Calendar ID:', calendarId);
     console.log('📅 Time range:', startDate.toISOString(), 'to', endDate.toISOString());
 
     let events: any[] = [];
+    
+    // Fetch from company events calendar
     try {
       const response = await calendar.events.list({
-        calendarId: calendarId,
+        calendarId: companyEventsCalendarId,
         timeMin: startDate.toISOString(),
         timeMax: endDate.toISOString(),
         singleEvents: true,
         orderBy: 'startTime',
       });
 
-      events = response.data.items || [];
-      console.log(`✅ Found ${events.length} calendar events`);
+      const companyEvents = response.data.items || [];
+      console.log(`✅ Found ${companyEvents.length} company calendar events`);
+      events.push(...companyEvents);
     } catch (calendarError) {
-      console.error('[CALENDAR_API] Google Calendar API failed:', calendarError);
-      // Continue with Firestore events only
-      events = [];
+      console.error('[CALENDAR_API] Failed to fetch from company events calendar:', calendarError);
     }
+    
+    // Also fetch from fallback calendar if it's different
+    if (fallbackCalendarId !== companyEventsCalendarId) {
+      try {
+        const fallbackResponse = await calendar.events.list({
+          calendarId: fallbackCalendarId,
+          timeMin: startDate.toISOString(),
+          timeMax: endDate.toISOString(),
+          singleEvents: true,
+          orderBy: 'startTime',
+        });
 
-    // Filter and format events to only show vacation events
+        const fallbackEvents = fallbackResponse.data.items || [];
+        console.log(`✅ Found ${fallbackEvents.length} fallback calendar events`);
+        events.push(...fallbackEvents);
+      } catch (fallbackError) {
+        console.error('[CALENDAR_API] Failed to fetch from fallback calendar:', fallbackError);
+      }
+    }
+    
+    console.log(`✅ Total calendar events: ${events.length}`);
+
+    // Format all events (including company events, holidays, etc.)
     const vacationEvents = events
       .filter(event => {
-        // Only show events that are vacation-related
+        // Show all events from the calendar
         const summary = event.summary || '';
         const description = event.description || '';
-        return summary.includes(' - ') || description.includes('Company:') || description.includes('Name:');
+        // Include vacation events and other company events/holidays
+        return true; // Show all events from the calendars
       })
       .map(event => {
         // Extract company and user info from event summary or description

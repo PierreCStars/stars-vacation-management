@@ -374,25 +374,34 @@ export default function UnifiedVacationCalendar({
         {/* Calendar days */}
         <div className="grid grid-cols-7 gap-1">
           {calendarDays.map((day, index) => {
-            // Determine if we should use pale blue outline (Monaco holiday priority)
+            // Determine background color priority: Monaco holiday (pale blue) > Company event (pale red) > Weekend (grey)
             const hasMonacoHoliday = day.monacoHolidays.length > 0;
             const hasCompanyEvent = day.companyEvents.length > 0;
+            
+            // Determine the background color priority
+            // Priority: Monaco holiday (pale blue) > Company event (pale red) > Weekend grey > regular
+            let bgColor = '';
+            if (hasMonacoHoliday) {
+              bgColor = 'bg-blue-50'; // Pale blue for Monaco holidays
+            } else if (hasCompanyEvent) {
+              bgColor = 'bg-red-50'; // Pale red for company events
+            } else if (day.isWeekend && !hasMonacoHoliday && !hasCompanyEvent) {
+              bgColor = 'bg-gray-100'; // Grey for weekends (only if no holiday/event)
+            } else if (day.conflictEvents && day.conflictEvents.length > 0) {
+              bgColor = 'bg-red-50'; // Red for conflicts
+            } else if (day.isInSelectedRange) {
+              bgColor = 'bg-blue-50'; // Blue for selected range
+            } else {
+              bgColor = day.isCurrentMonth ? 'bg-white' : 'bg-gray-50';
+            }
             
             return (
             <div
               key={index}
               className={`p-1 sm:p-2 min-h-[60px] sm:min-h-[80px] border rounded-lg transition-all duration-200 ${
                 readOnly ? 'cursor-default' : 'cursor-pointer hover:shadow-md'
-              } ${
-                day.isWeekend ? 'bg-gray-100' : day.isCurrentMonth ? 'bg-white' : 'bg-gray-50'
-              } ${getConflictColor(day.severity)} ${
+              } ${bgColor} ${getConflictColor(day.severity)} ${
                 day.isToday ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
-              } ${
-                day.isInSelectedRange ? 'bg-blue-50 border-blue-300 ring-1 ring-blue-200' : ''
-              } ${
-                day.conflictEvents && day.conflictEvents.length > 0 ? 'bg-red-50 border-red-300 ring-1 ring-red-200' : ''
-              } ${
-                hasMonacoHoliday ? 'border-2 border-blue-300' : hasCompanyEvent ? 'border-2 border-red-300' : ''
               }`}
               onClick={() => !readOnly && setSelectedDate(selectedDate?.toDateString() === day.date.toDateString() ? null : day.date)}
             >
@@ -402,13 +411,13 @@ export default function UnifiedVacationCalendar({
                 {day.dayNumber}
               </div>
               
-              {/* Monaco Holidays - Outlined in pale blue */}
+              {/* Monaco Holidays - Display with name */}
               {day.monacoHolidays.length > 0 && (
                 <div className="mt-1 space-y-0.5">
                   {day.monacoHolidays.map((holiday, holidayIndex) => (
                     <div
                       key={`holiday-${holidayIndex}`}
-                      className="text-xs p-1 rounded truncate font-medium bg-white border-2 border-blue-300 text-blue-800"
+                      className="text-xs p-1 rounded truncate font-medium text-blue-800"
                       title={`${holiday.title}${holiday.description ? ` • ${holiday.description}` : ''}`}
                     >
                       🏛️ {holiday.title}
@@ -417,16 +426,14 @@ export default function UnifiedVacationCalendar({
                 </div>
               )}
               
-              {/* Company Events - Outlined in pale red (unless there's a Monaco holiday) */}
+              {/* Company Events - Display with name (pale blue if Monaco holiday exists, otherwise pale red) */}
               {day.companyEvents.length > 0 && (
                 <div className="mt-1 space-y-0.5">
                   {day.companyEvents.map((event, eventIndex) => (
                     <div
                       key={`event-${eventIndex}`}
                       className={`text-xs p-1 rounded truncate font-medium ${
-                        hasMonacoHoliday 
-                          ? 'bg-white border-2 border-blue-300 text-blue-800' 
-                          : 'bg-white border-2 border-red-300 text-red-800'
+                        hasMonacoHoliday ? 'text-blue-800' : 'text-red-800'
                       }`}
                       title={`${event.title}${event.location ? ` • ${event.location}` : ''}`}
                     >

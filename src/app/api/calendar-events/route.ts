@@ -117,8 +117,9 @@ export async function GET(request: NextRequest) {
     const timeMin = searchParams.get('timeMin');
     const timeMax = searchParams.get('timeMax');
     
-    // Define calendar IDs - company events calendar
+    // Define calendar IDs - company events calendar and Monaco holidays calendar
     const companyEventsCalendarId = 'c_1ee147e8254f6b2d5985d9ce6c4f9b39983d00cdcfe3c3732fa3aa33a1e30e0e@group.calendar.google.com';
+    const monacoHolidaysCalendarId = 'en-gb.mc#holiday@group.v.calendar.google.com';
     const fallbackCalendarId = process.env.GOOGLE_CALENDAR_ID || companyEventsCalendarId;
     const includeVacationRequests = searchParams.get('includeVacationRequests') !== 'false';
 
@@ -146,10 +147,10 @@ export async function GET(request: NextRequest) {
       return await getFirestoreEventsOnly(includeVacationRequests);
     }
 
-    // Set default time range if not provided
+    // Set default time range if not provided - fetch 12 months of data to show all events
     const now = new Date();
-    const startDate = timeMin ? new Date(timeMin) : new Date(now.getFullYear(), now.getMonth(), 1);
-    const endDate = timeMax ? new Date(timeMax) : new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const startDate = timeMin ? new Date(timeMin) : new Date(now.getFullYear(), now.getMonth() - 3, 1);
+    const endDate = timeMax ? new Date(timeMax) : new Date(now.getFullYear(), now.getMonth() + 9, 0);
 
     console.log('📅 Fetching calendar events...');
     console.log('📅 Time range:', startDate.toISOString(), 'to', endDate.toISOString());
@@ -190,6 +191,23 @@ export async function GET(request: NextRequest) {
       } catch (fallbackError) {
         console.error('[CALENDAR_API] Failed to fetch from fallback calendar:', fallbackError);
       }
+    }
+    
+    // Also fetch from Monaco holidays calendar
+    try {
+      const holidaysResponse = await calendar.events.list({
+        calendarId: monacoHolidaysCalendarId,
+        timeMin: startDate.toISOString(),
+        timeMax: endDate.toISOString(),
+        singleEvents: true,
+        orderBy: 'startTime',
+      });
+
+      const holidaysEvents = holidaysResponse.data.items || [];
+      console.log(`✅ Found ${holidaysEvents.length} Monaco holidays calendar events`);
+      events.push(...holidaysEvents);
+    } catch (holidaysError) {
+      console.error('[CALENDAR_API] Failed to fetch from Monaco holidays calendar:', holidaysError);
     }
     
     console.log(`✅ Total calendar events: ${events.length}`);

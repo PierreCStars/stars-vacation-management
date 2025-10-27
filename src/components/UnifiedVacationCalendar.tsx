@@ -379,13 +379,11 @@ export default function UnifiedVacationCalendar({
             const hasCompanyEvent = day.companyEvents.length > 0;
             
             // Determine the background color priority
-            // Priority: Monaco holiday (pale blue) > Company event (pale red) > Weekend grey > regular
+            // Priority: Monaco holiday/Company event (#de9090) > Weekend grey > regular
             let bgColor = '';
             let bgColorStyle = {};
-            if (hasMonacoHoliday) {
-              bgColor = 'bg-blue-50'; // Pale blue for Monaco holidays
-            } else if (hasCompanyEvent) {
-              bgColor = 'bg-red-50'; // Pale red for company events
+            if (hasMonacoHoliday || hasCompanyEvent) {
+              bgColorStyle = { backgroundColor: '#de9090' }; // Custom color for holidays and events
             } else if (day.isWeekend && !hasMonacoHoliday && !hasCompanyEvent) {
               // Custom grey color for weekends
               bgColorStyle = { backgroundColor: '#808080' };
@@ -660,12 +658,8 @@ export default function UnifiedVacationCalendar({
                 </div>
               )}
               <div className="flex items-center space-x-1 sm:space-x-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-purple-100 border border-purple-300 rounded"></div>
-                <span className="text-xs sm:text-sm text-gray-600">Company Events</span>
-              </div>
-              <div className="flex items-center space-x-1 sm:space-x-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-100 border border-blue-300 rounded"></div>
-                <span className="text-xs sm:text-sm text-gray-600">Monaco Holidays</span>
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#de9090' }}></div>
+                <span className="text-xs sm:text-sm text-gray-600">Holidays & Events</span>
               </div>
               <div className="flex items-center space-x-1 sm:space-x-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#5af542' }}></div>

@@ -37,6 +37,7 @@ interface CalendarDay {
   dayNumber: number;
   isCurrentMonth: boolean;
   isToday: boolean;
+  isWeekend: boolean;
   vacations: VacationRequest[];
   companyEvents: CompanyEvent[];
   monacoHolidays: MonacoHoliday[];
@@ -145,6 +146,10 @@ export default function UnifiedVacationCalendar({
       const date = new Date(monthInfo.startDate);
       date.setDate(monthInfo.startDate.getDate() + i);
       
+      // Check if this is a weekend (Saturday = 6, Sunday = 0)
+      const dayOfWeek = date.getDay();
+      const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
+      
       // Find vacations for this date (exclude rejected)
       const dayVacations = vacationRequests.filter(request => {
         const isRejected = (request.status || '').toLowerCase() === 'rejected' || (request.status || '').toLowerCase() === 'denied';
@@ -229,6 +234,7 @@ export default function UnifiedVacationCalendar({
         dayNumber: date.getDate(),
         isCurrentMonth: isInMonth(date, monthInfo.currentYear, monthInfo.currentMonth),
         isToday: isToday(date),
+        isWeekend,
         vacations: dayVacations,
         companyEvents: dayCompanyEvents,
         monacoHolidays: dayMonacoHolidays,
@@ -353,19 +359,6 @@ export default function UnifiedVacationCalendar({
         </h3>
       </div>
 
-      {/* Debug Info - only show when debug flag is set */}
-      {process.env.NEXT_PUBLIC_DEBUG_CALENDAR === '1' && (
-        <div className="p-4 bg-yellow-50 border-b border-yellow-200">
-          <p className="text-sm text-yellow-800">
-            Debug: Vacation Requests: {vacationRequests?.length || 0}, Company Events: {companyEvents.length}, Loading: {loadingEvents ? 'Yes' : 'No'}
-          </p>
-          <p className="text-xs text-yellow-700 mt-1">
-            Status breakdown: {vacationRequests?.filter(r => (r.status || '').toLowerCase() === 'pending').length || 0} pending, 
-            {vacationRequests?.filter(r => (r.status || '').toLowerCase() === 'approved' || (r.status || '').toLowerCase() === 'validated').length || 0} validated
-          </p>
-        </div>
-      )}
-
       {/* Calendar Grid */}
       <div className="p-2 sm:p-4">
         {/* Day headers - Monday start */}
@@ -380,53 +373,64 @@ export default function UnifiedVacationCalendar({
         
         {/* Calendar days */}
         <div className="grid grid-cols-7 gap-1">
-          {calendarDays.map((day, index) => (
+          {calendarDays.map((day, index) => {
+            // Determine if we should use pale blue outline (Monaco holiday priority)
+            const hasMonacoHoliday = day.monacoHolidays.length > 0;
+            const hasCompanyEvent = day.companyEvents.length > 0;
+            
+            return (
             <div
               key={index}
               className={`p-1 sm:p-2 min-h-[60px] sm:min-h-[80px] border rounded-lg transition-all duration-200 ${
                 readOnly ? 'cursor-default' : 'cursor-pointer hover:shadow-md'
               } ${
-                day.isCurrentMonth ? 'bg-white' : 'bg-gray-50'
+                day.isWeekend ? 'bg-gray-100' : day.isCurrentMonth ? 'bg-white' : 'bg-gray-50'
               } ${getConflictColor(day.severity)} ${
                 day.isToday ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
               } ${
                 day.isInSelectedRange ? 'bg-blue-50 border-blue-300 ring-1 ring-blue-200' : ''
               } ${
                 day.conflictEvents && day.conflictEvents.length > 0 ? 'bg-red-50 border-red-300 ring-1 ring-red-200' : ''
+              } ${
+                hasMonacoHoliday ? 'border-2 border-blue-300' : hasCompanyEvent ? 'border-2 border-red-300' : ''
               }`}
               onClick={() => !readOnly && setSelectedDate(selectedDate?.toDateString() === day.date.toDateString() ? null : day.date)}
             >
               <div className={`text-xs sm:text-sm font-medium ${
-                day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
+                day.isWeekend ? 'text-gray-500' : day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
               } ${day.isToday ? 'text-blue-600 font-bold' : ''}`}>
                 {day.dayNumber}
               </div>
               
-              {/* Company Events - Show ALL without limits */}
-              {day.companyEvents.length > 0 && (
+              {/* Monaco Holidays - Outlined in pale blue */}
+              {day.monacoHolidays.length > 0 && (
                 <div className="mt-1 space-y-0.5">
-                  {day.companyEvents.map((event, eventIndex) => (
+                  {day.monacoHolidays.map((holiday, holidayIndex) => (
                     <div
-                      key={`event-${eventIndex}`}
-                      className="text-xs p-1 rounded truncate font-medium bg-purple-100 border border-purple-300 text-purple-800"
-                      title={`${event.title}${event.location ? ` • ${event.location}` : ''}`}
+                      key={`holiday-${holidayIndex}`}
+                      className="text-xs p-1 rounded truncate font-medium bg-white border-2 border-blue-300 text-blue-800"
+                      title={`${holiday.title}${holiday.description ? ` • ${holiday.description}` : ''}`}
                     >
-                      📅 {event.title}
+                      🏛️ {holiday.title}
                     </div>
                   ))}
                 </div>
               )}
               
-              {/* Monaco Holidays */}
-              {day.monacoHolidays.length > 0 && (
-                <div className="mt-1 space-y-1">
-                  {day.monacoHolidays.map((holiday, holidayIndex) => (
+              {/* Company Events - Outlined in pale red (unless there's a Monaco holiday) */}
+              {day.companyEvents.length > 0 && (
+                <div className="mt-1 space-y-0.5">
+                  {day.companyEvents.map((event, eventIndex) => (
                     <div
-                      key={`holiday-${holidayIndex}`}
-                      className="text-xs p-1 rounded truncate font-medium bg-blue-100 border border-blue-300 text-blue-800"
-                      title={`${holiday.title}${holiday.description ? ` • ${holiday.description}` : ''}`}
+                      key={`event-${eventIndex}`}
+                      className={`text-xs p-1 rounded truncate font-medium ${
+                        hasMonacoHoliday 
+                          ? 'bg-white border-2 border-blue-300 text-blue-800' 
+                          : 'bg-white border-2 border-red-300 text-red-800'
+                      }`}
+                      title={`${event.title}${event.location ? ` • ${event.location}` : ''}`}
                     >
-                      {compact ? '🏛️' : `🏛️ ${holiday.title.substring(0, 8)}...`}
+                      📅 {event.title}
                     </div>
                   ))}
                 </div>
@@ -498,8 +502,9 @@ export default function UnifiedVacationCalendar({
                   </span>
                 </div>
               )}
-            </div>
-          ))}
+          </div>
+          );
+          })}
         </div>
 
         {/* Selected date details */}

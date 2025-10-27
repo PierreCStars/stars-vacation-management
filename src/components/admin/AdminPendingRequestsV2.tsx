@@ -408,33 +408,6 @@ export default function AdminPendingRequestsV2() {
                     </div>
                   ) : (
                     <>
-                      {/* ALWAYS show debug panel to diagnose issue */}
-                      <div className="mb-4 p-4 bg-blue-50 rounded border border-blue-200">
-                        <h4 className="font-semibold mb-2">🔧 Calendar Debug Panel</h4>
-                        <div className="text-sm space-y-1">
-                          <p><strong>Total requests from API:</strong> {requests.length}</p>
-                          <p><strong>Loading state:</strong> {isLoading ? 'YES' : 'NO'}</p>
-                          <p><strong>Pending:</strong> {requests.filter(r => normalizeVacationStatus(r.status) === 'pending').length}</p>
-                          <p><strong>Approved/Validated:</strong> {requests.filter(r => normalizeVacationStatus(r.status) === 'approved').length}</p>
-                          <p><strong>Rejected:</strong> {requests.filter(r => normalizeVacationStatus(r.status) === 'denied').length}</p>
-                          <p><strong>Passed to calendar:</strong> {requests.filter(r => {
-                            const status = normalizeVacationStatus(r.status);
-                            return status === 'pending' || status === 'approved';
-                          }).length}</p>
-                          <p><strong>Sample request:</strong></p>
-                          <pre className="text-xs bg-white p-2 rounded mt-1 overflow-auto max-h-32">
-                            {requests.length > 0 ? JSON.stringify({
-                              userName: requests[0].userName,
-                              status: requests[0].status,
-                              startDate: requests[0].startDate,
-                              endDate: requests[0].endDate,
-                              company: requests[0].company
-                            }, null, 2) : 'NO REQUESTS'}
-                          </pre>
-                          <p className="mt-2"><strong>⚠️ NOTE:</strong> If dates are in 2026 but viewing October 2025, navigate to January 2026 to see events!</p>
-                        </div>
-                      </div>
-                      
                       {(() => {
                         const filteredAndMapped = requests
                           .filter(r => {

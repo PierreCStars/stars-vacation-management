@@ -413,8 +413,38 @@ export default function AdminVacationRequestsClient({
           </div>
         </div>
         <div className="p-6">
+          {/* Debug panel - only show when NEXT_PUBLIC_DEBUG_CALENDAR=1 */}
+          {process.env.NEXT_PUBLIC_DEBUG_CALENDAR === '1' && (
+            <div className="mb-4 p-4 bg-gray-100 rounded-lg border border-gray-300">
+              <h4 className="font-semibold mb-2">🔧 Calendar Debug Info</h4>
+              <div className="text-sm space-y-1">
+                <p><strong>Total requests:</strong> {effectiveRequests.length}</p>
+                <p><strong>Pending:</strong> {effectivePending.length}</p>
+                <p><strong>Reviewed/Validated:</strong> {effectiveReviewed.length}</p>
+                <p><strong>Passed to calendar:</strong> {effectiveRequests.filter(r => {
+                  const status = (r.status || '').toLowerCase();
+                  return status === 'pending' || status === 'approved' || status === 'validated';
+                }).length}</p>
+                <p><strong>Sample requests:</strong></p>
+                <pre className="text-xs bg-white p-2 rounded mt-1 overflow-auto max-h-32">
+                  {JSON.stringify(effectiveRequests.slice(0, 3).map(r => ({
+                    userName: r.userName,
+                    status: r.status,
+                    startDate: r.startDate,
+                    endDate: r.endDate,
+                    company: r.company
+                  })), null, 2)}
+                </pre>
+              </div>
+            </div>
+          )}
+          
           <UnifiedVacationCalendar 
-            vacationRequests={effectiveRequests.filter(r => r.status?.toLowerCase() === 'approved') as any} 
+            vacationRequests={effectiveRequests.filter(r => {
+              const status = (r.status || '').toLowerCase();
+              // Include pending AND approved/validated - exclude rejected/denied
+              return (status === 'pending' || status === 'approved' || status === 'validated');
+            }) as any} 
             currentRequestId={undefined}
             showLegend={true}
             compact={false}

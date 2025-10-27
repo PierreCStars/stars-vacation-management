@@ -130,8 +130,16 @@ export default function UnifiedVacationCalendar({
   const calendarDays = useMemo(() => {
     if (!mounted) return [];
     
+    // Debug logging when enabled
+    if (process.env.NEXT_PUBLIC_DEBUG_CALENDAR === '1') {
+      console.log('[CALENDAR DEBUG] vacationRequests count:', vacationRequests.length);
+      console.log('[CALENDAR DEBUG] Month:', monthInfo.currentYear, monthInfo.currentMonth);
+      console.log('[CALENDAR DEBUG] Sample requests:', vacationRequests.slice(0, 3));
+    }
+    
     const days: CalendarDay[] = [];
     const currentDateObj = new Date();
+    let totalVacationsRendered = 0;
 
     for (let i = 0; i < 42; i++) {
       const date = new Date(monthInfo.startDate);
@@ -154,6 +162,8 @@ export default function UnifiedVacationCalendar({
           return false;
         }
       });
+      
+      totalVacationsRendered += dayVacations.length;
 
       // Find Monaco holidays for this date
       const dayMonacoHolidays = getMonacoHolidaysInRange(date, date);
@@ -230,6 +240,12 @@ export default function UnifiedVacationCalendar({
       });
     }
 
+    // Debug logging when enabled
+    if (process.env.NEXT_PUBLIC_DEBUG_CALENDAR === '1') {
+      console.log('[CALENDAR DEBUG] Total vacations rendered:', totalVacationsRendered);
+      console.log('[CALENDAR DEBUG] Days with vacations:', days.filter(d => d.vacations.length > 0).length);
+    }
+    
     return days;
   }, [vacationRequests, companyEvents, monthInfo, conflicts, initialRange, mounted]);
 
@@ -337,12 +353,18 @@ export default function UnifiedVacationCalendar({
         </h3>
       </div>
 
-      {/* Debug Info */}
-      <div className="p-4 bg-yellow-50 border-b border-yellow-200">
-        <p className="text-sm text-yellow-800">
-          Debug: Vacation Requests: {vacationRequests?.length || 0}, Company Events: {companyEvents.length}, Loading: {loadingEvents ? 'Yes' : 'No'}
-        </p>
-      </div>
+      {/* Debug Info - only show when debug flag is set */}
+      {process.env.NEXT_PUBLIC_DEBUG_CALENDAR === '1' && (
+        <div className="p-4 bg-yellow-50 border-b border-yellow-200">
+          <p className="text-sm text-yellow-800">
+            Debug: Vacation Requests: {vacationRequests?.length || 0}, Company Events: {companyEvents.length}, Loading: {loadingEvents ? 'Yes' : 'No'}
+          </p>
+          <p className="text-xs text-yellow-700 mt-1">
+            Status breakdown: {vacationRequests?.filter(r => (r.status || '').toLowerCase() === 'pending').length || 0} pending, 
+            {vacationRequests?.filter(r => (r.status || '').toLowerCase() === 'approved' || (r.status || '').toLowerCase() === 'validated').length || 0} validated
+          </p>
+        </div>
+      )}
 
       {/* Calendar Grid */}
       <div className="p-2 sm:p-4">

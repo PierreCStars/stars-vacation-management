@@ -237,10 +237,12 @@ export async function GET(request: NextRequest) {
 
         return {
           id: event.id,
+          title: event.summary || 'Untitled Event',
+          startDate: event.start?.date || event.start?.dateTime?.slice(0, 10) || '',
+          endDate: event.end?.date || event.end?.dateTime?.slice(0, 10) || '',
+          location: event.location || '',
           summary: event.summary,
           description: event.description,
-          start: event.start?.date || event.start?.dateTime,
-          end: event.end?.date || event.end?.dateTime,
           colorId: event.colorId,
           company: company,
           userName: userName,

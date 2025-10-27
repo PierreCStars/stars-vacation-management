@@ -408,27 +408,36 @@ export default function AdminPendingRequestsV2() {
                     </div>
                   ) : (
                     <>
-                      {/* Debug info - show in development */}
-                      {process.env.NODE_ENV === 'development' && (
-                        <div className="mb-4 p-4 bg-blue-50 rounded border border-blue-200">
-                          <h4 className="font-semibold mb-2">🔧 Calendar Debug (Dev Only)</h4>
-                          <div className="text-sm space-y-1">
-                            <p><strong>Total requests:</strong> {requests.length}</p>
-                            <p><strong>Pending:</strong> {requests.filter(r => normalizeVacationStatus(r.status) === 'pending').length}</p>
-                            <p><strong>Approved/Validated:</strong> {requests.filter(r => normalizeVacationStatus(r.status) === 'approved').length}</p>
-                            <p><strong>Rejected:</strong> {requests.filter(r => normalizeVacationStatus(r.status) === 'denied').length}</p>
-                            <p><strong>Passed to calendar:</strong> {requests.filter(r => {
-                              const status = normalizeVacationStatus(r.status);
-                              return status === 'pending' || status === 'approved';
-                            }).length}</p>
-                          </div>
+                      {/* ALWAYS show debug panel to diagnose issue */}
+                      <div className="mb-4 p-4 bg-blue-50 rounded border border-blue-200">
+                        <h4 className="font-semibold mb-2">🔧 Calendar Debug Panel</h4>
+                        <div className="text-sm space-y-1">
+                          <p><strong>Total requests from API:</strong> {requests.length}</p>
+                          <p><strong>Loading state:</strong> {isLoading ? 'YES' : 'NO'}</p>
+                          <p><strong>Pending:</strong> {requests.filter(r => normalizeVacationStatus(r.status) === 'pending').length}</p>
+                          <p><strong>Approved/Validated:</strong> {requests.filter(r => normalizeVacationStatus(r.status) === 'approved').length}</p>
+                          <p><strong>Rejected:</strong> {requests.filter(r => normalizeVacationStatus(r.status) === 'denied').length}</p>
+                          <p><strong>Passed to calendar:</strong> {requests.filter(r => {
+                            const status = normalizeVacationStatus(r.status);
+                            return status === 'pending' || status === 'approved';
+                          }).length}</p>
+                          <p><strong>Sample request:</strong></p>
+                          <pre className="text-xs bg-white p-2 rounded mt-1 overflow-auto max-h-32">
+                            {requests.length > 0 ? JSON.stringify({
+                              userName: requests[0].userName,
+                              status: requests[0].status,
+                              startDate: requests[0].startDate,
+                              endDate: requests[0].endDate,
+                              company: requests[0].company
+                            }, null, 2) : 'NO REQUESTS'}
+                          </pre>
                         </div>
-                      )}
-                      <UnifiedVacationCalendar 
-                        vacationRequests={requests
+                      </div>
+                      
+                      {(() => {
+                        const filteredAndMapped = requests
                           .filter(r => {
                             const status = normalizeVacationStatus(r.status);
-                            // Include pending AND approved/validated - exclude denied/rejected
                             return status === 'pending' || status === 'approved';
                           })
                           .map((r): VacationRequest => ({
@@ -445,7 +454,7 @@ export default function AdminPendingRequestsV2() {
                             createdAt: r.createdAt || new Date().toISOString(),
                              reviewedBy: r.reviewedBy,
                             reviewerEmail: undefined,
-                            reviewedAt: r.reviewedAt || undefined, // Convert null to undefined
+                            reviewedAt: r.reviewedAt || undefined,
                             adminComment: undefined,
                             included: true,
                             openDays: undefined,
@@ -453,12 +462,23 @@ export default function AdminPendingRequestsV2() {
                             halfDayType: (r.halfDayType as 'morning' | 'afternoon' | null) || null,
                             durationDays: r.durationDays,
                             googleEventId: undefined
-                          }))}
-                        className="w-full"
-                        showLegend={true}
-                        compact={false}
-                        data-testid="admin-calendar"
-                      />
+                          }));
+                        
+                        console.log('[CALENDAR DEBUG] Final data passed to UnifiedVacationCalendar:', {
+                          count: filteredAndMapped.length,
+                          sample: filteredAndMapped[0]
+                        });
+                        
+                        return (
+                          <UnifiedVacationCalendar 
+                            vacationRequests={filteredAndMapped}
+                            className="w-full"
+                            showLegend={true}
+                            compact={false}
+                            data-testid="admin-calendar"
+                          />
+                        );
+                      })()}
                     </>
                   )}
                 </div>

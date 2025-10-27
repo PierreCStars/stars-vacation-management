@@ -381,12 +381,14 @@ export default function UnifiedVacationCalendar({
             // Determine the background color priority
             // Priority: Monaco holiday (pale blue) > Company event (pale red) > Weekend grey > regular
             let bgColor = '';
+            let bgColorStyle = {};
             if (hasMonacoHoliday) {
               bgColor = 'bg-blue-50'; // Pale blue for Monaco holidays
             } else if (hasCompanyEvent) {
               bgColor = 'bg-red-50'; // Pale red for company events
             } else if (day.isWeekend && !hasMonacoHoliday && !hasCompanyEvent) {
-              bgColor = 'bg-gray-100'; // Grey for weekends (only if no holiday/event)
+              // Custom grey color for weekends
+              bgColorStyle = { backgroundColor: '#808080' };
             } else if (day.conflictEvents && day.conflictEvents.length > 0) {
               bgColor = 'bg-red-50'; // Red for conflicts
             } else if (day.isInSelectedRange) {
@@ -403,6 +405,7 @@ export default function UnifiedVacationCalendar({
               } ${bgColor} ${
                 day.isToday ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
               }`}
+              style={bgColorStyle}
               onClick={() => !readOnly && setSelectedDate(selectedDate?.toDateString() === day.date.toDateString() ? null : day.date)}
             >
               <div className={`text-xs sm:text-sm font-medium ${

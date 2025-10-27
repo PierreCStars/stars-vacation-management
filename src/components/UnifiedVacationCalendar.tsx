@@ -253,7 +253,7 @@ export default function UnifiedVacationCalendar({
     'July', 'August', 'September', 'October', 'November', 'December'
   ];
 
-  const getStatusColor = (status: string) => {
+  const getStatusColorClass = (status: string) => {
     switch (status.toLowerCase()) {
       case 'approved': return 'bg-green-500';
       case 'rejected': return 'bg-red-500';
@@ -536,7 +536,7 @@ export default function UnifiedVacationCalendar({
                         </p>
                       </div>
                       <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 text-xs rounded-full font-semibold ${getStatusColor(conflict.status)} text-white`}>
+                        <span className={`px-2 py-1 text-xs rounded-full font-semibold ${getStatusColorClass(conflict.status)} text-white`}>
                           {conflict.status}
                         </span>
                       </div>
@@ -590,7 +590,7 @@ export default function UnifiedVacationCalendar({
                         )}
                       </div>
                       <div className="flex items-center space-x-2">
-                        <span className={`px-2 py-1 text-xs rounded-full font-semibold ${getStatusColor(vacation.status)} text-white`}>
+                        <span className={`px-2 py-1 text-xs rounded-full font-semibold ${getStatusColorClass(vacation.status)} text-white`}>
                           {vacation.status}
                         </span>
                         {vacation.id === currentRequestId && (

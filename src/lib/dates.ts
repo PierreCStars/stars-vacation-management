@@ -6,14 +6,19 @@
 /**
  * Parse an ISO date string (YYYY-MM-DD) as a local date at midnight
  * This prevents timezone shifts when parsing date-only strings
+ * Handles both "2025-12-25" and "2025-12-25T00:00:00.000Z" formats
  * 
- * @param isoString - ISO date string like "2025-12-25"
+ * @param isoString - ISO date string like "2025-12-25" or "2025-12-25T00:00:00.000Z"
  * @returns Date object at 00:00:00 local time
  */
 export function parseLocalDate(isoString: string): Date {
-  // For date-only strings (YYYY-MM-DD), we need to parse as local time
+  // Handle full ISO timestamps (e.g., "2025-12-25T00:00:00.000Z")
+  // Extract just the date part
+  const dateOnly = isoString.split('T')[0];
+  
+  // For date-only strings (YYYY-MM-DD), parse as local time
   // Using 'T00:00:00' ensures we get midnight in local timezone, not UTC
-  const date = new Date(isoString + 'T00:00:00');
+  const date = new Date(dateOnly + 'T00:00:00');
   
   if (isNaN(date.getTime())) {
     throw new Error(`Invalid date string: ${isoString}`);

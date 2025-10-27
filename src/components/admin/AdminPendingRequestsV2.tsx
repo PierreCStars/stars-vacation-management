@@ -431,6 +431,7 @@ export default function AdminPendingRequestsV2() {
                               company: requests[0].company
                             }, null, 2) : 'NO REQUESTS'}
                           </pre>
+                          <p className="mt-2"><strong>⚠️ NOTE:</strong> If dates are in 2026 but viewing October 2025, navigate to January 2026 to see events!</p>
                         </div>
                       </div>
                       

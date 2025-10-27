@@ -52,8 +52,8 @@ export async function GET(req: NextRequest) {
           return false;
         }
 
-        // Only check approved or pending requests (not rejected)
-        if (!['approved', 'pending'].includes(request.status.toLowerCase())) {
+        // Only check pending requests (exclude approved and rejected)
+        if (!['pending'].includes(request.status.toLowerCase())) {
           return false;
         }
 

@@ -122,12 +122,12 @@ async function fetchDataWithFallback(): Promise<VacationRequestWithConflicts[]> 
 
     console.log(`📅 Server-side: Scanning conflicts from ${minStart} to ${maxEnd}`);
 
-    // 3) Get all approved/pending requests that could potentially overlap
+    // 3) Get only pending requests that could potentially overlap (exclude approved)
     const candidates = allRequests.filter(request => 
-      ['approved', 'pending'].includes(request.status.toLowerCase())
+      ['pending'].includes(request.status.toLowerCase())
     );
 
-    console.log(`🔍 Server-side: Found ${candidates.length} approved/pending candidates for conflict checking`);
+    console.log(`🔍 Server-side: Found ${candidates.length} pending candidates for conflict checking`);
 
     // 4) Map conflicts per request using inclusive overlap rule
     const enriched = allRequests.map(request => {

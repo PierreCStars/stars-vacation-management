@@ -43,10 +43,11 @@ export async function findVacationConflicts({
 
     // Query by startDate <= endBound (index-friendly), then filter by endDate >= startBound
     // We'll use a broader query and filter in code since Firestore range queries are limited
+    // Only check pending requests for conflicts (exclude approved)
     const vacationRequestsRef = collection(db, 'vacationRequests');
     const q = query(
       vacationRequestsRef,
-      where('status', 'in', ['pending', 'approved']),
+      where('status', 'in', ['pending']),
       limit(200)
     );
     

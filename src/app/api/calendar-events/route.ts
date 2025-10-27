@@ -1,5 +1,5 @@
 export const dynamic = "force-dynamic";
-export const revalidate = 0;
+export const revalidate = 86400; // Revalidate every 24 hours (86400 seconds)
 export const runtime = 'nodejs';
 
 import { NextRequest, NextResponse } from 'next/server';

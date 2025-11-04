@@ -1,6 +1,7 @@
 import { setRequestLocale } from 'next-intl/server';
 import IntlProvider from '../../i18n/intl-provider'; // keep relative path
 import { Topbar } from '../../components/nav/Topbar';
+import ForbiddenDatesNotice from '../../components/ForbiddenDatesNotice';
 
 export default async function LocaleLayout({
   children,
@@ -27,6 +28,7 @@ export default async function LocaleLayout({
         <main className="min-h-screen">
           {children}
         </main>
+        <ForbiddenDatesNotice />
       </div>
     </IntlProvider>
   );

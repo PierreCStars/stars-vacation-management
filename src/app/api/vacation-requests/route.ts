@@ -95,6 +95,8 @@ export async function POST(request: Request) {
     }
 
     // Prepare the vacation request data
+    // If status and denialReason are provided (from auto-deny), use them
+    const status = vacationRequestData.status === 'denied' ? 'denied' : 'pending';
     const vacationRequest: Omit<VacationRequest, 'id' | 'createdAt' | 'updatedAt'> = {
       userId: session.user.email,
       userEmail: session.user.email,
@@ -104,10 +106,14 @@ export async function POST(request: Request) {
       reason: vacationRequestData.reason,
       company: vacationRequestData.company,
       type: vacationRequestData.type,
-      status: 'pending',
+      status: status,
       isHalfDay: vacationRequestData.isHalfDay || false,
       halfDayType: vacationRequestData.halfDayType || null,
-      durationDays: durationDays
+      durationDays: durationDays,
+      // Include denialReason if provided (for auto-denied requests)
+      ...(vacationRequestData.denialReason && { denialReason: vacationRequestData.denialReason }),
+      // Set reviewedAt if auto-denied
+      ...(status === 'denied' && { reviewedAt: new Date().toISOString() })
     };
 
     // Firebase is required - no fallbacks

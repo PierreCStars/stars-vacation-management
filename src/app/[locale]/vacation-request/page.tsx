@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { VacationRequest } from '@/types/vacation';
 import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 import { createLocaleUrl } from '@/i18n/routing';
+import { overlapsForbiddenWindow, resolveLocale, autoDenyMessage } from '@/lib/forbiddenDates';
 
 export default function VacationRequestPage() {
   const [formData, setFormData] = useState({
@@ -100,6 +101,10 @@ export default function VacationRequestPage() {
       console.log('🔍 Time diff:', timeDiff);
       console.log('🔍 Calculated durationDays:', durationDays);
 
+      // Check if dates overlap forbidden windows
+      const locale = resolveLocale(currentLocale);
+      const overlapsForbidden = overlapsForbiddenWindow(startDate, endDate);
+
       const payload = {
         startDate: formData.startDate,
         endDate: formData.isHalfDay ? formData.startDate : formData.endDate,
@@ -108,7 +113,12 @@ export default function VacationRequestPage() {
         reason: formData.reason,
         isHalfDay: formData.isHalfDay,
         halfDayType: formData.isHalfDay ? formData.halfDayType : null,
-        durationDays: formData.isHalfDay ? 0.5 : durationDays
+        durationDays: formData.isHalfDay ? 0.5 : durationDays,
+        // If dates overlap forbidden windows, set status to denied with reason
+        ...(overlapsForbidden && {
+          status: 'denied',
+          denialReason: autoDenyMessage(locale)
+        })
       };
 
       console.log('📤 Sending payload to API:', payload);
@@ -123,21 +133,44 @@ export default function VacationRequestPage() {
       });
 
       if (response.ok) {
-        setSubmitStatus('success');
-        setFormData({
-          startDate: '',
-          endDate: '',
-          company: '',
-          type: '',
-          reason: '',
-          isHalfDay: false,
-          halfDayType: ''
-        });
-        // Refresh the calendar after successful submission
-        const refreshResponse = await fetch('/api/vacation-requests');
-        if (refreshResponse.ok) {
-          const data = await refreshResponse.json();
-          setVacationRequests(data);
+        // If request was auto-denied, show the denial message
+        if (overlapsForbidden) {
+          const denyMessage = autoDenyMessage(locale);
+          setErrorMessage(denyMessage);
+          setSubmitStatus('error');
+          // Still show success state but with denial message
+          setFormData({
+            startDate: '',
+            endDate: '',
+            company: '',
+            type: '',
+            reason: '',
+            isHalfDay: false,
+            halfDayType: ''
+          });
+          // Refresh the calendar
+          const refreshResponse = await fetch('/api/vacation-requests');
+          if (refreshResponse.ok) {
+            const data = await refreshResponse.json();
+            setVacationRequests(data);
+          }
+        } else {
+          setSubmitStatus('success');
+          setFormData({
+            startDate: '',
+            endDate: '',
+            company: '',
+            type: '',
+            reason: '',
+            isHalfDay: false,
+            halfDayType: ''
+          });
+          // Refresh the calendar after successful submission
+          const refreshResponse = await fetch('/api/vacation-requests');
+          if (refreshResponse.ok) {
+            const data = await refreshResponse.json();
+            setVacationRequests(data);
+          }
         }
       } else {
         const error = await response.json();

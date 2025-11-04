@@ -18,6 +18,7 @@ export interface VacationRequest {
   reviewerEmail?: string;
   reviewedAt?: string | null;  // Allow null from Firestore
   adminComment?: string;
+  denialReason?: string;       // Reason for automatic denial (e.g., forbidden dates)
   included?: boolean;
   openDays?: string;
   

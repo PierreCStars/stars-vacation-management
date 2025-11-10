@@ -4,6 +4,7 @@ export const revalidate = 0;
 
 import { NextResponse } from "next/server";
 import { getVacationRequests } from "@/lib/analytics/data";
+import { normalizeVacationStatus, normalizeVacationType } from "@/lib/normalize-vacation-fields";
 
 type VR = {
   id: string;
@@ -89,11 +90,9 @@ export async function GET(req: Request) {
       const empKey = r.userEmail || r.userId || r.userName || r.id;
       const name = r.userName || "Unknown";
       const cmp = r.company || "—";
-      // Normalize vacation types - treat both VACATION and PAID_VACATION as "Paid Vacation"
+      // Normalize vacation types to canonical value
       let typ = r.type || (r.isHalfDay ? "Half day" : "Full day");
-      if (typ === 'VACATION' || typ === 'PAID_VACATION') {
-        typ = 'Paid Vacation';
-      }
+      typ = normalizeVacationType(typ);
       
       // Convert timestamps to ISO strings for consistent handling
       const requestDate = r.createdAt ? 
@@ -140,8 +139,8 @@ export async function GET(req: Request) {
       const reason = r.reason || "No reason provided";
       byReasonCount[reason] = (byReasonCount[reason] || 0) + 1;
 
-      // by status (frequency)
-      const status = r.status || "unknown";
+      // by status (frequency) - normalize to canonical value
+      const status = normalizeVacationStatus(r.status || "unknown");
       byStatusCount[status] = (byStatusCount[status] || 0) + 1;
 
       // monthly data

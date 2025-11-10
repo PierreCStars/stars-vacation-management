@@ -7,6 +7,7 @@ import { VacationRequest } from '@/lib/firebase';
 import { decideVacation } from '@/lib/vacation-orchestration';
 import { revalidateTag, revalidatePath } from 'next/cache';
 import { syncEventForRequest, refreshCacheTags } from '@/lib/calendar/sync';
+import { normalizeVacationFields } from '@/lib/normalize-vacation-fields';
 
 // Google Calendar API for Holidays Calendar
 const GOOGLE_CALENDAR_ID = 'c_e98f5350bf743174f87e1a786038cb9d103c306b7246c6200684f81c37a6a764@group.calendar.google.com';
@@ -95,15 +96,18 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
         const currentData = { id: docSnap.id, ...docSnap.data() } as VacationRequest;
         console.log('🔍 [INVESTIGATION] Current status before update:', { id, currentStatus: currentData?.status });
         
-                const updateData: any = {
-                  status: newStatus,
-                  reviewedBy: reviewer.name,
-                  reviewerEmail: reviewer.email,
-                  reviewedAt: new Date(),
-                  approvedByName: reviewer.name,
-                  approvedByEmail: reviewer.email,
-                  updatedAt: new Date()
-                };
+        // Normalize status to canonical value
+        const normalizedFields = normalizeVacationFields({ status: newStatus });
+        
+        const updateData: any = {
+          status: normalizedFields.status || newStatus,
+          reviewedBy: reviewer.name,
+          reviewerEmail: reviewer.email,
+          reviewedAt: new Date(),
+          approvedByName: reviewer.name,
+          approvedByEmail: reviewer.email,
+          updatedAt: new Date()
+        };
         
         // Only include adminComment if it's provided and not undefined
         if (adminComment !== undefined && adminComment !== null && adminComment !== '') {

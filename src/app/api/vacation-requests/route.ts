@@ -14,6 +14,7 @@ import { VacationRequest } from '@/types/vacation';
 import { mapFromFirestore } from '@/lib/requests/mapFromFirestore';
 import { submitVacation } from '@/lib/vacation-orchestration';
 import { serializeVacationRequestsFor, serializeVacationRequestFor } from '@/lib/serializers/vacation-request';
+import { normalizeVacationFields } from '@/lib/normalize-vacation-fields';
 
 // No mock data - Firebase only
 
@@ -104,7 +105,14 @@ export async function POST(request: Request) {
 
     // Prepare the vacation request data
     // If status and denialReason are provided (from auto-deny), use them
-    const status = vacationRequestData.status === 'denied' ? 'denied' : 'pending';
+    const rawStatus = vacationRequestData.status === 'denied' ? 'denied' : 'pending';
+    
+    // Normalize status and type to canonical values
+    const normalizedFields = normalizeVacationFields({
+      status: rawStatus,
+      type: vacationRequestData.type
+    });
+    
     const vacationRequest: Omit<VacationRequest, 'id' | 'createdAt' | 'updatedAt'> = {
       userId: session.user.email,
       userEmail: session.user.email,
@@ -113,15 +121,15 @@ export async function POST(request: Request) {
       endDate: vacationRequestData.endDate,
       reason: vacationRequestData.reason,
       company: vacationRequestData.company,
-      type: vacationRequestData.type,
-      status: status,
+      type: normalizedFields.type || 'Other',
+      status: normalizedFields.status || 'Pending',
       isHalfDay: vacationRequestData.isHalfDay || false,
       halfDayType: vacationRequestData.halfDayType || null,
       durationDays: durationDays,
       // Include denialReason if provided (for auto-denied requests)
       ...(vacationRequestData.denialReason && { denialReason: vacationRequestData.denialReason }),
       // Set reviewedAt if auto-denied
-      ...(status === 'denied' && { reviewedAt: new Date().toISOString() })
+      ...(normalizedFields.status === 'Denied' && { reviewedAt: new Date().toISOString() })
     };
 
     // Firebase is required - no fallbacks

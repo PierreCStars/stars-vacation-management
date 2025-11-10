@@ -8,6 +8,7 @@
  */
 
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
+import { normalizeVacationStatus, normalizeVacationType } from '@/lib/normalize-vacation-fields';
 
 export interface VacationRequest {
   id: string;
@@ -85,12 +86,13 @@ export async function getVacationRequests(status?: string): Promise<VacationRequ
   let snapshot;
   try {
     if (status && status !== 'all') {
-      // Normalize status to match database values
-      const normalizedStatus = status === 'approved' ? 'APPROVED' : 
-                              status === 'denied' ? 'denied' : 
-                              status === 'pending' ? 'pending' : status;
-      console.log('🔍 Debug: Querying with status filter:', normalizedStatus);
-      snapshot = await collection.where('status', '==', normalizedStatus).get();
+      // Normalize the requested status to canonical value
+      const canonicalStatus = normalizeVacationStatus(status);
+      
+      // Query for all possible variations of the status (legacy support)
+      // Since Firestore doesn't support OR queries easily, we'll fetch all and filter
+      console.log('🔍 Debug: Querying all documents (will filter by normalized status)');
+      snapshot = await collection.get();
     } else {
       console.log('🔍 Debug: Querying all documents');
       snapshot = await collection.get();
@@ -101,10 +103,23 @@ export async function getVacationRequests(status?: string): Promise<VacationRequ
     throw queryError;
   }
 
-  const requests: VacationRequest[] = snapshot.docs.map(doc => ({
-    id: doc.id,
-    ...doc.data()
-  })) as VacationRequest[];
+  // Map and normalize requests
+  let requests: VacationRequest[] = snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      ...data,
+      // Normalize status and type to canonical values
+      status: normalizeVacationStatus(data.status),
+      type: normalizeVacationType(data.type || 'Other'),
+    } as VacationRequest;
+  });
+
+  // Filter by normalized status if requested
+  if (status && status !== 'all') {
+    const canonicalStatus = normalizeVacationStatus(status);
+    requests = requests.filter(r => normalizeVacationStatus(r.status) === canonicalStatus);
+  }
 
   console.info('[ANALYTICS] source=firebase result=success', {
     count: requests.length,
@@ -137,11 +152,9 @@ export async function getVacationAnalytics(status?: string): Promise<VacationAna
     const empKey = request.userEmail || request.userId || request.userName || request.id;
     const name = request.userName || 'Unknown';
     const company = request.company || '—';
-    // Normalize vacation types - treat both VACATION and PAID_VACATION as "Paid Vacation"
+    // Normalize vacation types to canonical value
     let type = request.type || (request.isHalfDay ? 'Half day' : 'Full day');
-    if (type === 'VACATION' || type === 'PAID_VACATION') {
-      type = 'Paid Vacation';
-    }
+    type = normalizeVacationType(type);
 
     if (!byPersonMap.has(empKey)) {
       byPersonMap.set(empKey, {

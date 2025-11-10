@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { isAdmin } from '@/config/admins';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
+import { normalizeVacationFields } from '@/lib/normalize-vacation-fields';
 import { sendEmailToRecipients } from '@/lib/email-notifications';
 import { getTranslations } from 'next-intl/server';
 import { getVacationTypeLabelFromTranslations } from '@/lib/vacation-types';
@@ -80,6 +81,12 @@ export async function POST(request: NextRequest) {
     const userId = email || `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${companyId.toLowerCase()}.mc`;
     const userName = `${firstName} ${lastName}`;
 
+    // Normalize status and type to canonical values
+    const normalizedFields = normalizeVacationFields({
+      status: 'approved', // Set as approved since admin is validating it
+      type: vacationType
+    });
+    
     // Prepare vacation request data
     const vacationRequest = {
       userId,
@@ -89,8 +96,8 @@ export async function POST(request: NextRequest) {
       endDate,
       reason: 'Created by admin',
       company: companyId,
-      type: vacationType,
-      status: 'approved', // Set as approved since admin is validating it
+      type: normalizedFields.type || vacationType,
+      status: normalizedFields.status || 'Approved',
       createdAt: new Date(),
       updatedAt: new Date(),
       reviewedAt: new Date(),

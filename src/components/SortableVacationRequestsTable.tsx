@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import { useSession } from 'next-auth/react';
+import { isAdmin } from '@/config/admins';
 import Link from 'next/link';
 import { getVacationTypeLabel, parseVacationType } from '@/lib/vacation-types';
 
@@ -31,6 +33,10 @@ export default function SortableVacationRequestsTable({ requests, type, onRefres
   const [sortField, setSortField] = useState<'userName' | 'company'>('userName');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
   const [processingRequests, setProcessingRequests] = useState<Set<string>>(new Set());
+
+  // Get session to check admin status (defense-in-depth)
+  const { data: session } = useSession();
+  const isAdminUser = isAdmin(session?.user?.email);
 
   const handleSort = (field: 'userName' | 'company') => {
     if (sortField === field) {
@@ -393,7 +399,7 @@ export default function SortableVacationRequestsTable({ requests, type, onRefres
                   </td>
                 )}
                 <td style={{ padding: '16px 24px', whiteSpace: 'nowrap', fontSize: 14, color: '#111827' }}>
-                  {req.comment || req.reason ? (
+                  {isAdminUser && (req.comment || req.reason) ? (
                     <span title={req.comment || req.reason} style={{ cursor: 'help' }}>
                       {(req.comment || req.reason || '').length > 30 ? `${(req.comment || req.reason || '').substring(0, 30)}...` : (req.comment || req.reason || '')}
                       </span>

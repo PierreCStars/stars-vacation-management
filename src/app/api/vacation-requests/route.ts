@@ -13,12 +13,17 @@ import { getFirebaseAdmin } from '@/lib/firebase/admin';
 import { VacationRequest } from '@/types/vacation';
 import { mapFromFirestore } from '@/lib/requests/mapFromFirestore';
 import { submitVacation } from '@/lib/vacation-orchestration';
+import { serializeVacationRequestsFor, serializeVacationRequestFor } from '@/lib/serializers/vacation-request';
 
 // No mock data - Firebase only
 
 export async function GET() {
   try {
     console.log('[REQS] Source=FIRESTORE, projectId=', process.env.FIREBASE_PROJECT_ID);
+    
+    // Get user session to determine if admin
+    const session = await getServerSession(authOptions);
+    const userEmail = session?.user?.email || null;
     
     // Firebase is required - no fallbacks
     const { db, error } = getFirebaseAdmin();
@@ -40,7 +45,10 @@ export async function GET() {
     console.log(`📊 Loaded ${requests.length} vacation requests from Firebase`);
     console.log('📊 Firebase requests:', requests.map(r => ({ id: r.id, userName: r.userName, status: r.status })));
     
-    return NextResponse.json(requests);
+    // Serialize requests based on user role (redact reason for non-admins)
+    const serializedRequests = serializeVacationRequestsFor(userEmail, requests);
+    
+    return NextResponse.json(serializedRequests);
   } catch (error) {
     console.error('❌ Error fetching vacation requests:', error);
     return NextResponse.json({ 
@@ -178,10 +186,18 @@ export async function POST(request: Request) {
 
     console.log('✅ Vacation request prepared for Google Calendar integration');
 
+    // Fetch the created request to serialize it properly
+    const createdDoc = await docRef.get();
+    const createdRequest = mapFromFirestore(requestId, createdDoc.data() as any);
+    
+    // Serialize the response based on user role (redact reason for non-admins)
+    const serializedRequest = serializeVacationRequestFor(session.user.email, createdRequest);
+
     return NextResponse.json({ 
       success: true, 
       id: requestId,
-      message: 'Vacation request submitted successfully' 
+      message: 'Vacation request submitted successfully',
+      request: serializedRequest
     });
 
   } catch (error) {

@@ -2,6 +2,8 @@
 
 import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslations } from 'next-intl';
+import { useSession } from 'next-auth/react';
+import { isAdmin } from '@/config/admins';
 import { VacationRequest } from '@/types/vacation';
 import { VacationRequestWithConflicts, ConflictEvent } from '@/app/[locale]/admin/vacation-requests/_server/getRequestsWithConflicts';
 import { getCompanyHexColor } from '@/lib/company-colors';
@@ -78,6 +80,10 @@ export default function UnifiedVacationCalendar({
   const [companyEvents, setCompanyEvents] = useState<CompanyEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [mounted, setMounted] = useState(false);
+
+  // Get session to check admin status
+  const { data: session } = useSession();
+  const isAdminUser = isAdmin(session?.user?.email);
 
   // Use next-intl translations
   const tCalendar = useTranslations('calendar');
@@ -620,7 +626,7 @@ export default function UnifiedVacationCalendar({
                           </span>
                           <span className="text-xs text-gray-400">{vacation.type}</span>
                         </div>
-                        {vacation.reason && (
+                        {isAdminUser && vacation.reason && (
                           <p className="text-sm text-gray-600 mt-1">{vacation.reason}</p>
                         )}
                       </div>

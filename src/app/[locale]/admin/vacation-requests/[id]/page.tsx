@@ -3,6 +3,8 @@
 import { useEffect, useState, useTransition } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { useSession } from 'next-auth/react';
+import { isAdmin } from '@/config/admins';
 import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 import { VacationRequest } from '@/types/vacation';
 import { normalizeVacationStatus } from '@/types/vacation-status';
@@ -22,6 +24,10 @@ export default function VacationRequestDetailPage() {
   const [allVacationRequests, setAllVacationRequests] = useState<VacationRequest[]>([]);
   const [actionLoading, setActionLoading] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  // Get session to check admin status (defense-in-depth)
+  const { data: session } = useSession();
+  const isAdminUser = isAdmin(session?.user?.email);
 
   // Use next-intl translations
   const t = useTranslations('admin');
@@ -533,8 +539,8 @@ export default function VacationRequestDetailPage() {
                 </div>
               </div>
 
-              {/* Reason */}
-              {vacationRequest.reason && (
+              {/* Reason - only show for admins (defense-in-depth) */}
+              {isAdminUser && vacationRequest.reason && (
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-3">Reason</h3>
                   <p className="text-gray-700 bg-gray-50 p-4 rounded-lg">

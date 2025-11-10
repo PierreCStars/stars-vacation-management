@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
+import { useSession } from 'next-auth/react';
+import { isAdmin } from '@/config/admins';
 import { VacationRequest } from '@/types/vacation';
 import { getCompanyHexColor } from '@/lib/company-colors';
 
@@ -26,6 +28,10 @@ export default function VacationConflictCalendar({
 }: VacationConflictCalendarProps) {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+
+  // Get session to check admin status
+  const { data: session } = useSession();
+  const isAdminUser = isAdmin(session?.user?.email);
 
   // Get current month info
   const currentMonth = currentDate.getMonth();
@@ -318,7 +324,7 @@ export default function VacationConflictCalendar({
                         </span>
                         <span className="text-xs text-gray-400">{vacation.type}</span>
                       </div>
-                      {vacation.reason && (
+                      {isAdminUser && vacation.reason && (
                         <p className="text-sm text-gray-600 mt-1">{vacation.reason}</p>
                       )}
                     </div>

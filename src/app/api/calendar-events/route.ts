@@ -7,6 +7,9 @@ import { google } from 'googleapis';
 import { safeTrim, safeStartsWith } from '@/lib/strings';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { normalizeVacationStatus } from '@/types/vacation-status';
+import { getServerSession } from 'next-auth/next';
+import { authOptions } from '@/lib/auth';
+import { isAdmin } from '@/config/admins';
 
 // Utility function to load and parse Google credentials
 function loadGoogleCreds() {
@@ -47,7 +50,7 @@ function loadGoogleCreds() {
 }
 
 // Fallback function to get only Firestore events when Google Calendar is not available
-async function getFirestoreEventsOnly(includeVacationRequests: boolean) {
+async function getFirestoreEventsOnly(includeVacationRequests: boolean, isAdminUser: boolean = false) {
   let firestoreEvents: any[] = [];
   
   if (includeVacationRequests) {
@@ -67,10 +70,16 @@ async function getFirestoreEventsOnly(includeVacationRequests: boolean) {
         
         firestoreEvents = approvedRequests.map(doc => {
           const data = doc.data();
-          return {
+          // Build description - only include reason for admins
+          const baseDescription = `Vacation Request\nName: ${data.userName || 'Unknown'}\nCompany: ${data.company || 'Unknown'}\nType: ${data.type || 'Full day'}`;
+          const description = isAdminUser && data.reason 
+            ? `${baseDescription}\nReason: ${data.reason}`
+            : baseDescription;
+          
+          const event: any = {
             id: `firestore_${doc.id}`,
             summary: `${data.userName || 'Unknown'} - ${data.company || 'Unknown'}`,
-            description: `Vacation Request\nName: ${data.userName || 'Unknown'}\nCompany: ${data.company || 'Unknown'}\nType: ${data.type || 'Full day'}\nReason: ${data.reason || 'N/A'}`,
+            description: description,
             start: data.startDate,
             end: data.endDate,
             colorId: '2', // Green for approved vacation
@@ -79,6 +88,13 @@ async function getFirestoreEventsOnly(includeVacationRequests: boolean) {
             source: 'firestore',
             calendarEventId: data.calendarEventId || data.googleCalendarEventId
           };
+          
+          // Only include reason field in event object for admins
+          if (isAdminUser && data.reason) {
+            event.reason = data.reason;
+          }
+          
+          return event;
         });
         console.log(`✅ Added ${firestoreEvents.length} Firestore vacation events`);
       }
@@ -103,6 +119,11 @@ async function getFirestoreEventsOnly(includeVacationRequests: boolean) {
 export async function GET(request: NextRequest) {
   try {
     console.log('[CALENDAR_API] start');
+    
+    // Get user session to determine if admin
+    const session = await getServerSession(authOptions);
+    const userEmail = session?.user?.email || null;
+    const isAdminUser = isAdmin(userEmail);
     
     // Handle build-time scenario where request.url might be undefined
     if (!request.url) {
@@ -130,7 +151,7 @@ export async function GET(request: NextRequest) {
     
     if (!hasGoogleCreds) {
       console.log('[CALENDAR_API] Google Calendar credentials not available, returning Firestore events only');
-      return await getFirestoreEventsOnly(includeVacationRequests);
+      return await getFirestoreEventsOnly(includeVacationRequests, isAdminUser);
     }
 
     // Initialize Google Calendar API
@@ -144,7 +165,7 @@ export async function GET(request: NextRequest) {
       calendar = google.calendar({ version: 'v3', auth });
     } catch (authError) {
       console.error('[CALENDAR_API] Google Auth failed:', authError);
-      return await getFirestoreEventsOnly(includeVacationRequests);
+      return await getFirestoreEventsOnly(includeVacationRequests, isAdminUser);
     }
 
     // Set default time range if not provided - fetch 12 months of data to show all events
@@ -289,10 +310,16 @@ export async function GET(request: NextRequest) {
           
           firestoreEvents = approvedRequests.map(doc => {
             const data = doc.data();
-            return {
+            // Build description - only include reason for admins
+            const baseDescription = `Vacation Request\nName: ${data.userName || 'Unknown'}\nCompany: ${data.company || 'Unknown'}\nType: ${data.type || 'Full day'}`;
+            const description = isAdminUser && data.reason 
+              ? `${baseDescription}\nReason: ${data.reason}`
+              : baseDescription;
+            
+            const event: any = {
               id: `firestore_${doc.id}`,
               summary: `${data.userName || 'Unknown'} - ${data.company || 'Unknown'}`,
-              description: `Vacation Request\nName: ${data.userName || 'Unknown'}\nCompany: ${data.company || 'Unknown'}\nType: ${data.type || 'Full day'}\nReason: ${data.reason || 'N/A'}`,
+              description: description,
               start: data.startDate,
               end: data.endDate,
               colorId: '2', // Green for approved vacation
@@ -301,6 +328,13 @@ export async function GET(request: NextRequest) {
               source: 'firestore',
               calendarEventId: data.calendarEventId || data.googleCalendarEventId
             };
+            
+            // Only include reason field in event object for admins
+            if (isAdminUser && data.reason) {
+              event.reason = data.reason;
+            }
+            
+            return event;
           });
           console.log(`✅ Added ${firestoreEvents.length} Firestore vacation events`);
         }

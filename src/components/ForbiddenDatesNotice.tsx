@@ -42,3 +42,5 @@ export default function ForbiddenDatesNotice() {
   return <NoticeModal open={show} onClose={() => setShow(false)} locale={locale} />;
 }
 
+
+

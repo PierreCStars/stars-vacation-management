@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
+import { isAdmin } from '@/config/admins';
 import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 import CalendarConflictsPanel from '@/components/CalendarConflictsPanel';
 import { createLocaleUrl } from '@/i18n/routing';
@@ -23,6 +24,9 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
   const router = useRouter();
   const pathname = usePathname();
   const [request, setRequest] = useState<VacationRequestWithConflicts | null>(null);
+  
+  // Get session to check admin status (defense-in-depth)
+  const isAdminUser = isAdmin(session?.user?.email);
   
   // Get current locale from pathname
   const currentLocale = pathname?.split('/')[1] || 'en';
@@ -236,7 +240,9 @@ export default function VacationRequestClient({ id }: VacationRequestClientProps
               return `${calculatedDays} day${calculatedDays !== 1 ? 's' : ''}`;
             })()}</p>
             <p style={{ color: '#000000', marginBottom: 8 }}>Type: {getVacationTypeLabelFromTranslations(request.type || '', tVacations)}</p>
-            <p style={{ color: '#000000', marginBottom: 8 }}>Reason: {request.reason || 'No reason provided'}</p>
+            {isAdminUser && (
+              <p style={{ color: '#000000', marginBottom: 8 }}>Reason: {request.reason || 'No reason provided'}</p>
+            )}
             <p style={{ color: '#000000', marginBottom: 8 }}>Company: {request.company || '—'}</p>
             <p style={{ color: '#000000' }}>Status: {request.status}</p>
           </div>

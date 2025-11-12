@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { runPendingReminder5d } from '@/lib/cron/pendingReminder5d';
+import { runPendingReminder5d, ReminderResult } from '@/lib/cron/pendingReminder5d';
+import { safeNextJson } from '@/lib/http/safeJson';
 
 export const dynamic = "force-dynamic";
 export const runtime = 'nodejs';
@@ -26,31 +27,30 @@ export async function GET() {
   try {
     console.log('[CRON_5D] Starting 5-day pending reminder check...');
     
-    const result = await runPendingReminder5d();
+    const result: ReminderResult = await runPendingReminder5d();
     
     if (result.included === 0) {
       console.log('[CRON_5D] No pending requests need reminder');
-      return NextResponse.json({
+      return safeNextJson(result, {
         success: true,
-        message: 'No pending requests need reminder',
-        ...result
+        message: 'No pending requests need reminder'
       });
     }
     
     console.log(`[CRON_5D] ✅ Reminder process completed: ${result.included} requests included, ${result.notified} admins notified`);
     
-    return NextResponse.json({
+    return safeNextJson(result, {
       success: result.success,
-      message: `Reminder sent for ${result.included} pending request${result.included !== 1 ? 's' : ''}`,
-      ...result
+      message: `Reminder sent for ${result.included} pending request${result.included !== 1 ? 's' : ''}`
     });
     
   } catch (error) {
     console.error('[CRON_5D] ❌ Error in 5-day reminder check:', error);
     
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error',
+      error: errorMessage,
       timestamp: new Date().toISOString()
     }, { status: 500 });
   }

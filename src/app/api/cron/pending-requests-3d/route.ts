@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
-import { runPendingCheck } from '@/lib/cron/pendingRequests';
+import { runPendingCheck, PendingCheckResult } from '@/lib/cron/pendingRequests';
+import { safeNextJson } from '@/lib/http/safeJson';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -8,23 +9,23 @@ export async function GET() {
   try {
     console.log('[CRON_3D] Starting 3-day pending requests check...');
     
-    const result = await runPendingCheck('3d');
+    const result: PendingCheckResult = await runPendingCheck('3d');
     
     console.log('[CRON_3D] Completed:', result);
     
-    return NextResponse.json({
+    return safeNextJson(result, {
       success: true,
-      message: '3-day pending requests check completed',
-      ...result
+      message: '3-day pending requests check completed'
     });
     
   } catch (error) {
     console.error('[CRON_3D] Error:', error);
     
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({
       success: false,
       error: '3-day pending requests check failed',
-      details: error instanceof Error ? error.message : String(error)
+      details: errorMessage
     }, { status: 500 });
   }
 }

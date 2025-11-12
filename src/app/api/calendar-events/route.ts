@@ -274,11 +274,31 @@ export async function GET(request: NextRequest) {
           }
         }
 
+        // Normalize all-day events: convert exclusive end dates to inclusive
+        const isAllDay = !!(event.start?.date && !event.start?.dateTime);
+        const startDate = event.start?.date || event.start?.dateTime?.slice(0, 10) || '';
+        let endDate = event.end?.date || event.end?.dateTime?.slice(0, 10) || '';
+        
+        // For all-day events, Google Calendar uses exclusive end dates
+        // Convert to inclusive for our app
+        if (isAllDay && endDate && endDate !== startDate) {
+          // Subtract one day from exclusive end date to get inclusive end date
+          const endDateObj = new Date(endDate + 'T00:00:00');
+          endDateObj.setDate(endDateObj.getDate() - 1);
+          const year = endDateObj.getFullYear();
+          const month = String(endDateObj.getMonth() + 1).padStart(2, '0');
+          const day = String(endDateObj.getDate()).padStart(2, '0');
+          endDate = `${year}-${month}-${day}`;
+        } else if (isAllDay && (!endDate || endDate === startDate)) {
+          // Single-day event: end date should equal start date
+          endDate = startDate;
+        }
+
         return {
           id: event.id,
           title: event.summary || 'Untitled Event',
-          startDate: event.start?.date || event.start?.dateTime?.slice(0, 10) || '',
-          endDate: event.end?.date || event.end?.dateTime?.slice(0, 10) || '',
+          startDate,
+          endDate,
           location: event.location || '',
           summary: event.summary,
           description: event.description,

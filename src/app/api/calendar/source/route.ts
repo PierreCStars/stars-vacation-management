@@ -31,18 +31,31 @@ export async function GET(req: Request) {
     const events = await listEventsInRange(calId, now.toISOString(), end.toISOString());
 
     // Normalize payload; fix all-day exclusive end date
+    // Google Calendar uses exclusive end dates for all-day events
     const list = events.map(ev => {
+      const isAllDay = !!(ev.start?.date && !ev.start?.dateTime);
       const start = ev.start?.date || ev.start?.dateTime?.slice(0, 10) || '';
-      const endRaw = ev.end?.date || ev.end?.dateTime?.slice(0, 10) || start;
-      const endInc = ev.end?.date ? 
-        new Date(new Date(endRaw).getTime() - 86400000).toISOString().slice(0, 10) : 
-        endRaw;
+      let endDate = ev.end?.date || ev.end?.dateTime?.slice(0, 10) || '';
+      
+      // For all-day events, convert exclusive end date to inclusive
+      if (isAllDay && endDate && endDate !== start) {
+        // Subtract one day from exclusive end date to get inclusive end date
+        const endDateObj = new Date(endDate + 'T00:00:00');
+        endDateObj.setDate(endDateObj.getDate() - 1);
+        const year = endDateObj.getFullYear();
+        const month = String(endDateObj.getMonth() + 1).padStart(2, '0');
+        const day = String(endDateObj.getDate()).padStart(2, '0');
+        endDate = `${year}-${month}-${day}`;
+      } else if (isAllDay && (!endDate || endDate === start)) {
+        // Single-day event: end date should equal start date
+        endDate = start;
+      }
       
       return {
         id: ev.id,
         title: ev.summary || '(Untitled)',
         startDate: start,
-        endDate: endInc,
+        endDate,
         location: ev.location || ''
       };
     });

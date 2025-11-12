@@ -157,6 +157,7 @@ export default function UnifiedVacationCalendar({
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
       
       // Find vacations for this date (exclude rejected)
+      // Note: Vacation requests use inclusive end dates (stored in Firestore)
       const dayVacations = vacationRequests.filter(request => {
         const isRejected = (request.status || '').toLowerCase() === 'rejected' || (request.status || '').toLowerCase() === 'denied';
         if (isRejected) return false;
@@ -166,7 +167,7 @@ export default function UnifiedVacationCalendar({
           const start = parseLocalDate(request.startDate);
           const end = parseLocalDate(request.endDate);
           
-          // Include the full range (inclusive on both ends)
+          // Vacation requests use inclusive end dates (both start and end are inclusive)
           return date >= start && date <= end;
         } catch (error) {
           console.error('Error parsing dates:', error, request);
@@ -180,10 +181,12 @@ export default function UnifiedVacationCalendar({
       const dayMonacoHolidays = getMonacoHolidaysInRange(date, date);
 
       // Find company events for this date
+      // Note: Company events from Google Calendar are normalized to use inclusive end dates
       const dayCompanyEvents = companyEvents.filter(event => {
         try {
           const start = parseLocalDate(event.startDate);
           const end = parseLocalDate(event.endDate);
+          // Events are normalized to inclusive end dates by the API
           return date >= start && date <= end;
         } catch (error) {
           return false;

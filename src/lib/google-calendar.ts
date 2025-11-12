@@ -137,11 +137,12 @@ export async function addVacationToCalendar(vacationEvent: VacationEvent) {
       requestBody: event,
     });
 
+    const createdEventId = response.data.id;
     console.log('[CALENDAR] add_event success', { 
-      eventId: response.data.id, 
+      eventId: createdEventId, 
       calendarId: CAL_TARGET 
     });
-    return response.data.id;
+    return createdEventId || undefined; // Ensure we return string | undefined, not null
     
   } catch (error) {
     console.error('[CALENDAR] add_event fail', { 
@@ -320,11 +321,12 @@ export async function updateVacationInCalendar(eventId: string, vacationEvent: V
       requestBody: event,
     });
 
+    const updatedEventId = response.data.id || eventId; // Fallback to original eventId if response doesn't have id
     console.log('[CALENDAR] update_event success', { 
-      eventId: response.data.id, 
+      eventId: updatedEventId, 
       calendarId: CAL_TARGET 
     });
-    return response.data.id;
+    return updatedEventId || undefined; // Ensure we return string | undefined, not null
     
   } catch (error) {
     console.error('[CALENDAR] update_event fail', { 

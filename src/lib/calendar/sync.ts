@@ -91,7 +91,7 @@ export async function ensureEventForRequest(
       });
 
       console.log('[CALENDAR] ensure_event updated', { id: requestDoc.id, eventId });
-      return { success: true, eventId };
+      return { success: true, eventId: eventId ?? undefined };
     }
 
     if (existingEventId && !datesChanged) {
@@ -112,7 +112,7 @@ export async function ensureEventForRequest(
 
     console.log('[CALENDAR] ensure_event stored', { id: requestDoc.id, eventId });
 
-    return { success: true, eventId: eventId || undefined };
+    return { success: true, eventId: eventId ?? undefined };
   } catch (error) {
     console.error('[CALENDAR] ensure_event fail', { 
       id: requestDoc.id, 

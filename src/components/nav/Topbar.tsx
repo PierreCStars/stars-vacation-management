@@ -9,6 +9,7 @@ import { useSession } from 'next-auth/react';
 import { SignOutButton } from '../SignOutButton';
 import Avatar from '../Avatar';
 import { isAdmin } from '@/config/admins';
+import { AdminDropdown } from './AdminDropdown';
 
 export function Topbar() {
   const pathname = usePathname();
@@ -70,29 +71,7 @@ export function Topbar() {
           </Link>
           
           {isAdmin(session?.user?.email) && (
-            <>
-              <Link
-                href={createLocaleUrl('/admin/vacation-requests', currentLocale)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive('/admin/vacation-requests')
-                    ? 'bg-indigo-100 text-indigo-700'
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-              >
-                {tNav('admin')}
-              </Link>
-              
-              <Link
-                href={createLocaleUrl('/admin/analytics', currentLocale)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  isActive('/admin/analytics')
-                    ? 'bg-indigo-100 text-indigo-700'
-                    : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
-                }`}
-              >
-                {tNav('analytics')}
-              </Link>
-            </>
+            <AdminDropdown currentLocale={currentLocale} />
           )}
         </nav>
 

@@ -8,5 +8,11 @@
       "destination": "https://starsvacationmanagementv2.vercel.app/$1",
       "permanent": true
     }
+  ],
+  "crons": [
+    {
+      "path": "/api/cron/pending-reminder-5d",
+      "schedule": "0 8 * * *"
+    }
   ]
 }

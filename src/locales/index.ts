@@ -68,7 +68,9 @@ const en = {
     "settings": "Settings",
     "logout": "Logout",
     "vacationRequests": "Vacation Requests",
-    "administration": "Administration"
+    "administration": "Administration",
+    "managementSection": "Management",
+    "analyticsSection": "Analytics"
   },
   "vacations": {
     "title": "Vacation Management",
@@ -338,7 +340,9 @@ const fr = {
     "settings": "Paramètres",
     "logout": "Déconnexion",
     "vacationRequests": "Demandes de congés",
-    "administration": "Administration"
+    "administration": "Administration",
+    "managementSection": "Gestion",
+    "analyticsSection": "Analyses"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -608,7 +612,9 @@ const it = {
     "settings": "Impostazioni",
     "logout": "Disconnetti",
     "vacationRequests": "Richieste di vacanza",
-    "administration": "Amministrazione"
+    "administration": "Amministrazione",
+    "managementSection": "Gestione",
+    "analyticsSection": "Analisi"
   },
   "dashboard": {
     "title": "Dashboard",

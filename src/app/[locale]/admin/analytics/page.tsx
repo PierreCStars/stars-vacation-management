@@ -132,7 +132,7 @@ export default function AnalyticsPage() {
       {/* Breadcrumb and Page Header */}
       <div className="border-b border-gray-200 pb-4">
         <div className="text-sm text-gray-500 mb-2">
-          <span>Admin</span> <span className="mx-1">/</span> <span className="text-gray-900 font-medium">Analytics</span>
+          <span>Administration</span> <span className="mx-1">/</span> <span className="text-gray-900 font-medium">Analytics</span>
         </div>
         <div className="flex items-center justify-between">
           <div>

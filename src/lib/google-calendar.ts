@@ -90,44 +90,64 @@ export interface VacationEvent {
 
 export async function addVacationToCalendar(vacationEvent: VacationEvent) {
   try {
-    console.log('📅 Adding vacation event to Google Calendar...');
+    console.log('[CALENDAR] add_event start', { 
+      userName: vacationEvent.userName, 
+      startDate: vacationEvent.startDate, 
+      endDate: vacationEvent.endDate,
+      calendarId: CAL_TARGET 
+    });
     
     const startDate = new Date(vacationEvent.startDate);
     const endDate = new Date(vacationEvent.endDate);
     
-    // Add one day to end date since Google Calendar events are exclusive
-    endDate.setDate(endDate.getDate() + 1);
+    // Add one day to end date since Google Calendar all-day events are exclusive
+    // For all-day events, end date should be the day after the last day
+    const endDateExclusive = new Date(endDate);
+    endDateExclusive.setDate(endDateExclusive.getDate() + 1);
     
     // Convert company enum to display name
     const companyDisplayName = getCompanyDisplayName(vacationEvent.company);
     
+    // Build event description with app URL if available
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'https://vacation.stars.mc';
+    const description = [
+      `Name: ${vacationEvent.userName}`,
+      `Company: ${companyDisplayName}`,
+      `Type: ${vacationEvent.type || 'Full day'}`,
+      `Date Range: ${startDate.toLocaleDateString('en-GB', { timeZone: APP_TZ })} - ${endDate.toLocaleDateString('en-GB', { timeZone: APP_TZ })}`,
+      ...(vacationEvent.reason ? [`Reason: ${vacationEvent.reason}`] : []),
+      `\nView in app: ${baseUrl}`
+    ].join('\n');
+    
     const event = {
       summary: `${vacationEvent.userName} - ${companyDisplayName}`,
-      description: `Name: ${vacationEvent.userName}\nCompany: ${companyDisplayName}\nDate Range: ${startDate.toLocaleDateString()} - ${new Date(vacationEvent.endDate).toLocaleDateString()}`,
+      description,
       start: {
-        date: startDate.toISOString().split('T')[0], // YYYY-MM-DD format
-        timeZone: 'UTC',
+        date: startDate.toISOString().split('T')[0], // YYYY-MM-DD format for all-day
       },
       end: {
-        date: endDate.toISOString().split('T')[0], // YYYY-MM-DD format
-        timeZone: 'UTC',
+        date: endDateExclusive.toISOString().split('T')[0], // YYYY-MM-DD format for all-day (exclusive)
       },
       colorId: getColorIdForCompany(vacationEvent.company),
       transparency: 'transparent', // Show as "busy" but transparent
     };
 
-    const calendarId = process.env.GOOGLE_CALENDAR_ID || 'primary';
-    
     const response = await calendar.events.insert({
-      calendarId,
+      calendarId: CAL_TARGET,
       requestBody: event,
     });
 
-    console.log('✅ Vacation event added to Google Calendar:', response.data.id);
+    console.log('[CALENDAR] add_event success', { 
+      eventId: response.data.id, 
+      calendarId: CAL_TARGET 
+    });
     return response.data.id;
     
   } catch (error) {
-    console.error('❌ Error adding vacation to Google Calendar:', error);
+    console.error('[CALENDAR] add_event fail', { 
+      error: error instanceof Error ? error.message : String(error),
+      calendarId: CAL_TARGET
+    });
     throw error;
   }
 }
@@ -250,10 +270,73 @@ export async function addEventToCalendar(calendarId: string, event: {
   }
 }
 
+export async function updateVacationInCalendar(eventId: string, vacationEvent: VacationEvent) {
+  try {
+    console.log('[CALENDAR] update_event start', { 
+      eventId, 
+      userName: vacationEvent.userName, 
+      startDate: vacationEvent.startDate, 
+      endDate: vacationEvent.endDate,
+      calendarId: CAL_TARGET 
+    });
+    
+    const startDate = new Date(vacationEvent.startDate);
+    const endDate = new Date(vacationEvent.endDate);
+    
+    // Add one day to end date since Google Calendar all-day events are exclusive
+    const endDateExclusive = new Date(endDate);
+    endDateExclusive.setDate(endDateExclusive.getDate() + 1);
+    
+    // Convert company enum to display name
+    const companyDisplayName = getCompanyDisplayName(vacationEvent.company);
+    
+    // Build event description with app URL if available
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'https://vacation.stars.mc';
+    const description = [
+      `Name: ${vacationEvent.userName}`,
+      `Company: ${companyDisplayName}`,
+      `Type: ${vacationEvent.type || 'Full day'}`,
+      `Date Range: ${startDate.toLocaleDateString('en-GB', { timeZone: APP_TZ })} - ${endDate.toLocaleDateString('en-GB', { timeZone: APP_TZ })}`,
+      ...(vacationEvent.reason ? [`Reason: ${vacationEvent.reason}`] : []),
+      `\nView in app: ${baseUrl}`
+    ].join('\n');
+    
+    const event = {
+      summary: `${vacationEvent.userName} - ${companyDisplayName}`,
+      description,
+      start: {
+        date: startDate.toISOString().split('T')[0], // YYYY-MM-DD format for all-day
+      },
+      end: {
+        date: endDateExclusive.toISOString().split('T')[0], // YYYY-MM-DD format for all-day (exclusive)
+      },
+      colorId: getColorIdForCompany(vacationEvent.company),
+      transparency: 'transparent',
+    };
+
+    const response = await calendar.events.update({
+      calendarId: CAL_TARGET,
+      eventId: eventId,
+      requestBody: event,
+    });
+
+    console.log('[CALENDAR] update_event success', { 
+      eventId: response.data.id, 
+      calendarId: CAL_TARGET 
+    });
+    return response.data.id;
+    
+  } catch (error) {
+    console.error('[CALENDAR] update_event fail', { 
+      eventId,
+      error: error instanceof Error ? error.message : String(error),
+      calendarId: CAL_TARGET
+    });
+    throw error;
+  }
+}
+
 export async function deleteVacationFromCalendar(eventId: string) {
-  const auth = getJwt();
-  const calendar = google.calendar({ version: 'v3', auth });
-  
   try {
     console.log('[CALENDAR] delete_event', { eventId, calendarId: CAL_TARGET });
     await calendar.events.delete({
@@ -262,7 +345,11 @@ export async function deleteVacationFromCalendar(eventId: string) {
     });
     console.log('[CALENDAR] delete_event success', { eventId });
   } catch (error) {
-    console.error('[CALENDAR] delete_event fail', { eventId, error: error instanceof Error ? error.message : String(error) });
+    console.error('[CALENDAR] delete_event fail', { 
+      eventId, 
+      error: error instanceof Error ? error.message : String(error),
+      calendarId: CAL_TARGET
+    });
     throw error;
   }
 }

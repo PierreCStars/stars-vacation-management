@@ -4,7 +4,7 @@
  */
 
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
-import { addVacationToCalendar, deleteVacationFromCalendar, CAL_TARGET } from '@/lib/google-calendar';
+import { addVacationToCalendar, updateVacationInCalendar, deleteVacationFromCalendar, CAL_TARGET } from '@/lib/google-calendar';
 import { revalidateTag, revalidatePath } from 'next/cache';
 import { normalizeVacationStatus } from '@/types/vacation-status';
 
@@ -28,7 +28,7 @@ export interface CalendarSyncResult {
 
 /**
  * Ensure a calendar event exists for the given vacation request
- * Creates event if it doesn't exist, updates if it does
+ * Creates event if it doesn't exist, updates if dates changed
  */
 export async function ensureEventForRequest(
   db: FirebaseFirestore.Firestore,
@@ -55,13 +55,10 @@ export async function ensureEventForRequest(
     const doc = await docRef.get();
     const existingData = doc.data();
     const existingEventId = existingData?.calendarEventId || existingData?.googleCalendarEventId;
+    const existingStartDate = existingData?.startDate;
+    const existingEndDate = existingData?.endDate;
 
-    if (existingEventId) {
-      console.log('[CALENDAR] ensure_event exists', { id: requestDoc.id, eventId: existingEventId });
-      return { success: true, eventId: existingEventId };
-    }
-
-    // Create new calendar event
+    // Prepare vacation event data
     const vacationEvent = {
       userName: requestDoc.userName,
       startDate: requestDoc.startDate,
@@ -71,6 +68,38 @@ export async function ensureEventForRequest(
       reason: requestDoc.reason
     };
 
+    // Check if dates have changed (need to update existing event)
+    const datesChanged = existingEventId && (
+      existingStartDate !== requestDoc.startDate || 
+      existingEndDate !== requestDoc.endDate
+    );
+
+    if (existingEventId && datesChanged) {
+      console.log('[CALENDAR] ensure_event update', { 
+        id: requestDoc.id, 
+        eventId: existingEventId,
+        oldDates: { start: existingStartDate, end: existingEndDate },
+        newDates: { start: requestDoc.startDate, end: requestDoc.endDate }
+      });
+      
+      // Update existing event with new dates
+      const eventId = await updateVacationInCalendar(existingEventId, vacationEvent);
+      
+      // Update sync timestamp
+      await docRef.update({
+        calendarSyncedAt: new Date().toISOString()
+      });
+
+      console.log('[CALENDAR] ensure_event updated', { id: requestDoc.id, eventId });
+      return { success: true, eventId };
+    }
+
+    if (existingEventId && !datesChanged) {
+      console.log('[CALENDAR] ensure_event exists', { id: requestDoc.id, eventId: existingEventId });
+      return { success: true, eventId: existingEventId };
+    }
+
+    // Create new calendar event
     const eventId = await addVacationToCalendar(vacationEvent);
     console.log('[CALENDAR] ensure_event created', { id: requestDoc.id, eventId });
 

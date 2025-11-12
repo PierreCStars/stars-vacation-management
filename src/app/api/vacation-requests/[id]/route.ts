@@ -150,24 +150,33 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
       console.log('✅ Vacation request updated successfully in Firestore');
 
-      // Sync calendar event based on new status
-      if (isStatusUpdate && requestData) {
+      // Sync calendar event based on new status or date changes
+      // For status updates: sync to create/delete events
+      // For date updates: sync to update existing events (if approved)
+      if ((isStatusUpdate || isDateUpdate) && requestData) {
         try {
+          // Get the current status (may have been updated or may be existing)
+          const currentStatus = isStatusUpdate ? newStatus : (requestData.status || 'pending');
+          
           const calendarData = {
             id: requestData.id || id,
             userName: requestData.userName || 'Unknown',
             userEmail: requestData.userEmail || 'unknown@stars.mc',
-            startDate: requestData.startDate,
-            endDate: requestData.endDate,
+            startDate: isDateUpdate ? newStartDate : requestData.startDate,
+            endDate: isDateUpdate ? newEndDate : requestData.endDate,
             type: requestData.type || 'Full day',
             company: requestData.company || 'Unknown',
             reason: requestData.reason,
-            status: newStatus as 'pending' | 'approved' | 'denied'
+            status: currentStatus as 'pending' | 'approved' | 'denied'
           };
           
           const calendarResult = await syncEventForRequest(calendarData);
           if (calendarResult.success) {
-            console.log('[VALIDATION] calendar_sync success', { id, eventId: calendarResult.eventId });
+            console.log('[VALIDATION] calendar_sync success', { 
+              id, 
+              eventId: calendarResult.eventId,
+              updateType: isStatusUpdate ? 'status' : 'dates'
+            });
           } else {
             console.error('[VALIDATION] calendar_sync fail', { id, error: calendarResult.error });
             // Don't fail the request if calendar sync fails

@@ -4,6 +4,10 @@ import { PATCH } from '../route';
 import { absoluteUrl } from '@/lib/urls';
 
 // Mock dependencies
+vi.mock('@/lib/auth', () => ({
+  authOptions: {}
+}));
+
 vi.mock('next-auth/next', () => ({
   getServerSession: vi.fn()
 }));
@@ -26,19 +30,32 @@ vi.mock('next/cache', () => ({
   revalidatePath: vi.fn()
 }));
 
+vi.mock('@/config/admins', () => ({
+  isFullAdmin: vi.fn(),
+  isAdmin: vi.fn(),
+  isReadOnlyAdmin: vi.fn()
+}));
+
 describe('/api/vacation-requests/[id] PATCH', () => {
-  beforeEach(() => {
+  beforeEach(async () => {
     vi.clearAllMocks();
+    // Default: mock isFullAdmin to return false (non-admin)
+    const { isFullAdmin } = await import('@/config/admins');
+    vi.mocked(isFullAdmin).mockReturnValue(false);
   });
 
   it('should approve a vacation request successfully', async () => {
     const { getServerSession } = await import('next-auth/next');
     const { getVacationRequestsService } = await import('@/lib/firebase');
+    const { isFullAdmin } = await import('@/config/admins');
     
-    // Mock session
+    // Mock session with admin user
     vi.mocked(getServerSession).mockResolvedValue({
-      user: { email: 'admin@stars.mc', name: 'Admin User' }
+      user: { email: 'pierre@stars.mc', name: 'Admin User' }
     } as any);
+    
+    // Mock isFullAdmin to return true for admin users
+    vi.mocked(isFullAdmin).mockReturnValue(true);
 
     // Mock vacation service
     const mockService = {
@@ -85,11 +102,15 @@ describe('/api/vacation-requests/[id] PATCH', () => {
   it('should reject a vacation request successfully', async () => {
     const { getServerSession } = await import('next-auth/next');
     const { getVacationRequestsService } = await import('@/lib/firebase');
+    const { isFullAdmin } = await import('@/config/admins');
     
-    // Mock session
+    // Mock session with admin user
     vi.mocked(getServerSession).mockResolvedValue({
-      user: { email: 'admin@stars.mc', name: 'Admin User' }
+      user: { email: 'pierre@stars.mc', name: 'Admin User' }
     } as any);
+    
+    // Mock isFullAdmin to return true for admin users
+    vi.mocked(isFullAdmin).mockReturnValue(true);
 
     // Mock vacation service
     const mockService = {
@@ -153,11 +174,15 @@ describe('/api/vacation-requests/[id] PATCH', () => {
 
   it('should return 400 for invalid update requests', async () => {
     const { getServerSession } = await import('next-auth/next');
+    const { isFullAdmin } = await import('@/config/admins');
     
-    // Mock session
+    // Mock session with admin user
     vi.mocked(getServerSession).mockResolvedValue({
-      user: { email: 'admin@stars.mc', name: 'Admin User' }
+      user: { email: 'pierre@stars.mc', name: 'Admin User' }
     } as any);
+    
+    // Mock isFullAdmin to return true (even though this test doesn't reach the check)
+    vi.mocked(isFullAdmin).mockReturnValue(true);
 
       const request = new NextRequest('http://localhost:3000/api/vacation-requests/test-123', {
       method: 'PATCH',

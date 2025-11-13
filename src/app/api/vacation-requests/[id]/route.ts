@@ -8,6 +8,7 @@ import { decideVacation } from '@/lib/vacation-orchestration';
 import { revalidateTag, revalidatePath } from 'next/cache';
 import { syncEventForRequest, refreshCacheTags } from '@/lib/calendar/sync';
 import { normalizeVacationFields } from '@/lib/normalize-vacation-fields';
+import { isFullAdmin } from '@/config/admins';
 
 // Google Calendar API for Holidays Calendar
 const GOOGLE_CALENDAR_ID = 'c_e98f5350bf743174f87e1a786038cb9d103c306b7246c6200684f81c37a6a764@group.calendar.google.com';
@@ -45,12 +46,6 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       userEmail: session.user.email 
     });
     
-    const reviewer = {
-      id: session.user.email,
-      name: session.user.name || session.user.email,
-      email: session.user.email
-    };
-
     // Check if this is a status update or a general update
     const isStatusUpdate = newStatus && ["approved", "denied"].includes(newStatus);
     const isDateUpdate = newStartDate && newEndDate;
@@ -62,10 +57,31 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       validStatuses: ["approved", "denied"].includes(newStatus) 
     });
     
+    // CRITICAL FIX: Check admin authorization for status updates (approve/deny)
+    if (isStatusUpdate) {
+      const userEmail = session.user.email;
+      if (!isFullAdmin(userEmail)) {
+        console.log('🔍 [INVESTIGATION] Forbidden - user is not a full admin:', { userEmail });
+        return NextResponse.json({ 
+          error: 'Forbidden - Admin access required to approve or deny vacation requests' 
+        }, { status: 403 });
+      }
+      console.log('🔍 [INVESTIGATION] Admin authorization verified:', { userEmail });
+    }
+    
+    // For date updates, we still allow the requester to update their own request
+    // but we'll check ownership in the date update section if needed
+    
     if (!isStatusUpdate && !isDateUpdate) {
       console.log('🔍 [INVESTIGATION] Invalid update request - returning 400');
       return NextResponse.json({ error: 'Invalid update request - must be status update or date update' }, { status: 400 });
     }
+    
+    const reviewer = {
+      id: session.user.email,
+      name: session.user.name || session.user.email,
+      email: session.user.email
+    };
 
     try {
       // Use Firebase Admin SDK to update the vacation request

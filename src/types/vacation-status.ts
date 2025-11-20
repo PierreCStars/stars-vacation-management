@@ -18,7 +18,7 @@ export const VACATION_STATUS_VALUES: VacationStatus[] = [
 export function normalizeVacationStatus(input: unknown): VacationStatus {
   if (!input) return 'pending';
   const s = String(input).toLowerCase().trim();
-  if (s === 'approved' || s === 'approve' || s === 'ok' || s === 'accepted') return 'approved';
+  if (s === 'approved' || s === 'approve' || s === 'ok' || s === 'accepted' || s === 'validated') return 'approved';
   if (s === 'denied' || s === 'reject' || s === 'rejected' || s === 'declined') return 'denied';
   return 'pending';
 }

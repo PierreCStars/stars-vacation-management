@@ -43,7 +43,10 @@ export async function POST() {
       const docRef = db.collection('vacationRequests').doc(req.id);
       const doc = await docRef.get();
       const existingData = doc.data();
-      const existingEventId = existingData?.calendarEventId;
+      // Check all possible event ID fields for backward compatibility
+      const existingEventId = existingData?.calendarEventId || 
+                              existingData?.googleCalendarEventId || 
+                              existingData?.googleEventId;
       
       if (!existingEventId) {
         requestsNeedingSync.push(req);

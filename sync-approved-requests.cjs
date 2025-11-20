@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
 /**
- * Sync all approved vacation requests to Google Calendar
- * This script will ensure all approved requests appear in the calendar
+ * Sync all approved/validated vacation requests to Google Calendar
+ * This script will ensure all approved/validated requests appear in the calendar
  */
 
 const { initializeApp, cert, getApps } = require('firebase-admin/app');
@@ -51,27 +51,67 @@ function initGoogleCalendar() {
 function normalizeVacationStatus(input) {
   if (!input) return 'pending';
   const s = String(input).toLowerCase().trim();
-  if (s === 'approved' || s === 'approve' || s === 'ok' || s === 'accepted') return 'approved';
+  if (s === 'approved' || s === 'approve' || s === 'ok' || s === 'accepted' || s === 'validated') return 'approved';
   if (s === 'denied' || s === 'reject' || s === 'rejected' || s === 'declined') return 'denied';
   return 'pending';
+}
+
+// Get company display name
+function getCompanyDisplayName(company) {
+  const companyDisplayNames = {
+    'STARS_MC': 'Stars MC',
+    'STARS_YACHTING': 'Stars Yachting',
+    'STARS_REAL_ESTATE': 'Stars Real Estate',
+    'LE_PNEU': 'Le Pneu',
+    'MIDI_PNEU': 'Midi Pneu',
+    'STARS_AVIATION': 'Stars Aviation',
+  };
+  return companyDisplayNames[company] || company;
+}
+
+// Get color ID for company
+function getColorIdForCompany(company) {
+  const companyColors = {
+    'STARS_MC': '1',
+    'STARS_YACHTING': '2',
+    'STARS_REAL_ESTATE': '3',
+    'LE_PNEU': '4',
+    'MIDI_PNEU': '5',
+    'STARS_AVIATION': '6',
+  };
+  return companyColors[company] || '1';
 }
 
 // Add vacation to calendar
 async function addVacationToCalendar(calendar, vacationEvent) {
   const { userName, startDate, endDate, type, company, reason } = vacationEvent;
   
+  // Parse dates
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  
+  // Add one day to end date since Google Calendar all-day events are exclusive
+  const endDateExclusive = new Date(end);
+  endDateExclusive.setDate(endDateExclusive.getDate() + 1);
+  
+  const companyDisplayName = getCompanyDisplayName(company);
+  
   const event = {
-    summary: `${userName} - ${company}`,
-    description: `Vacation Request\nName: ${userName}\nCompany: ${company}\nType: ${type}\nReason: ${reason || 'N/A'}`,
-    start: { date: startDate },
-    end: { date: endDate },
-    transparency: 'opaque',
-    colorId: '2', // Default color
+    summary: `${userName} - ${companyDisplayName}`,
+    description: `Vacation Request\nName: ${userName}\nCompany: ${companyDisplayName}\nType: ${type || 'Full day'}\nDate Range: ${start.toLocaleDateString('en-GB')} - ${end.toLocaleDateString('en-GB')}\nReason: ${reason || 'N/A'}`,
+    start: { 
+      date: start.toISOString().split('T')[0] // YYYY-MM-DD format for all-day
+    },
+    end: { 
+      date: endDateExclusive.toISOString().split('T')[0] // YYYY-MM-DD format (exclusive)
+    },
+    transparency: 'transparent',
+    colorId: getColorIdForCompany(company),
   };
 
   try {
     const response = await calendar.events.insert({
-      calendarId: process.env.GOOGLE_CALENDAR_TARGET_ID || 'primary',
+      calendarId: process.env.GOOGLE_CALENDAR_TARGET_ID || process.env.GOOGLE_CALENDAR_ID || 'primary',
       requestBody: event,
     });
     return response.data.id;
@@ -84,7 +124,7 @@ async function addVacationToCalendar(calendar, vacationEvent) {
 // Main sync function
 async function syncApprovedRequests() {
   try {
-    console.log('🚀 Starting sync of approved vacation requests...');
+    console.log('🚀 Starting sync of approved/validated vacation requests...');
     
     // Initialize services
     const app = initFirebase();
@@ -108,7 +148,7 @@ async function syncApprovedRequests() {
       return normalizedStatus === 'approved';
     });
     
-    console.log(`✅ Found ${approvedRequests.length} approved requests`);
+    console.log(`✅ Found ${approvedRequests.length} approved/validated requests`);
     
     // Check which ones need calendar events
     const requestsNeedingSync = [];
@@ -116,7 +156,10 @@ async function syncApprovedRequests() {
       const docRef = db.collection('vacationRequests').doc(req.id);
       const doc = await docRef.get();
       const existingData = doc.data();
-      const existingEventId = existingData?.calendarEventId;
+      // Check all possible event ID fields for backward compatibility
+      const existingEventId = existingData?.calendarEventId || 
+                              existingData?.googleCalendarEventId || 
+                              existingData?.googleEventId;
       
       if (!existingEventId) {
         requestsNeedingSync.push(req);
@@ -147,9 +190,11 @@ async function syncApprovedRequests() {
         const eventId = await addVacationToCalendar(calendar, vacationEvent);
         console.log(`✅ Created calendar event: ${eventId}`);
         
-        // Store the event ID in Firestore
+        // Store the event ID in Firestore (store in all fields for compatibility)
         await db.collection('vacationRequests').doc(req.id).update({
           calendarEventId: eventId,
+          googleCalendarEventId: eventId, // Legacy field
+          googleEventId: eventId, // Legacy field
           calendarSyncedAt: new Date().toISOString()
         });
         

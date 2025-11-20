@@ -1,4 +1,4 @@
-import { google } from 'googleapis';
+import { google, calendar_v3 } from 'googleapis';
 import { getGoogleCalendarColorId, getCompanyColor } from './company-colors';
 
 // Utility function to load and parse Google credentials
@@ -48,30 +48,80 @@ function loadGoogleCreds(): GoogleCreds {
   return { client_email: process.env.GOOGLE_CLIENT_EMAIL!, private_key: pem };
 }
 
-// Initialize Google Calendar API
-const auth = new google.auth.GoogleAuth({
-  credentials: (() => {
-    try {
-      return loadGoogleCreds();
-    } catch (error) {
-      console.error('❌ Error loading Google credentials:', error);
-      return {};
-    }
-  })(),
-  scopes: ['https://www.googleapis.com/auth/calendar'],
-});
+// Initialize Google Calendar API with proper error handling
+let authInstance: InstanceType<typeof google.auth.GoogleAuth> | null = null;
+let calendar: calendar_v3.Calendar | null = null;
 
-const calendar = google.calendar({ version: 'v3', auth });
+export function initializeCalendarClient(): { auth: InstanceType<typeof google.auth.GoogleAuth>; calendar: calendar_v3.Calendar } {
+  if (authInstance && calendar) {
+    return { auth: authInstance, calendar };
+  }
+
+  try {
+    const credentials = loadGoogleCreds();
+    if (!credentials.client_email || !credentials.private_key) {
+      throw new Error('Google Calendar credentials are missing or invalid');
+    }
+
+    authInstance = new google.auth.GoogleAuth({
+      credentials,
+      scopes: ['https://www.googleapis.com/auth/calendar'],
+    });
+
+    calendar = google.calendar({ version: 'v3', auth: authInstance });
+    
+    // Verify service account email matches expected
+    const expectedServiceAccount = 'vacation-db@holiday-461710.iam.gserviceaccount.com';
+    const serviceAccountMatch = credentials.client_email === expectedServiceAccount;
+    
+    console.log('[CALENDAR] Client initialized successfully', {
+      clientEmail: credentials.client_email,
+      expectedServiceAccount,
+      serviceAccountMatch: serviceAccountMatch ? '✅' : '❌ MISMATCH',
+      calendarTarget: CAL_TARGET,
+      scopes: ['https://www.googleapis.com/auth/calendar']
+    });
+    
+    if (!serviceAccountMatch) {
+      console.warn('[CALENDAR] ⚠️ Service account email mismatch!', {
+        expected: expectedServiceAccount,
+        actual: credentials.client_email,
+        message: 'This may cause permission issues if the wrong service account is used'
+      });
+    }
+
+    return { auth: authInstance, calendar };
+  } catch (error) {
+    console.error('❌ Error initializing Google Calendar client:', error);
+    throw new Error(`Failed to initialize Google Calendar client: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
 
 // Export calendar client for use in other modules
 export function calendarClient() {
-  return calendar;
+  const { calendar: cal } = initializeCalendarClient();
+  return cal;
 }
 
 // Calendar IDs from environment variables
-export const CAL_TARGET = process.env.GOOGLE_CALENDAR_TARGET_ID || process.env.GOOGLE_CALENDAR_ID || 'primary';
+// Target calendar: c_e98f5350bf743174f87e1a786038cb9d103c306b7246c6200684f81c37a6a764@group.calendar.google.com
+// Service account: vacation-db@holiday-461710.iam.gserviceaccount.com
+export const CAL_TARGET = process.env.GOOGLE_CALENDAR_TARGET_ID || 
+                          process.env.GOOGLE_CALENDAR_ID || 
+                          'c_e98f5350bf743174f87e1a786038cb9d103c306b7246c6200684f81c37a6a764@group.calendar.google.com';
 export const CAL_SOURCE = process.env.GOOGLE_CALENDAR_SOURCE_ID;
 export const APP_TZ = process.env.APP_TIMEZONE || "Europe/Monaco";
+
+// Log calendar configuration on module load
+console.log('[CALENDAR] Configuration loaded', {
+  targetCalendarId: CAL_TARGET,
+  sourceCalendarId: CAL_SOURCE || 'Not set',
+  timezone: APP_TZ,
+  envVarSet: {
+    GOOGLE_CALENDAR_TARGET_ID: !!process.env.GOOGLE_CALENDAR_TARGET_ID,
+    GOOGLE_CALENDAR_ID: !!process.env.GOOGLE_CALENDAR_ID
+  }
+});
 
 // Utility function to convert date and time to RFC3339 local format
 export function toRFC3339Local(dateISO: string, timeHHMM: string) {
@@ -96,6 +146,9 @@ export async function addVacationToCalendar(vacationEvent: VacationEvent) {
       endDate: vacationEvent.endDate,
       calendarId: CAL_TARGET 
     });
+
+    // Initialize calendar client with error handling
+    const { calendar: cal } = initializeCalendarClient();
     
     const startDate = new Date(vacationEvent.startDate);
     const endDate = new Date(vacationEvent.endDate);
@@ -132,7 +185,15 @@ export async function addVacationToCalendar(vacationEvent: VacationEvent) {
       transparency: 'transparent', // Show as "busy" but transparent
     };
 
-    const response = await calendar.events.insert({
+    console.log('[CALENDAR] add_event API call', {
+      calendarId: CAL_TARGET,
+      eventSummary: event.summary,
+      eventStart: event.start.date,
+      eventEnd: event.end.date,
+      serviceAccount: loadGoogleCreds().client_email
+    });
+
+    const response = await cal.events.insert({
       calendarId: CAL_TARGET,
       requestBody: event,
     });
@@ -140,15 +201,63 @@ export async function addVacationToCalendar(vacationEvent: VacationEvent) {
     const createdEventId = response.data.id;
     console.log('[CALENDAR] add_event success', { 
       eventId: createdEventId, 
-      calendarId: CAL_TARGET 
+      calendarId: CAL_TARGET,
+      eventLink: response.data.htmlLink,
+      serviceAccount: loadGoogleCreds().client_email
     });
     return createdEventId || undefined; // Ensure we return string | undefined, not null
     
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorDetails = error instanceof Error && 'code' in error ? { code: (error as any).code } : {};
+    
+    // Extract HTTP status code if available
+    const httpStatus = (error as any)?.response?.status;
+    const httpStatusText = (error as any)?.response?.statusText;
+    const responseData = (error as any)?.response?.data;
+    
+    // Get service account email for debugging
+    const credentials = loadGoogleCreds();
+    
     console.error('[CALENDAR] add_event fail', { 
-      error: error instanceof Error ? error.message : String(error),
-      calendarId: CAL_TARGET
+      error: errorMessage,
+      errorDetails,
+      httpStatus,
+      httpStatusText,
+      responseData,
+      calendarId: CAL_TARGET,
+      serviceAccountEmail: credentials.client_email,
+      userName: vacationEvent.userName,
+      startDate: vacationEvent.startDate,
+      endDate: vacationEvent.endDate,
+      eventPayload: {
+        summary: `${vacationEvent.userName} - ${getCompanyDisplayName(vacationEvent.company)}`,
+        start: vacationEvent.startDate,
+        end: vacationEvent.endDate
+      }
     });
+    
+    // Provide more specific error messages
+    if (errorMessage.includes('PERMISSION_DENIED') || errorMessage.includes('403') || httpStatus === 403) {
+      const detailedError = `Calendar permission denied. 
+Service Account: ${credentials.client_email}
+Target Calendar: ${CAL_TARGET}
+HTTP Status: ${httpStatus || 'N/A'}
+Error: ${errorMessage}
+
+Please verify:
+1. Service account ${credentials.client_email} has "Make changes to events" permission on calendar ${CAL_TARGET}
+2. Calendar ID is correct: c_e98f5350bf743174f87e1a786038cb9d103c306b7246c6200684f81c37a6a764@group.calendar.google.com
+3. Permissions have propagated (wait 2-5 minutes after granting)`;
+      throw new Error(detailedError);
+    }
+    if (errorMessage.includes('NOT_FOUND') || errorMessage.includes('404') || httpStatus === 404) {
+      throw new Error(`Calendar not found: ${CAL_TARGET}. Please verify the calendar ID is correct. HTTP Status: ${httpStatus}`);
+    }
+    if (errorMessage.includes('credentials') || errorMessage.includes('authentication')) {
+      throw new Error(`Calendar authentication failed. Service account: ${credentials.client_email}. Please check GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64 or GOOGLE_SERVICE_ACCOUNT_KEY environment variable.`);
+    }
+    
     throw error;
   }
 }
@@ -157,9 +266,12 @@ export async function removeVacationFromCalendar(eventId: string) {
   try {
     console.log('📅 Removing vacation event from Google Calendar...');
     
-    const calendarId = process.env.GOOGLE_CALENDAR_ID || 'primary';
+    const calendarId = CAL_TARGET;
     
-    await calendar.events.delete({
+    // Initialize calendar client with error handling
+    const { calendar: cal } = initializeCalendarClient();
+    
+    await cal.events.delete({
       calendarId,
       eventId,
     });
@@ -280,6 +392,9 @@ export async function updateVacationInCalendar(eventId: string, vacationEvent: V
       endDate: vacationEvent.endDate,
       calendarId: CAL_TARGET 
     });
+
+    // Initialize calendar client with error handling
+    const { calendar: cal } = initializeCalendarClient();
     
     const startDate = new Date(vacationEvent.startDate);
     const endDate = new Date(vacationEvent.endDate);
@@ -315,7 +430,7 @@ export async function updateVacationInCalendar(eventId: string, vacationEvent: V
       transparency: 'transparent',
     };
 
-    const response = await calendar.events.update({
+    const response = await cal.events.update({
       calendarId: CAL_TARGET,
       eventId: eventId,
       requestBody: event,
@@ -329,11 +444,28 @@ export async function updateVacationInCalendar(eventId: string, vacationEvent: V
     return updatedEventId || undefined; // Ensure we return string | undefined, not null
     
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const httpStatus = (error as any)?.response?.status;
+    const responseData = (error as any)?.response?.data;
+    const credentials = loadGoogleCreds();
+    
     console.error('[CALENDAR] update_event fail', { 
       eventId,
-      error: error instanceof Error ? error.message : String(error),
-      calendarId: CAL_TARGET
+      error: errorMessage,
+      httpStatus,
+      responseData,
+      calendarId: CAL_TARGET,
+      serviceAccountEmail: credentials.client_email
     });
+    
+    // Provide more specific error messages
+    if (errorMessage.includes('PERMISSION_DENIED') || errorMessage.includes('403') || httpStatus === 403) {
+      throw new Error(`Calendar permission denied. Service account: ${credentials.client_email}, Calendar: ${CAL_TARGET}, HTTP: ${httpStatus}`);
+    }
+    if (errorMessage.includes('NOT_FOUND') || errorMessage.includes('404') || httpStatus === 404) {
+      throw new Error(`Calendar event not found: ${eventId} in calendar: ${CAL_TARGET}`);
+    }
+    
     throw error;
   }
 }
@@ -341,17 +473,36 @@ export async function updateVacationInCalendar(eventId: string, vacationEvent: V
 export async function deleteVacationFromCalendar(eventId: string) {
   try {
     console.log('[CALENDAR] delete_event', { eventId, calendarId: CAL_TARGET });
-    await calendar.events.delete({
+    
+    // Initialize calendar client with error handling
+    const { calendar: cal } = initializeCalendarClient();
+    
+    await cal.events.delete({
       calendarId: CAL_TARGET,
       eventId: eventId
     });
     console.log('[CALENDAR] delete_event success', { eventId });
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const httpStatus = (error as any)?.response?.status;
+    const responseData = (error as any)?.response?.data;
+    const credentials = loadGoogleCreds();
+    
     console.error('[CALENDAR] delete_event fail', { 
       eventId, 
-      error: error instanceof Error ? error.message : String(error),
-      calendarId: CAL_TARGET
+      error: errorMessage,
+      httpStatus,
+      responseData,
+      calendarId: CAL_TARGET,
+      serviceAccountEmail: credentials.client_email
     });
+    
+    // Don't throw error if event is already deleted (404)
+    if (errorMessage.includes('NOT_FOUND') || errorMessage.includes('404') || httpStatus === 404) {
+      console.log('[CALENDAR] delete_event skip - event already deleted', { eventId });
+      return;
+    }
+    
     throw error;
   }
 }

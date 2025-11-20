@@ -120,7 +120,8 @@ console.log('[CALENDAR] Configuration loaded', {
   envVarSet: {
     GOOGLE_CALENDAR_TARGET_ID: !!process.env.GOOGLE_CALENDAR_TARGET_ID,
     GOOGLE_CALENDAR_ID: !!process.env.GOOGLE_CALENDAR_ID
-  }
+  },
+  version: '2025-01-XX-v2'
 });
 
 // Utility function to convert date and time to RFC3339 local format

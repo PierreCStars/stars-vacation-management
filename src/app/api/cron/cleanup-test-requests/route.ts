@@ -8,8 +8,9 @@ export const revalidate = 0;
 /**
  * Cron endpoint to delete test user vacation requests older than 24 hours
  * 
- * Schedule: Run every hour to catch requests that have been around for 24+ hours
- * Vercel Cron: 0 * * * * (runs every hour)
+ * Schedule: Run once daily at 1:00 AM UTC to catch requests that have been around for 24+ hours
+ * Vercel Cron: 0 1 * * * (runs once daily at 1:00 AM UTC)
+ * Note: Hobby accounts are limited to daily cron jobs
  * 
  * This endpoint:
  * 1. Finds all vacation requests from test@stars.mc

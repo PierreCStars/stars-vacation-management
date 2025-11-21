@@ -16,7 +16,7 @@
     },
     {
       "path": "/api/cron/cleanup-test-requests",
-      "schedule": "0 * * * *"
+      "schedule": "0 1 * * *"
     }
   ]
 }

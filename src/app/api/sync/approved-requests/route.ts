@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { syncEventForRequest } from '@/lib/calendar/sync';
 import { normalizeVacationStatus } from '@/types/vacation-status';
+import { initializeCalendarClient, EXPECTED_SERVICE_ACCOUNT, CAL_TARGET } from '@/lib/google-calendar';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -9,6 +10,31 @@ export const revalidate = 0;
 export async function POST() {
   try {
     console.log('🚀 Starting sync of all approved vacation requests...');
+    
+    // Verify service account configuration before starting
+    try {
+      const { auth } = initializeCalendarClient();
+      const actualServiceAccount = (auth as any).credentials?.client_email || 'unknown';
+      const serviceAccountMatch = actualServiceAccount === EXPECTED_SERVICE_ACCOUNT;
+      
+      console.log('[SYNC] Service account verification', {
+        actual: actualServiceAccount,
+        expected: EXPECTED_SERVICE_ACCOUNT,
+        match: serviceAccountMatch ? '✅' : '❌ MISMATCH',
+        calendarId: CAL_TARGET
+      });
+      
+      if (!serviceAccountMatch) {
+        console.error('[SYNC] ❌ CRITICAL: Wrong service account detected!', {
+          actual: actualServiceAccount,
+          expected: EXPECTED_SERVICE_ACCOUNT,
+          message: 'Sync will fail because the wrong service account is being used',
+          fix: `Update Vercel environment variables to use credentials for ${EXPECTED_SERVICE_ACCOUNT}`
+        });
+      }
+    } catch (authError) {
+      console.error('[SYNC] Failed to verify service account:', authError);
+    }
     
     // Get Firebase Admin
     const { db, error } = getFirebaseAdmin();
@@ -84,8 +110,32 @@ export async function POST() {
           console.log(`✅ Synced request ${req.id} - Event ID: ${result.eventId || 'N/A'}`);
           successCount++;
         } else {
-          console.error(`❌ Failed to sync request ${req.id}: ${result.error}`);
-          errors.push({ id: req.id, error: result.error });
+          // Get actual service account for error context
+          let actualServiceAccount = 'unknown';
+          try {
+            const { auth } = initializeCalendarClient();
+            actualServiceAccount = (auth as any).credentials?.client_email || 'unknown';
+          } catch (e) {
+            // Ignore
+          }
+          
+          const errorWithContext = result.error?.includes('Service Account:') 
+            ? result.error 
+            : `${result.error} (Service Account: ${actualServiceAccount}, Expected: ${EXPECTED_SERVICE_ACCOUNT})`;
+          
+          console.error(`❌ Failed to sync request ${req.id}:`, {
+            error: result.error,
+            actualServiceAccount,
+            expectedServiceAccount: EXPECTED_SERVICE_ACCOUNT,
+            calendarId: CAL_TARGET
+          });
+          
+          errors.push({ 
+            id: req.id, 
+            error: errorWithContext,
+            serviceAccount: actualServiceAccount,
+            expectedServiceAccount: EXPECTED_SERVICE_ACCOUNT
+          });
           errorCount++;
         }
         

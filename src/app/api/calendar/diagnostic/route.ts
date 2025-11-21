@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { syncEventForRequest } from '@/lib/calendar/sync';
-import { CAL_TARGET } from '@/lib/google-calendar';
+import { CAL_TARGET, EXPECTED_SERVICE_ACCOUNT } from '@/lib/google-calendar';
 import { initializeCalendarClient } from '@/lib/google-calendar';
 
 export const dynamic = 'force-dynamic';
@@ -21,6 +21,7 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       calendarConfig: {
         targetCalendarId: CAL_TARGET,
+        expectedServiceAccount: EXPECTED_SERVICE_ACCOUNT,
         envVars: {
           GOOGLE_CALENDAR_TARGET_ID: process.env.GOOGLE_CALENDAR_TARGET_ID ? '✅ Set' : '❌ Missing',
           GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64: process.env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64 ? '✅ Set' : '❌ Missing',
@@ -49,15 +50,18 @@ export async function GET() {
     try {
       const { auth, calendar } = initializeCalendarClient();
       const clientEmail = (auth as any).credentials?.client_email || 'unknown';
-      const expectedServiceAccount = 'vacation-db@holiday-461710.iam.gserviceaccount.com';
-      const serviceAccountMatch = clientEmail === expectedServiceAccount;
+      const serviceAccountMatch = clientEmail === EXPECTED_SERVICE_ACCOUNT;
       
       diagnostics.tests.calendarClient = { 
-        status: serviceAccountMatch ? '✅ Initialized' : '⚠️ Initialized (wrong service account)',
+        status: serviceAccountMatch ? '✅ Initialized' : '❌ Initialized (WRONG SERVICE ACCOUNT)',
         clientEmail,
-        expectedServiceAccount,
+        expectedServiceAccount: EXPECTED_SERVICE_ACCOUNT,
         serviceAccountMatch,
-        scopes: ['https://www.googleapis.com/auth/calendar']
+        scopes: ['https://www.googleapis.com/auth/calendar'],
+        criticalIssue: !serviceAccountMatch ? {
+          message: `App is using "${clientEmail}" but expected "${EXPECTED_SERVICE_ACCOUNT}"`,
+          fix: `Update Vercel environment variables (GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64 or GOOGLE_SERVICE_ACCOUNT_KEY) to use credentials for ${EXPECTED_SERVICE_ACCOUNT}`
+        } : null
       };
     } catch (error) {
       diagnostics.tests.calendarClient = { 

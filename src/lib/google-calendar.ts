@@ -4,12 +4,20 @@ import { getGoogleCalendarColorId, getCompanyColor } from './company-colors';
 // Utility function to load and parse Google credentials
 // Updated: Fixed newline handling for Google Calendar integration
 // Deployed: Testing environment variable update
+
+// Expected service account for Google Calendar operations
+// This MUST match the service account that has calendar permissions
+export const EXPECTED_SERVICE_ACCOUNT = 'vacation-db@holiday-461710.iam.gserviceaccount.com';
+
 type GoogleCreds = {
   client_email: string;
   private_key: string;
 };
 
 function loadGoogleCreds(): GoogleCreds {
+  let credentials: GoogleCreds | null = null;
+  let source = 'unknown';
+  
   // Try base64 encoded key first (GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64)
   const base64Key = process.env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64;
   if (base64Key) {
@@ -21,7 +29,8 @@ function loadGoogleCreds(): GoogleCreds {
       }
       // Normalize private key newlines
       obj.private_key = String(obj.private_key).replace(/\\n/g, "\n");
-      return { client_email: obj.client_email, private_key: obj.private_key };
+      credentials = { client_email: obj.client_email, private_key: obj.private_key };
+      source = 'GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64';
     } catch (error) {
       console.error('❌ Error decoding base64 Google Calendar key:', error);
       throw new Error("Failed to decode GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64");
@@ -29,23 +38,53 @@ function loadGoogleCreds(): GoogleCreds {
   }
 
   // Fallback to regular key (GOOGLE_SERVICE_ACCOUNT_KEY)
-  const raw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
-  if (!raw) throw new Error("GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64 or GOOGLE_SERVICE_ACCOUNT_KEY missing");
+  if (!credentials) {
+    const raw = process.env.GOOGLE_SERVICE_ACCOUNT_KEY;
+    if (!raw) throw new Error("GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64 or GOOGLE_SERVICE_ACCOUNT_KEY missing");
 
-  // 1) Si c'est du JSON (cas recommandé en .env)
-  if (raw.trim().startsWith("{")) {
-    const obj = JSON.parse(raw);
-    if (!obj.client_email || !obj.private_key) {
-      throw new Error("Clé de service Google invalide (champs manquants)");
+    // 1) Si c'est du JSON (cas recommandé en .env)
+    if (raw.trim().startsWith("{")) {
+      const obj = JSON.parse(raw);
+      if (!obj.client_email || !obj.private_key) {
+        throw new Error("Clé de service Google invalide (champs manquants)");
+      }
+      // Remettre de vrais retours à la ligne
+      obj.private_key = String(obj.private_key).replace(/\\n/g, "\n");
+      credentials = { client_email: obj.client_email, private_key: obj.private_key };
+      source = 'GOOGLE_SERVICE_ACCOUNT_KEY';
+    } else {
+      // 2) Si quelqu'un a mis directement le PEM dans la variable
+      const pem = raw.includes("\\n") ? raw.replace(/\\n/g, "\n") : raw;
+      credentials = { client_email: process.env.GOOGLE_CLIENT_EMAIL!, private_key: pem };
+      source = 'GOOGLE_SERVICE_ACCOUNT_KEY + GOOGLE_CLIENT_EMAIL';
     }
-    // Remettre de vrais retours à la ligne
-    obj.private_key = String(obj.private_key).replace(/\\n/g, "\n");
-    return { client_email: obj.client_email, private_key: obj.private_key };
   }
 
-  // 2) Si quelqu'un a mis directement le PEM dans la variable
-  const pem = raw.includes("\\n") ? raw.replace(/\\n/g, "\n") : raw;
-  return { client_email: process.env.GOOGLE_CLIENT_EMAIL!, private_key: pem };
+  if (!credentials) {
+    throw new Error("Failed to load Google Calendar credentials from any source");
+  }
+
+  // Validate service account email matches expected
+  const serviceAccountMatch = credentials.client_email === EXPECTED_SERVICE_ACCOUNT;
+  
+  console.log('[CALENDAR] Credentials loaded', {
+    source,
+    serviceAccountEmail: credentials.client_email,
+    expectedServiceAccount: EXPECTED_SERVICE_ACCOUNT,
+    serviceAccountMatch: serviceAccountMatch ? '✅ MATCH' : '❌ MISMATCH',
+    warning: serviceAccountMatch ? null : `⚠️ Using service account "${credentials.client_email}" but expected "${EXPECTED_SERVICE_ACCOUNT}". Calendar permissions may fail if this account doesn't have access.`
+  });
+
+  if (!serviceAccountMatch) {
+    console.error('[CALENDAR] ⚠️ SERVICE ACCOUNT MISMATCH!', {
+      actual: credentials.client_email,
+      expected: EXPECTED_SERVICE_ACCOUNT,
+      message: 'The app is using a different service account than expected. This will cause permission errors.',
+      fix: `Update environment variables to use credentials for ${EXPECTED_SERVICE_ACCOUNT}`
+    });
+  }
+
+  return credentials;
 }
 
 // Initialize Google Calendar API with proper error handling
@@ -70,23 +109,24 @@ export function initializeCalendarClient(): { auth: InstanceType<typeof google.a
 
     calendar = google.calendar({ version: 'v3', auth: authInstance });
     
-    // Verify service account email matches expected
-    const expectedServiceAccount = 'vacation-db@holiday-461710.iam.gserviceaccount.com';
-    const serviceAccountMatch = credentials.client_email === expectedServiceAccount;
+    // Verify service account email matches expected (already validated in loadGoogleCreds, but log again)
+    const serviceAccountMatch = credentials.client_email === EXPECTED_SERVICE_ACCOUNT;
     
     console.log('[CALENDAR] Client initialized successfully', {
       clientEmail: credentials.client_email,
-      expectedServiceAccount,
-      serviceAccountMatch: serviceAccountMatch ? '✅' : '❌ MISMATCH',
+      expectedServiceAccount: EXPECTED_SERVICE_ACCOUNT,
+      serviceAccountMatch: serviceAccountMatch ? '✅ MATCH' : '❌ MISMATCH',
       calendarTarget: CAL_TARGET,
       scopes: ['https://www.googleapis.com/auth/calendar']
     });
     
     if (!serviceAccountMatch) {
-      console.warn('[CALENDAR] ⚠️ Service account email mismatch!', {
-        expected: expectedServiceAccount,
+      console.error('[CALENDAR] ❌ CRITICAL: Service account mismatch detected!', {
+        expected: EXPECTED_SERVICE_ACCOUNT,
         actual: credentials.client_email,
-        message: 'This may cause permission issues if the wrong service account is used'
+        calendarId: CAL_TARGET,
+        message: `Calendar sync will fail because "${credentials.client_email}" does not have permissions. Expected "${EXPECTED_SERVICE_ACCOUNT}".`,
+        fix: `Update GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64 or GOOGLE_SERVICE_ACCOUNT_KEY in Vercel to use credentials for ${EXPECTED_SERVICE_ACCOUNT}`
       });
     }
 
@@ -112,16 +152,21 @@ export const CAL_TARGET = process.env.GOOGLE_CALENDAR_TARGET_ID ||
 export const CAL_SOURCE = process.env.GOOGLE_CALENDAR_SOURCE_ID;
 export const APP_TZ = process.env.APP_TIMEZONE || "Europe/Monaco";
 
+// EXPECTED_SERVICE_ACCOUNT is defined above
+
 // Log calendar configuration on module load
 console.log('[CALENDAR] Configuration loaded', {
   targetCalendarId: CAL_TARGET,
   sourceCalendarId: CAL_SOURCE || 'Not set',
   timezone: APP_TZ,
+  expectedServiceAccount: EXPECTED_SERVICE_ACCOUNT,
   envVarSet: {
     GOOGLE_CALENDAR_TARGET_ID: !!process.env.GOOGLE_CALENDAR_TARGET_ID,
-    GOOGLE_CALENDAR_ID: !!process.env.GOOGLE_CALENDAR_ID
+    GOOGLE_CALENDAR_ID: !!process.env.GOOGLE_CALENDAR_ID,
+    GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64: !!process.env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64,
+    GOOGLE_SERVICE_ACCOUNT_KEY: !!process.env.GOOGLE_SERVICE_ACCOUNT_KEY
   },
-  version: '2025-01-XX-v2'
+  version: '2025-01-XX-v3'
 });
 
 // Utility function to convert date and time to RFC3339 local format
@@ -240,16 +285,28 @@ export async function addVacationToCalendar(vacationEvent: VacationEvent) {
     
     // Provide more specific error messages
     if (errorMessage.includes('PERMISSION_DENIED') || errorMessage.includes('403') || httpStatus === 403) {
+      const serviceAccountMatch = credentials.client_email === EXPECTED_SERVICE_ACCOUNT;
+      const mismatchWarning = serviceAccountMatch ? '' : `\n\n⚠️ CRITICAL ISSUE: Wrong Service Account Detected!
+   Actual: ${credentials.client_email}
+   Expected: ${EXPECTED_SERVICE_ACCOUNT}
+   
+   The app is using the wrong service account credentials!
+   Update Vercel environment variables to use credentials for ${EXPECTED_SERVICE_ACCOUNT}`;
+      
       const detailedError = `Calendar permission denied. 
 Service Account: ${credentials.client_email}
+Expected Service Account: ${EXPECTED_SERVICE_ACCOUNT}
+Service Account Match: ${serviceAccountMatch ? '✅' : '❌ MISMATCH'}
 Target Calendar: ${CAL_TARGET}
 HTTP Status: ${httpStatus || 'N/A'}
 Error: ${errorMessage}
+${mismatchWarning}
 
 Please verify:
 1. Service account ${credentials.client_email} has "Make changes to events" permission on calendar ${CAL_TARGET}
-2. Calendar ID is correct: c_e98f5350bf743174f87e1a786038cb9d103c306b7246c6200684f81c37a6a764@group.calendar.google.com
-3. Permissions have propagated (wait 2-5 minutes after granting)`;
+2. If service account doesn't match expected (${EXPECTED_SERVICE_ACCOUNT}), update environment variables in Vercel
+3. Calendar ID is correct: c_e98f5350bf743174f87e1a786038cb9d103c306b7246c6200684f81c37a6a764@group.calendar.google.com
+4. Permissions have propagated (wait 2-5 minutes after granting)`;
       throw new Error(detailedError);
     }
     if (errorMessage.includes('NOT_FOUND') || errorMessage.includes('404') || httpStatus === 404) {

@@ -195,14 +195,15 @@ console.log('[CALENDAR] Configuration loaded', {
   targetCalendarId: CAL_TARGET,
   sourceCalendarId: CAL_SOURCE || 'Not set',
   timezone: APP_TZ,
-  expectedServiceAccount: EXPECTED_SERVICE_ACCOUNT,
+  canonicalServiceAccount: CANONICAL_SERVICE_ACCOUNT,
+  alternativeServiceAccount: ALTERNATIVE_SERVICE_ACCOUNT,
   envVarSet: {
     GOOGLE_CALENDAR_TARGET_ID: !!process.env.GOOGLE_CALENDAR_TARGET_ID,
     GOOGLE_CALENDAR_ID: !!process.env.GOOGLE_CALENDAR_ID,
     GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64: !!process.env.GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64,
     GOOGLE_SERVICE_ACCOUNT_KEY: !!process.env.GOOGLE_SERVICE_ACCOUNT_KEY
   },
-  version: '2025-01-XX-v3'
+  version: '2025-01-XX-v5'
 });
 
 // Utility function to convert date and time to RFC3339 local format

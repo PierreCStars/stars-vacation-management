@@ -71,70 +71,20 @@ export async function POST() {
     });
     
     console.log(`✅ Found ${approvedRequests.length} approved/validated requests`);
+    console.log(`🔄 Syncing all approved requests (syncEventForRequest will check if events exist)...`);
     
-    // Check which requests need sync (missing event ID or event doesn't exist)
-    const requestsNeedingSync = [];
-    const { calendar } = initializeCalendarClient();
-    
-    for (const req of approvedRequests) {
-      const docRef = db.collection('vacationRequests').doc(req.id);
-      const doc = await docRef.get();
-      const existingData = doc.data();
-      const existingEventId = existingData?.calendarEventId || 
-                              existingData?.googleCalendarEventId || 
-                              existingData?.googleEventId;
-      
-      if (!existingEventId) {
-        // No event ID - needs sync
-        requestsNeedingSync.push(req);
-        console.log(`🔄 Request ${req.id} (${req.userName}) needs sync - no event ID`);
-      } else {
-        // Check if event actually exists in calendar
-        try {
-          await calendar.events.get({
-            calendarId: CAL_TARGET,
-            eventId: existingEventId
-          });
-          console.log(`✅ Request ${req.id} (${req.userName}) already synced - event exists`);
-        } catch (error: any) {
-          // Event doesn't exist (404) or other error - needs sync
-          if (error.code === 404) {
-            console.log(`🔄 Request ${req.id} (${req.userName}) needs sync - stale event ID`);
-            // Clear stale event ID
-            await docRef.update({
-              calendarEventId: null,
-              googleCalendarEventId: null,
-              googleEventId: null
-            });
-            requestsNeedingSync.push(req);
-          } else {
-            console.warn(`⚠️  Error checking event for request ${req.id}:`, error.message);
-            // Still try to sync it (might be a permission issue, sync will handle it)
-            requestsNeedingSync.push(req);
-          }
-        }
-      }
-    }
-    
-    console.log(`🔄 ${requestsNeedingSync.length} requests need calendar sync`);
-    
-    if (requestsNeedingSync.length === 0) {
-      console.log('✅ All validated/approved requests are already synced to Google Calendar!');
-      return NextResponse.json({
-        success: true,
-        totalApproved: approvedRequests.length,
-        synced: 0,
-        failed: 0,
-        message: `All ${approvedRequests.length} approved vacation requests are already synced to Google Calendar`
-      });
-    }
-    
-    // Sync each request
+    // Sync each approved request
+    // syncEventForRequest already handles:
+    // - Checking if event ID exists
+    // - Verifying event exists in Google Calendar
+    // - Clearing stale event IDs
+    // - Creating/updating events as needed
     let successCount = 0;
     let errorCount = 0;
+    let skippedCount = 0;
     const errors = [];
     
-    for (const req of requestsNeedingSync) {
+    for (const req of approvedRequests) {
       try {
         console.log(`📅 Syncing request ${req.id} (${req.userName})...`);
         
@@ -153,8 +103,14 @@ export async function POST() {
         const result = await syncEventForRequest(calendarData);
         
         if (result.success) {
-          console.log(`✅ Synced request ${req.id} - Event ID: ${result.eventId || 'N/A'}`);
-          successCount++;
+          if (result.eventId) {
+            console.log(`✅ Synced request ${req.id} (${req.userName}) - Event ID: ${result.eventId}`);
+            successCount++;
+          } else {
+            // Event already exists, no action needed
+            console.log(`⏭️  Request ${req.id} (${req.userName}) already synced - event exists`);
+            skippedCount++;
+          }
         } else {
           // Get actual service account for error context
           let actualServiceAccount = 'unknown';
@@ -201,9 +157,10 @@ export async function POST() {
       success: true,
       totalApproved: approvedRequests.length,
       synced: successCount,
+      skipped: skippedCount,
       failed: errorCount,
       errors: errors.length > 0 ? errors : undefined,
-      message: `Successfully synced ${successCount} out of ${approvedRequests.length} approved vacation requests to Google Calendar`
+      message: `Successfully synced ${successCount} out of ${approvedRequests.length} approved vacation requests to Google Calendar (${skippedCount} already synced)`
     });
     
   } catch (error) {

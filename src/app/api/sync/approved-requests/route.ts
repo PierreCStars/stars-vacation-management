@@ -52,27 +52,17 @@ export async function POST() {
       }, { status: 500 });
     }
 
-    // Calculate date 30 days ago
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    console.log(`📅 Fetching ALL validated vacation requests...`);
     
-    console.log(`📅 Looking for validated vacations from the last 30 days (since ${thirtyDaysAgo.toISOString()})`);
-    
-    // Get all vacation requests created in the last 30 days
-    // Firestore requires Timestamp for date comparisons
-    const { Timestamp } = await import('firebase-admin/firestore');
-    const thirtyDaysAgoTimestamp = Timestamp.fromDate(thirtyDaysAgo);
-    
-    const snapshot = await db.collection('vacationRequests')
-      .where('createdAt', '>=', thirtyDaysAgoTimestamp)
-      .get();
+    // Get all vacation requests (not just last 30 days)
+    const snapshot = await db.collection('vacationRequests').get();
     
     const requests = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     })) as Array<{ id: string; status?: string; userName?: string; createdAt?: any; [key: string]: any }>;
     
-    console.log(`📊 Found ${requests.length} vacation requests from last 30 days`);
+    console.log(`📊 Found ${requests.length} total vacation requests`);
     
     // Filter approved/validated requests
     const approvedRequests = requests.filter(req => {
@@ -80,16 +70,13 @@ export async function POST() {
       return normalizedStatus === 'approved';
     });
     
-    console.log(`✅ Found ${approvedRequests.length} approved/validated requests from last 30 days`);
+    console.log(`✅ Found ${approvedRequests.length} approved/validated requests`);
     
-    // Sync ALL approved requests from last 30 days (even if they already have event IDs - to handle duplicates)
-    // For force sync, we'll clear existing event IDs first to ensure recreation
-    const requestsNeedingSync = approvedRequests;
+    // Check which requests need sync (missing event ID or event doesn't exist)
+    const requestsNeedingSync = [];
+    const { calendar } = initializeCalendarClient();
     
-    console.log(`🔄 Will sync ${requestsNeedingSync.length} requests (including duplicates - will recreate events)`);
-    
-    // Clear existing event IDs for force sync (to handle duplicates)
-    for (const req of requestsNeedingSync) {
+    for (const req of approvedRequests) {
       const docRef = db.collection('vacationRequests').doc(req.id);
       const doc = await docRef.get();
       const existingData = doc.data();
@@ -97,15 +84,49 @@ export async function POST() {
                               existingData?.googleCalendarEventId || 
                               existingData?.googleEventId;
       
-      if (existingEventId) {
-        // Clear event ID to force recreation (handles duplicates)
-        await docRef.update({
-          calendarEventId: null,
-          googleCalendarEventId: null,
-          googleEventId: null
-        });
-        console.log(`🔄 Cleared event ID for request ${req.id} to force recreation`);
+      if (!existingEventId) {
+        // No event ID - needs sync
+        requestsNeedingSync.push(req);
+        console.log(`🔄 Request ${req.id} (${req.userName}) needs sync - no event ID`);
+      } else {
+        // Check if event actually exists in calendar
+        try {
+          await calendar.events.get({
+            calendarId: CAL_TARGET,
+            eventId: existingEventId
+          });
+          console.log(`✅ Request ${req.id} (${req.userName}) already synced - event exists`);
+        } catch (error: any) {
+          // Event doesn't exist (404) or other error - needs sync
+          if (error.code === 404) {
+            console.log(`🔄 Request ${req.id} (${req.userName}) needs sync - stale event ID`);
+            // Clear stale event ID
+            await docRef.update({
+              calendarEventId: null,
+              googleCalendarEventId: null,
+              googleEventId: null
+            });
+            requestsNeedingSync.push(req);
+          } else {
+            console.warn(`⚠️  Error checking event for request ${req.id}:`, error.message);
+            // Still try to sync it (might be a permission issue, sync will handle it)
+            requestsNeedingSync.push(req);
+          }
+        }
       }
+    }
+    
+    console.log(`🔄 ${requestsNeedingSync.length} requests need calendar sync`);
+    
+    if (requestsNeedingSync.length === 0) {
+      console.log('✅ All validated/approved requests are already synced to Google Calendar!');
+      return NextResponse.json({
+        success: true,
+        totalApproved: approvedRequests.length,
+        synced: 0,
+        failed: 0,
+        message: `All ${approvedRequests.length} approved vacation requests are already synced to Google Calendar`
+      });
     }
     
     // Sync each request

@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { syncEventForRequest } from '@/lib/calendar/sync';
 import { normalizeVacationStatus } from '@/types/vacation-status';
-import { initializeCalendarClient, EXPECTED_SERVICE_ACCOUNT, CAL_TARGET } from '@/lib/google-calendar';
+import { initializeCalendarClient, CANONICAL_SERVICE_ACCOUNT, ALTERNATIVE_SERVICE_ACCOUNT, CAL_TARGET } from '@/lib/google-calendar';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -15,21 +15,27 @@ export async function POST() {
     try {
       const { auth } = initializeCalendarClient();
       const actualServiceAccount = (auth as any).credentials?.client_email || 'unknown';
-      const serviceAccountMatch = actualServiceAccount === EXPECTED_SERVICE_ACCOUNT;
+      const isCanonical = actualServiceAccount === CANONICAL_SERVICE_ACCOUNT;
+      const isAlternative = actualServiceAccount === ALTERNATIVE_SERVICE_ACCOUNT;
+      const isValidServiceAccount = isCanonical || isAlternative;
       
       console.log('[SYNC] Service account verification', {
         actual: actualServiceAccount,
-        expected: EXPECTED_SERVICE_ACCOUNT,
-        match: serviceAccountMatch ? '✅' : '❌ MISMATCH',
+        canonical: CANONICAL_SERVICE_ACCOUNT,
+        alternative: ALTERNATIVE_SERVICE_ACCOUNT,
+        isCanonical: isCanonical ? '✅' : '❌',
+        isAlternative: isAlternative ? '✅' : '❌',
+        isValid: isValidServiceAccount ? '✅ VALID' : '❌ UNKNOWN',
         calendarId: CAL_TARGET
       });
       
-      if (!serviceAccountMatch) {
-        console.error('[SYNC] ❌ CRITICAL: Wrong service account detected!', {
+      if (!isValidServiceAccount) {
+        console.warn('[SYNC] ⚠️ Unknown service account detected', {
           actual: actualServiceAccount,
-          expected: EXPECTED_SERVICE_ACCOUNT,
-          message: 'Sync will fail because the wrong service account is being used',
-          fix: `Update Vercel environment variables to use credentials for ${EXPECTED_SERVICE_ACCOUNT}`
+          canonical: CANONICAL_SERVICE_ACCOUNT,
+          alternative: ALTERNATIVE_SERVICE_ACCOUNT,
+          message: 'This service account may not have calendar permissions',
+          recommendation: `Use credentials for ${CANONICAL_SERVICE_ACCOUNT} (preferred) or ${ALTERNATIVE_SERVICE_ACCOUNT}`
         });
       }
     } catch (authError) {
@@ -119,22 +125,23 @@ export async function POST() {
             // Ignore
           }
           
+          // Include service account info in error if not already present
           const errorWithContext = result.error?.includes('Service Account:') 
             ? result.error 
-            : `${result.error} (Service Account: ${actualServiceAccount}, Expected: ${EXPECTED_SERVICE_ACCOUNT})`;
+            : `${result.error} (Service Account: ${actualServiceAccount})`;
           
           console.error(`❌ Failed to sync request ${req.id}:`, {
             error: result.error,
-            actualServiceAccount,
-            expectedServiceAccount: EXPECTED_SERVICE_ACCOUNT,
-            calendarId: CAL_TARGET
+            serviceAccount: actualServiceAccount,
+            calendarId: CAL_TARGET,
+            requestId: req.id,
+            userName: req.userName
           });
           
           errors.push({ 
             id: req.id, 
             error: errorWithContext,
-            serviceAccount: actualServiceAccount,
-            expectedServiceAccount: EXPECTED_SERVICE_ACCOUNT
+            serviceAccount: actualServiceAccount
           });
           errorCount++;
         }

@@ -82,16 +82,26 @@ export async function ensureEventForRequest(
         newDates: { start: requestDoc.startDate, end: requestDoc.endDate }
       });
       
-      // Update existing event with new dates
-      const eventId = await updateVacationInCalendar(existingEventId, vacationEvent);
-      
-      // Update sync timestamp
-      await docRef.update({
-        calendarSyncedAt: new Date().toISOString()
-      });
+      try {
+        // Update existing event with new dates
+        const eventId = await updateVacationInCalendar(existingEventId, vacationEvent);
+        
+        // Update sync timestamp
+        await docRef.update({
+          calendarSyncedAt: new Date().toISOString()
+        });
 
-      console.log('[CALENDAR] ensure_event updated', { id: requestDoc.id, eventId });
-      return { success: true, eventId: eventId ?? undefined };
+        console.log('[CALENDAR] ensure_event updated', { id: requestDoc.id, eventId });
+        return { success: true, eventId: eventId ?? undefined };
+      } catch (updateError) {
+        console.error('[CALENDAR] ensure_event update failed', { 
+          id: requestDoc.id, 
+          eventId: existingEventId,
+          error: updateError instanceof Error ? updateError.message : String(updateError)
+        });
+        // Try to create a new event if update fails
+        console.log('[CALENDAR] ensure_event retry create after update failure', { id: requestDoc.id });
+      }
     }
 
     if (existingEventId && !datesChanged) {
@@ -100,27 +110,55 @@ export async function ensureEventForRequest(
     }
 
     // Create new calendar event
-    const eventId = await addVacationToCalendar(vacationEvent);
-    console.log('[CALENDAR] ensure_event created', { id: requestDoc.id, eventId });
+    try {
+      const eventId = await addVacationToCalendar(vacationEvent);
+      console.log('[CALENDAR] ensure_event created', { id: requestDoc.id, eventId });
 
-    // Store the event ID in Firestore for idempotency
-    await docRef.update({
-      calendarEventId: eventId,
-      googleCalendarEventId: eventId, // Also store in legacy field for compatibility
-      calendarSyncedAt: new Date().toISOString()
-    });
+      // Store the event ID in Firestore for idempotency
+      await docRef.update({
+        calendarEventId: eventId,
+        googleCalendarEventId: eventId, // Also store in legacy field for compatibility
+        calendarSyncedAt: new Date().toISOString()
+      });
 
-    console.log('[CALENDAR] ensure_event stored', { id: requestDoc.id, eventId });
+      console.log('[CALENDAR] ensure_event stored', { id: requestDoc.id, eventId });
 
-    return { success: true, eventId: eventId ?? undefined };
+      return { success: true, eventId: eventId ?? undefined };
+    } catch (createError) {
+      const errorMessage = createError instanceof Error ? createError.message : String(createError);
+      console.error('[CALENDAR] ensure_event create failed', { 
+        id: requestDoc.id, 
+        error: errorMessage,
+        userName: requestDoc.userName,
+        startDate: requestDoc.startDate,
+        endDate: requestDoc.endDate
+      });
+      
+      // Store error in Firestore for debugging
+      try {
+        await docRef.update({
+          calendarSyncError: errorMessage,
+          calendarSyncErrorAt: new Date().toISOString()
+        });
+      } catch (updateError) {
+        console.error('[CALENDAR] Failed to store sync error', { id: requestDoc.id, updateError });
+      }
+      
+      return { 
+        success: false, 
+        error: errorMessage
+      };
+    }
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
     console.error('[CALENDAR] ensure_event fail', { 
       id: requestDoc.id, 
-      error: error instanceof Error ? error.message : String(error) 
+      error: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined
     });
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : String(error) 
+      error: errorMessage
     };
   }
 }
@@ -202,22 +240,61 @@ export async function refreshCacheTags(): Promise<void> {
 export async function syncEventForRequest(
   requestDoc: CalendarEventData
 ): Promise<CalendarSyncResult> {
-  const { db, error } = getFirebaseAdmin();
-  if (!db || error) {
-    console.error('[CALENDAR] sync_event fail', { 
+  try {
+    console.log('[CALENDAR] sync_event start', { 
       id: requestDoc.id, 
-      error: 'Firebase Admin not available' 
+      status: requestDoc.status,
+      userName: requestDoc.userName
+    });
+
+    const { db, error } = getFirebaseAdmin();
+    if (!db || error) {
+      const errorMsg = `Firebase Admin not available: ${error || 'unknown error'}`;
+      console.error('[CALENDAR] sync_event fail', { 
+        id: requestDoc.id, 
+        error: errorMsg 
+      });
+      return { 
+        success: false, 
+        error: errorMsg
+      };
+    }
+
+    const normalizedStatus = normalizeVacationStatus(requestDoc.status);
+    console.log('[CALENDAR] sync_event status', { 
+      id: requestDoc.id, 
+      originalStatus: requestDoc.status,
+      normalizedStatus 
+    });
+
+    if (normalizedStatus === 'approved') {
+      const result = await ensureEventForRequest(db, requestDoc);
+      console.log('[CALENDAR] sync_event approved result', { 
+        id: requestDoc.id, 
+        success: result.success,
+        eventId: result.eventId,
+        error: result.error
+      });
+      return result;
+    } else {
+      const result = await deleteEventForRequest(db, requestDoc);
+      console.log('[CALENDAR] sync_event delete result', { 
+        id: requestDoc.id, 
+        success: result.success,
+        error: result.error
+      });
+      return result;
+    }
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error('[CALENDAR] sync_event exception', { 
+      id: requestDoc.id, 
+      error: errorMessage,
+      stack: error instanceof Error ? error.stack : undefined
     });
     return { 
       success: false, 
-      error: 'Firebase Admin not available' 
+      error: errorMessage
     };
-  }
-
-  const normalizedStatus = normalizeVacationStatus(requestDoc.status);
-  if (normalizedStatus === 'approved') {
-    return await ensureEventForRequest(db, requestDoc);
-  } else {
-    return await deleteEventForRequest(db, requestDoc);
   }
 }

@@ -5,9 +5,26 @@ import { getGoogleCalendarColorId, getCompanyColor } from './company-colors';
 // Updated: Fixed newline handling for Google Calendar integration
 // Deployed: Testing environment variable update
 
-// Expected service account for Google Calendar operations
-// This MUST match the service account that has calendar permissions
-export const EXPECTED_SERVICE_ACCOUNT = 'vacation-db@holiday-461710.iam.gserviceaccount.com';
+/**
+ * Canonical service account for Google Calendar operations
+ * 
+ * This is the preferred service account for calendar sync.
+ * The calendar is shared with both:
+ * - vacation-db@holiday-461710.iam.gserviceaccount.com (preferred)
+ * - stars-vacation-management@appspot.gserviceaccount.com (App Engine default, also has permissions)
+ * 
+ * We prefer vacation-db@holiday-461710.iam.gserviceaccount.com for consistency.
+ */
+export const CANONICAL_SERVICE_ACCOUNT = 'vacation-db@holiday-461710.iam.gserviceaccount.com';
+
+/**
+ * Alternative service account that also has permissions
+ * Used for validation but not required if canonical account is used
+ */
+export const ALTERNATIVE_SERVICE_ACCOUNT = 'stars-vacation-management@appspot.gserviceaccount.com';
+
+// Legacy export for backward compatibility
+export const EXPECTED_SERVICE_ACCOUNT = CANONICAL_SERVICE_ACCOUNT;
 
 type GoogleCreds = {
   client_email: string;
@@ -64,23 +81,38 @@ function loadGoogleCreds(): GoogleCreds {
     throw new Error("Failed to load Google Calendar credentials from any source");
   }
 
-  // Validate service account email matches expected
-  const serviceAccountMatch = credentials.client_email === EXPECTED_SERVICE_ACCOUNT;
+  // Validate service account email - both accounts have permissions, but prefer canonical
+  const isCanonical = credentials.client_email === CANONICAL_SERVICE_ACCOUNT;
+  const isAlternative = credentials.client_email === ALTERNATIVE_SERVICE_ACCOUNT;
+  const isValidServiceAccount = isCanonical || isAlternative;
   
   console.log('[CALENDAR] Credentials loaded', {
     source,
     serviceAccountEmail: credentials.client_email,
-    expectedServiceAccount: EXPECTED_SERVICE_ACCOUNT,
-    serviceAccountMatch: serviceAccountMatch ? '✅ MATCH' : '❌ MISMATCH',
-    warning: serviceAccountMatch ? null : `⚠️ Using service account "${credentials.client_email}" but expected "${EXPECTED_SERVICE_ACCOUNT}". Calendar permissions may fail if this account doesn't have access.`
+    canonicalServiceAccount: CANONICAL_SERVICE_ACCOUNT,
+    isCanonical: isCanonical ? '✅' : '❌',
+    isAlternative: isAlternative ? '✅' : '❌',
+    isValidServiceAccount: isValidServiceAccount ? '✅ VALID' : '❌ UNKNOWN',
+    note: isCanonical 
+      ? 'Using preferred canonical service account' 
+      : isAlternative 
+        ? 'Using alternative service account (also has permissions)' 
+        : `⚠️ Unknown service account "${credentials.client_email}" - may not have calendar permissions`
   });
 
-  if (!serviceAccountMatch) {
-    console.error('[CALENDAR] ⚠️ SERVICE ACCOUNT MISMATCH!', {
+  if (!isValidServiceAccount) {
+    console.warn('[CALENDAR] ⚠️ Unknown service account detected', {
       actual: credentials.client_email,
-      expected: EXPECTED_SERVICE_ACCOUNT,
-      message: 'The app is using a different service account than expected. This will cause permission errors.',
-      fix: `Update environment variables to use credentials for ${EXPECTED_SERVICE_ACCOUNT}`
+      canonical: CANONICAL_SERVICE_ACCOUNT,
+      alternative: ALTERNATIVE_SERVICE_ACCOUNT,
+      message: 'This service account may not have calendar permissions. Calendar sync may fail.',
+      recommendation: `Use credentials for ${CANONICAL_SERVICE_ACCOUNT} (preferred) or ${ALTERNATIVE_SERVICE_ACCOUNT}`
+    });
+  } else if (!isCanonical) {
+    console.info('[CALENDAR] Using alternative service account', {
+      actual: credentials.client_email,
+      canonical: CANONICAL_SERVICE_ACCOUNT,
+      note: 'This account has permissions, but consider using the canonical account for consistency'
     });
   }
 
@@ -109,24 +141,28 @@ export function initializeCalendarClient(): { auth: InstanceType<typeof google.a
 
     calendar = google.calendar({ version: 'v3', auth: authInstance });
     
-    // Verify service account email matches expected (already validated in loadGoogleCreds, but log again)
-    const serviceAccountMatch = credentials.client_email === EXPECTED_SERVICE_ACCOUNT;
+    // Verify service account (already validated in loadGoogleCreds, but log again)
+    const isCanonical = credentials.client_email === CANONICAL_SERVICE_ACCOUNT;
+    const isAlternative = credentials.client_email === ALTERNATIVE_SERVICE_ACCOUNT;
+    const isValidServiceAccount = isCanonical || isAlternative;
     
     console.log('[CALENDAR] Client initialized successfully', {
       clientEmail: credentials.client_email,
-      expectedServiceAccount: EXPECTED_SERVICE_ACCOUNT,
-      serviceAccountMatch: serviceAccountMatch ? '✅ MATCH' : '❌ MISMATCH',
+      canonicalServiceAccount: CANONICAL_SERVICE_ACCOUNT,
+      isCanonical: isCanonical ? '✅' : '❌',
+      isValidServiceAccount: isValidServiceAccount ? '✅' : '❌',
       calendarTarget: CAL_TARGET,
       scopes: ['https://www.googleapis.com/auth/calendar']
     });
     
-    if (!serviceAccountMatch) {
-      console.error('[CALENDAR] ❌ CRITICAL: Service account mismatch detected!', {
-        expected: EXPECTED_SERVICE_ACCOUNT,
+    if (!isValidServiceAccount) {
+      console.error('[CALENDAR] ❌ CRITICAL: Unknown service account!', {
         actual: credentials.client_email,
+        canonical: CANONICAL_SERVICE_ACCOUNT,
+        alternative: ALTERNATIVE_SERVICE_ACCOUNT,
         calendarId: CAL_TARGET,
-        message: `Calendar sync will fail because "${credentials.client_email}" does not have permissions. Expected "${EXPECTED_SERVICE_ACCOUNT}".`,
-        fix: `Update GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64 or GOOGLE_SERVICE_ACCOUNT_KEY in Vercel to use credentials for ${EXPECTED_SERVICE_ACCOUNT}`
+        message: `Calendar sync may fail because "${credentials.client_email}" may not have permissions.`,
+        fix: `Update GOOGLE_CALENDAR_SERVICE_ACCOUNT_KEY_BASE64 or GOOGLE_SERVICE_ACCOUNT_KEY in Vercel to use credentials for ${CANONICAL_SERVICE_ACCOUNT}`
       });
     }
 
@@ -285,28 +321,28 @@ export async function addVacationToCalendar(vacationEvent: VacationEvent) {
     
     // Provide more specific error messages
     if (errorMessage.includes('PERMISSION_DENIED') || errorMessage.includes('403') || httpStatus === 403) {
-      const serviceAccountMatch = credentials.client_email === EXPECTED_SERVICE_ACCOUNT;
-      const mismatchWarning = serviceAccountMatch ? '' : `\n\n⚠️ CRITICAL ISSUE: Wrong Service Account Detected!
-   Actual: ${credentials.client_email}
-   Expected: ${EXPECTED_SERVICE_ACCOUNT}
-   
-   The app is using the wrong service account credentials!
-   Update Vercel environment variables to use credentials for ${EXPECTED_SERVICE_ACCOUNT}`;
+      const isCanonical = credentials.client_email === CANONICAL_SERVICE_ACCOUNT;
+      const isAlternative = credentials.client_email === ALTERNATIVE_SERVICE_ACCOUNT;
+      const isValidServiceAccount = isCanonical || isAlternative;
+      
+      const accountStatus = isCanonical 
+        ? '✅ Using canonical service account' 
+        : isAlternative 
+          ? '✅ Using alternative service account (has permissions)' 
+          : '❌ Unknown service account (may not have permissions)';
       
       const detailedError = `Calendar permission denied. 
 Service Account: ${credentials.client_email}
-Expected Service Account: ${EXPECTED_SERVICE_ACCOUNT}
-Service Account Match: ${serviceAccountMatch ? '✅' : '❌ MISMATCH'}
+Account Status: ${accountStatus}
 Target Calendar: ${CAL_TARGET}
 HTTP Status: ${httpStatus || 'N/A'}
 Error: ${errorMessage}
-${mismatchWarning}
 
 Please verify:
 1. Service account ${credentials.client_email} has "Make changes to events" permission on calendar ${CAL_TARGET}
-2. If service account doesn't match expected (${EXPECTED_SERVICE_ACCOUNT}), update environment variables in Vercel
-3. Calendar ID is correct: c_e98f5350bf743174f87e1a786038cb9d103c306b7246c6200684f81c37a6a764@group.calendar.google.com
-4. Permissions have propagated (wait 2-5 minutes after granting)`;
+2. Calendar ID is correct: c_e98f5350bf743174f87e1a786038cb9d103c306b7246c6200684f81c37a6a764@group.calendar.google.com
+3. Permissions have propagated (wait 2-5 minutes after granting)
+${!isValidServiceAccount ? `\n4. Consider using ${CANONICAL_SERVICE_ACCOUNT} (preferred) or ${ALTERNATIVE_SERVICE_ACCOUNT} (also has permissions)` : ''}`;
       throw new Error(detailedError);
     }
     if (errorMessage.includes('NOT_FOUND') || errorMessage.includes('404') || httpStatus === 404) {
@@ -518,7 +554,30 @@ export async function updateVacationInCalendar(eventId: string, vacationEvent: V
     
     // Provide more specific error messages
     if (errorMessage.includes('PERMISSION_DENIED') || errorMessage.includes('403') || httpStatus === 403) {
-      throw new Error(`Calendar permission denied. Service account: ${credentials.client_email}, Calendar: ${CAL_TARGET}, HTTP: ${httpStatus}`);
+      const isCanonical = credentials.client_email === CANONICAL_SERVICE_ACCOUNT;
+      const isAlternative = credentials.client_email === ALTERNATIVE_SERVICE_ACCOUNT;
+      const isValidServiceAccount = isCanonical || isAlternative;
+      
+      const accountStatus = isCanonical 
+        ? '✅ Using canonical service account' 
+        : isAlternative 
+          ? '✅ Using alternative service account (has permissions)' 
+          : '❌ Unknown service account (may not have permissions)';
+      
+      const detailedError = `Calendar permission denied. 
+Service Account: ${credentials.client_email}
+Account Status: ${accountStatus}
+Target Calendar: ${CAL_TARGET}
+Event ID: ${eventId}
+HTTP Status: ${httpStatus || 'N/A'}
+Error: ${errorMessage}
+
+Please verify:
+1. Service account ${credentials.client_email} has "Make changes to events" permission on calendar ${CAL_TARGET}
+2. Calendar ID is correct: c_e98f5350bf743174f87e1a786038cb9d103c306b7246c6200684f81c37a6a764@group.calendar.google.com
+3. Permissions have propagated (wait 2-5 minutes after granting)
+${!isValidServiceAccount ? `\n4. Consider using ${CANONICAL_SERVICE_ACCOUNT} (preferred) or ${ALTERNATIVE_SERVICE_ACCOUNT} (also has permissions)` : ''}`;
+      throw new Error(detailedError);
     }
     if (errorMessage.includes('NOT_FOUND') || errorMessage.includes('404') || httpStatus === 404) {
       throw new Error(`Calendar event not found: ${eventId} in calendar: ${CAL_TARGET}`);

@@ -163,14 +163,21 @@ export default function AdminPendingRequestsV2() {
 
       if (response.ok) {
         const data = await response.json();
-        setActionMessage({
-          type: 'success',
-          message: data.message || `Successfully synced ${data.synced || 0} vacation requests to Google Calendar!`
-        });
         
-        // Show errors if any
-        if (data.errors && data.errors.length > 0) {
+        // Only show warning if there are actual errors
+        if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
           console.warn('Some requests failed to sync:', data.errors);
+          // Show error message with count
+          setActionMessage({
+            type: 'error',
+            message: `Sync completed with ${data.synced || 0} successful, but ${data.errors.length} request(s) failed to sync. Check console for details.`
+          });
+        } else {
+          // Success - no errors
+          setActionMessage({
+            type: 'success',
+            message: data.message || `Successfully synced ${data.synced || 0} vacation requests to Google Calendar!`
+          });
         }
       } else {
         const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));

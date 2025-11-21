@@ -18,7 +18,7 @@
 fetch('/api/sync/approved-requests', {
   method: 'POST',
   headers: { 'Content-Type': 'application/json' }
-})
+})is 
 .then(r => r.json())
 .then(data => {
   console.log('Sync Result:', data);

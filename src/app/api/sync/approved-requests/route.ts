@@ -52,42 +52,57 @@ export async function POST() {
       }, { status: 500 });
     }
 
-    // Get all vacation requests
-    const snapshot = await db.collection('vacationRequests').get();
+    // Calculate date 30 days ago
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    
+    console.log(`📅 Looking for validated vacations from the last 30 days (since ${thirtyDaysAgo.toISOString()})`);
+    
+    // Get all vacation requests created in the last 30 days
+    const snapshot = await db.collection('vacationRequests')
+      .where('createdAt', '>=', thirtyDaysAgo)
+      .get();
+    
     const requests = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    })) as Array<{ id: string; status?: string; userName?: string; [key: string]: any }>;
+    })) as Array<{ id: string; status?: string; userName?: string; createdAt?: any; [key: string]: any }>;
     
-    console.log(`📊 Found ${requests.length} total vacation requests`);
+    console.log(`📊 Found ${requests.length} vacation requests from last 30 days`);
     
-    // Filter approved requests
+    // Filter approved/validated requests
     const approvedRequests = requests.filter(req => {
       const normalizedStatus = normalizeVacationStatus(req.status);
       return normalizedStatus === 'approved';
     });
     
-    console.log(`✅ Found ${approvedRequests.length} approved requests`);
+    console.log(`✅ Found ${approvedRequests.length} approved/validated requests from last 30 days`);
     
-    // Check which ones need calendar events
-    const requestsNeedingSync = [];
-    for (const req of approvedRequests) {
+    // Sync ALL approved requests from last 30 days (even if they already have event IDs - to handle duplicates)
+    // For force sync, we'll clear existing event IDs first to ensure recreation
+    const requestsNeedingSync = approvedRequests;
+    
+    console.log(`🔄 Will sync ${requestsNeedingSync.length} requests (including duplicates - will recreate events)`);
+    
+    // Clear existing event IDs for force sync (to handle duplicates)
+    for (const req of requestsNeedingSync) {
       const docRef = db.collection('vacationRequests').doc(req.id);
       const doc = await docRef.get();
       const existingData = doc.data();
-      // Check all possible event ID fields for backward compatibility
       const existingEventId = existingData?.calendarEventId || 
                               existingData?.googleCalendarEventId || 
                               existingData?.googleEventId;
       
-      if (!existingEventId) {
-        requestsNeedingSync.push(req);
-      } else {
-        console.log(`⏭️  Request ${req.id} already has calendar event: ${existingEventId}`);
+      if (existingEventId) {
+        // Clear event ID to force recreation (handles duplicates)
+        await docRef.update({
+          calendarEventId: null,
+          googleCalendarEventId: null,
+          googleEventId: null
+        });
+        console.log(`🔄 Cleared event ID for request ${req.id} to force recreation`);
       }
     }
-    
-    console.log(`🔄 ${requestsNeedingSync.length} requests need calendar sync`);
     
     // Sync each request
     let successCount = 0;

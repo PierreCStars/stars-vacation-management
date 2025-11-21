@@ -74,6 +74,7 @@ const en = {
   },
   "vacations": {
     "title": "Vacation Management",
+    "subtitle": "welcome",
     "request": "Request Vacation",
     "approve": "Approve",
     "reject": "Reject",
@@ -356,6 +357,7 @@ const fr = {
   },
   "vacations": {
     "title": "Gestion des congés",
+    "subtitle": "welcome",
     "request": "Demander un congé",
     "approve": "Approuver",
     "reject": "Rejeter",
@@ -628,6 +630,7 @@ const it = {
   },
   "vacations": {
     "title": "Gestione Vacanze",
+    "subtitle": "welcome",
     "request": "Richiedi Vacanza",
     "approve": "Approva",
     "reject": "Rifiuta",

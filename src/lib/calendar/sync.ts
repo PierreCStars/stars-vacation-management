@@ -4,7 +4,7 @@
  */
 
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
-import { addVacationToCalendar, updateVacationInCalendar, deleteVacationFromCalendar, CAL_TARGET } from '@/lib/google-calendar';
+import { addVacationToCalendar, updateVacationInCalendar, deleteVacationFromCalendar, CAL_TARGET, calendarClient } from '@/lib/google-calendar';
 import { revalidateTag, revalidatePath } from 'next/cache';
 import { normalizeVacationStatus } from '@/types/vacation-status';
 
@@ -110,7 +110,6 @@ export async function ensureEventForRequest(
     if (existingEventId && !datesChanged) {
       // Verify the event actually exists in Google Calendar
       try {
-        const { calendarClient, CAL_TARGET } = await import('@/lib/google-calendar');
         const cal = calendarClient();
         
         try {
@@ -148,11 +147,12 @@ export async function ensureEventForRequest(
             // Fall through to create new event
           }
         }
-      } catch (importError) {
-        // If we can't import, just proceed with creation
-        console.warn('[CALENDAR] ensure_event import_error', { 
+      } catch (verifyError) {
+        // If verification fails, log and proceed with creation
+        console.warn('[CALENDAR] ensure_event verify_failed', { 
           id: requestDoc.id, 
-          error: importError instanceof Error ? importError.message : String(importError)
+          eventId: existingEventId,
+          error: verifyError instanceof Error ? verifyError.message : String(verifyError)
         });
         // Fall through to create new event
       }

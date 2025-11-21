@@ -55,6 +55,7 @@ export async function GET(
     let calendarEventExists = false;
     let calendarEventDetails = null;
     let calendarError = null;
+    let calendarIdUsed = CAL_TARGET;
 
     if (eventId) {
       try {
@@ -69,14 +70,23 @@ export async function GET(
           start: event.data.start?.date || event.data.start?.dateTime,
           end: event.data.end?.date || event.data.end?.dateTime,
           status: event.data.status,
-          htmlLink: event.data.htmlLink
+          htmlLink: event.data.htmlLink,
+          calendarId: CAL_TARGET,
+          eventId: event.data.id,
+          created: event.data.created,
+          updated: event.data.updated,
+          visibility: event.data.visibility,
+          transparency: event.data.transparency
         };
+        console.log(`✅ Event ${eventId} found in calendar ${CAL_TARGET}`);
       } catch (error: any) {
         if (error.code === 404) {
           calendarEventExists = false;
           calendarError = 'Event not found in Google Calendar (may have been deleted)';
+          console.log(`⚠️  Event ${eventId} not found in calendar ${CAL_TARGET}`);
         } else {
           calendarError = error.message || String(error);
+          console.error(`❌ Error checking event ${eventId}:`, error);
         }
       }
     }
@@ -94,6 +104,7 @@ export async function GET(
       calendarEventExists,
       calendarEventDetails,
       calendarError,
+      calendarId: calendarIdUsed,
       requestData: {
         userName: data?.userName,
         userEmail: data?.userEmail,
@@ -106,7 +117,13 @@ export async function GET(
       syncStatus: {
         needsSync: isApproved && !eventId,
         needsRecreate: isApproved && eventId && !calendarEventExists,
-        isSynced: isApproved && eventId && calendarEventExists
+        isSynced: isApproved && eventId && calendarEventExists,
+        canForceRecreate: isApproved && eventId && calendarEventExists
+      },
+      actions: {
+        forceRecreate: isApproved && eventId 
+          ? `POST /api/sync/request/${id}?force=true` 
+          : null
       }
     });
 
@@ -125,7 +142,12 @@ export async function POST(
 ) {
   try {
     const { id } = await params;
-    console.log(`🔄 Force syncing vacation request: ${id}`);
+    
+    // Check for force-recreate query parameter
+    const url = new URL(request.url);
+    const forceRecreate = url.searchParams.get('force') === 'true';
+    
+    console.log(`🔄 Force syncing vacation request: ${id}${forceRecreate ? ' (force recreate)' : ''}`);
 
     // Get Firebase Admin
     const { db, error } = getFirebaseAdmin();
@@ -163,14 +185,17 @@ export async function POST(
     // Check if we need to clear a stale event ID
     const existingEventId = data?.calendarEventId || data?.googleCalendarEventId || data?.googleEventId;
     let shouldClearEventId = false;
+    let eventExistsInCalendar = false;
 
-    if (existingEventId) {
+    if (existingEventId && !forceRecreate) {
       try {
         const { calendar } = initializeCalendarClient();
-        await calendar.events.get({
+        const event = await calendar.events.get({
           calendarId: CAL_TARGET,
           eventId: existingEventId
         });
+        eventExistsInCalendar = true;
+        console.log(`✅ Event ${existingEventId} exists in calendar, will update it`);
         // Event exists, we'll update it
       } catch (error: any) {
         if (error.code === 404) {
@@ -186,6 +211,33 @@ export async function POST(
           throw error;
         }
       }
+    } else if (existingEventId && forceRecreate) {
+      // Force recreate: delete existing event and clear ID
+      console.log(`🔄 Force recreate: deleting existing event ${existingEventId} and creating new one`);
+      try {
+        const { calendar } = initializeCalendarClient();
+        try {
+          await calendar.events.delete({
+            calendarId: CAL_TARGET,
+            eventId: existingEventId
+          });
+          console.log(`✅ Deleted existing event ${existingEventId}`);
+        } catch (deleteError: any) {
+          if (deleteError.code !== 404) {
+            console.warn(`⚠️  Could not delete event ${existingEventId}:`, deleteError.message);
+          }
+        }
+      } catch (error) {
+        console.warn(`⚠️  Error during force recreate cleanup:`, error);
+      }
+      
+      // Clear the event ID
+      shouldClearEventId = true;
+      await docRef.update({
+        calendarEventId: null,
+        googleCalendarEventId: null,
+        googleEventId: null
+      });
     }
 
     // Prepare calendar data
@@ -224,14 +276,18 @@ export async function POST(
         message: result.eventId 
           ? `Successfully synced vacation request to Google Calendar (Event ID: ${result.eventId})`
           : 'Successfully synced vacation request to Google Calendar',
-        clearedStaleEventId: shouldClearEventId
+        clearedStaleEventId: shouldClearEventId,
+        forceRecreated: forceRecreate,
+        previousEventId: forceRecreate ? existingEventId : null,
+        calendarId: CAL_TARGET
       });
     } else {
       return NextResponse.json({
         success: false,
         id,
         error: result.error,
-        message: `Failed to sync vacation request: ${result.error}`
+        message: `Failed to sync vacation request: ${result.error}`,
+        calendarId: CAL_TARGET
       }, { status: 500 });
     }
 

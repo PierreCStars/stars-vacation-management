@@ -81,6 +81,9 @@ export async function POST(request: NextRequest) {
     const userId = email || `${firstName.toLowerCase()}.${lastName.toLowerCase()}@${companyId.toLowerCase()}.mc`;
     const userName = `${firstName} ${lastName}`;
 
+    // Check if this is a test user request
+    const isTestUser = email === 'test@stars.mc' || userId === 'test@stars.mc';
+
     // Normalize status and type to canonical values
     const normalizedFields = normalizeVacationFields({
       status: 'approved', // Set as approved since admin is validating it
@@ -94,7 +97,7 @@ export async function POST(request: NextRequest) {
       userName,
       startDate,
       endDate,
-      reason: 'Created by admin',
+      reason: isTestUser ? 'Test vacation request (auto-deleted after 24h)' : 'Created by admin',
       company: companyId,
       type: normalizedFields.type || vacationType,
       status: normalizedFields.status || 'Approved',
@@ -103,12 +106,14 @@ export async function POST(request: NextRequest) {
       reviewedAt: new Date(),
       reviewedBy: session.user.name || 'Admin',
       reviewerEmail: session.user.email,
-      adminComment: 'Created and validated by admin',
+      adminComment: isTestUser ? 'Test request - will be auto-deleted after 24 hours' : 'Created and validated by admin',
       isHalfDay: false,
       halfDayType: null,
       durationDays,
       createdByAdminId: session.user.email, // Track who created it
-      createdByAdminName: session.user.name || 'Admin'
+      createdByAdminName: session.user.name || 'Admin',
+      isTestUser: isTestUser, // Flag to identify test requests
+      testUserCreatedAt: isTestUser ? new Date() : undefined // Track creation time for auto-deletion
     };
 
     // Save to Firestore

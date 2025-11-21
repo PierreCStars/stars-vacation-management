@@ -50,6 +50,21 @@ export default function CreateVacationModal({ isOpen, onClose, onSuccess }: Crea
   const t = useTranslations('admin.createVacation');
   const tVacations = useTranslations('vacations');
 
+  // Quick-fill test user
+  const fillTestUser = () => {
+    setFormData({
+      firstName: 'Test',
+      lastName: 'User',
+      phone: '+377 00 00 00 00',
+      email: 'test@stars.mc',
+      companyId: 'STARS_MC',
+      startDate: '',
+      endDate: '',
+      vacationType: 'PAID_LEAVE'
+    });
+    setErrors({});
+  };
+
   // Company options (matching existing form)
   const companyOptions = [
     { value: 'STARS_MC', label: 'Stars MC' },
@@ -219,6 +234,24 @@ export default function CreateVacationModal({ isOpen, onClose, onSuccess }: Crea
               </div>
             </div>
           )}
+
+          {/* Test User Quick Fill */}
+          <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-yellow-800">🧪 Test User</p>
+                <p className="text-xs text-yellow-700 mt-1">Quick-fill test@stars.mc (auto-deleted after 24h)</p>
+              </div>
+              <button
+                type="button"
+                onClick={fillTestUser}
+                disabled={isSubmitting}
+                className="px-3 py-1.5 text-xs font-medium text-yellow-800 bg-yellow-100 border border-yellow-300 rounded-md hover:bg-yellow-200 focus:outline-none focus:ring-2 focus:ring-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Fill Test User
+              </button>
+            </div>
+          </div>
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">

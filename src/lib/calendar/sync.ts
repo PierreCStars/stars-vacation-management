@@ -54,7 +54,10 @@ export async function ensureEventForRequest(
     const docRef = db.collection('vacationRequests').doc(requestDoc.id);
     const doc = await docRef.get();
     const existingData = doc.data();
-    const existingEventId = existingData?.calendarEventId || existingData?.googleCalendarEventId;
+    // Check all possible event ID fields for backward compatibility
+    const existingEventId = existingData?.calendarEventId || 
+                            existingData?.googleCalendarEventId || 
+                            existingData?.googleEventId;
     const existingStartDate = existingData?.startDate;
     const existingEndDate = existingData?.endDate;
 
@@ -105,8 +108,54 @@ export async function ensureEventForRequest(
     }
 
     if (existingEventId && !datesChanged) {
-      console.log('[CALENDAR] ensure_event exists', { id: requestDoc.id, eventId: existingEventId });
-      return { success: true, eventId: existingEventId };
+      // Verify the event actually exists in Google Calendar
+      try {
+        const { calendarClient, CAL_TARGET } = await import('@/lib/google-calendar');
+        const cal = calendarClient();
+        
+        try {
+          await cal.events.get({
+            calendarId: CAL_TARGET,
+            eventId: existingEventId
+          });
+          // Event exists, all good
+          console.log('[CALENDAR] ensure_event exists', { id: requestDoc.id, eventId: existingEventId });
+          return { success: true, eventId: existingEventId };
+        } catch (verifyError: any) {
+          if (verifyError.code === 404) {
+            // Event doesn't exist in calendar, clear stale ID and create new event
+            console.log('[CALENDAR] ensure_event stale_id', { 
+              id: requestDoc.id, 
+              eventId: existingEventId,
+              reason: 'Event ID exists in Firestore but not in Google Calendar'
+            });
+            
+            // Clear the stale event ID
+            await docRef.update({
+              calendarEventId: null,
+              googleCalendarEventId: null,
+              googleEventId: null
+            });
+            
+            // Fall through to create new event
+          } else {
+            // Other error, log and try to create anyway
+            console.warn('[CALENDAR] ensure_event verify_error', { 
+              id: requestDoc.id, 
+              eventId: existingEventId,
+              error: verifyError.message
+            });
+            // Fall through to create new event
+          }
+        }
+      } catch (importError) {
+        // If we can't import, just proceed with creation
+        console.warn('[CALENDAR] ensure_event import_error', { 
+          id: requestDoc.id, 
+          error: importError instanceof Error ? importError.message : String(importError)
+        });
+        // Fall through to create new event
+      }
     }
 
     // Create new calendar event

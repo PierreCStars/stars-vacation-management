@@ -59,8 +59,12 @@ export async function POST() {
     console.log(`📅 Looking for validated vacations from the last 30 days (since ${thirtyDaysAgo.toISOString()})`);
     
     // Get all vacation requests created in the last 30 days
+    // Firestore requires Timestamp for date comparisons
+    const { Timestamp } = await import('firebase-admin/firestore');
+    const thirtyDaysAgoTimestamp = Timestamp.fromDate(thirtyDaysAgo);
+    
     const snapshot = await db.collection('vacationRequests')
-      .where('createdAt', '>=', thirtyDaysAgo)
+      .where('createdAt', '>=', thirtyDaysAgoTimestamp)
       .get();
     
     const requests = snapshot.docs.map(doc => ({

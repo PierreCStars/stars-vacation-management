@@ -54,15 +54,25 @@ export async function GET() {
 
     // Find all test user requests older than 24 hours
     const testUserEmail = 'test@stars.mc';
+    const { Timestamp } = await import('firebase-admin/firestore');
+    const twentyFourHoursAgoTimestamp = Timestamp.fromDate(twentyFourHoursAgo);
+    
     const snapshot = await db.collection('vacationRequests')
       .where('userEmail', '==', testUserEmail)
-      .where('createdAt', '<', twentyFourHoursAgo)
+      .where('createdAt', '<', twentyFourHoursAgoTimestamp)
       .get();
 
     const requestsToDelete = snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    }));
+    })) as Array<{ 
+      id: string; 
+      userName?: string; 
+      calendarEventId?: string; 
+      googleCalendarEventId?: string; 
+      googleEventId?: string;
+      [key: string]: any;
+    }>;
 
     console.log(`[CLEANUP_TEST] Found ${requestsToDelete.length} test requests to delete`);
 

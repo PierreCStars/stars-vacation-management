@@ -872,8 +872,176 @@ function ReviewedRequestsTable({
   tCommon: any;
   tVacations: any;
 }) {
+  // Sorting state
+  const [sortColumn, setSortColumn] = useState<'userName' | 'startDate' | null>(null);
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+
+  // Handle column header click for sorting
+  const handleSort = (column: 'userName' | 'startDate') => {
+    if (sortColumn === column) {
+      // Toggle direction if clicking the same column
+      setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+      // Set new column and default to ascending
+      setSortColumn(column);
+      setSortDirection('asc');
+    }
+  };
+
+  // Sort requests based on current sort state
+  const sortedRequests = useMemo(() => {
+    if (!sortColumn) return requests;
+
+    return [...requests].sort((a, b) => {
+      let comparison = 0;
+
+      if (sortColumn === 'userName') {
+        // Alphabetical sorting for employee name
+        const nameA = (a.userName || '').toLowerCase();
+        const nameB = (b.userName || '').toLowerCase();
+        comparison = nameA.localeCompare(nameB);
+      } else if (sortColumn === 'startDate') {
+        // Chronological sorting for month (using underlying date value)
+        const dateA = new Date(a.startDate).getTime();
+        const dateB = new Date(b.startDate).getTime();
+        comparison = dateA - dateB;
+      }
+
+      return sortDirection === 'asc' ? comparison : -comparison;
+    });
+  }, [requests, sortColumn, sortDirection]);
+
+  // CSV export function
+  const exportToCSV = () => {
+    // CSV header row
+    const headers = [
+      'Employee Name',
+      'Company',
+      'Type',
+      'Start Date',
+      'End Date',
+      'Duration (days)',
+      'Status',
+      'Approved By',
+      'Reviewer Email',
+      'Reviewed At'
+    ];
+
+    // Helper function to escape CSV values
+    const escapeCSV = (value: any): string => {
+      if (value === null || value === undefined) return '';
+      const stringValue = String(value);
+      // If value contains comma, quote, or newline, wrap in quotes and escape internal quotes
+      if (stringValue.includes(',') || stringValue.includes('"') || stringValue.includes('\n')) {
+        return `"${stringValue.replace(/"/g, '""')}"`;
+      }
+      return stringValue;
+    };
+
+    // Format date for CSV
+    const formatDate = (dateString: string | null | undefined): string => {
+      if (!dateString) return '';
+      try {
+        return new Date(dateString).toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        });
+      } catch {
+        return '';
+      }
+    };
+
+    // Format datetime for CSV
+    const formatDateTime = (dateString: string | null | undefined): string => {
+      if (!dateString) return '';
+      try {
+        const date = new Date(dateString);
+        return `${date.toLocaleDateString('en-GB', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        })} ${date.toLocaleTimeString('en-GB', {
+          hour: '2-digit',
+          minute: '2-digit'
+        })}`;
+      } catch {
+        return '';
+      }
+    };
+
+    // Build CSV rows
+    const rows = sortedRequests.map(request => [
+      escapeCSV(request.userName || ''),
+      escapeCSV(request.company || ''),
+      escapeCSV(request.type || ''),
+      escapeCSV(formatDate(request.startDate)),
+      escapeCSV(formatDate(request.endDate)),
+      escapeCSV(request.durationDays || calculateDays(request.startDate, request.endDate)),
+      escapeCSV(request.status || ''),
+      escapeCSV(request.reviewedBy || 'Admin'),
+      escapeCSV(request.reviewerEmail || ''),
+      escapeCSV(formatDateTime(request.reviewedAt))
+    ]);
+
+    // Combine headers and rows
+    const csvContent = [
+      headers.map(escapeCSV).join(','),
+      ...rows.map(row => row.join(','))
+    ].join('\n');
+
+    // Create blob and trigger download
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' }); // BOM for Excel compatibility
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `reviewed-vacations-${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // Sort indicator component
+  const SortIndicator = ({ column }: { column: 'userName' | 'startDate' }) => {
+    if (sortColumn !== column) {
+      return (
+        <span className="ml-1 text-gray-400">
+          <svg className="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+          </svg>
+        </span>
+      );
+    }
+    return (
+      <span className="ml-1 text-blue-600">
+        {sortDirection === 'asc' ? (
+          <svg className="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
+          </svg>
+        ) : (
+          <svg className="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        )}
+      </span>
+    );
+  };
+
   return (
     <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
+      {/* Export CSV Button */}
+      <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+        <button
+          onClick={exportToCSV}
+          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+        >
+          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          Export CSV
+        </button>
+      </div>
       {/* Desktop Table */}
       <div className="hidden md:block overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200">
@@ -882,25 +1050,37 @@ function ReviewedRequestsTable({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 <input
                   type="checkbox"
-                  checked={selectedRequests.size === requests.length && requests.length > 0}
+                  checked={selectedRequests.size === sortedRequests.length && sortedRequests.length > 0}
                   onChange={(e) => {
                     if (e.target.checked) {
-                      requests.forEach(req => onToggleSelection(req.id));
+                      sortedRequests.forEach(req => onToggleSelection(req.id));
                     } else {
-                      requests.forEach(req => onToggleSelection(req.id));
+                      sortedRequests.forEach(req => onToggleSelection(req.id));
                     }
                   }}
                   className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                 />
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {tVacations('employee')}
+              <th 
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                onClick={() => handleSort('userName')}
+              >
+                <div className="flex items-center">
+                  {tVacations('employee')}
+                  <SortIndicator column="userName" />
+                </div>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {tVacations('type')}
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {tCommon('dates')}
+              <th 
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                onClick={() => handleSort('startDate')}
+              >
+                <div className="flex items-center">
+                  Month of Vacation Taken
+                  <SortIndicator column="startDate" />
+                </div>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
@@ -914,7 +1094,7 @@ function ReviewedRequestsTable({
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {requests.map((request) => (
+            {sortedRequests.map((request) => (
               <tr key={request.id} className="hover:bg-gray-50">
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   <input
@@ -986,7 +1166,7 @@ function ReviewedRequestsTable({
 
       {/* Mobile Cards */}
       <div className="md:hidden">
-        {requests.map((request) => (
+        {sortedRequests.map((request) => (
           <div key={request.id} className="border-b border-gray-200 p-4 last:border-b-0">
             <div className="flex items-start justify-between mb-3">
               <div className="flex items-start gap-3 flex-1 min-w-0">

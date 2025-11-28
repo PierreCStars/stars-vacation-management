@@ -78,10 +78,11 @@ export async function GET() {
 
     console.log('[DAILY_DISPATCHER] ✅ Daily dispatcher completed');
 
+    // Note: safeNextJson handles merging, so we only pass override properties here
+    // Do not spread results again to avoid duplicate key errors
     return safeNextJson(results, {
       success: results.success,
-      message: 'Daily dispatcher completed',
-      ...results
+      message: 'Daily dispatcher completed'
     });
 
   } catch (error) {
@@ -92,7 +93,7 @@ export async function GET() {
       success: false,
       error: errorMessage,
       timestamp: new Date().toISOString(),
-      ...results
+      tasks: results.tasks
     }, { status: 500 });
   }
 }

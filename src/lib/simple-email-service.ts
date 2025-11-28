@@ -272,9 +272,9 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
 
   // Try Gmail SMTP
   try {
-    const gmailUser = process.env.GMAIL_USER || process.env.SMTP_USER;
-    const smtpPassword = process.env.SMTP_PASSWORD || process.env.GMAIL_APP_PASSWORD;
-    if (gmailUser && smtpPassword) {
+    const gmailUser = (process.env.GMAIL_USER || process.env.SMTP_USER)?.trim();
+    const gmailPassword = (process.env.SMTP_PASSWORD || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD)?.trim();
+    if (isSet(gmailUser) && isSet(gmailPassword)) {
       const gmailResult = await sendGmailSMTP(to, subject, body);
       if (gmailResult.success) {
         console.log('✅ Email sent successfully via Gmail SMTP');

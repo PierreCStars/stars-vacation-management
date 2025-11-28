@@ -110,18 +110,41 @@ export default function AdminSetupClient() {
       } else {
         // Email sending failed - show detailed error
         const errorMsg = data.emailError || data.error || 'Email sending failed';
-        const provider = data.emailProvider ? ` (${data.emailProvider})` : '';
         
         // Build actionable error message
-        let actionableMessage = `Email sending failed${provider}: ${errorMsg}`;
+        let actionableMessage = `Email sending failed: ${errorMsg}`;
         
         if (data.emailConfigurationMissing) {
-          actionableMessage += '. No email providers configured. Please set up SMTP, Resend, or Gmail credentials in environment variables.';
-        } else if (data.emailServiceErrors && Array.isArray(data.emailServiceErrors) && data.emailServiceErrors.length > 0) {
-          const serviceErrors = data.emailServiceErrors.map((e: any) => `${e.service}: ${e.error}`).join('; ');
-          actionableMessage += `. Service errors: ${serviceErrors}`;
+          actionableMessage += '\n\n❌ No email providers configured in production.';
+          
+          // Add configuration help if available
+          if (data.emailConfigurationHelp) {
+            actionableMessage += '\n\nPlease configure at least one provider in Vercel:';
+            const options = data.emailConfigurationHelp.options || [];
+            options.forEach((opt: any) => {
+              actionableMessage += `\n• ${opt.provider}: ${opt.required.join(', ')}`;
+            });
+            actionableMessage += '\n\nSee README.md for detailed setup instructions.';
+          } else {
+            actionableMessage += '\n\nPlease configure SMTP, Resend, or Gmail credentials in Vercel environment variables.';
+          }
         } else {
-          actionableMessage += '. Check email service configuration (SMTP, Resend, or Gmail).';
+          // Show service-specific errors
+          const allErrors: string[] = [];
+          
+          if (data.emailServiceErrors && Array.isArray(data.emailServiceErrors) && data.emailServiceErrors.length > 0) {
+            allErrors.push(...data.emailServiceErrors.map((e: any) => `${e.service}: ${e.error}`));
+          }
+          
+          if (data.emailSkippedServices && Array.isArray(data.emailSkippedServices) && data.emailSkippedServices.length > 0) {
+            allErrors.push(...data.emailSkippedServices.map((s: any) => `${s.service}: ${s.reason}`));
+          }
+          
+          if (allErrors.length > 0) {
+            actionableMessage += `\n\nIssues:\n${allErrors.map(e => `• ${e}`).join('\n')}`;
+          } else {
+            actionableMessage += '\n\nCheck email service configuration (SMTP, Resend, or Gmail).';
+          }
         }
         
         setActionMessage({
@@ -135,10 +158,25 @@ export default function AdminSetupClient() {
           provider: data.emailProvider,
           recipients: Array.isArray(data.recipients) ? data.recipients : [data.recipients],
           validated: data.validated,
-          serviceErrors: data.emailServiceErrors,
-          configurationMissing: data.emailConfigurationMissing
+          serviceErrors: data.emailServiceErrors || [],
+          skippedServices: data.emailSkippedServices || [],
+          configurationMissing: data.emailConfigurationMissing,
+          configurationHelp: data.emailConfigurationHelp
         };
         console.error('Email sending failed:', cleanErrorInfo);
+        
+        // Also log configuration help to console for easy copy-paste
+        if (data.emailConfigurationHelp) {
+          console.error('\n📧 Email Configuration Required:');
+          console.error('Add these environment variables in Vercel:');
+          const options = data.emailConfigurationHelp.options || [];
+          options.forEach((opt: any) => {
+            console.error(`\n${opt.provider}:`);
+            opt.required.forEach((varName: string) => {
+              console.error(`  - ${varName}`);
+            });
+          });
+        }
       }
       
       setTimeout(() => setActionMessage(null), 5000);

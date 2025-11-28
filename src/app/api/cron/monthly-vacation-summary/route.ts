@@ -320,7 +320,11 @@ export async function GET(req: Request) {
       serviceErrors: ('errors' in emailResult && Array.isArray(emailResult.errors)) 
         ? emailResult.errors.map((err: any) => ({ service: err.service, error: err.error }))
         : undefined,
-      configurationMissing: 'configurationMissing' in emailResult ? emailResult.configurationMissing : false
+      skippedServices: ('skippedServices' in emailResult && Array.isArray(emailResult.skippedServices))
+        ? emailResult.skippedServices
+        : undefined,
+      configurationMissing: 'configurationMissing' in emailResult ? emailResult.configurationMissing : false,
+      configurationHelp: 'configurationHelp' in emailResult ? emailResult.configurationHelp : undefined
     };
 
     return NextResponse.json({ 
@@ -335,7 +339,9 @@ export async function GET(req: Request) {
       emailError: emailErrorInfo?.message,
       emailProvider: emailErrorInfo?.provider,
       emailServiceErrors: emailErrorInfo?.serviceErrors,
+      emailSkippedServices: emailErrorInfo?.skippedServices,
       emailConfigurationMissing: emailErrorInfo?.configurationMissing,
+      emailConfigurationHelp: emailErrorInfo?.configurationHelp,
       isTestService: 'isTestService' in emailResult ? emailResult.isTestService : false,
       emailWarning: 'warning' in emailResult ? emailResult.warning : undefined,
       previewUrl: 'previewUrl' in emailResult ? emailResult.previewUrl : undefined
@@ -552,7 +558,11 @@ export async function POST(req: Request) {
       serviceErrors: ('errors' in emailResult && Array.isArray(emailResult.errors)) 
         ? emailResult.errors.map((err: any) => ({ service: err.service, error: err.error }))
         : undefined,
-      configurationMissing: 'configurationMissing' in emailResult ? emailResult.configurationMissing : false
+      skippedServices: ('skippedServices' in emailResult && Array.isArray(emailResult.skippedServices))
+        ? emailResult.skippedServices
+        : undefined,
+      configurationMissing: 'configurationMissing' in emailResult ? emailResult.configurationMissing : false,
+      configurationHelp: 'configurationHelp' in emailResult ? emailResult.configurationHelp : undefined
     };
 
     // Return response with detailed email result
@@ -568,7 +578,9 @@ export async function POST(req: Request) {
       emailError: emailErrorInfo?.message,
       emailProvider: emailErrorInfo?.provider,
       emailServiceErrors: emailErrorInfo?.serviceErrors,
+      emailSkippedServices: emailErrorInfo?.skippedServices,
       emailConfigurationMissing: emailErrorInfo?.configurationMissing,
+      emailConfigurationHelp: emailErrorInfo?.configurationHelp,
       isTestService: 'isTestService' in emailResult ? emailResult.isTestService : false,
       emailWarning: 'warning' in emailResult ? emailResult.warning : undefined,
       previewUrl: 'previewUrl' in emailResult ? emailResult.previewUrl : undefined,

@@ -193,6 +193,7 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
   console.log('📧 Subject:', subject);
 
   const errors: Array<{ service: string; error: unknown }> = [];
+  const skippedServices: Array<{ service: string; reason: string }> = [];
 
   // Check environment variables for diagnostics
   console.log('📧 Email service configuration check:');
@@ -217,7 +218,13 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
         errors.push({ service: 'Custom SMTP', error: smtpResult.error });
       }
     } else {
-      console.log('⚠️ Custom SMTP skipped (missing configuration)');
+      const missing = [];
+      if (!process.env.SMTP_HOST) missing.push('SMTP_HOST');
+      if (!process.env.SMTP_USER) missing.push('SMTP_USER');
+      if (!process.env.SMTP_PASSWORD) missing.push('SMTP_PASSWORD');
+      const reason = `Missing: ${missing.join(', ')}`;
+      console.log(`⚠️ Custom SMTP skipped (${reason})`);
+      skippedServices.push({ service: 'Custom SMTP', reason });
     }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
@@ -238,7 +245,9 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
         errors.push({ service: 'Resend', error: resendResult.error });
       }
     } else {
-      console.log('⚠️ Resend skipped (RESEND_API_KEY not set)');
+      const reason = 'RESEND_API_KEY not set';
+      console.log(`⚠️ Resend skipped (${reason})`);
+      skippedServices.push({ service: 'Resend', reason });
     }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
@@ -261,7 +270,12 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
         errors.push({ service: 'Gmail SMTP', error: gmailResult.error });
       }
     } else {
-      console.log('⚠️ Gmail SMTP skipped (missing credentials)');
+      const missing = [];
+      if (!gmailUser) missing.push('GMAIL_USER or SMTP_USER');
+      if (!smtpPassword) missing.push('SMTP_PASSWORD or GMAIL_APP_PASSWORD');
+      const reason = `Missing: ${missing.join(', ')}`;
+      console.log(`⚠️ Gmail SMTP skipped (${reason})`);
+      skippedServices.push({ service: 'Gmail SMTP', reason });
     }
   } catch (error) {
     const errorMsg = error instanceof Error ? error.message : String(error);
@@ -344,12 +358,39 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
     console.error('   - Gmail SMTP: GMAIL_USER (or SMTP_USER) and SMTP_PASSWORD (or GMAIL_APP_PASSWORD)');
   }
 
+  // Build comprehensive error information
+  const errorMessage = hasAnyProvider 
+    ? 'All email services failed'
+    : 'No email providers configured';
+  
   return {
     success: false,
-    error: 'All email services failed',
+    error: errorMessage,
     fallback: 'Logged to console',
     provider: 'Logged to console',
     errors: serializedErrors,
-    configurationMissing: isProductionEnv && !hasAnyProvider
+    skippedServices: skippedServices,
+    configurationMissing: isProductionEnv && !hasAnyProvider,
+    // Provide actionable guidance
+    configurationHelp: !hasAnyProvider ? {
+      message: 'Please configure at least one email provider in Vercel environment variables:',
+      options: [
+        {
+          provider: 'Custom SMTP',
+          required: ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD'],
+          optional: ['SMTP_PORT', 'SMTP_SECURE', 'SMTP_FROM']
+        },
+        {
+          provider: 'Resend',
+          required: ['RESEND_API_KEY'],
+          optional: []
+        },
+        {
+          provider: 'Gmail SMTP',
+          required: ['GMAIL_USER (or SMTP_USER)', 'SMTP_PASSWORD (or GMAIL_APP_PASSWORD)'],
+          optional: []
+        }
+      ]
+    } : undefined
   };
 } 

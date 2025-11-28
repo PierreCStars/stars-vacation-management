@@ -290,10 +290,13 @@ export async function GET(req: Request) {
     
     if (!emailResult.success) {
       console.error(`❌ Email sending failed:`, emailResult.error);
-      console.error(`   Provider: ${emailResult.provider || emailResult.fallback || 'unknown'}`);
-    } else if (emailResult.isTestService || emailResult.warning) {
+      const provider = 'provider' in emailResult ? emailResult.provider : undefined;
+      const fallback = 'fallback' in emailResult ? emailResult.fallback : undefined;
+      console.error(`   Provider: ${provider || fallback || 'unknown'}`);
+    } else if ('isTestService' in emailResult && emailResult.isTestService) {
       console.error(`⚠️ WARNING: Email sent via TEST SERVICE (Ethereal). Real emails were NOT delivered!`);
-      console.error(`   Preview URL: ${emailResult.previewUrl || 'N/A'}`);
+      const previewUrl = 'previewUrl' in emailResult ? emailResult.previewUrl : undefined;
+      console.error(`   Preview URL: ${previewUrl || 'N/A'}`);
       console.error(`   This means all real email services (SMTP, Resend, Gmail) failed.`);
       console.error(`   Please check email service configuration.`);
     }
@@ -306,12 +309,12 @@ export async function GET(req: Request) {
       totalDays: totalDays.toFixed(1),
       dateRange: { start: startISO, end: endISO },
       recipients: recipients,
-      emailSent: emailResult.success && !emailResult.isTestService, // Only true if sent via real service
+      emailSent: emailResult.success && !('isTestService' in emailResult && emailResult.isTestService), // Only true if sent via real service
       emailError: emailResult.success ? undefined : (emailResult.error || 'Unknown error'),
-      emailProvider: emailResult.provider || emailResult.fallback || undefined,
-      isTestService: emailResult.isTestService || false,
-      emailWarning: emailResult.warning || undefined,
-      previewUrl: emailResult.previewUrl || undefined
+      emailProvider: ('provider' in emailResult ? emailResult.provider : undefined) || ('fallback' in emailResult ? emailResult.fallback : undefined),
+      isTestService: 'isTestService' in emailResult ? emailResult.isTestService : false,
+      emailWarning: 'warning' in emailResult ? emailResult.warning : undefined,
+      previewUrl: 'previewUrl' in emailResult ? emailResult.previewUrl : undefined
     });
 
   } catch (error) {
@@ -495,10 +498,13 @@ export async function POST(req: Request) {
     
     if (!emailResult.success) {
       console.error(`❌ Email sending failed:`, emailResult.error);
-      console.error(`   Provider: ${emailResult.provider || emailResult.fallback || 'unknown'}`);
-    } else if (emailResult.isTestService || emailResult.warning) {
+      const provider = 'provider' in emailResult ? emailResult.provider : undefined;
+      const fallback = 'fallback' in emailResult ? emailResult.fallback : undefined;
+      console.error(`   Provider: ${provider || fallback || 'unknown'}`);
+    } else if ('isTestService' in emailResult && emailResult.isTestService) {
       console.error(`⚠️ WARNING: Email sent via TEST SERVICE (Ethereal). Real emails were NOT delivered!`);
-      console.error(`   Preview URL: ${emailResult.previewUrl || 'N/A'}`);
+      const previewUrl = 'previewUrl' in emailResult ? emailResult.previewUrl : undefined;
+      console.error(`   Preview URL: ${previewUrl || 'N/A'}`);
       console.error(`   This means all real email services (SMTP, Resend, Gmail) failed.`);
       console.error(`   Please check email service configuration.`);
     }
@@ -512,12 +518,12 @@ export async function POST(req: Request) {
       totalDays: totalDays.toFixed(1),
       dateRange: { start: startISO, end: endISO },
       recipients: recipients,
-      emailSent: emailResult.success && !emailResult.isTestService, // Only true if sent via real service
+      emailSent: emailResult.success && !('isTestService' in emailResult && emailResult.isTestService), // Only true if sent via real service
       emailError: emailResult.success ? undefined : (emailResult.error || 'Unknown error'),
-      emailProvider: emailResult.provider || emailResult.fallback || undefined,
-      isTestService: emailResult.isTestService || false,
-      emailWarning: emailResult.warning || undefined,
-      previewUrl: emailResult.previewUrl || undefined,
+      emailProvider: ('provider' in emailResult ? emailResult.provider : undefined) || ('fallback' in emailResult ? emailResult.fallback : undefined),
+      isTestService: 'isTestService' in emailResult ? emailResult.isTestService : false,
+      emailWarning: 'warning' in emailResult ? emailResult.warning : undefined,
+      previewUrl: 'previewUrl' in emailResult ? emailResult.previewUrl : undefined,
       manuallyTriggered: true
     });
 

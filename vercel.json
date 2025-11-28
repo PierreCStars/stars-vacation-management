@@ -11,12 +11,8 @@
   ],
   "crons": [
     {
-      "path": "/api/cron/pending-reminder-5d",
+      "path": "/api/cron/daily-dispatcher",
       "schedule": "0 8 * * *"
-    },
-    {
-      "path": "/api/cron/cleanup-test-requests",
-      "schedule": "0 1 * * *"
     },
     {
       "path": "/api/cron/monthly-vacation-summary",

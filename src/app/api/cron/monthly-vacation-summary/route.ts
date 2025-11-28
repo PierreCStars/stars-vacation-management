@@ -60,15 +60,23 @@ function toCSV(rows: Record<string, any>[]) {
   return [headers.join(","), ...rows.map(r => headers.map(h => esc(r[h])).join(","))].join("\n");
 }
 
-// Get accounting email recipient (defaults to compta@stars.mc)
-function getAccountingEmail(): string {
-  return process.env.ACCOUNTING_EMAIL || 'compta@stars.mc';
+// Get accounting email recipients (defaults to compta@stars.mc and pierre@stars.mc)
+function getAccountingEmails(): string[] {
+  // If ACCOUNTING_EMAIL is set, use it (can be comma-separated)
+  if (process.env.ACCOUNTING_EMAIL) {
+    return process.env.ACCOUNTING_EMAIL
+      .split(',')
+      .map(email => email.trim())
+      .filter(Boolean);
+  }
+  // Default recipients: compta@stars.mc and pierre@stars.mc
+  return ['compta@stars.mc', 'pierre@stars.mc'];
 }
 
 // Send email to accounting department
 async function sendEmail(subject: string, html: string, csvContent: string, filename: string) {
-  const recipient = getAccountingEmail();
-  console.log(`📧 Sending monthly summary email to ${recipient}...`);
+  const recipients = getAccountingEmails();
+  console.log(`📧 Sending monthly summary email to ${recipients.join(', ')}...`);
   console.log('Subject:', subject);
   
   // Include CSV data in email body as a pre-formatted section
@@ -78,12 +86,12 @@ async function sendEmail(subject: string, html: string, csvContent: string, file
     <pre style="background-color: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto; font-size: 12px; line-height: 1.4;">${csvContent}</pre>
   `;
   
-  const result = await sendEmailWithFallbacks([recipient], subject, htmlWithCSV);
+  const result = await sendEmailWithFallbacks(recipients, subject, htmlWithCSV);
   
   if (result.success) {
-    console.log(`✅ Monthly summary email sent successfully to ${recipient}`);
+    console.log(`✅ Monthly summary email sent successfully to ${recipients.join(', ')}`);
   } else {
-    console.error(`❌ Failed to send monthly summary email to ${recipient}:`, result.error);
+    console.error(`❌ Failed to send monthly summary email to ${recipients.join(', ')}:`, result.error);
   }
   
   return result;
@@ -274,9 +282,10 @@ export async function GET(req: Request) {
     // Send email
     const emailResult = await sendEmail(subject, html, csv, filename);
 
+    const recipients = getAccountingEmails();
     console.log(`✅ Monthly summary processed successfully for ${label}`);
     console.log(`   - Validated vacations: ${approved.length} requests (${totalDays.toFixed(1)} days)`);
-    console.log(`   - Email sent to: ${getAccountingEmail()}`);
+    console.log(`   - Email sent to: ${recipients.join(', ')}`);
     console.log(`   - Email result: ${emailResult.success ? 'Success' : 'Failed'}`);
 
     return NextResponse.json({ 
@@ -286,7 +295,7 @@ export async function GET(req: Request) {
       validated: approved.length, 
       totalDays: totalDays.toFixed(1),
       dateRange: { start: startISO, end: endISO },
-      recipient: getAccountingEmail(),
+      recipients: recipients,
       emailSent: emailResult.success
     });
 
@@ -463,9 +472,10 @@ export async function POST(req: Request) {
     // Send email
     const emailResult = await sendEmail(subject, html, csv, filename);
 
+    const recipients = getAccountingEmails();
     console.log(`✅ Monthly summary processed successfully for ${label}`);
     console.log(`   - Validated vacations: ${approved.length} requests (${totalDays.toFixed(1)} days)`);
-    console.log(`   - Email sent to: ${getAccountingEmail()}`);
+    console.log(`   - Email sent to: ${recipients.join(', ')}`);
     console.log(`   - Email result: ${emailResult.success ? 'Success' : 'Failed'}`);
 
     return NextResponse.json({ 
@@ -475,7 +485,7 @@ export async function POST(req: Request) {
       validated: approved.length, 
       totalDays: totalDays.toFixed(1),
       dateRange: { start: startISO, end: endISO },
-      recipient: getAccountingEmail(),
+      recipients: recipients,
       emailSent: emailResult.success,
       manuallyTriggered: true
     });

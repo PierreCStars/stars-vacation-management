@@ -87,9 +87,11 @@ export default function AdminSetupClient() {
       const data = await response.json();
       
       if (data.ok && data.emailSent) {
+        const recipients = data.recipients || data.recipient || ['compta@stars.mc', 'pierre@stars.mc'];
+        const recipientList = Array.isArray(recipients) ? recipients.join(', ') : recipients;
         setActionMessage({
           type: 'success',
-          message: `Monthly summary email sent successfully to ${data.recipient || 'compta@stars.mc'}! (${data.validated || 0} validated vacations)`
+          message: `Monthly summary email sent successfully to ${recipientList}! (${data.validated || 0} validated vacations)`
         });
       } else {
         setActionMessage({

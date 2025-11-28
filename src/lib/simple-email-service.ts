@@ -212,16 +212,28 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
     console.log('⚠️ Gmail SMTP failed, trying Ethereal...');
   }
 
-  // Try Ethereal (test service) as fallback
-  try {
-    const etherealResult = await sendSimpleEmail(to, subject, body);
-    if (etherealResult.success) {
-      console.log('✅ Email sent successfully via Ethereal (test service)');
-      console.log('📧 Preview URL:', etherealResult.previewUrl);
-      return etherealResult;
+  // Try Ethereal (test service) as fallback - ONLY in development
+  // In production, skip Ethereal as it doesn't send real emails
+  const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+  if (!isProduction) {
+    try {
+      const etherealResult = await sendSimpleEmail(to, subject, body);
+      if (etherealResult.success) {
+        console.log('⚠️ Email sent via Ethereal (TEST SERVICE - emails not delivered to real recipients)');
+        console.log('📧 Preview URL:', etherealResult.previewUrl);
+        console.log('⚠️ WARNING: This is a test service. Real emails were NOT sent!');
+        // Return success but with a warning flag
+        return {
+          ...etherealResult,
+          isTestService: true,
+          warning: 'Email sent via test service (Ethereal). Real emails were NOT delivered.'
+        };
+      }
+    } catch {
+      console.log('⚠️ Ethereal failed...');
     }
-  } catch {
-    console.log('⚠️ Ethereal failed...');
+  } else {
+    console.log('⚠️ Skipping Ethereal test service in production environment');
   }
 
   // Final fallback: console log

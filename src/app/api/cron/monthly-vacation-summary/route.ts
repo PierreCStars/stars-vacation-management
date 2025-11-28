@@ -287,6 +287,16 @@ export async function GET(req: Request) {
     console.log(`   - Validated vacations: ${approved.length} requests (${totalDays.toFixed(1)} days)`);
     console.log(`   - Email sent to: ${recipients.join(', ')}`);
     console.log(`   - Email result: ${emailResult.success ? 'Success' : 'Failed'}`);
+    
+    if (!emailResult.success) {
+      console.error(`❌ Email sending failed:`, emailResult.error);
+      console.error(`   Provider: ${emailResult.provider || emailResult.fallback || 'unknown'}`);
+    } else if (emailResult.isTestService || emailResult.warning) {
+      console.error(`⚠️ WARNING: Email sent via TEST SERVICE (Ethereal). Real emails were NOT delivered!`);
+      console.error(`   Preview URL: ${emailResult.previewUrl || 'N/A'}`);
+      console.error(`   This means all real email services (SMTP, Resend, Gmail) failed.`);
+      console.error(`   Please check email service configuration.`);
+    }
 
     return NextResponse.json({ 
       ok: true, 
@@ -296,7 +306,12 @@ export async function GET(req: Request) {
       totalDays: totalDays.toFixed(1),
       dateRange: { start: startISO, end: endISO },
       recipients: recipients,
-      emailSent: emailResult.success
+      emailSent: emailResult.success && !emailResult.isTestService, // Only true if sent via real service
+      emailError: emailResult.success ? undefined : (emailResult.error || 'Unknown error'),
+      emailProvider: emailResult.provider || emailResult.fallback || undefined,
+      isTestService: emailResult.isTestService || false,
+      emailWarning: emailResult.warning || undefined,
+      previewUrl: emailResult.previewUrl || undefined
     });
 
   } catch (error) {
@@ -477,7 +492,18 @@ export async function POST(req: Request) {
     console.log(`   - Validated vacations: ${approved.length} requests (${totalDays.toFixed(1)} days)`);
     console.log(`   - Email sent to: ${recipients.join(', ')}`);
     console.log(`   - Email result: ${emailResult.success ? 'Success' : 'Failed'}`);
+    
+    if (!emailResult.success) {
+      console.error(`❌ Email sending failed:`, emailResult.error);
+      console.error(`   Provider: ${emailResult.provider || emailResult.fallback || 'unknown'}`);
+    } else if (emailResult.isTestService || emailResult.warning) {
+      console.error(`⚠️ WARNING: Email sent via TEST SERVICE (Ethereal). Real emails were NOT delivered!`);
+      console.error(`   Preview URL: ${emailResult.previewUrl || 'N/A'}`);
+      console.error(`   This means all real email services (SMTP, Resend, Gmail) failed.`);
+      console.error(`   Please check email service configuration.`);
+    }
 
+    // Return response with detailed email result
     return NextResponse.json({ 
       ok: true, 
       month: label,
@@ -486,7 +512,12 @@ export async function POST(req: Request) {
       totalDays: totalDays.toFixed(1),
       dateRange: { start: startISO, end: endISO },
       recipients: recipients,
-      emailSent: emailResult.success,
+      emailSent: emailResult.success && !emailResult.isTestService, // Only true if sent via real service
+      emailError: emailResult.success ? undefined : (emailResult.error || 'Unknown error'),
+      emailProvider: emailResult.provider || emailResult.fallback || undefined,
+      isTestService: emailResult.isTestService || false,
+      emailWarning: emailResult.warning || undefined,
+      previewUrl: emailResult.previewUrl || undefined,
       manuallyTriggered: true
     });
 

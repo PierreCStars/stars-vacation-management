@@ -93,10 +93,33 @@ export default function AdminSetupClient() {
           type: 'success',
           message: `Monthly summary email sent successfully to ${recipientList}! (${data.validated || 0} validated vacations)`
         });
-      } else {
+      } else if (data.ok && data.isTestService) {
+        // Email was sent via test service (Ethereal) - warn user
+        const recipients = data.recipients || data.recipient || ['compta@stars.mc', 'pierre@stars.mc'];
+        const recipientList = Array.isArray(recipients) ? recipients.join(', ') : recipients;
         setActionMessage({
           type: 'error',
-          message: data.error || 'Email sending failed. Check logs for details.'
+          message: `⚠️ Email sent via TEST SERVICE only. Real emails were NOT delivered to ${recipientList}. All email services failed. Please check email configuration (SMTP, Resend, or Gmail).`
+        });
+        console.error('Email sent via test service:', {
+          warning: data.emailWarning,
+          provider: data.emailProvider,
+          recipients: data.recipients,
+          previewUrl: data.previewUrl
+        });
+      } else {
+        // Email sending failed - show detailed error
+        const errorMsg = data.emailError || data.error || 'Email sending failed';
+        const provider = data.emailProvider ? ` (${data.emailProvider})` : '';
+        setActionMessage({
+          type: 'error',
+          message: `Email sending failed${provider}: ${errorMsg}. Check email service configuration.`
+        });
+        console.error('Email sending failed:', {
+          error: data.emailError,
+          provider: data.emailProvider,
+          recipients: data.recipients,
+          validated: data.validated
         });
       }
       

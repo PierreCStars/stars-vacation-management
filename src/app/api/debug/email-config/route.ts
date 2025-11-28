@@ -30,13 +30,13 @@ export async function GET() {
       GMAIL_APP_PASSWORD: process.env.GMAIL_APP_PASSWORD ? '✅ Set' : '❌ NOT SET',
     },
     analysis: {
-      hasCustomSMTP: !!(process.env.SMTP_HOST && process.env.SMTP_USER && (process.env.SMTP_PASSWORD || process.env.SMTP_PASS)),
-      hasResend: !!process.env.RESEND_API_KEY,
-      hasGmailSMTP: !!(process.env.GMAIL_USER || process.env.SMTP_USER) && (process.env.SMTP_PASSWORD || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD),
+      hasCustomSMTP: !!(process.env.SMTP_HOST?.trim() && process.env.SMTP_USER?.trim() && (process.env.SMTP_PASSWORD?.trim() || process.env.SMTP_PASS?.trim())),
+      hasResend: !!process.env.RESEND_API_KEY?.trim(),
+      hasGmailSMTP: !!(process.env.GMAIL_USER?.trim() || process.env.SMTP_USER?.trim()) && !!(process.env.SMTP_PASSWORD?.trim() || process.env.SMTP_PASS?.trim() || process.env.GMAIL_APP_PASSWORD?.trim()),
       hasAnyProvider: !!(
-        (process.env.SMTP_HOST && process.env.SMTP_USER && (process.env.SMTP_PASSWORD || process.env.SMTP_PASS)) ||
-        process.env.RESEND_API_KEY ||
-        ((process.env.GMAIL_USER || process.env.SMTP_USER) && (process.env.SMTP_PASSWORD || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD))
+        (process.env.SMTP_HOST?.trim() && process.env.SMTP_USER?.trim() && (process.env.SMTP_PASSWORD?.trim() || process.env.SMTP_PASS?.trim())) ||
+        process.env.RESEND_API_KEY?.trim() ||
+        ((process.env.GMAIL_USER?.trim() || process.env.SMTP_USER?.trim()) && (process.env.SMTP_PASSWORD?.trim() || process.env.SMTP_PASS?.trim() || process.env.GMAIL_APP_PASSWORD?.trim()))
       ),
     },
     // Show first few characters of sensitive values (for debugging)

@@ -111,16 +111,34 @@ export default function AdminSetupClient() {
         // Email sending failed - show detailed error
         const errorMsg = data.emailError || data.error || 'Email sending failed';
         const provider = data.emailProvider ? ` (${data.emailProvider})` : '';
+        
+        // Build actionable error message
+        let actionableMessage = `Email sending failed${provider}: ${errorMsg}`;
+        
+        if (data.emailConfigurationMissing) {
+          actionableMessage += '. No email providers configured. Please set up SMTP, Resend, or Gmail credentials in environment variables.';
+        } else if (data.emailServiceErrors && Array.isArray(data.emailServiceErrors) && data.emailServiceErrors.length > 0) {
+          const serviceErrors = data.emailServiceErrors.map((e: any) => `${e.service}: ${e.error}`).join('; ');
+          actionableMessage += `. Service errors: ${serviceErrors}`;
+        } else {
+          actionableMessage += '. Check email service configuration (SMTP, Resend, or Gmail).';
+        }
+        
         setActionMessage({
           type: 'error',
-          message: `Email sending failed${provider}: ${errorMsg}. Check email service configuration.`
+          message: actionableMessage
         });
-        console.error('Email sending failed:', {
-          error: data.emailError,
+        
+        // Log clean error information (avoid dumping prototype chains)
+        const cleanErrorInfo = {
+          error: data.emailError || data.error,
           provider: data.emailProvider,
-          recipients: data.recipients,
-          validated: data.validated
-        });
+          recipients: Array.isArray(data.recipients) ? data.recipients : [data.recipients],
+          validated: data.validated,
+          serviceErrors: data.emailServiceErrors,
+          configurationMissing: data.emailConfigurationMissing
+        };
+        console.error('Email sending failed:', cleanErrorInfo);
       }
       
       setTimeout(() => setActionMessage(null), 5000);

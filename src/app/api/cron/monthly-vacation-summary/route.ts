@@ -293,6 +293,18 @@ export async function GET(req: Request) {
       const provider = 'provider' in emailResult ? emailResult.provider : undefined;
       const fallback = 'fallback' in emailResult ? emailResult.fallback : undefined;
       console.error(`   Provider: ${provider || fallback || 'unknown'}`);
+      
+      // Log detailed error information if available
+      if ('errors' in emailResult && Array.isArray(emailResult.errors)) {
+        console.error('   Service failures:');
+        emailResult.errors.forEach((err: any) => {
+          console.error(`     - ${err.service}: ${err.error}`);
+        });
+      }
+      
+      if ('configurationMissing' in emailResult && emailResult.configurationMissing) {
+        console.error('   ⚠️ No email providers configured in production!');
+      }
     } else if ('isTestService' in emailResult && emailResult.isTestService) {
       console.error(`⚠️ WARNING: Email sent via TEST SERVICE (Ethereal). Real emails were NOT delivered!`);
       const previewUrl = 'previewUrl' in emailResult ? emailResult.previewUrl : undefined;
@@ -300,6 +312,16 @@ export async function GET(req: Request) {
       console.error(`   This means all real email services (SMTP, Resend, Gmail) failed.`);
       console.error(`   Please check email service configuration.`);
     }
+
+    // Serialize error information safely for client
+    const emailErrorInfo = emailResult.success ? undefined : {
+      message: emailResult.error || 'Unknown error',
+      provider: ('provider' in emailResult ? emailResult.provider : undefined) || ('fallback' in emailResult ? emailResult.fallback : undefined),
+      serviceErrors: ('errors' in emailResult && Array.isArray(emailResult.errors)) 
+        ? emailResult.errors.map((err: any) => ({ service: err.service, error: err.error }))
+        : undefined,
+      configurationMissing: 'configurationMissing' in emailResult ? emailResult.configurationMissing : false
+    };
 
     return NextResponse.json({ 
       ok: true, 
@@ -310,8 +332,10 @@ export async function GET(req: Request) {
       dateRange: { start: startISO, end: endISO },
       recipients: recipients,
       emailSent: emailResult.success && !('isTestService' in emailResult && emailResult.isTestService), // Only true if sent via real service
-      emailError: emailResult.success ? undefined : (emailResult.error || 'Unknown error'),
-      emailProvider: ('provider' in emailResult ? emailResult.provider : undefined) || ('fallback' in emailResult ? emailResult.fallback : undefined),
+      emailError: emailErrorInfo?.message,
+      emailProvider: emailErrorInfo?.provider,
+      emailServiceErrors: emailErrorInfo?.serviceErrors,
+      emailConfigurationMissing: emailErrorInfo?.configurationMissing,
       isTestService: 'isTestService' in emailResult ? emailResult.isTestService : false,
       emailWarning: 'warning' in emailResult ? emailResult.warning : undefined,
       previewUrl: 'previewUrl' in emailResult ? emailResult.previewUrl : undefined
@@ -501,6 +525,18 @@ export async function POST(req: Request) {
       const provider = 'provider' in emailResult ? emailResult.provider : undefined;
       const fallback = 'fallback' in emailResult ? emailResult.fallback : undefined;
       console.error(`   Provider: ${provider || fallback || 'unknown'}`);
+      
+      // Log detailed error information if available
+      if ('errors' in emailResult && Array.isArray(emailResult.errors)) {
+        console.error('   Service failures:');
+        emailResult.errors.forEach((err: any) => {
+          console.error(`     - ${err.service}: ${err.error}`);
+        });
+      }
+      
+      if ('configurationMissing' in emailResult && emailResult.configurationMissing) {
+        console.error('   ⚠️ No email providers configured in production!');
+      }
     } else if ('isTestService' in emailResult && emailResult.isTestService) {
       console.error(`⚠️ WARNING: Email sent via TEST SERVICE (Ethereal). Real emails were NOT delivered!`);
       const previewUrl = 'previewUrl' in emailResult ? emailResult.previewUrl : undefined;
@@ -508,6 +544,16 @@ export async function POST(req: Request) {
       console.error(`   This means all real email services (SMTP, Resend, Gmail) failed.`);
       console.error(`   Please check email service configuration.`);
     }
+
+    // Serialize error information safely for client
+    const emailErrorInfo = emailResult.success ? undefined : {
+      message: emailResult.error || 'Unknown error',
+      provider: ('provider' in emailResult ? emailResult.provider : undefined) || ('fallback' in emailResult ? emailResult.fallback : undefined),
+      serviceErrors: ('errors' in emailResult && Array.isArray(emailResult.errors)) 
+        ? emailResult.errors.map((err: any) => ({ service: err.service, error: err.error }))
+        : undefined,
+      configurationMissing: 'configurationMissing' in emailResult ? emailResult.configurationMissing : false
+    };
 
     // Return response with detailed email result
     return NextResponse.json({ 
@@ -519,8 +565,10 @@ export async function POST(req: Request) {
       dateRange: { start: startISO, end: endISO },
       recipients: recipients,
       emailSent: emailResult.success && !('isTestService' in emailResult && emailResult.isTestService), // Only true if sent via real service
-      emailError: emailResult.success ? undefined : (emailResult.error || 'Unknown error'),
-      emailProvider: ('provider' in emailResult ? emailResult.provider : undefined) || ('fallback' in emailResult ? emailResult.fallback : undefined),
+      emailError: emailErrorInfo?.message,
+      emailProvider: emailErrorInfo?.provider,
+      emailServiceErrors: emailErrorInfo?.serviceErrors,
+      emailConfigurationMissing: emailErrorInfo?.configurationMissing,
       isTestService: 'isTestService' in emailResult ? emailResult.isTestService : false,
       emailWarning: 'warning' in emailResult ? emailResult.warning : undefined,
       previewUrl: 'previewUrl' in emailResult ? emailResult.previewUrl : undefined,

@@ -271,8 +271,8 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
 
   // Try Ethereal (test service) as fallback - ONLY in development
   // In production, skip Ethereal as it doesn't send real emails
-  const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
-  if (!isProduction) {
+  const isProductionEnv = process.env.NODE_ENV === 'production' || process.env.VERCEL === '1';
+  if (!isProductionEnv) {
     try {
       const etherealResult = await sendSimpleEmail(to, subject, body);
       if (etherealResult.success) {
@@ -313,13 +313,43 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
   });
   console.log('========================');
 
+  // Serialize errors safely (avoid prototype chains and circular references)
+  const serializedErrors = errors.map(({ service, error }) => {
+    if (error instanceof Error) {
+      return {
+        service,
+        error: error.message,
+        errorType: error.name,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      };
+    }
+    return {
+      service,
+      error: String(error)
+    };
+  });
+
+  // In production, fail loudly if no email providers are configured
+  const hasAnyProvider = !!(
+    (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD) ||
+    process.env.RESEND_API_KEY ||
+    (process.env.GMAIL_USER || process.env.SMTP_USER) && (process.env.SMTP_PASSWORD || process.env.GMAIL_APP_PASSWORD)
+  );
+
+  if (isProductionEnv && !hasAnyProvider) {
+    console.error('🚨 CRITICAL: No email providers configured in production!');
+    console.error('   Please configure at least one of:');
+    console.error('   - SMTP: SMTP_HOST, SMTP_USER, SMTP_PASSWORD');
+    console.error('   - Resend: RESEND_API_KEY');
+    console.error('   - Gmail SMTP: GMAIL_USER (or SMTP_USER) and SMTP_PASSWORD (or GMAIL_APP_PASSWORD)');
+  }
+
   return {
     success: false,
     error: 'All email services failed',
     fallback: 'Logged to console',
-    errors: errors.map(({ service, error }) => ({
-      service,
-      error: error instanceof Error ? error.message : String(error)
-    }))
+    provider: 'Logged to console',
+    errors: serializedErrors,
+    configurationMissing: isProductionEnv && !hasAnyProvider
   };
 } 

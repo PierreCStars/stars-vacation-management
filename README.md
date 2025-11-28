@@ -201,6 +201,103 @@ service cloud.firestore {
 - **Production**: Requires proper user authentication
 - **Security**: Rules are stricter in production (users can only access their own data)
 
+## Email Configuration
+
+The application uses a multi-provider email service with automatic fallbacks. **At least one email provider must be configured in production** for emails to be sent.
+
+### Email Providers
+
+The system tries email providers in this order:
+1. **Custom SMTP** (if configured)
+2. **Resend** (if configured)
+3. **Gmail SMTP** (if configured)
+4. **Ethereal** (test service, only in development)
+
+### Required Environment Variables
+
+Configure at least one of the following options:
+
+#### Option 1: Custom SMTP
+
+```bash
+SMTP_HOST=smtp.example.com
+SMTP_PORT=587
+SMTP_USER=your-email@example.com
+SMTP_PASSWORD=your-app-password
+SMTP_SECURE=false  # true for port 465, false for port 587
+SMTP_FROM=your-email@example.com  # Optional, defaults to "RH Stars" <rh@stars.mc>
+```
+
+#### Option 2: Resend (Recommended)
+
+```bash
+RESEND_API_KEY=re_xxxxxxxxxxxxx
+```
+
+Get your API key from [resend.com](https://resend.com)
+
+#### Option 3: Gmail SMTP
+
+```bash
+GMAIL_USER=your-email@gmail.com
+SMTP_PASSWORD=your-gmail-app-password
+# OR
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-gmail-app-password
+GMAIL_APP_PASSWORD=your-gmail-app-password  # Alternative to SMTP_PASSWORD
+```
+
+**Note**: Gmail requires an [App Password](https://support.google.com/accounts/answer/185833) (not your regular password).
+
+### Email Recipients
+
+Monthly summary emails are sent to:
+- `compta@stars.mc`
+- `pierre@stars.mc`
+
+You can override this by setting:
+```bash
+ACCOUNTING_EMAIL=compta@stars.mc,pierre@stars.mc,other@example.com
+```
+
+### Production Requirements
+
+**⚠️ CRITICAL**: In production, at least one email provider must be configured. If no providers are configured:
+- The system will log errors to the console
+- Emails will NOT be sent
+- The application will fail loudly with clear error messages
+
+### Error Handling
+
+When email sending fails, the system:
+1. Tries each configured provider in order
+2. Logs detailed error messages for each failed provider
+3. Returns actionable error messages indicating which providers failed and why
+4. In production, fails loudly if no providers are configured
+
+### Testing Email Configuration
+
+```bash
+# Test email sending (monthly summary)
+curl -X POST http://localhost:3000/api/cron/monthly-vacation-summary
+
+# Check email service status
+# Look for "📧 Email service configuration check" in server logs
+```
+
+### Troubleshooting
+
+**"All email services failed" error:**
+1. Check server logs for detailed error messages
+2. Verify environment variables are set correctly in Vercel
+3. Ensure credentials are valid (test SMTP connection, verify Resend API key, etc.)
+4. Check that at least one provider is fully configured
+
+**Common issues:**
+- **SMTP**: Wrong port, incorrect credentials, firewall blocking connection
+- **Resend**: Invalid API key, domain not verified
+- **Gmail**: App password not generated, 2FA not enabled
+
 ## Deployment
 
 This project is deployed on Vercel with automatic deployments from the main branch.

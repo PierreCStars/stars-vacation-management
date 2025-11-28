@@ -55,12 +55,13 @@ export async function sendGmailSMTP(to: string[], subject: string, body: string)
     
     // Try different environment variable combinations
     const gmailUser = process.env.GMAIL_USER || process.env.SMTP_USER;
-    const smtpPassword = process.env.SMTP_PASSWORD || process.env.GMAIL_APP_PASSWORD;
+    const smtpPassword = process.env.SMTP_PASSWORD || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD;
     
     if (!gmailUser || !smtpPassword) {
       console.error('❌ Gmail credentials not configured');
       console.error('❌ Gmail User:', gmailUser ? 'Set' : 'NOT SET');
       console.error('❌ SMTP Password:', smtpPassword ? 'Set' : 'NOT SET');
+      console.error('❌ Checked: SMTP_PASSWORD, SMTP_PASS, GMAIL_APP_PASSWORD');
       throw new Error('Gmail credentials not configured');
     }
 

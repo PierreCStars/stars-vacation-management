@@ -286,8 +286,8 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
       }
     } else {
       const missing = [];
-      if (!gmailUser) missing.push('GMAIL_USER or SMTP_USER');
-      if (!smtpPassword) missing.push('SMTP_PASSWORD or GMAIL_APP_PASSWORD');
+      if (!isSet(gmailUser)) missing.push('GMAIL_USER or SMTP_USER');
+      if (!isSet(gmailPassword)) missing.push('SMTP_PASSWORD or SMTP_PASS or GMAIL_APP_PASSWORD');
       const reason = `Missing: ${missing.join(', ')}`;
       console.log(`⚠️ Gmail SMTP skipped (${reason})`);
       skippedServices.push({ service: 'Gmail SMTP', reason });

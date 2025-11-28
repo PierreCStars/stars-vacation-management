@@ -70,7 +70,8 @@ const en = {
     "vacationRequests": "Vacation Requests",
     "administration": "Administration",
     "managementSection": "Management",
-    "analyticsSection": "Analytics"
+    "analyticsSection": "Analytics",
+    "setup": "Set Up"
   },
   "vacations": {
     "title": "Vacation Management",
@@ -213,6 +214,27 @@ const en = {
       "cancel": "Cancel",
       "success": "Vacation created and validated.",
       "error": "Unable to create vacation."
+    },
+    "setup": {
+      "title": "Set Up",
+      "description": "Administrative actions and system configuration",
+      "createVacation": {
+        "title": "Create Vacation",
+        "description": "Create and validate a vacation request for an employee",
+        "button": "Create Vacation"
+      },
+      "syncCalendar": {
+        "title": "Sync Calendar",
+        "description": "Synchronize approved vacation requests with Google Calendar",
+        "button": "Sync to Calendar",
+        "syncing": "Syncing..."
+      },
+      "sendEmail": {
+        "title": "Send Monthly Summary",
+        "description": "Send the current month's validated vacations summary to accounting",
+        "button": "Send Monthly Email",
+        "sending": "Sending..."
+      }
     }
   },
   "emails": {
@@ -343,7 +365,8 @@ const fr = {
     "vacationRequests": "Demandes de congés",
     "administration": "Administration",
     "managementSection": "Gestion",
-    "analyticsSection": "Analyses"
+    "analyticsSection": "Analyses",
+    "setup": "Réglages"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -486,6 +509,27 @@ const fr = {
       "cancel": "Annuler",
       "success": "Congé créé et validé.",
       "error": "Impossible de créer le congé."
+    },
+    "setup": {
+      "title": "Réglages",
+      "description": "Actions administratives et configuration du système",
+      "createVacation": {
+        "title": "Créer un congé",
+        "description": "Créer et valider une demande de congé pour un employé",
+        "button": "Créer un congé"
+      },
+      "syncCalendar": {
+        "title": "Synchroniser le calendrier",
+        "description": "Synchroniser les demandes de congés approuvées avec Google Calendar",
+        "button": "Synchroniser le calendrier",
+        "syncing": "Synchronisation..."
+      },
+      "sendEmail": {
+        "title": "Envoyer le résumé mensuel",
+        "description": "Envoyer le résumé des vacances validées du mois en cours à la comptabilité",
+        "button": "Envoyer l'email mensuel",
+        "sending": "Envoi..."
+      }
     }
   },
   "emails": {
@@ -616,7 +660,8 @@ const it = {
     "vacationRequests": "Richieste di vacanza",
     "administration": "Amministrazione",
     "managementSection": "Gestione",
-    "analyticsSection": "Analisi"
+    "analyticsSection": "Analisi",
+    "setup": "Impostazioni"
   },
   "dashboard": {
     "title": "Dashboard",
@@ -759,6 +804,27 @@ const it = {
       "cancel": "Annulla",
       "success": "Ferie create e confermate.",
       "error": "Impossibile creare le ferie."
+    },
+    "setup": {
+      "title": "Impostazioni",
+      "description": "Azioni amministrative e configurazione del sistema",
+      "createVacation": {
+        "title": "Crea ferie",
+        "description": "Crea e convalida una richiesta di ferie per un dipendente",
+        "button": "Crea ferie"
+      },
+      "syncCalendar": {
+        "title": "Sincronizza calendario",
+        "description": "Sincronizza le richieste di ferie approvate con Google Calendar",
+        "button": "Sincronizza calendario",
+        "syncing": "Sincronizzazione..."
+      },
+      "sendEmail": {
+        "title": "Invia riepilogo mensile",
+        "description": "Invia il riepilogo delle ferie validate del mese corrente alla contabilità",
+        "button": "Invia email mensile",
+        "sending": "Invio..."
+      }
     }
   },
   "emails": {

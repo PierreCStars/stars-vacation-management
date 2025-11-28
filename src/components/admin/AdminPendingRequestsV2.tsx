@@ -7,7 +7,6 @@ import { absoluteUrl } from '@/lib/urls';
 import { isPendingStatus, isReviewedStatus, normalizeVacationStatus } from '@/types/vacation-status';
 import { VacationRequest } from '@/types/vacation';
 import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
-import CreateVacationModal from './CreateVacationModal';
 
 // Helper function to calculate days between dates
 function calculateDays(startDate: string, endDate: string): number {
@@ -29,8 +28,6 @@ export default function AdminPendingRequestsV2() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [actionMessage, setActionMessage] = useState<{type: 'success' | 'error', message: string} | null>(null);
   const [isExporting, setIsExporting] = useState(false);
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
   
   const { data: session } = useSession();
   const t = useTranslations('admin');
@@ -147,62 +144,6 @@ export default function AdminPendingRequestsV2() {
     });
   };
 
-  const handleSyncToCalendar = async () => {
-    if (isSyncing) return;
-    
-    setIsSyncing(true);
-    setActionMessage(null);
-    
-    try {
-      const response = await fetch('/api/sync/approved-requests', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        
-        // Only show warning if there are actual errors
-        if (data.errors && Array.isArray(data.errors) && data.errors.length > 0) {
-          console.warn('Some requests failed to sync:', data.errors);
-          // Show error message with count
-          setActionMessage({
-            type: 'error',
-            message: `Sync completed with ${data.synced || 0} successful, but ${data.errors.length} request(s) failed to sync. Check console for details.`
-          });
-        } else {
-          // Success - no errors
-          setActionMessage({
-            type: 'success',
-            message: data.message || `Successfully synced ${data.synced || 0} vacation requests to Google Calendar!`
-          });
-        }
-      } else {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
-        setActionMessage({
-          type: 'error',
-          message: `Failed to sync: ${errorData.error || errorData.details || 'Unknown error'}`
-        });
-      }
-    } catch (error) {
-      setActionMessage({
-        type: 'error',
-        message: `Error syncing to calendar: ${error instanceof Error ? error.message : 'Unknown error'}`
-      });
-      console.error('Calendar sync error:', error);
-    } finally {
-      setIsSyncing(false);
-      // Auto-hide message after 5 seconds
-      setTimeout(() => setActionMessage(null), 5000);
-      // Refresh the requests list to show updated calendar event IDs
-      setTimeout(() => {
-        fetchVacationRequests();
-      }, 1000);
-    }
-  };
-
   const handleCSVExport = async () => {
     if (isExporting) return;
     
@@ -250,19 +191,6 @@ export default function AdminPendingRequestsV2() {
     }
   };
 
-  const handleVacationCreated = () => {
-    // Show success message
-    setActionMessage({
-      type: 'success',
-      message: 'Vacation created and validated successfully!'
-    });
-    
-    // Auto-hide message after 3 seconds
-    setTimeout(() => setActionMessage(null), 3000);
-    
-    // Refresh the requests list
-    fetchVacationRequests();
-  };
 
   const isProcessing = (id: string) => processingRequests.has(id);
   
@@ -383,34 +311,6 @@ export default function AdminPendingRequestsV2() {
                     )}
                   </div>
                   <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => setShowCreateModal(true)}
-                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                    >
-                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                      </svg>
-                      {t('createVacation.button')}
-                    </button>
-                    <button
-                      onClick={handleSyncToCalendar}
-                      disabled={isSyncing}
-                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {isSyncing ? (
-                        <>
-                          <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
-                          Syncing...
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          Sync to Calendar
-                        </>
-                      )}
-                    </button>
                     <button
                       onClick={handleCSVExport}
                       disabled={isExporting || requests.length === 0}
@@ -589,11 +489,6 @@ export default function AdminPendingRequestsV2() {
               )}
 
               {/* Create Vacation Modal */}
-              <CreateVacationModal
-                isOpen={showCreateModal}
-                onClose={() => setShowCreateModal(false)}
-                onSuccess={handleVacationCreated}
-              />
 
     </div>
   );

@@ -4,6 +4,7 @@ export const revalidate = 0;
 
 import { NextResponse } from "next/server";
 import { firebaseAdmin, isFirebaseAdminAvailable } from "@/lib/firebase-admin";
+import { sendEmailWithFallbacks } from "@/lib/simple-email-service";
 
 type VR = {
   id: string;
@@ -19,11 +20,11 @@ type VR = {
   reviewedAt?: any;
 };
 
-function firstAndLastOfPrevMonth(tz = "Europe/Monaco") {
-  // Compute in local TZ roughly by date arithmetic on UTC; acceptable for monthly ranges.
+function firstAndLastOfCurrentMonth(tz = "Europe/Monaco") {
+  // Compute current month date range
   const now = new Date();
-  const first = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
-  const last = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 0)); // day 0 of current month
+  const first = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+  const last = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() + 1, 0)); // day 0 of next month
   const yyyy = first.getUTCFullYear();
   const mm = String(first.getUTCMonth() + 1).padStart(2, "0");
   const dd1 = "01";
@@ -59,59 +60,67 @@ function toCSV(rows: Record<string, any>[]) {
   return [headers.join(","), ...rows.map(r => headers.map(h => esc(r[h])).join(","))].join("\n");
 }
 
-// Simple email function using environment variables
+// Get accounting email recipient (defaults to compta@stars.mc)
+function getAccountingEmail(): string {
+  return process.env.ACCOUNTING_EMAIL || 'compta@stars.mc';
+}
+
+// Send email to accounting department
 async function sendEmail(subject: string, html: string, csvContent: string, filename: string) {
-  // For now, we'll log the email details since we don't have a mailer configured
-  // In production, you would use nodemailer or similar
-  console.log('📧 Monthly Summary Email would be sent:');
+  const recipient = getAccountingEmail();
+  console.log(`📧 Sending monthly summary email to ${recipient}...`);
   console.log('Subject:', subject);
-  console.log('HTML:', html);
-  console.log('CSV Filename:', filename);
-  console.log('CSV Content Length:', csvContent.length);
   
-  // TODO: Implement actual email sending using your preferred email service
-  // Example with nodemailer:
-  // const transporter = nodemailer.createTransporter({
-  //   host: process.env.SMTP_HOST,
-  //   port: parseInt(process.env.SMTP_PORT || '587'),
-  //   secure: false,
-  //   auth: {
-  //     user: process.env.SMTP_USER,
-  //     pass: process.env.SMTP_PASS
-  //   }
-  // });
+  // Include CSV data in email body as a pre-formatted section
+  const htmlWithCSV = `${html}
+    <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
+    <h3 style="margin: 16px 0 8px;">CSV Data (${filename}):</h3>
+    <pre style="background-color: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto; font-size: 12px; line-height: 1.4;">${csvContent}</pre>
+  `;
   
-  // await transporter.sendMail({
-  //   from: `"Stars Vacation" <${process.env.SMTP_USER}>`,
-  //   to: process.env.ADMIN_EMAILS?.split(',') || ['admin@stars.mc'],
-  //   subject,
-  //   html,
-  //   attachments: [{
-  //     filename,
-  //     content: csvContent,
-  //     contentType: "text/csv"
-  //   }]
-  // });
+  const result = await sendEmailWithFallbacks([recipient], subject, htmlWithCSV);
+  
+  if (result.success) {
+    console.log(`✅ Monthly summary email sent successfully to ${recipient}`);
+  } else {
+    console.error(`❌ Failed to send monthly summary email to ${recipient}:`, result.error);
+  }
+  
+  return result;
+}
+
+// Helper function to check if a vacation overlaps with a date range
+function vacationOverlapsMonth(vacation: VR, monthStart: string, monthEnd: string): boolean {
+  const vacStart = vacation.startDate || "";
+  const vacEnd = vacation.endDate || vacation.startDate || "";
+  
+  // Vacation overlaps if:
+  // - It starts in the month, OR
+  // - It ends in the month, OR
+  // - It spans the entire month (starts before and ends after)
+  return (vacStart >= monthStart && vacStart <= monthEnd) ||
+         (vacEnd >= monthStart && vacEnd <= monthEnd) ||
+         (vacStart <= monthStart && vacEnd >= monthEnd);
 }
 
 export async function GET(req: Request) {
   try {
-    // Only send on the last day of month (Europe/Monaco)
+    // Only send on the 27th of the current month (Europe/Monaco timezone)
     const now = new Date();
     const y = now.getFullYear(), m = now.getMonth();
-    const lastDay = new Date(y, m + 1, 0).getDate();
     
-    if (now.getDate() !== lastDay) {
+    // Check if it's the 27th day of the month
+    if (now.getDate() !== 27) {
       return NextResponse.json({ 
         ok: true, 
         skipped: true, 
-        reason: "Not last day of month",
+        reason: "Not 27th of month - monthly summary runs on the 27th to summarize current month",
         currentDate: now.toISOString(),
-        lastDayOfMonth: lastDay
+        currentDay: now.getDate()
       });
     }
 
-    const { startISO, endISO, label } = firstAndLastOfPrevMonth();
+    const { startISO, endISO, label } = firstAndLastOfCurrentMonth();
     console.log(`📅 Processing monthly summary for ${label} (${startISO} to ${endISO})`);
 
     let all: VR[] = [];
@@ -122,13 +131,14 @@ export async function GET(req: Request) {
         const { db, error } = await firebaseAdmin();
         
         if (db && !error) {
-          // Pull approved/rejected requests whose startDate is in prev month
+          // Pull only approved/validated requests (exclude rejected/denied)
+          // Status can be "approved", "APPROVED", or "validated" depending on the system
           const snap = await db.collection("vacationRequests")
-            .where("status", "in", ["approved", "denied"])
+            .where("status", "in", ["approved", "APPROVED", "validated", "Validated"])
             .get();
 
           all = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
-          console.log(`✅ Fetched ${all.length} approved/rejected requests from Firestore`);
+          console.log(`✅ Fetched ${all.length} approved/validated requests from Firestore`);
         } else {
           console.log('⚠️  Firebase Admin not available - using mock data for monthly summary:', error);
         }
@@ -142,11 +152,9 @@ export async function GET(req: Request) {
 
     // No mock data fallback - Firebase only
 
-    // Filter requests in the date range
-    const inRange = all.filter(r => {
-      const s = r.startDate || "";
-      return s >= startISO && s <= endISO;
-    });
+    // Filter requests that overlap with the current month
+    // Include ALL vacations that were taken in the month (start, end, or span the month)
+    const inRange = all.filter(r => vacationOverlapsMonth(r, startISO, endISO));
 
     console.log(`📊 Found ${inRange.length} requests in range ${startISO} to ${endISO}`);
 
@@ -160,42 +168,320 @@ export async function GET(req: Request) {
       days: resolveDuration(r)
     }));
 
-    const approved = flat.filter(r => r.status === "approved");
-    const rejected = flat.filter(r => r.status === "denied");
+    // Filter only approved/validated vacations (exclude rejected)
+    // Normalize status to handle variations: approved, APPROVED, validated, Validated
+    const approved = flat.filter(r => {
+      const status = (r.status || "").toLowerCase();
+      return status === "approved" || status === "validated";
+    });
     const totalDays = approved.reduce((s, r) => s + Number(r.days || 0), 0);
 
-    // Build email
-    const subject = `📅 Monthly Vacation Summary — ${label} (Approved & Rejected)`;
+    // Format month name for display (e.g., "2025-01" -> "January 2025")
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+    const [year, month] = label.split('-');
+    const monthName = monthNames[parseInt(month) - 1];
+    const displayLabel = `${monthName} ${year}`;
+
+    // Build email with HTML table
+    const subject = `Monthly validated vacations summary – ${displayLabel}`;
+    
+    // Create HTML table for validated vacations
+    let tableRows = '';
+    if (approved.length === 0) {
+      tableRows = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #666;">No validated vacations for this month.</td></tr>';
+    } else {
+      tableRows = approved.map(r => `
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.employee || 'Unknown'}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.company || '—'}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.type || 'Full day'}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.startDate || '—'}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.endDate || r.startDate || '—'}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${r.days || 0}</td>
+        </tr>
+      `).join('');
+    }
+
     const html = `
-      <div style="font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif">
-        <h2 style="margin:0 0 8px">Monthly Vacation Summary — ${label}</h2>
-        <p><b>Approved:</b> ${approved.length} requests — ${totalDays.toFixed(1)} days</p>
-        <p><b>Rejected:</b> ${rejected.length} requests</p>
-        <p>The detailed CSV is attached.</p>
-      </div>
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+          .content { background: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px; }
+          table { width: 100%; border-collapse: collapse; background: white; margin: 16px 0; }
+          th { background: #f5f5f5; padding: 12px 8px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd; }
+          td { padding: 8px; border-bottom: 1px solid #eee; }
+          .summary { background: white; padding: 16px; margin: 16px 0; border-radius: 4px; border-left: 4px solid #667eea; }
+          .footer { text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 style="margin: 0 0 8px;">Monthly Vacation Summary</h1>
+            <p style="margin: 0; opacity: 0.9;">${displayLabel}</p>
+          </div>
+          
+          <div class="content">
+            <div class="summary">
+              <h2 style="margin: 0 0 12px;">Summary</h2>
+              <p style="margin: 4px 0;"><strong>Period:</strong> ${startISO} to ${endISO}</p>
+              <p style="margin: 4px 0;"><strong>Total Validated Vacations:</strong> ${approved.length} requests</p>
+              <p style="margin: 4px 0;"><strong>Total Days:</strong> ${totalDays.toFixed(1)} days</p>
+            </div>
+
+            <h3 style="margin: 24px 0 12px;">Validated Vacations Details</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Employee Name</th>
+                  <th>Company</th>
+                  <th>Type</th>
+                  <th>Start Date</th>
+                  <th>End Date</th>
+                  <th style="text-align: right;">Days</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRows}
+              </tbody>
+            </table>
+
+            <p style="margin-top: 20px; color: #666; font-size: 14px;">
+              <em>This summary includes only validated/approved vacation requests for ${displayLabel}.</em>
+            </p>
+          </div>
+          
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Stars Vacation Management System</p>
+            <p>Generated: ${new Date().toLocaleString('en-US', { timeZone: 'Europe/Monaco' })}</p>
+          </div>
+        </div>
+      </body>
+      </html>
     `;
     
-    const csv = toCSV(flat);
+    const csv = toCSV(approved);
     const filename = `vacations_${label}.csv`;
 
     // Send email
-    await sendEmail(subject, html, csv, filename);
+    const emailResult = await sendEmail(subject, html, csv, filename);
 
     console.log(`✅ Monthly summary processed successfully for ${label}`);
-    console.log(`   - Approved: ${approved.length} requests (${totalDays.toFixed(1)} days)`);
-    console.log(`   - Rejected: ${rejected.length} requests`);
+    console.log(`   - Validated vacations: ${approved.length} requests (${totalDays.toFixed(1)} days)`);
+    console.log(`   - Email sent to: ${getAccountingEmail()}`);
+    console.log(`   - Email result: ${emailResult.success ? 'Success' : 'Failed'}`);
 
     return NextResponse.json({ 
       ok: true, 
-      month: label, 
-      approved: approved.length, 
-      rejected: rejected.length,
+      month: label,
+      displayLabel: displayLabel,
+      validated: approved.length, 
       totalDays: totalDays.toFixed(1),
-      dateRange: { start: startISO, end: endISO }
+      dateRange: { start: startISO, end: endISO },
+      recipient: getAccountingEmail(),
+      emailSent: emailResult.success
     });
 
   } catch (error) {
     console.error('❌ Error in monthly summary API:', error);
+    return NextResponse.json(
+      { error: 'Failed to process monthly summary' },
+      { status: 500 }
+    );
+  }
+}
+
+// POST endpoint for manual trigger (bypasses date check)
+export async function POST(req: Request) {
+  try {
+    // Allow manual triggering without date restriction
+    const { startISO, endISO, label } = firstAndLastOfCurrentMonth();
+    console.log(`📅 Manually processing monthly summary for ${label} (${startISO} to ${endISO})`);
+
+    let all: VR[] = [];
+    
+    // Try to fetch from Firestore first
+    try {
+      if (isFirebaseAdminAvailable()) {
+        const { db, error } = await firebaseAdmin();
+        
+        if (db && !error) {
+          // Pull only approved/validated requests (exclude rejected/denied)
+          const snap = await db.collection("vacationRequests")
+            .where("status", "in", ["approved", "APPROVED", "validated", "Validated"])
+            .get();
+
+          all = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
+          console.log(`✅ Fetched ${all.length} approved/validated requests from Firestore`);
+        } else {
+          console.log('⚠️  Firebase Admin not available:', error);
+          return NextResponse.json(
+            { error: 'Firebase Admin not available' },
+            { status: 500 }
+          );
+        }
+      } else {
+        console.log('⚠️  Firebase Admin not available');
+        return NextResponse.json(
+          { error: 'Firebase Admin not available' },
+          { status: 500 }
+        );
+      }
+    } catch (firebaseError) {
+      console.error('❌ Firebase error:', firebaseError);
+      return NextResponse.json(
+        { error: 'Failed to fetch vacation requests' },
+        { status: 500 }
+      );
+    }
+
+    // Filter requests that overlap with the current month
+    const inRange = all.filter(r => vacationOverlapsMonth(r, startISO, endISO));
+
+    console.log(`📊 Found ${inRange.length} requests overlapping with ${startISO} to ${endISO}`);
+
+    const flat = inRange.map(r => ({
+      employee: r.userName || "Unknown",
+      company: r.company || "—",
+      type: r.type || (r.isHalfDay ? "Half day" : "Full day"),
+      status: r.status || "",
+      startDate: r.startDate || "",
+      endDate: r.endDate || r.startDate || "",
+      days: resolveDuration(r)
+    }));
+
+    // Filter only approved/validated vacations (exclude rejected)
+    const approved = flat.filter(r => {
+      const status = (r.status || "").toLowerCase();
+      return status === "approved" || status === "validated";
+    });
+    const totalDays = approved.reduce((s, r) => s + Number(r.days || 0), 0);
+
+    // Format month name for display
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+    const [year, month] = label.split('-');
+    const monthName = monthNames[parseInt(month) - 1];
+    const displayLabel = `${monthName} ${year}`;
+
+    // Build email with HTML table
+    const subject = `Monthly validated vacations summary – ${displayLabel}`;
+    
+    // Create HTML table for validated vacations
+    let tableRows = '';
+    if (approved.length === 0) {
+      tableRows = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #666;">No validated vacations for this month.</td></tr>';
+    } else {
+      tableRows = approved.map(r => `
+        <tr>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.employee || 'Unknown'}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.company || '—'}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.type || 'Full day'}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.startDate || '—'}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.endDate || r.startDate || '—'}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${r.days || 0}</td>
+        </tr>
+      `).join('');
+    }
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <style>
+          body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 900px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; }
+          .content { background: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px; }
+          table { width: 100%; border-collapse: collapse; background: white; margin: 16px 0; }
+          th { background: #f5f5f5; padding: 12px 8px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd; }
+          td { padding: 8px; border-bottom: 1px solid #eee; }
+          .summary { background: white; padding: 16px; margin: 16px 0; border-radius: 4px; border-left: 4px solid #667eea; }
+          .footer { text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1 style="margin: 0 0 8px;">Monthly Vacation Summary</h1>
+            <p style="margin: 0; opacity: 0.9;">${displayLabel}</p>
+          </div>
+          
+          <div class="content">
+            <div class="summary">
+              <h2 style="margin: 0 0 12px;">Summary</h2>
+              <p style="margin: 4px 0;"><strong>Period:</strong> ${startISO} to ${endISO}</p>
+              <p style="margin: 4px 0;"><strong>Total Validated Vacations:</strong> ${approved.length} requests</p>
+              <p style="margin: 4px 0;"><strong>Total Days:</strong> ${totalDays.toFixed(1)} days</p>
+            </div>
+
+            <h3 style="margin: 24px 0 12px;">Validated Vacations Details</h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>Employee Name</th>
+                  <th>Company</th>
+                  <th>Type</th>
+                  <th>Start Date</th>
+                  <th>End Date</th>
+                  <th style="text-align: right;">Days</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${tableRows}
+              </tbody>
+            </table>
+
+            <p style="margin-top: 20px; color: #666; font-size: 14px;">
+              <em>This summary includes only validated/approved vacation requests for ${displayLabel}.</em>
+            </p>
+          </div>
+          
+          <div class="footer">
+            <p>© ${new Date().getFullYear()} Stars Vacation Management System</p>
+            <p>Generated: ${new Date().toLocaleString('en-US', { timeZone: 'Europe/Monaco' })}</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+    
+    const csv = toCSV(approved);
+    const filename = `vacations_${label}.csv`;
+
+    // Send email
+    const emailResult = await sendEmail(subject, html, csv, filename);
+
+    console.log(`✅ Monthly summary processed successfully for ${label}`);
+    console.log(`   - Validated vacations: ${approved.length} requests (${totalDays.toFixed(1)} days)`);
+    console.log(`   - Email sent to: ${getAccountingEmail()}`);
+    console.log(`   - Email result: ${emailResult.success ? 'Success' : 'Failed'}`);
+
+    return NextResponse.json({ 
+      ok: true, 
+      month: label,
+      displayLabel: displayLabel,
+      validated: approved.length, 
+      totalDays: totalDays.toFixed(1),
+      dateRange: { start: startISO, end: endISO },
+      recipient: getAccountingEmail(),
+      emailSent: emailResult.success,
+      manuallyTriggered: true
+    });
+
+  } catch (error) {
+    console.error('❌ Error in monthly summary API (POST):', error);
     return NextResponse.json(
       { error: 'Failed to process monthly summary' },
       { status: 500 }

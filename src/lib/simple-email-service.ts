@@ -198,19 +198,31 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
   const errors: Array<{ service: string; error: unknown }> = [];
   const skippedServices: Array<{ service: string; reason: string }> = [];
 
+  // Helper to check if env var is actually set (not empty string)
+  const isSet = (val: string | undefined): boolean => {
+    return !!val && val.trim().length > 0;
+  };
+
   // Check environment variables for diagnostics
   console.log('📧 Email service configuration check:');
-  console.log('   - SMTP_HOST:', process.env.SMTP_HOST ? 'Set' : 'NOT SET');
-  console.log('   - SMTP_USER:', process.env.SMTP_USER ? 'Set' : 'NOT SET');
-  console.log('   - SMTP_PASSWORD:', (process.env.SMTP_PASSWORD || process.env.SMTP_PASS) ? 'Set' : 'NOT SET');
-  console.log('   - RESEND_API_KEY:', process.env.RESEND_API_KEY ? 'Set' : 'NOT SET');
-  console.log('   - GMAIL_USER:', process.env.GMAIL_USER ? 'Set' : 'NOT SET');
+  console.log('   - SMTP_HOST:', isSet(process.env.SMTP_HOST) ? `Set (${process.env.SMTP_HOST})` : 'NOT SET');
+  console.log('   - SMTP_USER:', isSet(process.env.SMTP_USER) ? 'Set' : 'NOT SET');
+  console.log('   - SMTP_PASSWORD:', isSet(process.env.SMTP_PASSWORD) ? 'Set' : 'NOT SET');
+  console.log('   - SMTP_PASS:', isSet(process.env.SMTP_PASS) ? 'Set' : 'NOT SET');
+  console.log('   - RESEND_API_KEY:', isSet(process.env.RESEND_API_KEY) ? 'Set' : 'NOT SET');
+  console.log('   - GMAIL_USER:', isSet(process.env.GMAIL_USER) ? 'Set' : 'NOT SET');
+  console.log('   - GMAIL_APP_PASSWORD:', isSet(process.env.GMAIL_APP_PASSWORD) ? 'Set' : 'NOT SET');
   console.log('   - NODE_ENV:', process.env.NODE_ENV || 'not set');
   console.log('   - VERCEL:', process.env.VERCEL || 'not set');
+  console.log('   - VERCEL_ENV:', process.env.VERCEL_ENV || 'not set');
 
   // Try Custom SMTP first
   try {
-    if (process.env.SMTP_HOST && process.env.SMTP_USER && (process.env.SMTP_PASSWORD || process.env.SMTP_PASS)) {
+    const smtpHost = process.env.SMTP_HOST?.trim();
+    const smtpUser = process.env.SMTP_USER?.trim();
+    const smtpPassword = (process.env.SMTP_PASSWORD || process.env.SMTP_PASS)?.trim();
+    
+    if (isSet(smtpHost) && isSet(smtpUser) && isSet(smtpPassword)) {
       const smtpResult = await sendCustomSMTP(to, subject, body);
       if (smtpResult.success) {
         console.log('✅ Email sent successfully via Custom SMTP');
@@ -237,7 +249,7 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
 
   // Try Resend next (most reliable)
   try {
-    if (process.env.RESEND_API_KEY) {
+    if (isSet(process.env.RESEND_API_KEY)) {
       const resendResult = await sendResendEmail(to, subject, body);
       if (resendResult.success) {
         console.log('✅ Email sent successfully via Resend');

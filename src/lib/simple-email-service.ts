@@ -140,14 +140,26 @@ export async function sendCustomSMTP(to: string[], subject: string, body: string
     console.log('📧 Attempting to send email via Custom SMTP...');
     console.log('📧 To:', to);
     console.log('📧 Subject:', subject);
+    
+    // Validate required environment variables
+    if (!process.env.SMTP_HOST) {
+      throw new Error('SMTP_HOST is not configured');
+    }
+    if (!process.env.SMTP_USER) {
+      throw new Error('SMTP_USER is not configured');
+    }
+    if (!process.env.SMTP_PASSWORD) {
+      throw new Error('SMTP_PASSWORD is not configured');
+    }
+    
     console.log('📧 SMTP Host:', process.env.SMTP_HOST);
-    console.log('📧 SMTP Port:', process.env.SMTP_PORT);
-    console.log('📧 SMTP User:', process.env.SMTP_USER ? 'Set' : 'NOT SET');
-    console.log('📧 SMTP From:', process.env.SMTP_FROM ? 'Set' : 'NOT SET');
+    console.log('📧 SMTP Port:', process.env.SMTP_PORT || '587 (default)');
+    console.log('📧 SMTP User:', process.env.SMTP_USER);
+    console.log('📧 SMTP From:', process.env.SMTP_FROM || 'rh@stars.mc (default)');
 
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
-      port: Number(process.env.SMTP_PORT),
+      port: Number(process.env.SMTP_PORT) || 587,
       secure: process.env.SMTP_SECURE === 'true',
       auth: {
         user: process.env.SMTP_USER,
@@ -156,9 +168,9 @@ export async function sendCustomSMTP(to: string[], subject: string, body: string
     });
 
     const info = await transporter.sendMail({
-      from: '"RH Stars" <rh@stars.mc>',
+      from: process.env.SMTP_FROM || '"RH Stars" <rh@stars.mc>',
       replyTo: 'pierre@stars.mc',
-      sender: 'rh@stars.mc',
+      sender: process.env.SMTP_FROM || 'rh@stars.mc',
       to: to.join(', '),
       subject,
       html: body,
@@ -168,7 +180,8 @@ export async function sendCustomSMTP(to: string[], subject: string, body: string
     console.log('📧 Message ID:', info.messageId);
     return { success: true, messageId: info.messageId };
   } catch (_error) {
-    console.error('❌ Custom SMTP failed:', _error);
+    const errorMsg = _error instanceof Error ? _error.message : String(_error);
+    console.error('❌ Custom SMTP failed:', errorMsg);
     return { success: false, error: _error };
   }
 }
@@ -179,37 +192,81 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
   console.log('📧 To:', to);
   console.log('📧 Subject:', subject);
 
+  const errors: Array<{ service: string; error: unknown }> = [];
+
+  // Check environment variables for diagnostics
+  console.log('📧 Email service configuration check:');
+  console.log('   - SMTP_HOST:', process.env.SMTP_HOST ? 'Set' : 'NOT SET');
+  console.log('   - SMTP_USER:', process.env.SMTP_USER ? 'Set' : 'NOT SET');
+  console.log('   - SMTP_PASSWORD:', process.env.SMTP_PASSWORD ? 'Set' : 'NOT SET');
+  console.log('   - RESEND_API_KEY:', process.env.RESEND_API_KEY ? 'Set' : 'NOT SET');
+  console.log('   - GMAIL_USER:', process.env.GMAIL_USER ? 'Set' : 'NOT SET');
+  console.log('   - NODE_ENV:', process.env.NODE_ENV || 'not set');
+  console.log('   - VERCEL:', process.env.VERCEL || 'not set');
+
   // Try Custom SMTP first
   try {
-    const smtpResult = await sendCustomSMTP(to, subject, body);
-    if (smtpResult.success) {
-      console.log('✅ Email sent successfully via Custom SMTP');
-      return smtpResult;
+    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
+      const smtpResult = await sendCustomSMTP(to, subject, body);
+      if (smtpResult.success) {
+        console.log('✅ Email sent successfully via Custom SMTP');
+        return { ...smtpResult, provider: 'Custom SMTP' };
+      } else {
+        const errorMsg = smtpResult.error instanceof Error ? smtpResult.error.message : String(smtpResult.error);
+        console.error('❌ Custom SMTP failed:', errorMsg);
+        errors.push({ service: 'Custom SMTP', error: smtpResult.error });
+      }
+    } else {
+      console.log('⚠️ Custom SMTP skipped (missing configuration)');
     }
-  } catch {
-    console.log('⚠️ Custom SMTP failed, trying Resend...');
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('❌ Custom SMTP exception:', errorMsg);
+    errors.push({ service: 'Custom SMTP', error });
   }
 
   // Try Resend next (most reliable)
   try {
-    const resendResult = await sendResendEmail(to, subject, body);
-    if (resendResult.success) {
-      console.log('✅ Email sent successfully via Resend');
-      return resendResult;
+    if (process.env.RESEND_API_KEY) {
+      const resendResult = await sendResendEmail(to, subject, body);
+      if (resendResult.success) {
+        console.log('✅ Email sent successfully via Resend');
+        return { ...resendResult, provider: 'Resend' };
+      } else {
+        const errorMsg = resendResult.error instanceof Error ? resendResult.error.message : String(resendResult.error);
+        console.error('❌ Resend failed:', errorMsg);
+        errors.push({ service: 'Resend', error: resendResult.error });
+      }
+    } else {
+      console.log('⚠️ Resend skipped (RESEND_API_KEY not set)');
     }
-  } catch {
-    console.log('⚠️ Resend failed, trying Gmail SMTP...');
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('❌ Resend exception:', errorMsg);
+    errors.push({ service: 'Resend', error });
   }
 
   // Try Gmail SMTP
   try {
-    const gmailResult = await sendGmailSMTP(to, subject, body);
-    if (gmailResult.success) {
-      console.log('✅ Email sent successfully via Gmail SMTP');
-      return gmailResult;
+    const gmailUser = process.env.GMAIL_USER || process.env.SMTP_USER;
+    const smtpPassword = process.env.SMTP_PASSWORD || process.env.GMAIL_APP_PASSWORD;
+    if (gmailUser && smtpPassword) {
+      const gmailResult = await sendGmailSMTP(to, subject, body);
+      if (gmailResult.success) {
+        console.log('✅ Email sent successfully via Gmail SMTP');
+        return { ...gmailResult, provider: 'Gmail SMTP' };
+      } else {
+        const errorMsg = gmailResult.error instanceof Error ? gmailResult.error.message : String(gmailResult.error);
+        console.error('❌ Gmail SMTP failed:', errorMsg);
+        errors.push({ service: 'Gmail SMTP', error: gmailResult.error });
+      }
+    } else {
+      console.log('⚠️ Gmail SMTP skipped (missing credentials)');
     }
-  } catch {
-    console.log('⚠️ Gmail SMTP failed, trying Ethereal...');
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.error('❌ Gmail SMTP exception:', errorMsg);
+    errors.push({ service: 'Gmail SMTP', error });
   }
 
   // Try Ethereal (test service) as fallback - ONLY in development
@@ -226,11 +283,18 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
         return {
           ...etherealResult,
           isTestService: true,
-          warning: 'Email sent via test service (Ethereal). Real emails were NOT delivered.'
+          warning: 'Email sent via test service (Ethereal). Real emails were NOT delivered.',
+          provider: 'Ethereal (Test)'
         };
+      } else {
+        const errorMsg = etherealResult.error instanceof Error ? etherealResult.error.message : String(etherealResult.error);
+        console.error('❌ Ethereal failed:', errorMsg);
+        errors.push({ service: 'Ethereal', error: etherealResult.error });
       }
-    } catch {
-      console.log('⚠️ Ethereal failed...');
+    } catch (error) {
+      const errorMsg = error instanceof Error ? error.message : String(error);
+      console.error('❌ Ethereal exception:', errorMsg);
+      errors.push({ service: 'Ethereal', error });
     }
   } else {
     console.log('⚠️ Skipping Ethereal test service in production environment');
@@ -242,11 +306,20 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
   console.log('To:', to.join(', '));
   console.log('Subject:', subject);
   console.log('Body:', body);
+  console.log('=== FAILURE SUMMARY ===');
+  errors.forEach(({ service, error }) => {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    console.log(`   ${service}: ${errorMsg}`);
+  });
   console.log('========================');
 
   return {
     success: false,
     error: 'All email services failed',
-    fallback: 'Logged to console'
+    fallback: 'Logged to console',
+    errors: errors.map(({ service, error }) => ({
+      service,
+      error: error instanceof Error ? error.message : String(error)
+    }))
   };
 } 

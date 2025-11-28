@@ -142,14 +142,17 @@ export async function sendCustomSMTP(to: string[], subject: string, body: string
     console.log('📧 Subject:', subject);
     
     // Validate required environment variables
+    // Support both SMTP_PASSWORD and SMTP_PASS for backward compatibility
+    const smtpPassword = process.env.SMTP_PASSWORD || process.env.SMTP_PASS;
+    
     if (!process.env.SMTP_HOST) {
       throw new Error('SMTP_HOST is not configured');
     }
     if (!process.env.SMTP_USER) {
       throw new Error('SMTP_USER is not configured');
     }
-    if (!process.env.SMTP_PASSWORD) {
-      throw new Error('SMTP_PASSWORD is not configured');
+    if (!smtpPassword) {
+      throw new Error('SMTP_PASSWORD or SMTP_PASS is not configured');
     }
     
     console.log('📧 SMTP Host:', process.env.SMTP_HOST);
@@ -163,7 +166,7 @@ export async function sendCustomSMTP(to: string[], subject: string, body: string
       secure: process.env.SMTP_SECURE === 'true',
       auth: {
         user: process.env.SMTP_USER,
-        pass: process.env.SMTP_PASSWORD,
+        pass: smtpPassword,
       },
     });
 
@@ -199,7 +202,7 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
   console.log('📧 Email service configuration check:');
   console.log('   - SMTP_HOST:', process.env.SMTP_HOST ? 'Set' : 'NOT SET');
   console.log('   - SMTP_USER:', process.env.SMTP_USER ? 'Set' : 'NOT SET');
-  console.log('   - SMTP_PASSWORD:', process.env.SMTP_PASSWORD ? 'Set' : 'NOT SET');
+  console.log('   - SMTP_PASSWORD:', (process.env.SMTP_PASSWORD || process.env.SMTP_PASS) ? 'Set' : 'NOT SET');
   console.log('   - RESEND_API_KEY:', process.env.RESEND_API_KEY ? 'Set' : 'NOT SET');
   console.log('   - GMAIL_USER:', process.env.GMAIL_USER ? 'Set' : 'NOT SET');
   console.log('   - NODE_ENV:', process.env.NODE_ENV || 'not set');
@@ -207,7 +210,7 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
 
   // Try Custom SMTP first
   try {
-    if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD) {
+    if (process.env.SMTP_HOST && process.env.SMTP_USER && (process.env.SMTP_PASSWORD || process.env.SMTP_PASS)) {
       const smtpResult = await sendCustomSMTP(to, subject, body);
       if (smtpResult.success) {
         console.log('✅ Email sent successfully via Custom SMTP');
@@ -221,7 +224,7 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
       const missing = [];
       if (!process.env.SMTP_HOST) missing.push('SMTP_HOST');
       if (!process.env.SMTP_USER) missing.push('SMTP_USER');
-      if (!process.env.SMTP_PASSWORD) missing.push('SMTP_PASSWORD');
+      if (!process.env.SMTP_PASSWORD && !process.env.SMTP_PASS) missing.push('SMTP_PASSWORD or SMTP_PASS');
       const reason = `Missing: ${missing.join(', ')}`;
       console.log(`⚠️ Custom SMTP skipped (${reason})`);
       skippedServices.push({ service: 'Custom SMTP', reason });
@@ -345,17 +348,17 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
 
   // In production, fail loudly if no email providers are configured
   const hasAnyProvider = !!(
-    (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD) ||
+    (process.env.SMTP_HOST && process.env.SMTP_USER && (process.env.SMTP_PASSWORD || process.env.SMTP_PASS)) ||
     process.env.RESEND_API_KEY ||
-    (process.env.GMAIL_USER || process.env.SMTP_USER) && (process.env.SMTP_PASSWORD || process.env.GMAIL_APP_PASSWORD)
+    (process.env.GMAIL_USER || process.env.SMTP_USER) && (process.env.SMTP_PASSWORD || process.env.SMTP_PASS || process.env.GMAIL_APP_PASSWORD)
   );
 
   if (isProductionEnv && !hasAnyProvider) {
     console.error('🚨 CRITICAL: No email providers configured in production!');
     console.error('   Please configure at least one of:');
-    console.error('   - SMTP: SMTP_HOST, SMTP_USER, SMTP_PASSWORD');
+    console.error('   - SMTP: SMTP_HOST, SMTP_USER, SMTP_PASSWORD (or SMTP_PASS)');
     console.error('   - Resend: RESEND_API_KEY');
-    console.error('   - Gmail SMTP: GMAIL_USER (or SMTP_USER) and SMTP_PASSWORD (or GMAIL_APP_PASSWORD)');
+    console.error('   - Gmail SMTP: GMAIL_USER (or SMTP_USER) and SMTP_PASSWORD (or SMTP_PASS or GMAIL_APP_PASSWORD)');
   }
 
   // Build comprehensive error information
@@ -377,7 +380,7 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
       options: [
         {
           provider: 'Custom SMTP',
-          required: ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD'],
+          required: ['SMTP_HOST', 'SMTP_USER', 'SMTP_PASSWORD (or SMTP_PASS)'],
           optional: ['SMTP_PORT', 'SMTP_SECURE', 'SMTP_FROM']
         },
         {
@@ -387,7 +390,7 @@ export async function sendEmailWithFallbacks(to: string[], subject: string, body
         },
         {
           provider: 'Gmail SMTP',
-          required: ['GMAIL_USER (or SMTP_USER)', 'SMTP_PASSWORD (or GMAIL_APP_PASSWORD)'],
+          required: ['GMAIL_USER (or SMTP_USER)', 'SMTP_PASSWORD (or SMTP_PASS or GMAIL_APP_PASSWORD)'],
           optional: []
         }
       ]

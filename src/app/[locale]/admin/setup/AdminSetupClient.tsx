@@ -75,16 +75,30 @@ export default function AdminSetupClient() {
     setActionMessage(null);
     
     try {
+      console.log('📧 Sending POST request to /api/cron/monthly-vacation-summary...');
       const response = await fetch('/api/cron/monthly-vacation-summary', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
       });
       
+      console.log('📧 Response status:', response.status, response.statusText);
+      
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        const errorText = await response.text();
+        console.error('❌ API error response:', errorText);
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch {
+          errorData = { error: errorText || `HTTP ${response.status}: ${response.statusText}` };
+        }
         throw new Error(errorData.error || `Failed to send email: ${response.status}`);
       }
       
       const data = await response.json();
+      console.log('📧 Full API response data:', data);
       
       console.log('📧 Monthly email API response:', {
         ok: data.ok,

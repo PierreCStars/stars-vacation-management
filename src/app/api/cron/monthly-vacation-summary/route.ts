@@ -254,7 +254,38 @@ export async function GET(req: Request) {
     })));
     
     // Sum durations using the safe sum function (preserves fractional values)
+    // CRITICAL: This sums ALL requests, including multiple per employee
     const totalDays = sumDurations(approved.map(r => r.days || 0));
+    
+    // Verification: Calculate per-employee totals to verify multiple requests are summed correctly
+    const employeeTotals = new Map<string, number>();
+    approved.forEach(r => {
+      const emp = r.employee || "Unknown";
+      const currentTotal = employeeTotals.get(emp) || 0;
+      employeeTotals.set(emp, currentTotal + (r.days || 0));
+    });
+    
+    // Log per-employee totals for verification
+    const employeeTotalsArray = Array.from(employeeTotals.entries())
+      .map(([emp, total]) => ({ employee: emp, totalDays: total, requestCount: approvedEmployeeCounts.get(emp) || 0 }))
+      .sort((a, b) => a.employee.localeCompare(b.employee));
+    
+    console.log(`📊 Per-employee totals (GET - verification that multiple requests are summed):`);
+    employeeTotalsArray.forEach(({ employee, totalDays, requestCount }) => {
+      if (requestCount > 1) {
+        console.log(`   ✅ ${employee}: ${totalDays.toFixed(1)} days (from ${requestCount} requests)`);
+      } else {
+        console.log(`   ${employee}: ${totalDays.toFixed(1)} days (${requestCount} request)`);
+      }
+    });
+    
+    // Verify that sum of per-employee totals matches overall total
+    const sumOfEmployeeTotals = sumDurations(Array.from(employeeTotals.values()));
+    if (Math.abs(sumOfEmployeeTotals - totalDays) > 0.01) {
+      console.error(`❌ CRITICAL ERROR: Sum of per-employee totals (${sumOfEmployeeTotals.toFixed(1)}) does not match overall total (${totalDays.toFixed(1)})!`);
+    } else {
+      console.log(`✅ Verification passed: Sum of per-employee totals (${sumOfEmployeeTotals.toFixed(1)}) matches overall total (${totalDays.toFixed(1)})`);
+    }
 
     // Format month name for display (e.g., "2025-01" -> "January 2025")
     const monthNames = [
@@ -557,7 +588,38 @@ export async function POST(req: Request) {
     })));
     
     // Sum durations using the safe sum function (preserves fractional values)
+    // CRITICAL: This sums ALL requests, including multiple per employee
     const totalDays = sumDurations(approved.map(r => r.days || 0));
+    
+    // Verification: Calculate per-employee totals to verify multiple requests are summed correctly
+    const employeeTotals = new Map<string, number>();
+    approved.forEach(r => {
+      const emp = r.employee || "Unknown";
+      const currentTotal = employeeTotals.get(emp) || 0;
+      employeeTotals.set(emp, currentTotal + (r.days || 0));
+    });
+    
+    // Log per-employee totals for verification
+    const employeeTotalsArray = Array.from(employeeTotals.entries())
+      .map(([emp, total]) => ({ employee: emp, totalDays: total, requestCount: approvedEmployeeCounts.get(emp) || 0 }))
+      .sort((a, b) => a.employee.localeCompare(b.employee));
+    
+    console.log(`📊 Per-employee totals (POST - verification that multiple requests are summed):`);
+    employeeTotalsArray.forEach(({ employee, totalDays, requestCount }) => {
+      if (requestCount > 1) {
+        console.log(`   ✅ ${employee}: ${totalDays.toFixed(1)} days (from ${requestCount} requests)`);
+      } else {
+        console.log(`   ${employee}: ${totalDays.toFixed(1)} days (${requestCount} request)`);
+      }
+    });
+    
+    // Verify that sum of per-employee totals matches overall total
+    const sumOfEmployeeTotals = sumDurations(Array.from(employeeTotals.values()));
+    if (Math.abs(sumOfEmployeeTotals - totalDays) > 0.01) {
+      console.error(`❌ CRITICAL ERROR: Sum of per-employee totals (${sumOfEmployeeTotals.toFixed(1)}) does not match overall total (${totalDays.toFixed(1)})!`);
+    } else {
+      console.log(`✅ Verification passed: Sum of per-employee totals (${sumOfEmployeeTotals.toFixed(1)}) matches overall total (${totalDays.toFixed(1)})`);
+    }
 
     // Format month name for display
     const monthNames = [

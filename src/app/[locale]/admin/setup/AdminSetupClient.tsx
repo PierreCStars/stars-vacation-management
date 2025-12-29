@@ -86,6 +86,15 @@ export default function AdminSetupClient() {
       
       const data = await response.json();
       
+      console.log('📧 Monthly email API response:', {
+        ok: data.ok,
+        emailSent: data.emailSent,
+        isTestService: data.isTestService,
+        emailError: data.emailError,
+        validated: data.validated,
+        recipients: data.recipients
+      });
+      
       if (data.ok && data.emailSent) {
         const recipients = data.recipients || data.recipient || ['compta@stars.mc', 'pierre@stars.mc'];
         const recipientList = Array.isArray(recipients) ? recipients.join(', ') : recipients;

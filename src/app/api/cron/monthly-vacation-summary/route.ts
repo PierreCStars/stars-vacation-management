@@ -182,10 +182,27 @@ export async function GET(req: Request) {
 
     // Filter requests that overlap with the current month
     // Include ALL vacations that were taken in the month (start, end, or span the month)
+    // CRITICAL: Use filter() not find() - we need ALL requests, not just one per employee
     const inRange = all.filter(r => vacationOverlapsMonth(r, startISO, endISO));
 
     console.log(`📊 Found ${inRange.length} requests in range ${startISO} to ${endISO}`);
+    
+    // Safeguard: Log employee distribution to verify no deduplication
+    const employeeCounts = new Map<string, number>();
+    inRange.forEach(r => {
+      const emp = r.userName || "Unknown";
+      employeeCounts.set(emp, (employeeCounts.get(emp) || 0) + 1);
+    });
+    console.log(`👥 Employee request counts:`, Object.fromEntries(employeeCounts));
+    const employeesWithMultiple = Array.from(employeeCounts.entries())
+      .filter(([_, count]) => count > 1)
+      .map(([emp, count]) => `${emp}: ${count}`);
+    if (employeesWithMultiple.length > 0) {
+      console.log(`✅ Employees with multiple requests: ${employeesWithMultiple.join(', ')}`);
+    }
 
+    // CRITICAL: Use map() to preserve ALL entries - one row per request
+    // Do NOT use reduce() or Map that would collapse multiple requests per employee
     const flat = inRange.map(r => {
       // Ensure isHalfDay is properly handled (boolean or undefined)
       const isHalfDay = r.isHalfDay === true;
@@ -206,17 +223,34 @@ export async function GET(req: Request) {
 
     // Filter only approved/validated vacations (exclude rejected)
     // Normalize status to handle variations: approved, APPROVED, validated, Validated
+    // CRITICAL: Use filter() to preserve ALL entries - do NOT deduplicate by employee
     const approved = flat.filter(r => {
       const status = (r.status || "").toLowerCase();
       return status === "approved" || status === "validated";
     });
     
     console.log(`✅ Filtered to ${approved.length} approved/validated vacations`);
-    console.log(`📊 Approved vacations details:`, approved.map(r => ({
+    
+    // Safeguard: Verify we still have all requests (no deduplication)
+    const approvedEmployeeCounts = new Map<string, number>();
+    approved.forEach(r => {
+      const emp = r.employee || "Unknown";
+      approvedEmployeeCounts.set(emp, (approvedEmployeeCounts.get(emp) || 0) + 1);
+    });
+    console.log(`👥 Approved employee request counts:`, Object.fromEntries(approvedEmployeeCounts));
+    const approvedWithMultiple = Array.from(approvedEmployeeCounts.entries())
+      .filter(([_, count]) => count > 1)
+      .map(([emp, count]) => `${emp}: ${count}`);
+    if (approvedWithMultiple.length > 0) {
+      console.log(`✅ Approved employees with multiple requests: ${approvedWithMultiple.join(', ')}`);
+    }
+    
+    console.log(`📊 Approved vacations details (ALL entries):`, approved.map(r => ({
       employee: r.employee,
       days: r.days,
       type: r.type,
-      startDate: r.startDate
+      startDate: r.startDate,
+      endDate: r.endDate
     })));
     
     // Sum durations using the safe sum function (preserves fractional values)
@@ -235,10 +269,13 @@ export async function GET(req: Request) {
     const subject = `Monthly validated vacations summary – ${displayLabel}`;
     
     // Create HTML table for validated vacations
+    // CRITICAL: Generate one row per request - do NOT group or deduplicate by employee
     let tableRows = '';
     if (approved.length === 0) {
       tableRows = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #666;">No validated vacations for this month.</td></tr>';
     } else {
+      // Verification: Log row count to ensure all requests are included
+      console.log(`📋 Generating ${approved.length} table rows (POST - one per request, no deduplication)`);
       tableRows = approved.map(r => `
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.employee || 'Unknown'}</td>
@@ -314,8 +351,19 @@ export async function GET(req: Request) {
       </html>
     `;
     
+    // Generate CSV - one row per request (no deduplication)
+    // Verification: CSV row count should match approved.length
+    console.log(`📄 Generating CSV with ${approved.length} rows (one per request)`);
     const csv = toCSV(approved);
     const filename = `vacations_${label}.csv`;
+    
+    // Verify CSV row count matches approved count
+    const csvRowCount = csv.split('\n').length - 1; // Subtract header row
+    if (csvRowCount !== approved.length) {
+      console.error(`⚠️ WARNING: CSV row count (${csvRowCount}) does not match approved count (${approved.length})`);
+    } else {
+      console.log(`✅ CSV row count verified: ${csvRowCount} rows match ${approved.length} approved requests`);
+    }
 
     // Send email
     const emailResult = await sendEmail(subject, html, csv, filename);
@@ -442,7 +490,23 @@ export async function POST(req: Request) {
     const inRange = all.filter(r => vacationOverlapsMonth(r, startISO, endISO));
 
     console.log(`📊 Found ${inRange.length} requests overlapping with ${startISO} to ${endISO}`);
+    
+    // Safeguard: Log employee distribution to verify no deduplication
+    const employeeCounts = new Map<string, number>();
+    inRange.forEach(r => {
+      const emp = r.userName || "Unknown";
+      employeeCounts.set(emp, (employeeCounts.get(emp) || 0) + 1);
+    });
+    console.log(`👥 Employee request counts (POST):`, Object.fromEntries(employeeCounts));
+    const employeesWithMultiple = Array.from(employeeCounts.entries())
+      .filter(([_, count]) => count > 1)
+      .map(([emp, count]) => `${emp}: ${count}`);
+    if (employeesWithMultiple.length > 0) {
+      console.log(`✅ Employees with multiple requests (POST): ${employeesWithMultiple.join(', ')}`);
+    }
 
+    // CRITICAL: Use map() to preserve ALL entries - one row per request
+    // Do NOT use reduce() or Map that would collapse multiple requests per employee
     const flat = inRange.map(r => {
       // Ensure isHalfDay is properly handled (boolean or undefined)
       const isHalfDay = r.isHalfDay === true;
@@ -462,17 +526,34 @@ export async function POST(req: Request) {
     });
 
     // Filter only approved/validated vacations (exclude rejected)
+    // CRITICAL: Use filter() to preserve ALL entries - do NOT deduplicate by employee
     const approved = flat.filter(r => {
       const status = (r.status || "").toLowerCase();
       return status === "approved" || status === "validated";
     });
     
     console.log(`✅ Filtered to ${approved.length} approved/validated vacations (POST)`);
-    console.log(`📊 Approved vacations details (POST):`, approved.map(r => ({
+    
+    // Safeguard: Verify we still have all requests (no deduplication)
+    const approvedEmployeeCounts = new Map<string, number>();
+    approved.forEach(r => {
+      const emp = r.employee || "Unknown";
+      approvedEmployeeCounts.set(emp, (approvedEmployeeCounts.get(emp) || 0) + 1);
+    });
+    console.log(`👥 Approved employee request counts (POST):`, Object.fromEntries(approvedEmployeeCounts));
+    const approvedWithMultiple = Array.from(approvedEmployeeCounts.entries())
+      .filter(([_, count]) => count > 1)
+      .map(([emp, count]) => `${emp}: ${count}`);
+    if (approvedWithMultiple.length > 0) {
+      console.log(`✅ Approved employees with multiple requests (POST): ${approvedWithMultiple.join(', ')}`);
+    }
+    
+    console.log(`📊 Approved vacations details (POST - ALL entries):`, approved.map(r => ({
       employee: r.employee,
       days: r.days,
       type: r.type,
-      startDate: r.startDate
+      startDate: r.startDate,
+      endDate: r.endDate
     })));
     
     // Sum durations using the safe sum function (preserves fractional values)
@@ -491,10 +572,13 @@ export async function POST(req: Request) {
     const subject = `Monthly validated vacations summary – ${displayLabel}`;
     
     // Create HTML table for validated vacations
+    // CRITICAL: Generate one row per request - do NOT group or deduplicate by employee
     let tableRows = '';
     if (approved.length === 0) {
       tableRows = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #666;">No validated vacations for this month.</td></tr>';
     } else {
+      // Verification: Log row count to ensure all requests are included
+      console.log(`📋 Generating ${approved.length} table rows (POST - one per request, no deduplication)`);
       tableRows = approved.map(r => `
         <tr>
           <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.employee || 'Unknown'}</td>
@@ -570,8 +654,19 @@ export async function POST(req: Request) {
       </html>
     `;
     
+    // Generate CSV - one row per request (no deduplication)
+    // Verification: CSV row count should match approved.length
+    console.log(`📄 Generating CSV with ${approved.length} rows (one per request)`);
     const csv = toCSV(approved);
     const filename = `vacations_${label}.csv`;
+    
+    // Verify CSV row count matches approved count
+    const csvRowCount = csv.split('\n').length - 1; // Subtract header row
+    if (csvRowCount !== approved.length) {
+      console.error(`⚠️ WARNING: CSV row count (${csvRowCount}) does not match approved count (${approved.length})`);
+    } else {
+      console.log(`✅ CSV row count verified: ${csvRowCount} rows match ${approved.length} approved requests`);
+    }
 
     // Send email
     const emailResult = await sendEmail(subject, html, csv, filename);

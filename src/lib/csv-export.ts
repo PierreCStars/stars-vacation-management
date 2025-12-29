@@ -114,6 +114,7 @@ export async function getReviewedRequestsForMonth(year: number, month: number): 
     
     // Filter for approved/validated requests that overlap with the specified month
     // Use vacation date range (not reviewedAt date) to match monthly summary logic
+    // CRITICAL: Use filter() to preserve ALL entries - do NOT deduplicate by employee
     const reviewedRequests = allRequests.filter((request: any) => {
       // Only include approved/validated requests (exclude pending/rejected)
       const status = (request.status || "").toLowerCase();
@@ -127,6 +128,22 @@ export async function getReviewedRequestsForMonth(year: number, month: number): 
 
     console.log(`✅ Found ${reviewedRequests.length} reviewed requests for ${year}-${month.toString().padStart(2, '0')} (filtered by vacation date range)`);
     
+    // Safeguard: Log employee distribution to verify no deduplication
+    const employeeCounts = new Map<string, number>();
+    reviewedRequests.forEach((r: any) => {
+      const emp = r.userName || "Unknown";
+      employeeCounts.set(emp, (employeeCounts.get(emp) || 0) + 1);
+    });
+    console.log(`👥 CSV Employee request counts:`, Object.fromEntries(employeeCounts));
+    const employeesWithMultiple = Array.from(employeeCounts.entries())
+      .filter(([_, count]) => count > 1)
+      .map(([emp, count]) => `${emp}: ${count}`);
+    if (employeesWithMultiple.length > 0) {
+      console.log(`✅ CSV Employees with multiple requests: ${employeesWithMultiple.join(', ')}`);
+    }
+    
+    // CRITICAL: Use map() to preserve ALL entries - one row per request
+    // Do NOT use reduce() or Map that would collapse multiple requests per employee
     return reviewedRequests.map((request: any) => ({
       id: request.id || '',
       userId: request.userId,

@@ -205,12 +205,18 @@ export default function AdminSetupClient() {
       setTimeout(() => setActionMessage(null), 5000);
       
     } catch (error) {
-      console.error('Send monthly email error:', error);
+      console.error('❌ Send monthly email error:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      console.error('❌ Error details:', {
+        message: errorMessage,
+        stack: error instanceof Error ? error.stack : undefined,
+        error: error
+      });
       setActionMessage({
         type: 'error',
-        message: `Failed to send monthly email: ${error instanceof Error ? error.message : 'Unknown error'}`
+        message: `Failed to send monthly email: ${errorMessage}. Check browser console and server logs for details.`
       });
-      setTimeout(() => setActionMessage(null), 5000);
+      setTimeout(() => setActionMessage(null), 10000); // Show error longer
     } finally {
       setIsSendingMonthlyEmail(false);
     }

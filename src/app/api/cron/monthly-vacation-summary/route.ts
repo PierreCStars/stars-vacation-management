@@ -740,8 +740,15 @@ export async function POST(req: Request) {
 
   } catch (error) {
     console.error('❌ Error in monthly summary API (POST):', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error('❌ Error details:', { message: errorMessage, stack: errorStack });
     return NextResponse.json(
-      { error: 'Failed to process monthly summary' },
+      { 
+        error: 'Failed to process monthly summary',
+        details: errorMessage,
+        ok: false
+      },
       { status: 500 }
     );
   }

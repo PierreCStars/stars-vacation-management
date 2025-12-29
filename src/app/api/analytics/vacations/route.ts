@@ -5,6 +5,7 @@ export const revalidate = 0;
 import { NextResponse } from "next/server";
 import { getVacationRequests } from "@/lib/analytics/data";
 import { normalizeVacationStatus, normalizeVacationType } from "@/lib/normalize-vacation-fields";
+import { calculateVacationDuration, sumDurations } from "@/lib/duration-calculator";
 
 type VR = {
   id: string;
@@ -29,18 +30,20 @@ type VR = {
   googleEventId?: string;
 };
 
-function inclusiveDays(startISO?: string, endISO?: string) {
-  if (!startISO) return 0;
-  const s = new Date(startISO);
-  const e = new Date(endISO || startISO);
-  const ms = e.getTime() - s.getTime();
-  return Math.floor(ms / (24*3600*1000)) + 1;
-}
-
-function resolveDuration(v: VR) {
-  if (typeof v.durationDays === "number") return v.durationDays;
-  if (v.isHalfDay) return 0.5;
-  return inclusiveDays(v.startDate, v.endDate);
+/**
+ * Resolve vacation duration using the single source of truth
+ * 
+ * CRITICAL: This function uses calculateVacationDuration which preserves
+ * fractional values (0.5, 1.5, etc.) and never rounds or truncates.
+ */
+function resolveDuration(v: VR): number {
+  return calculateVacationDuration({
+    durationDays: v.durationDays,
+    isHalfDay: v.isHalfDay,
+    halfDayType: v.halfDayType,
+    startDate: v.startDate,
+    endDate: v.endDate
+  });
 }
 
 export async function GET(req: Request) {

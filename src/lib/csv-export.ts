@@ -1,4 +1,5 @@
 import { getAllVacationRequests } from './firebase';
+import { calculateVacationDuration, formatDuration } from './duration-calculator';
 
 export interface CSVRow {
   id: string;
@@ -20,25 +21,20 @@ export interface CSVRow {
   isHalfDay?: boolean;    // Add half-day flag
 }
 
-// Helper function to calculate duration (supports half-days)
+/**
+ * Calculate duration using the single source of truth
+ * 
+ * CRITICAL: This function uses calculateVacationDuration which preserves
+ * fractional values (0.5, 1.5, etc.) and never rounds or truncates.
+ */
 function calculateDuration(request: any): number {
-  // Check durationDays first (explicit duration) - include 0.5 for half-days
-  if (typeof request.durationDays === "number" && request.durationDays > 0) {
-    return request.durationDays;
-  }
-  // Check isHalfDay
-  if (request.isHalfDay === true) {
-    return 0.5;
-  }
-  // Fall back to calculating from dates
-  if (request.startDate) {
-    const start = new Date(request.startDate);
-    const end = new Date(request.endDate || request.startDate);
-    const ms = end.getTime() - start.getTime();
-    const days = Math.floor(ms / (24 * 3600 * 1000)) + 1;
-    return days > 0 ? days : (request.isHalfDay === true ? 0.5 : 0);
-  }
-  return 0;
+  return calculateVacationDuration({
+    durationDays: request.durationDays,
+    isHalfDay: request.isHalfDay,
+    halfDayType: request.halfDayType,
+    startDate: request.startDate,
+    endDate: request.endDate
+  });
 }
 
 export function generateCSVContent(requests: CSVRow[]): string {
@@ -74,7 +70,7 @@ export function generateCSVContent(requests: CSVRow[]): string {
       `"${request.userName.replace(/"/g, '""')}"`, // Escape quotes in names
       request.startDate,
       request.endDate,
-      duration.toString(), // Include duration (supports 0.5 for half-days)
+      duration.toString(), // Include duration (preserves 0.5, 1.5, etc. - no rounding)
       `"${(request.reason || '').replace(/"/g, '""')}"`, // Escape quotes in reasons
       request.company,
       request.type,

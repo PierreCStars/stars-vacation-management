@@ -9,6 +9,7 @@
 
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { normalizeVacationStatus, normalizeVacationType } from '@/lib/normalize-vacation-fields';
+import { calculateVacationDuration, sumDurations } from '@/lib/duration-calculator';
 
 export interface VacationRequest {
   id: string;

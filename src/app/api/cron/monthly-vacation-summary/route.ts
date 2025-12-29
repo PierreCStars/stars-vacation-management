@@ -5,6 +5,7 @@ export const revalidate = 0;
 import { NextResponse } from "next/server";
 import { firebaseAdmin, isFirebaseAdminAvailable } from "@/lib/firebase-admin";
 import { sendEmailWithFallbacks } from "@/lib/simple-email-service";
+import { calculateVacationDuration, sumDurations, formatDuration, validateVacationDuration } from "@/lib/duration-calculator";
 
 type VR = {
   id: string;
@@ -12,7 +13,8 @@ type VR = {
   company?: string; 
   type?: string;
   status?: string;
-  isHalfDay?: boolean; 
+  isHalfDay?: boolean;
+  halfDayType?: 'morning' | 'afternoon' | null;
   durationDays?: number;
   startDate?: string; 
   endDate?: string;
@@ -36,31 +38,36 @@ function firstAndLastOfCurrentMonth(tz = "Europe/Monaco") {
   };
 }
 
-function inclusiveDays(startISO?: string, endISO?: string) {
-  if (!startISO) return 0;
-  const s = new Date(startISO);
-  const e = new Date(endISO || startISO);
-  const ms = e.getTime() - s.getTime();
-  return Math.floor(ms / (24*3600*1000)) + 1;
-}
-
-function resolveDuration(v: VR) {
-  // Check durationDays first (explicit duration) - include 0.5 for half-days
-  if (typeof v.durationDays === "number") {
-    // Accept any positive number including 0.5
-    if (v.durationDays > 0) {
-      return v.durationDays;
+/**
+ * Resolve vacation duration using the single source of truth
+ * 
+ * CRITICAL: This function uses calculateVacationDuration which preserves
+ * fractional values (0.5, 1.5, etc.) and never rounds or truncates.
+ */
+function resolveDuration(v: VR): number {
+  const duration = calculateVacationDuration({
+    durationDays: v.durationDays,
+    isHalfDay: v.isHalfDay,
+    halfDayType: v.halfDayType,
+    startDate: v.startDate,
+    endDate: v.endDate
+  });
+  
+  // Safeguard: Log warning if validated vacation has 0 days (should not happen)
+  if (duration <= 0) {
+    const status = (v.status || "").toLowerCase();
+    if (status === "approved" || status === "validated") {
+      console.error(`⚠️ WARNING: Validated vacation ${v.id || 'unknown'} has 0 days duration!`, {
+        durationDays: v.durationDays,
+        isHalfDay: v.isHalfDay,
+        startDate: v.startDate,
+        endDate: v.endDate,
+        status: v.status
+      });
     }
-    // If durationDays is 0 or negative, fall through to check isHalfDay
   }
-  // Check isHalfDay (handle boolean true)
-  if (v.isHalfDay === true) {
-    return 0.5;
-  }
-  // Fall back to calculating from dates
-  const calculated = inclusiveDays(v.startDate, v.endDate);
-  // Return calculated value (will be at least 1 for valid date ranges)
-  return calculated;
+  
+  return duration;
 }
 
 function toCSV(rows: Record<string, any>[]) {
@@ -212,7 +219,8 @@ export async function GET(req: Request) {
       startDate: r.startDate
     })));
     
-    const totalDays = approved.reduce((s, r) => s + Number(r.days || 0), 0);
+    // Sum durations using the safe sum function (preserves fractional values)
+    const totalDays = sumDurations(approved.map(r => r.days || 0));
 
     // Format month name for display (e.g., "2025-01" -> "January 2025")
     const monthNames = [
@@ -238,7 +246,7 @@ export async function GET(req: Request) {
           <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.type || 'Full day'}</td>
           <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.startDate || '—'}</td>
           <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.endDate || r.startDate || '—'}</td>
-          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${r.days || 0}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatDuration(Number(r.days || 0))}</td>
         </tr>
       `).join('');
     }
@@ -467,7 +475,8 @@ export async function POST(req: Request) {
       startDate: r.startDate
     })));
     
-    const totalDays = approved.reduce((s, r) => s + Number(r.days || 0), 0);
+    // Sum durations using the safe sum function (preserves fractional values)
+    const totalDays = sumDurations(approved.map(r => r.days || 0));
 
     // Format month name for display
     const monthNames = [
@@ -493,7 +502,7 @@ export async function POST(req: Request) {
           <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.type || 'Full day'}</td>
           <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.startDate || '—'}</td>
           <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.endDate || r.startDate || '—'}</td>
-          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${r.days || 0}</td>
+          <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatDuration(Number(r.days || 0))}</td>
         </tr>
       `).join('');
     }

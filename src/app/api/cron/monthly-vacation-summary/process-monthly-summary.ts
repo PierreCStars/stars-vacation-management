@@ -84,8 +84,33 @@ function generateHTML(approved: VacationRow[], range: MonthRange, totalDays: num
   if (approved.length === 0) {
     tableRows = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #666;">No validated vacations for this month.</td></tr>';
   } else {
+    // CRITICAL: Log all approved vacations to verify no deduplication
     console.log(`📋 Generating ${approved.length} table rows (one per request, no deduplication)`);
-    tableRows = approved.map(r => `
+    console.log(`📋 All approved vacations being included in HTML table:`, approved.map(r => ({
+      employee: r.employee,
+      startDate: r.startDate,
+      endDate: r.endDate,
+      days: r.days,
+      id: r.id
+    })));
+    
+    // Verify employee distribution
+    const employeeCounts = new Map<string, number>();
+    approved.forEach(r => {
+      const emp = r.employee || "Unknown";
+      employeeCounts.set(emp, (employeeCounts.get(emp) || 0) + 1);
+    });
+    const employeesWithMultiple = Array.from(employeeCounts.entries())
+      .filter(([_, count]) => count > 1)
+      .map(([emp, count]) => `${emp}: ${count} requests`);
+    if (employeesWithMultiple.length > 0) {
+      console.log(`📋 HTML Table: Employees with multiple requests: ${employeesWithMultiple.join(', ')}`);
+    }
+    
+    // CRITICAL: Use map() to create one row per vacation - NO deduplication
+    tableRows = approved.map((r, index) => {
+      console.log(`📋 HTML Row ${index + 1}: ${r.employee}, ${r.startDate} to ${r.endDate}, ${r.days} days`);
+      return `
       <tr>
         <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.employee || 'Unknown'}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.company || '—'}</td>
@@ -94,7 +119,18 @@ function generateHTML(approved: VacationRow[], range: MonthRange, totalDays: num
         <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.endDate || r.startDate || '—'}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatDuration(Number(r.days || 0))}</td>
       </tr>
-    `).join('');
+    `;
+    }).join('');
+    
+    console.log(`📋 Generated ${approved.length} HTML table rows (should match approved.length)`);
+    
+    // CRITICAL: Verify the HTML actually contains all rows by counting <tr> tags
+    const rowCountInHTML = (tableRows.match(/<tr>/g) || []).length;
+    if (rowCountInHTML !== approved.length) {
+      console.error(`❌ CRITICAL ERROR: HTML table has ${rowCountInHTML} rows but approved.length is ${approved.length}! Data loss in HTML generation!`);
+    } else {
+      console.log(`✅ Verified: HTML table contains ${rowCountInHTML} rows matching ${approved.length} approved vacations`);
+    }
   }
 
   return `
@@ -192,6 +228,30 @@ export async function processMonthlySummary(manuallyTriggered = false): Promise<
   
   // Calculate totals (includes per-employee verification)
   const { totalDays } = calculateTotals(approved);
+
+  // CRITICAL: Log approved vacations before generating HTML to verify no deduplication
+  console.log(`📧 About to generate HTML email with ${approved.length} approved vacations`);
+  console.log(`📧 Approved vacations breakdown:`, approved.map(r => ({
+    employee: r.employee,
+    startDate: r.startDate,
+    endDate: r.endDate,
+    days: r.days,
+    id: r.id
+  })));
+  
+  // Verify employee distribution one more time
+  const employeeCountsBeforeHTML = new Map<string, number>();
+  approved.forEach(r => {
+    const emp = r.employee || "Unknown";
+    employeeCountsBeforeHTML.set(emp, (employeeCountsBeforeHTML.get(emp) || 0) + 1);
+  });
+  console.log(`📧 Employee request counts before HTML generation:`, Object.fromEntries(employeeCountsBeforeHTML));
+  const employeesWithMultipleBeforeHTML = Array.from(employeeCountsBeforeHTML.entries())
+    .filter(([_, count]) => count > 1)
+    .map(([emp, count]) => `${emp}: ${count}`);
+  if (employeesWithMultipleBeforeHTML.length > 0) {
+    console.log(`📧 Employees with multiple requests before HTML: ${employeesWithMultipleBeforeHTML.join(', ')}`);
+  }
 
   // Generate email
   const subject = `Monthly validated vacations summary – ${range.displayLabel}`;

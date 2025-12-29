@@ -49,9 +49,9 @@ function resolveDuration(v: VR) {
   if (typeof v.durationDays === "number" && v.durationDays > 0) {
     return v.durationDays;
   }
-  // Check isHalfDay (could be boolean true, string "true", or truthy value)
-  const isHalfDay = v.isHalfDay === true || v.isHalfDay === "true" || String(v.isHalfDay).toLowerCase() === "true";
-  if (isHalfDay) {
+  // Check isHalfDay (handle boolean true or truthy value)
+  // Note: Firestore might store boolean, but we check for truthy to be safe
+  if (v.isHalfDay === true) {
     return 0.5;
   }
   // Fall back to calculating from dates
@@ -175,11 +175,11 @@ export async function GET(req: Request) {
     console.log(`📊 Found ${inRange.length} requests in range ${startISO} to ${endISO}`);
 
     const flat = inRange.map(r => {
-      // Ensure isHalfDay is properly handled (could be boolean, string, or undefined)
-      const isHalfDay = r.isHalfDay === true || String(r.isHalfDay).toLowerCase() === "true";
+      // Ensure isHalfDay is properly handled (boolean or undefined)
+      const isHalfDay = r.isHalfDay === true;
       const duration = resolveDuration(r);
       
-      console.log(`📋 Processing vacation: ${r.userName}, isHalfDay: ${r.isHalfDay} (parsed: ${isHalfDay}), durationDays: ${r.durationDays}, resolved duration: ${duration}, status: ${r.status}`);
+      console.log(`📋 Processing vacation: ${r.userName}, isHalfDay: ${r.isHalfDay}, durationDays: ${r.durationDays}, resolved duration: ${duration}, status: ${r.status}`);
       
       return {
         employee: r.userName || "Unknown",
@@ -431,11 +431,11 @@ export async function POST(req: Request) {
     console.log(`📊 Found ${inRange.length} requests overlapping with ${startISO} to ${endISO}`);
 
     const flat = inRange.map(r => {
-      // Ensure isHalfDay is properly handled (could be boolean, string, or undefined)
-      const isHalfDay = r.isHalfDay === true || String(r.isHalfDay).toLowerCase() === "true";
+      // Ensure isHalfDay is properly handled (boolean or undefined)
+      const isHalfDay = r.isHalfDay === true;
       const duration = resolveDuration(r);
       
-      console.log(`📋 Processing vacation (POST): ${r.userName}, isHalfDay: ${r.isHalfDay} (parsed: ${isHalfDay}), durationDays: ${r.durationDays}, resolved duration: ${duration}, status: ${r.status}`);
+      console.log(`📋 Processing vacation (POST): ${r.userName}, isHalfDay: ${r.isHalfDay}, durationDays: ${r.durationDays}, resolved duration: ${duration}, status: ${r.status}`);
       
       return {
         employee: r.userName || "Unknown",

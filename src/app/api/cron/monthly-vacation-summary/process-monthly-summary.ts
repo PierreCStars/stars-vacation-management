@@ -108,13 +108,15 @@ function generateHTML(approved: VacationRow[], range: MonthRange, totalDays: num
     }
     
     // CRITICAL: Use map() to create one row per vacation - NO deduplication
+    // Add a unique data attribute to each row to help debug if rows are being collapsed
     tableRows = approved.map((r, index) => {
-      console.log(`📋 HTML Row ${index + 1}: ${r.employee}, ${r.startDate} to ${r.endDate}, ${r.days} days`);
+      const uniqueId = r.id || `row-${index}`;
+      console.log(`📋 HTML Row ${index + 1}/${approved.length}: ${r.employee}, ${r.startDate} to ${r.endDate}, ${r.days} days, id: ${uniqueId}`);
       return `
-      <tr>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.employee || 'Unknown'}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.company || '—'}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.type || 'Full day'}</td>
+      <tr data-vacation-id="${uniqueId}" data-employee="${(r.employee || 'Unknown').replace(/"/g, '&quot;')}" data-index="${index}">
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">${(r.employee || 'Unknown').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">${(r.company || '—').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>
+        <td style="padding: 8px; border-bottom: 1px solid #eee;">${(r.type || 'Full day').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.startDate || '—'}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.endDate || r.startDate || '—'}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatDuration(Number(r.days || 0))}</td>
@@ -130,6 +132,29 @@ function generateHTML(approved: VacationRow[], range: MonthRange, totalDays: num
       console.error(`❌ CRITICAL ERROR: HTML table has ${rowCountInHTML} rows but approved.length is ${approved.length}! Data loss in HTML generation!`);
     } else {
       console.log(`✅ Verified: HTML table contains ${rowCountInHTML} rows matching ${approved.length} approved vacations`);
+    }
+    
+    // CRITICAL: Log a sample of the HTML to verify structure
+    const sampleRows = tableRows.split('</tr>').slice(0, 3).map(r => r.substring(0, 200) + '...');
+    console.log(`📋 Sample HTML rows (first 3, truncated):`, sampleRows);
+    
+    // CRITICAL: Count unique employee names in the HTML to detect if email client is collapsing
+    const employeeNamesInHTML = new Set<string>();
+    const employeeMatches = tableRows.match(/data-employee="([^"]+)"/g) || [];
+    employeeMatches.forEach(match => {
+      const emp = match.match(/data-employee="([^"]+)"/)?.[1];
+      if (emp) employeeNamesInHTML.add(emp);
+    });
+    console.log(`📋 Unique employee names in HTML: ${employeeNamesInHTML.size} (should be <= ${approved.length})`);
+    if (employeeNamesInHTML.size < approved.length) {
+      console.log(`📋 Employee names in HTML:`, Array.from(employeeNamesInHTML));
+      // Count how many rows per employee
+      const rowsPerEmployee = new Map<string, number>();
+      employeeMatches.forEach(match => {
+        const emp = match.match(/data-employee="([^"]+)"/)?.[1];
+        if (emp) rowsPerEmployee.set(emp, (rowsPerEmployee.get(emp) || 0) + 1);
+      });
+      console.log(`📋 Rows per employee in HTML:`, Object.fromEntries(rowsPerEmployee));
     }
   }
 

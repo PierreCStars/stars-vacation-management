@@ -33,6 +33,7 @@ export interface MonthlySummaryResult {
   isTestService?: boolean;
   emailWarning?: string;
   previewUrl?: string;
+  messageId?: string;
   manuallyTriggered?: boolean;
 }
 
@@ -217,6 +218,14 @@ export async function processMonthlySummary(manuallyTriggered = false): Promise<
   console.log(`   - Validated vacations: ${approved.length} requests (${totalDays.toFixed(1)} days)`);
   console.log(`   - Email sent to: ${recipients.join(', ')}`);
   console.log(`   - Email result: ${emailResult.success ? 'Success' : 'Failed'}`);
+  console.log(`   - Email provider: ${'provider' in emailResult ? emailResult.provider : 'unknown'}`);
+  console.log(`   - Is test service: ${'isTestService' in emailResult ? emailResult.isTestService : false}`);
+  if ('messageId' in emailResult && emailResult.messageId) {
+    console.log(`   - Message ID: ${emailResult.messageId}`);
+  }
+  if ('previewUrl' in emailResult && emailResult.previewUrl) {
+    console.log(`   - Preview URL: ${emailResult.previewUrl}`);
+  }
   
   if (!emailResult.success) {
     console.error(`❌ Email sending failed:`, emailResult.error);
@@ -256,6 +265,11 @@ export async function processMonthlySummary(manuallyTriggered = false): Promise<
     configurationHelp: 'configurationHelp' in emailResult ? emailResult.configurationHelp : undefined
   };
 
+  // Get provider info (for both success and failure cases)
+  const provider = ('provider' in emailResult ? emailResult.provider : undefined) || 
+                   ('fallback' in emailResult ? emailResult.fallback : undefined) ||
+                   'unknown';
+
   return {
     ok: true,
     month: range.label,
@@ -266,7 +280,7 @@ export async function processMonthlySummary(manuallyTriggered = false): Promise<
     recipients: recipients,
     emailSent: emailResult.success && !('isTestService' in emailResult && emailResult.isTestService),
     emailError: emailErrorInfo?.message,
-    emailProvider: emailErrorInfo?.provider,
+    emailProvider: emailErrorInfo?.provider || (emailResult.success ? provider : undefined),
     emailServiceErrors: emailErrorInfo?.serviceErrors,
     emailSkippedServices: emailErrorInfo?.skippedServices,
     emailConfigurationMissing: emailErrorInfo?.configurationMissing,
@@ -274,6 +288,7 @@ export async function processMonthlySummary(manuallyTriggered = false): Promise<
     isTestService: 'isTestService' in emailResult ? emailResult.isTestService : false,
     emailWarning: ('warning' in emailResult ? String(emailResult.warning) : undefined) as string | undefined,
     previewUrl: ('previewUrl' in emailResult ? String(emailResult.previewUrl) : undefined) as string | undefined,
+    messageId: ('messageId' in emailResult ? String(emailResult.messageId) : undefined) as string | undefined,
     manuallyTriggered
   };
   } catch (error) {

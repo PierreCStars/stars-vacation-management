@@ -105,8 +105,11 @@ export default function AdminSetupClient() {
         emailSent: data.emailSent,
         isTestService: data.isTestService,
         emailError: data.emailError,
+        emailProvider: data.emailProvider,
         validated: data.validated,
-        recipients: data.recipients
+        recipients: data.recipients,
+        messageId: data.messageId,
+        previewUrl: data.previewUrl
       });
       
       if (data.ok && data.emailSent) {

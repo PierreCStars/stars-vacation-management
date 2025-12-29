@@ -236,25 +236,19 @@ export async function getTopEmployeesByDays(limit: number = 10): Promise<Employe
 }
 
 /**
- * Calculate duration of a vacation request
+ * Calculate vacation duration using the single source of truth
+ * 
+ * CRITICAL: This function uses calculateVacationDuration which preserves
+ * fractional values (0.5, 1.5, etc.) and never rounds or truncates.
  */
 function calculateDuration(request: VacationRequest): number {
-  if (typeof request.durationDays === 'number') {
-    return request.durationDays;
-  }
-  
-  if (request.isHalfDay) {
-    return 0.5;
-  }
-  
-  if (request.startDate && request.endDate) {
-    const start = new Date(request.startDate);
-    const end = new Date(request.endDate);
-    const diffTime = end.getTime() - start.getTime();
-    return Math.floor(diffTime / (1000 * 60 * 60 * 24)) + 1;
-  }
-  
-  return 0;
+  return calculateVacationDuration({
+    durationDays: request.durationDays,
+    isHalfDay: request.isHalfDay,
+    halfDayType: request.halfDayType,
+    startDate: request.startDate,
+    endDate: request.endDate
+  });
 }
 
 /**

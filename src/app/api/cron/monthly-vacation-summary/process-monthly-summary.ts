@@ -174,12 +174,20 @@ function generateHTML(approved: VacationRow[], range: MonthRange, totalDays: num
  * @returns MonthlySummaryResult with all details
  */
 export async function processMonthlySummary(manuallyTriggered = false): Promise<MonthlySummaryResult> {
-  // Get month range in Monaco timezone (CRITICAL: fixes timezone bug)
-  const range = getMonthRangeInTimezone("Europe/Monaco");
-  console.log(`📅 Processing monthly summary for ${range.label} (${range.startISO} to ${range.endISO})`);
+  try {
+    // Get month range in Monaco timezone (CRITICAL: fixes timezone bug)
+    const range = getMonthRangeInTimezone("Europe/Monaco");
+    console.log(`📅 Processing monthly summary for ${range.label} (${range.startISO} to ${range.endISO})`);
 
-  // Get validated vacations using shared helper (ensures no deduplication, preserves 0.5 days)
-  const approved = await getValidatedVacationsForMonth(range.startISO, range.endISO);
+    // Get validated vacations using shared helper (ensures no deduplication, preserves 0.5 days)
+    let approved: VacationRow[];
+    try {
+      approved = await getValidatedVacationsForMonth(range.startISO, range.endISO);
+    } catch (fetchError) {
+      console.error('❌ Error fetching validated vacations:', fetchError);
+      const errorMessage = fetchError instanceof Error ? fetchError.message : String(fetchError);
+      throw new Error(`Failed to fetch vacation requests: ${errorMessage}`);
+    }
   
   // Calculate totals (includes per-employee verification)
   const { totalDays } = calculateTotals(approved);
@@ -268,5 +276,25 @@ export async function processMonthlySummary(manuallyTriggered = false): Promise<
     previewUrl: ('previewUrl' in emailResult ? String(emailResult.previewUrl) : undefined) as string | undefined,
     manuallyTriggered
   };
+  } catch (error) {
+    console.error('❌ Error in processMonthlySummary:', error);
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    const errorStack = error instanceof Error ? error.stack : undefined;
+    console.error('❌ Error details:', { message: errorMessage, stack: errorStack });
+    
+    // Return error result instead of throwing
+    return {
+      ok: false,
+      month: '',
+      displayLabel: '',
+      validated: 0,
+      totalDays: 0,
+      dateRange: { start: '', end: '' },
+      recipients: getAccountingEmails(),
+      emailSent: false,
+      emailError: errorMessage,
+      manuallyTriggered
+    };
+  }
 }
 

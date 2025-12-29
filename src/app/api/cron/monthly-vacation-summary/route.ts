@@ -45,9 +45,11 @@ export async function GET(req: Request) {
 // POST endpoint for manual trigger (bypasses date check)
 export async function POST(req: Request) {
   try {
+    console.log('📧 POST /api/cron/monthly-vacation-summary called');
     // Allow manual triggering without date restriction
     // Use shared processing function (ensures timezone correctness and no deduplication)
     const result = await processMonthlySummary(true);
+    console.log('📧 processMonthlySummary completed, result.ok:', result.ok, 'emailSent:', result.emailSent);
     return NextResponse.json(result);
   } catch (error) {
     console.error('❌ Error in monthly summary API (POST):', error);
@@ -56,9 +58,11 @@ export async function POST(req: Request) {
     console.error('❌ Error details:', { message: errorMessage, stack: errorStack });
     return NextResponse.json(
       { 
+        ok: false,
         error: 'Failed to process monthly summary',
         details: errorMessage,
-        ok: false
+        emailSent: false,
+        emailError: errorMessage
       },
       { status: 500 }
     );

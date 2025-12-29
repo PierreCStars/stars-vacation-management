@@ -45,8 +45,16 @@ function inclusiveDays(startISO?: string, endISO?: string) {
 }
 
 function resolveDuration(v: VR) {
-  if (typeof v.durationDays === "number") return v.durationDays;
-  if (v.isHalfDay) return 0.5;
+  // Check durationDays first (explicit duration)
+  if (typeof v.durationDays === "number" && v.durationDays > 0) {
+    return v.durationDays;
+  }
+  // Check isHalfDay (could be boolean true, string "true", or truthy value)
+  const isHalfDay = v.isHalfDay === true || v.isHalfDay === "true" || String(v.isHalfDay).toLowerCase() === "true";
+  if (isHalfDay) {
+    return 0.5;
+  }
+  // Fall back to calculating from dates
   return inclusiveDays(v.startDate, v.endDate);
 }
 
@@ -166,15 +174,23 @@ export async function GET(req: Request) {
 
     console.log(`📊 Found ${inRange.length} requests in range ${startISO} to ${endISO}`);
 
-    const flat = inRange.map(r => ({
-      employee: r.userName || "Unknown",
-      company: r.company || "—",
-      type: r.type || (r.isHalfDay ? "Half day" : "Full day"),
-      status: r.status || "",
-      startDate: r.startDate || "",
-      endDate: r.endDate || r.startDate || "",
-      days: resolveDuration(r)
-    }));
+    const flat = inRange.map(r => {
+      // Ensure isHalfDay is properly handled (could be boolean, string, or undefined)
+      const isHalfDay = r.isHalfDay === true || String(r.isHalfDay).toLowerCase() === "true";
+      const duration = resolveDuration(r);
+      
+      console.log(`📋 Processing vacation: ${r.userName}, isHalfDay: ${r.isHalfDay} (parsed: ${isHalfDay}), durationDays: ${r.durationDays}, resolved duration: ${duration}, status: ${r.status}`);
+      
+      return {
+        employee: r.userName || "Unknown",
+        company: r.company || "—",
+        type: r.type || (isHalfDay ? "Half day" : "Full day"),
+        status: r.status || "",
+        startDate: r.startDate || "",
+        endDate: r.endDate || r.startDate || "",
+        days: duration
+      };
+    });
 
     // Filter only approved/validated vacations (exclude rejected)
     // Normalize status to handle variations: approved, APPROVED, validated, Validated
@@ -182,6 +198,15 @@ export async function GET(req: Request) {
       const status = (r.status || "").toLowerCase();
       return status === "approved" || status === "validated";
     });
+    
+    console.log(`✅ Filtered to ${approved.length} approved/validated vacations`);
+    console.log(`📊 Approved vacations details:`, approved.map(r => ({
+      employee: r.employee,
+      days: r.days,
+      type: r.type,
+      startDate: r.startDate
+    })));
+    
     const totalDays = approved.reduce((s, r) => s + Number(r.days || 0), 0);
 
     // Format month name for display (e.g., "2025-01" -> "January 2025")
@@ -405,21 +430,38 @@ export async function POST(req: Request) {
 
     console.log(`📊 Found ${inRange.length} requests overlapping with ${startISO} to ${endISO}`);
 
-    const flat = inRange.map(r => ({
-      employee: r.userName || "Unknown",
-      company: r.company || "—",
-      type: r.type || (r.isHalfDay ? "Half day" : "Full day"),
-      status: r.status || "",
-      startDate: r.startDate || "",
-      endDate: r.endDate || r.startDate || "",
-      days: resolveDuration(r)
-    }));
+    const flat = inRange.map(r => {
+      // Ensure isHalfDay is properly handled (could be boolean, string, or undefined)
+      const isHalfDay = r.isHalfDay === true || String(r.isHalfDay).toLowerCase() === "true";
+      const duration = resolveDuration(r);
+      
+      console.log(`📋 Processing vacation (POST): ${r.userName}, isHalfDay: ${r.isHalfDay} (parsed: ${isHalfDay}), durationDays: ${r.durationDays}, resolved duration: ${duration}, status: ${r.status}`);
+      
+      return {
+        employee: r.userName || "Unknown",
+        company: r.company || "—",
+        type: r.type || (isHalfDay ? "Half day" : "Full day"),
+        status: r.status || "",
+        startDate: r.startDate || "",
+        endDate: r.endDate || r.startDate || "",
+        days: duration
+      };
+    });
 
     // Filter only approved/validated vacations (exclude rejected)
     const approved = flat.filter(r => {
       const status = (r.status || "").toLowerCase();
       return status === "approved" || status === "validated";
     });
+    
+    console.log(`✅ Filtered to ${approved.length} approved/validated vacations (POST)`);
+    console.log(`📊 Approved vacations details (POST):`, approved.map(r => ({
+      employee: r.employee,
+      days: r.days,
+      type: r.type,
+      startDate: r.startDate
+    })));
+    
     const totalDays = approved.reduce((s, r) => s + Number(r.days || 0), 0);
 
     // Format month name for display

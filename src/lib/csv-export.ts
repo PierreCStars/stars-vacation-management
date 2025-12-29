@@ -16,10 +16,33 @@ export interface CSVRow {
   reviewerEmail: string;
   reviewedAt: string;
   adminComment: string;
+  durationDays?: number;  // Add duration field
+  isHalfDay?: boolean;    // Add half-day flag
+}
+
+// Helper function to calculate duration (supports half-days)
+function calculateDuration(request: any): number {
+  // Check durationDays first (explicit duration) - include 0.5 for half-days
+  if (typeof request.durationDays === "number" && request.durationDays > 0) {
+    return request.durationDays;
+  }
+  // Check isHalfDay
+  if (request.isHalfDay === true) {
+    return 0.5;
+  }
+  // Fall back to calculating from dates
+  if (request.startDate) {
+    const start = new Date(request.startDate);
+    const end = new Date(request.endDate || request.startDate);
+    const ms = end.getTime() - start.getTime();
+    const days = Math.floor(ms / (24 * 3600 * 1000)) + 1;
+    return days > 0 ? days : (request.isHalfDay === true ? 0.5 : 0);
+  }
+  return 0;
 }
 
 export function generateCSVContent(requests: CSVRow[]): string {
-  // Define CSV headers
+  // Define CSV headers (add Duration Days column)
   const headers = [
     'ID',
     'User ID',
@@ -27,6 +50,7 @@ export function generateCSVContent(requests: CSVRow[]): string {
     'User Name',
     'Start Date',
     'End Date',
+    'Duration Days',
     'Reason',
     'Company',
     'Type',
@@ -42,6 +66,7 @@ export function generateCSVContent(requests: CSVRow[]): string {
   const csvRows = [headers.join(',')];
   
   for (const request of requests) {
+    const duration = calculateDuration(request);
     const row = [
       request.id,
       request.userId,
@@ -49,6 +74,7 @@ export function generateCSVContent(requests: CSVRow[]): string {
       `"${request.userName.replace(/"/g, '""')}"`, // Escape quotes in names
       request.startDate,
       request.endDate,
+      duration.toString(), // Include duration (supports 0.5 for half-days)
       `"${(request.reason || '').replace(/"/g, '""')}"`, // Escape quotes in reasons
       request.company,
       request.type,
@@ -65,28 +91,45 @@ export function generateCSVContent(requests: CSVRow[]): string {
   return csvRows.join('\n');
 }
 
+// Helper function to check if a vacation overlaps with a date range
+function vacationOverlapsMonth(vacation: any, monthStart: string, monthEnd: string): boolean {
+  const vacStart = vacation.startDate || "";
+  const vacEnd = vacation.endDate || vacation.startDate || "";
+  
+  // Vacation overlaps if:
+  // - It starts in the month, OR
+  // - It ends in the month, OR
+  // - It spans the entire month (starts before and ends after)
+  return (vacStart >= monthStart && vacStart <= monthEnd) ||
+         (vacEnd >= monthStart && vacEnd <= monthEnd) ||
+         (vacStart <= monthStart && vacEnd >= monthEnd);
+}
+
 export async function getReviewedRequestsForMonth(year: number, month: number): Promise<CSVRow[]> {
   try {
     console.log(`📊 Fetching reviewed requests for ${year}-${month.toString().padStart(2, '0')}...`);
     
     const allRequests = await getAllVacationRequests();
     
-    // Filter for reviewed requests (not PENDING) in the specified month
+    // Calculate month date range (first and last day of month)
+    const monthStart = `${year}-${month.toString().padStart(2, '0')}-01`;
+    const lastDay = new Date(year, month, 0).getDate(); // 0 = last day of previous month
+    const monthEnd = `${year}-${month.toString().padStart(2, '0')}-${lastDay.toString().padStart(2, '0')}`;
+    
+    // Filter for approved/validated requests that overlap with the specified month
+    // Use vacation date range (not reviewedAt date) to match monthly summary logic
     const reviewedRequests = allRequests.filter((request: any) => {
-      if (request.status === 'PENDING') return false;
-      
-      // Check if the request was reviewed in the specified month
-      if (request.reviewedAt) {
-        const reviewedDate = new Date(request.reviewedAt);
-        return reviewedDate.getFullYear() === year && reviewedDate.getMonth() === month - 1;
+      // Only include approved/validated requests (exclude pending/rejected)
+      const status = (request.status || "").toLowerCase();
+      if (status === 'pending' || status === 'rejected' || status === 'denied') {
+        return false;
       }
       
-      // If no reviewedAt date, check the createdAt date
-      const createdDate = new Date(request.createdAt);
-      return createdDate.getFullYear() === year && createdDate.getMonth() === month - 1;
+      // Check if vacation overlaps with the month (by vacation dates, not review date)
+      return vacationOverlapsMonth(request, monthStart, monthEnd);
     });
 
-    console.log(`✅ Found ${reviewedRequests.length} reviewed requests for ${year}-${month.toString().padStart(2, '0')}`);
+    console.log(`✅ Found ${reviewedRequests.length} reviewed requests for ${year}-${month.toString().padStart(2, '0')} (filtered by vacation date range)`);
     
     return reviewedRequests.map((request: any) => ({
       id: request.id || '',
@@ -103,7 +146,9 @@ export async function getReviewedRequestsForMonth(year: number, month: number): 
       reviewedBy: request.reviewedBy || '',
       reviewerEmail: request.reviewerEmail || '',
       reviewedAt: request.reviewedAt || '',
-      adminComment: request.adminComment || ''
+      adminComment: request.adminComment || '',
+      durationDays: request.durationDays,  // Include durationDays
+      isHalfDay: request.isHalfDay        // Include isHalfDay
     }));
   } catch (error) {
     console.error('❌ Error fetching reviewed requests for CSV export:', error);

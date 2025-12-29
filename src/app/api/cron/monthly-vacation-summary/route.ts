@@ -45,17 +45,22 @@ function inclusiveDays(startISO?: string, endISO?: string) {
 }
 
 function resolveDuration(v: VR) {
-  // Check durationDays first (explicit duration)
-  if (typeof v.durationDays === "number" && v.durationDays > 0) {
-    return v.durationDays;
+  // Check durationDays first (explicit duration) - include 0.5 for half-days
+  if (typeof v.durationDays === "number") {
+    // Accept any positive number including 0.5
+    if (v.durationDays > 0) {
+      return v.durationDays;
+    }
+    // If durationDays is 0 or negative, fall through to check isHalfDay
   }
-  // Check isHalfDay (handle boolean true or truthy value)
-  // Note: Firestore might store boolean, but we check for truthy to be safe
+  // Check isHalfDay (handle boolean true)
   if (v.isHalfDay === true) {
     return 0.5;
   }
   // Fall back to calculating from dates
-  return inclusiveDays(v.startDate, v.endDate);
+  const calculated = inclusiveDays(v.startDate, v.endDate);
+  // Return calculated value (will be at least 1 for valid date ranges)
+  return calculated;
 }
 
 function toCSV(rows: Record<string, any>[]) {

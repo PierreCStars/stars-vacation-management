@@ -35,6 +35,7 @@ export interface MonthlySummaryResult {
   previewUrl?: string;
   messageId?: string;
   manuallyTriggered?: boolean;
+  employeeBreakdown?: Array<{ employee: string; requestCount: number; totalDays: number; vacationIds: string[] }>;
 }
 
 function toCSV(rows: VacationRow[]): string {
@@ -443,6 +444,14 @@ export async function processMonthlySummary(manuallyTriggered = false): Promise<
                    ('fallback' in emailResult ? emailResult.fallback : undefined) ||
                    'unknown';
 
+  // Add diagnostic information to help verify all vacations are included
+  const employeeBreakdown = Array.from(employeeVacationMap.entries()).map(([emp, vacations]) => ({
+    employee: emp,
+    requestCount: vacations.length,
+    totalDays: vacations.reduce((sum, v) => sum + (v.days || 0), 0),
+    vacationIds: vacations.map(v => v.id).filter((id): id is string => Boolean(id))
+  }));
+
   return {
     ok: true,
     month: range.label,
@@ -462,7 +471,9 @@ export async function processMonthlySummary(manuallyTriggered = false): Promise<
     emailWarning: ('warning' in emailResult ? String(emailResult.warning) : undefined) as string | undefined,
     previewUrl: ('previewUrl' in emailResult ? String(emailResult.previewUrl) : undefined) as string | undefined,
     messageId: ('messageId' in emailResult ? String(emailResult.messageId) : undefined) as string | undefined,
-    manuallyTriggered
+    manuallyTriggered,
+    // Diagnostic information to help verify fix
+    employeeBreakdown: employeesWithMultiple.length > 0 ? employeeBreakdown.filter(e => e.requestCount > 1) : undefined
   };
   } catch (error) {
     console.error('❌ Error in processMonthlySummary:', error);

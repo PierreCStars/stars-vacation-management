@@ -5,12 +5,11 @@
  * are correctly included in the recap email and CSV.
  */
 
-import { describe, it, expect } from '@jest/globals';
+import { describe, it, expect, vi } from 'vitest';
 import { getValidatedVacationsForMonth, calculateTotals, getMonthRangeInTimezone } from '@/lib/monthly-vacation-helper';
-import { processMonthlySummary } from '@/app/api/cron/monthly-vacation-summary/process-monthly-summary';
 
 // Mock Firebase Admin
-jest.mock('@/lib/firebase-admin', () => ({
+vi.mock('@/lib/firebase-admin', () => ({
   isFirebaseAdminAvailable: () => true,
   firebaseAdmin: async () => ({
     db: {

@@ -130,8 +130,32 @@ function generateHTML(approved: VacationRow[], range: MonthRange, totalDays: num
     const rowCountInHTML = (tableRows.match(/<tr>/g) || []).length;
     if (rowCountInHTML !== approved.length) {
       console.error(`❌ CRITICAL ERROR: HTML table has ${rowCountInHTML} rows but approved.length is ${approved.length}! Data loss in HTML generation!`);
+      console.error(`   This indicates some vacations were not included in the HTML table.`);
+      console.error(`   Approved vacations:`, approved.map(r => ({ id: r.id, employee: r.employee, startDate: r.startDate })));
     } else {
       console.log(`✅ Verified: HTML table contains ${rowCountInHTML} rows matching ${approved.length} approved vacations`);
+    }
+    
+    // CRITICAL SAFEGUARD: Verify all vacation IDs are present in HTML
+    const htmlVacationIds = new Set<string>();
+    const idMatches = tableRows.match(/data-vacation-id="([^"]+)"/g) || [];
+    idMatches.forEach(match => {
+      const id = match.match(/data-vacation-id="([^"]+)"/)?.[1];
+      if (id) htmlVacationIds.add(id);
+    });
+    
+    const approvedIds = new Set(approved.map(r => r.id).filter((id): id is string => Boolean(id)));
+    const missingIds = Array.from(approvedIds).filter(id => !htmlVacationIds.has(id));
+    const extraIds = Array.from(htmlVacationIds).filter(id => !approvedIds.has(id));
+    
+    if (missingIds.length > 0) {
+      console.error(`❌ CRITICAL ERROR: ${missingIds.length} vacation IDs are missing from HTML table:`, missingIds);
+    }
+    if (extraIds.length > 0) {
+      console.error(`❌ CRITICAL ERROR: ${extraIds.length} unexpected vacation IDs found in HTML table:`, extraIds);
+    }
+    if (missingIds.length === 0 && extraIds.length === 0) {
+      console.log(`✅ Verified: All ${approvedIds.size} vacation IDs are present in HTML table`);
     }
     
     // CRITICAL: Log a sample of the HTML to verify structure
@@ -241,15 +265,45 @@ export async function processMonthlySummary(manuallyTriggered = false): Promise<
     const range = getMonthRangeInTimezone("Europe/Monaco");
     console.log(`📅 Processing monthly summary for ${range.label} (${range.startISO} to ${range.endISO})`);
 
-    // Get validated vacations using shared helper (ensures no deduplication, preserves 0.5 days)
-    let approved: VacationRow[];
-    try {
-      approved = await getValidatedVacationsForMonth(range.startISO, range.endISO);
-    } catch (fetchError) {
-      console.error('❌ Error fetching validated vacations:', fetchError);
-      const errorMessage = fetchError instanceof Error ? fetchError.message : String(fetchError);
-      throw new Error(`Failed to fetch vacation requests: ${errorMessage}`);
+  // Get validated vacations using shared helper (ensures no deduplication, preserves 0.5 days)
+  let approved: VacationRow[];
+  try {
+    approved = await getValidatedVacationsForMonth(range.startISO, range.endISO);
+  } catch (fetchError) {
+    console.error('❌ Error fetching validated vacations:', fetchError);
+    const errorMessage = fetchError instanceof Error ? fetchError.message : String(fetchError);
+    throw new Error(`Failed to fetch vacation requests: ${errorMessage}`);
+  }
+  
+  // CRITICAL SAFEGUARD: Verify no deduplication occurred
+  // Count unique vacation IDs to ensure we have all requests
+  const uniqueIds = new Set(approved.map(r => r.id).filter((id): id is string => Boolean(id)));
+  if (uniqueIds.size !== approved.length) {
+    console.error(`❌ CRITICAL ERROR: Duplicate vacation IDs detected! Expected ${approved.length} unique IDs but found ${uniqueIds.size}`);
+    console.error(`   This indicates deduplication occurred. All vacation IDs:`, approved.map(r => r.id));
+  } else {
+    console.log(`✅ Verified: All ${approved.length} vacations have unique IDs (no deduplication)`);
+  }
+  
+  // CRITICAL SAFEGUARD: Verify employees with multiple requests are preserved
+  const employeeVacationMap = new Map<string, VacationRow[]>();
+  approved.forEach(r => {
+    const emp = r.employee || "Unknown";
+    if (!employeeVacationMap.has(emp)) {
+      employeeVacationMap.set(emp, []);
     }
+    employeeVacationMap.get(emp)!.push(r);
+  });
+  
+  const employeesWithMultiple = Array.from(employeeVacationMap.entries())
+    .filter(([_, vacations]) => vacations.length > 1);
+  
+  if (employeesWithMultiple.length > 0) {
+    console.log(`✅ Verified: ${employeesWithMultiple.length} employees have multiple vacations (preserved, not deduplicated):`);
+    employeesWithMultiple.forEach(([emp, vacations]) => {
+      console.log(`   - ${emp}: ${vacations.length} vacations (IDs: ${vacations.map(v => v.id).join(', ')})`);
+    });
+  }
   
   // Calculate totals (includes per-employee verification)
   const { totalDays } = calculateTotals(approved);
@@ -287,12 +341,46 @@ export async function processMonthlySummary(manuallyTriggered = false): Promise<
   const csv = toCSV(approved);
   const filename = `vacations_${range.label}.csv`;
   
-  // Verify CSV row count matches approved count
+  // CRITICAL SAFEGUARD: Verify CSV row count matches approved count
   const csvRowCount = csv.split('\n').length - 1; // Subtract header row
   if (csvRowCount !== approved.length) {
-    console.error(`⚠️ WARNING: CSV row count (${csvRowCount}) does not match approved count (${approved.length})`);
+    console.error(`❌ CRITICAL ERROR: CSV row count (${csvRowCount}) does not match approved count (${approved.length})! Data loss in CSV generation!`);
+    console.error(`   This indicates some vacations were not included in the CSV.`);
   } else {
     console.log(`✅ CSV row count verified: ${csvRowCount} rows match ${approved.length} approved requests`);
+  }
+  
+  // CRITICAL SAFEGUARD: Verify CSV contains all employee names (including duplicates)
+  const csvLines = csv.split('\n').slice(1); // Skip header
+  const csvEmployeeCounts = new Map<string, number>();
+  csvLines.forEach(line => {
+    if (line.trim()) {
+      const firstComma = line.indexOf(',');
+      if (firstComma > 0) {
+        const employee = line.substring(0, firstComma).replace(/^"|"$/g, '');
+        csvEmployeeCounts.set(employee, (csvEmployeeCounts.get(employee) || 0) + 1);
+      }
+    }
+  });
+  
+  // Compare CSV employee counts with approved counts
+  const approvedEmployeeCounts = new Map<string, number>();
+  approved.forEach(r => {
+    const emp = r.employee || "Unknown";
+    approvedEmployeeCounts.set(emp, (approvedEmployeeCounts.get(emp) || 0) + 1);
+  });
+  
+  let csvMatches = true;
+  for (const [emp, count] of approvedEmployeeCounts.entries()) {
+    const csvCount = csvEmployeeCounts.get(emp) || 0;
+    if (csvCount !== count) {
+      console.error(`❌ CRITICAL ERROR: Employee "${emp}" has ${count} vacations in approved list but only ${csvCount} in CSV!`);
+      csvMatches = false;
+    }
+  }
+  
+  if (csvMatches) {
+    console.log(`✅ CSV employee counts verified: All employees have correct number of rows in CSV`);
   }
 
   // Send email

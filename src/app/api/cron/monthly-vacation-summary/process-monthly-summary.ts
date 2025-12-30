@@ -110,11 +110,16 @@ function generateHTML(approved: VacationRow[], range: MonthRange, totalDays: num
     
     // CRITICAL: Use map() to create one row per vacation - NO deduplication
     // Add a unique data attribute to each row to help debug if rows are being collapsed
+    // IMPORTANT: Do NOT sort, filter, or deduplicate - preserve exact order and all entries
+    console.log(`📋 Starting HTML row generation for ${approved.length} vacations (NO sorting, NO filtering, NO deduplication)`);
     tableRows = approved.map((r, index) => {
       const uniqueId = r.id || `row-${index}`;
-      console.log(`📋 HTML Row ${index + 1}/${approved.length}: ${r.employee}, ${r.startDate} to ${r.endDate}, ${r.days} days, id: ${uniqueId}`);
-      return `
-      <tr data-vacation-id="${uniqueId}" data-employee="${(r.employee || 'Unknown').replace(/"/g, '&quot;')}" data-index="${index}">
+      const rowNumber = index + 1;
+      console.log(`📋 HTML Row ${rowNumber}/${approved.length}: Employee="${r.employee}", Start="${r.startDate}", End="${r.endDate}", Days=${r.days}, ID="${uniqueId}"`);
+      
+      // CRITICAL: Each row must be unique - add index to ensure uniqueness even if IDs are missing
+      const rowHtml = `
+      <tr data-vacation-id="${uniqueId}" data-employee="${(r.employee || 'Unknown').replace(/"/g, '&quot;')}" data-index="${index}" data-row-number="${rowNumber}">
         <td style="padding: 8px; border-bottom: 1px solid #eee;">${(r.employee || 'Unknown').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee;">${(r.company || '—').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>
         <td style="padding: 8px; border-bottom: 1px solid #eee;">${(r.type || 'Full day').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>
@@ -123,7 +128,19 @@ function generateHTML(approved: VacationRow[], range: MonthRange, totalDays: num
         <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatDuration(Number(r.days || 0))}</td>
       </tr>
     `;
+      
+      // Verify this row contains the expected data
+      if (!rowHtml.includes(r.employee || 'Unknown')) {
+        console.error(`❌ CRITICAL: Row ${rowNumber} HTML does not contain employee name "${r.employee}"!`);
+      }
+      if (!rowHtml.includes(r.startDate || '—')) {
+        console.error(`❌ CRITICAL: Row ${rowNumber} HTML does not contain start date "${r.startDate}"!`);
+      }
+      
+      return rowHtml;
     }).join('');
+    
+    console.log(`📋 Completed HTML row generation: Generated ${approved.length} rows`);
     
     console.log(`📋 Generated ${approved.length} HTML table rows (should match approved.length)`);
     
@@ -333,9 +350,29 @@ export async function processMonthlySummary(manuallyTriggered = false): Promise<
     console.log(`📧 Employees with multiple requests before HTML: ${employeesWithMultipleBeforeHTML.join(', ')}`);
   }
 
+  // CRITICAL: Before generating HTML, verify we have all vacations
+  // Log a complete breakdown to help diagnose
+  console.log(`📧 FINAL VERIFICATION: About to generate HTML with ${approved.length} vacations`);
+  const finalBreakdown = approved.map((r, idx) => ({
+    index: idx,
+    id: r.id,
+    employee: r.employee,
+    startDate: r.startDate,
+    endDate: r.endDate,
+    days: r.days
+  }));
+  console.log(`📧 Complete vacation list being passed to generateHTML:`, JSON.stringify(finalBreakdown, null, 2));
+  
   // Generate email
   const subject = `Monthly validated vacations summary – ${range.displayLabel}`;
   const html = generateHTML(approved, range, totalDays);
+  
+  // CRITICAL: After generating HTML, verify it contains all rows
+  const htmlRowMatches = html.match(/<tr data-vacation-id="[^"]+"/g) || [];
+  console.log(`📧 HTML contains ${htmlRowMatches.length} <tr> tags with data-vacation-id attributes`);
+  if (htmlRowMatches.length !== approved.length) {
+    console.error(`❌ CRITICAL: HTML has ${htmlRowMatches.length} rows but should have ${approved.length} rows!`);
+  }
   
   // Generate CSV
   console.log(`📄 Generating CSV with ${approved.length} rows (one per request)`);

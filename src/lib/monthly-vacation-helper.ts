@@ -152,13 +152,30 @@ export async function getValidatedVacationsForMonth(
       const { db, error } = await firebaseAdmin();
       
       if (db && !error) {
-        // Pull only approved/validated requests (exclude rejected/denied)
-        const snap = await db.collection("vacationRequests")
-          .where("status", "in", ["approved", "APPROVED", "validated", "Validated"])
-          .get();
+        // CRITICAL: Fetch ALL vacation requests, then filter by status in code
+        // This ensures we don't miss any vacations due to status value variations
+        // Firestore's "in" operator might miss variations like "Approved", "APPROVED", etc.
+        const snap = await db.collection("vacationRequests").get();
 
         all = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
-        console.log(`✅ Fetched ${all.length} approved/validated requests from Firestore`);
+        console.log(`✅ Fetched ${all.length} total vacation requests from Firestore`);
+        
+        // Log status distribution to help diagnose
+        const statusCounts = new Map<string, number>();
+        all.forEach(r => {
+          const status = (r.status || "unknown").toLowerCase();
+          statusCounts.set(status, (statusCounts.get(status) || 0) + 1);
+        });
+        console.log(`📊 Status distribution:`, Object.fromEntries(statusCounts));
+        
+        // Filter to only approved/validated requests (case-insensitive)
+        // This catches all variations: "approved", "APPROVED", "Approved", "validated", "Validated", etc.
+        const approvedStatuses = ["approved", "validated"];
+        all = all.filter(r => {
+          const status = (r.status || "").toLowerCase();
+          return approvedStatuses.includes(status);
+        });
+        console.log(`✅ Filtered to ${all.length} approved/validated requests (case-insensitive)`);
       } else {
         console.error('⚠️ Firebase Admin not available:', error);
         throw new Error('Firebase Admin not available');

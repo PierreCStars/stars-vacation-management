@@ -158,15 +158,6 @@ export async function getValidatedVacationsForMonth(
         const snap = await db.collection("vacationRequests").get();
 
         all = snap.docs.map((d: any) => ({ id: d.id, ...(d.data() as any) }));
-        console.log(`✅ Fetched ${all.length} total vacation requests from Firestore`);
-        
-        // Log status distribution to help diagnose
-        const statusCounts = new Map<string, number>();
-        all.forEach(r => {
-          const status = (r.status || "unknown").toLowerCase();
-          statusCounts.set(status, (statusCounts.get(status) || 0) + 1);
-        });
-        console.log(`📊 Status distribution:`, Object.fromEntries(statusCounts));
         
         // Filter to only approved/validated requests (case-insensitive)
         // This catches all variations: "approved", "APPROVED", "Approved", "validated", "Validated", etc.
@@ -175,7 +166,7 @@ export async function getValidatedVacationsForMonth(
           const status = (r.status || "").toLowerCase();
           return approvedStatuses.includes(status);
         });
-        console.log(`✅ Filtered to ${all.length} approved/validated requests (case-insensitive)`);
+        console.log(`✅ Fetched ${all.length} approved/validated vacation requests from Firestore`);
       } else {
         console.error('⚠️ Firebase Admin not available:', error);
         throw new Error('Firebase Admin not available');
@@ -191,22 +182,7 @@ export async function getValidatedVacationsForMonth(
 
   // Filter requests that overlap with the month
   const inRange = all.filter(r => vacationOverlapsMonth(r, startISO, endISO));
-
   console.log(`📊 Found ${inRange.length} requests overlapping with ${startISO} to ${endISO}`);
-  
-  // Safeguard: Log employee distribution to verify no deduplication
-  const employeeCounts = new Map<string, number>();
-  inRange.forEach(r => {
-    const emp = r.userName || "Unknown";
-    employeeCounts.set(emp, (employeeCounts.get(emp) || 0) + 1);
-  });
-  console.log(`👥 Employee request counts:`, Object.fromEntries(employeeCounts));
-  const employeesWithMultiple = Array.from(employeeCounts.entries())
-    .filter(([_, count]) => count > 1)
-    .map(([emp, count]) => `${emp}: ${count}`);
-  if (employeesWithMultiple.length > 0) {
-    console.log(`✅ Employees with multiple requests: ${employeesWithMultiple.join(', ')}`);
-  }
 
   // CRITICAL: Use map() to preserve ALL entries - one row per request
   // Do NOT use reduce() or Map that would collapse multiple requests per employee
@@ -219,8 +195,6 @@ export async function getValidatedVacationsForMonth(
       startDate: r.startDate,
       endDate: r.endDate
     });
-    
-    console.log(`📋 Processing vacation: ${r.userName}, isHalfDay: ${r.isHalfDay}, durationDays: ${r.durationDays}, resolved duration: ${duration}, status: ${r.status}`);
     
     return {
       id: r.id,
@@ -247,20 +221,6 @@ export async function getValidatedVacationsForMonth(
   });
   
   console.log(`✅ Filtered to ${approved.length} approved/validated vacations`);
-  
-  // Safeguard: Verify we still have all requests (no deduplication)
-  const approvedEmployeeCounts = new Map<string, number>();
-  approved.forEach(r => {
-    const emp = r.employee || "Unknown";
-    approvedEmployeeCounts.set(emp, (approvedEmployeeCounts.get(emp) || 0) + 1);
-  });
-  console.log(`👥 Approved employee request counts:`, Object.fromEntries(approvedEmployeeCounts));
-  const approvedWithMultiple = Array.from(approvedEmployeeCounts.entries())
-    .filter(([_, count]) => count > 1)
-    .map(([emp, count]) => `${emp}: ${count}`);
-  if (approvedWithMultiple.length > 0) {
-    console.log(`✅ Approved employees with multiple requests: ${approvedWithMultiple.join(', ')}`);
-  }
   
   return approved;
 }
@@ -292,24 +252,8 @@ export function calculateTotals(rows: VacationRow[]): MonthlyTotals {
   // Verify that sum of per-employee totals matches overall total
   const sumOfEmployeeTotals = sumDurations(Array.from(perEmployeeTotals.values()).map(e => e.totalDays));
   if (Math.abs(sumOfEmployeeTotals - totalDays) > 0.01) {
-    console.error(`❌ CRITICAL ERROR: Sum of per-employee totals (${sumOfEmployeeTotals.toFixed(1)}) does not match overall total (${totalDays.toFixed(1)})!`);
-  } else {
-    console.log(`✅ Verification passed: Sum of per-employee totals (${sumOfEmployeeTotals.toFixed(1)}) matches overall total (${totalDays.toFixed(1)})`);
+    console.error(`❌ ERROR: Sum of per-employee totals (${sumOfEmployeeTotals.toFixed(1)}) does not match overall total (${totalDays.toFixed(1)})!`);
   }
-  
-  // Log per-employee totals
-  const employeeTotalsArray = Array.from(perEmployeeTotals.entries())
-    .map(([emp, data]) => ({ employee: emp, ...data }))
-    .sort((a, b) => a.employee.localeCompare(b.employee));
-  
-  console.log(`📊 Per-employee totals (verification that multiple requests are summed):`);
-  employeeTotalsArray.forEach(({ employee, totalDays, requestCount }) => {
-    if (requestCount > 1) {
-      console.log(`   ✅ ${employee}: ${totalDays.toFixed(1)} days (from ${requestCount} requests)`);
-    } else {
-      console.log(`   ${employee}: ${totalDays.toFixed(1)} days (${requestCount} request)`);
-    }
-  });
   
   return { totalDays, perEmployeeTotals };
 }

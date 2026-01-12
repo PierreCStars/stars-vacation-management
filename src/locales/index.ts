@@ -231,7 +231,7 @@ const en = {
       },
       "syncEventCalendar": {
         "title": "Sync Event Calendar",
-        "description": "Import company events from Google Calendar (c_1ee147e8254f6b2d5985d9ce6c4f9b39983d00cdcfe3c3732fa3aa33a1e30e0e@group.calendar.google.com)",
+        "description": "Import company events from Google Calendar",
         "button": "Sync Event Calendar",
         "syncing": "Syncing events..."
       },
@@ -532,7 +532,7 @@ const fr = {
       },
       "syncEventCalendar": {
         "title": "Synchroniser le calendrier d'événements",
-        "description": "Importer les événements de l'entreprise depuis Google Calendar (c_1ee147e8254f6b2d5985d9ce6c4f9b39983d00cdcfe3c3732fa3aa33a1e30e0e@group.calendar.google.com)",
+        "description": "Importer les événements de l'entreprise depuis Google Calendar",
         "button": "Synchroniser le calendrier d'événements",
         "syncing": "Synchronisation des événements..."
       },
@@ -833,7 +833,7 @@ const it = {
       },
       "syncEventCalendar": {
         "title": "Sincronizza calendario eventi",
-        "description": "Importa eventi aziendali da Google Calendar (c_1ee147e8254f6b2d5985d9ce6c4f9b39983d00cdcfe3c3732fa3aa33a1e30e0e@group.calendar.google.com)",
+        "description": "Importa eventi aziendali da Google Calendar",
         "button": "Sincronizza calendario eventi",
         "syncing": "Sincronizzazione eventi..."
       },

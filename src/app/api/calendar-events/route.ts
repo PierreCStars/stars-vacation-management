@@ -10,6 +10,7 @@ import { normalizeVacationStatus } from '@/types/vacation-status';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { isAdmin } from '@/config/admins';
+import { getAllExternalEvents } from '@/lib/db/calendar-sync.store';
 
 // Utility function to load and parse Google credentials
 function loadGoogleCreds() {
@@ -380,7 +381,71 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const allEvents = [...vacationEvents, ...firestoreEvents];
+    // Add imported external events from Firestore (synced via /api/sync/import-remote)
+    let externalEvents: any[] = [];
+    try {
+      const importedEvents = await getAllExternalEvents();
+      
+      // Filter events within the requested time range
+      const timeMinDate = startDate;
+      const timeMaxDate = endDate;
+      
+      externalEvents = importedEvents
+        .filter(event => {
+          // Filter out cancelled events
+          if (event.status === 'cancelled') return false;
+          
+          // Check if event overlaps with requested time range
+          const eventStart = new Date(event.startISO);
+          const eventEnd = new Date(event.endISO);
+          
+          // Event overlaps if it starts before timeMax and ends after timeMin
+          return eventStart < timeMaxDate && eventEnd > timeMinDate;
+        })
+        .map(event => {
+          // Format dates - extract date part (YYYY-MM-DD) from ISO string
+          let startDate = event.startISO.split('T')[0];
+          let endDate = event.endISO.split('T')[0];
+          
+          // For all-day events, Google Calendar uses exclusive end dates
+          // Convert to inclusive for our app (same as we do for direct Google Calendar events)
+          if (event.allDay && endDate && endDate !== startDate) {
+            // Subtract one day from exclusive end date to get inclusive end date
+            const endDateObj = new Date(endDate + 'T00:00:00');
+            endDateObj.setDate(endDateObj.getDate() - 1);
+            const year = endDateObj.getFullYear();
+            const month = String(endDateObj.getMonth() + 1).padStart(2, '0');
+            const day = String(endDateObj.getDate()).padStart(2, '0');
+            endDate = `${year}-${month}-${day}`;
+          } else if (event.allDay && (!endDate || endDate === startDate)) {
+            // Single-day event: end date should equal start date
+            endDate = startDate;
+          }
+          
+          return {
+            id: `external_${event.externalEventId}`,
+            title: event.title,
+            startDate,
+            endDate,
+            location: '',
+            summary: event.title,
+            description: `Imported from Google Calendar (${event.source})`,
+            colorId: '8', // Gray color for external events
+            company: 'Company Event',
+            userName: 'External Event',
+            htmlLink: '',
+            source: 'external_import',
+            iCalUID: event.iCalUID,
+            allDay: event.allDay,
+          };
+        });
+      
+      console.log(`✅ Added ${externalEvents.length} imported external events from Firestore`);
+    } catch (error) {
+      console.error('[CALENDAR_API] Error fetching external events:', error);
+    }
+
+    const allEvents = [...vacationEvents, ...firestoreEvents, ...externalEvents];
 
     return NextResponse.json({
       success: true,
@@ -388,6 +453,7 @@ export async function GET(request: NextRequest) {
       totalEvents: events.length,
       vacationEvents: vacationEvents.length,
       firestoreEvents: firestoreEvents.length,
+      externalEvents: externalEvents.length,
       timeRange: {
         start: startDate.toISOString(),
         end: endDate.toISOString(),

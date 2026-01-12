@@ -28,6 +28,7 @@ export default function AdminPendingRequestsV2() {
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
   const [actionMessage, setActionMessage] = useState<{type: 'success' | 'error', message: string} | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   
   const { data: session } = useSession();
   const t = useTranslations('admin');
@@ -191,6 +192,52 @@ export default function AdminPendingRequestsV2() {
     }
   };
 
+  const handleSyncToCalendar = async () => {
+    if (isSyncing) return;
+    
+    setIsSyncing(true);
+    setActionMessage(null);
+    
+    try {
+      const response = await fetch('/api/sync/approved-requests', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' }
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Sync failed: ${response.status} ${errorText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        setActionMessage({
+          type: 'success',
+          message: `Sync completed! ${data.synced || 0} requests synced, ${data.skipped || 0} already synced${data.failed > 0 ? `, ${data.failed} failed` : ''}`
+        });
+        
+        // Refresh the requests list after sync
+        setTimeout(() => {
+          fetchVacationRequests();
+        }, 1000);
+      } else {
+        throw new Error(data.error || 'Sync failed');
+      }
+      
+      setTimeout(() => setActionMessage(null), 5000);
+      
+    } catch (error) {
+      console.error('Calendar sync error:', error);
+      setActionMessage({
+        type: 'error',
+        message: `Sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
 
   const isProcessing = (id: string) => processingRequests.has(id);
   
@@ -311,6 +358,25 @@ export default function AdminPendingRequestsV2() {
                     )}
                   </div>
                   <div className="flex items-center gap-3">
+                    <button
+                      onClick={handleSyncToCalendar}
+                      disabled={isSyncing}
+                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isSyncing ? (
+                        <>
+                          <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                          {t('syncCalendar.syncing')}
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          </svg>
+                          {t('syncCalendar.button')}
+                        </>
+                      )}
+                    </button>
                     <button
                       onClick={handleCSVExport}
                       disabled={isExporting || requests.length === 0}

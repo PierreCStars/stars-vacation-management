@@ -139,7 +139,9 @@ export async function GET(request: NextRequest) {
     const timeMax = searchParams.get('timeMax');
     
     // Define calendar IDs - company events calendar and Monaco holidays calendar
-    const companyEventsCalendarId = 'c_1ee147e8254f6b2d5985d9ce6c4f9b39983d00cdcfe3c3732fa3aa33a1e30e0e@group.calendar.google.com';
+    // Use environment variable if available, otherwise fallback to hardcoded ID
+    const companyEventsCalendarId = process.env.GOOGLE_CALENDAR_SOURCE_ID || 
+      'c_1ee147e8254f6b2d5985d9ce6c4f9b39983d00cdcfe3c3732fa3aa33a1e30e0e@group.calendar.google.com';
     const monacoHolidaysCalendarId = 'en-gb.mc#holiday@group.v.calendar.google.com';
     const fallbackCalendarId = process.env.GOOGLE_CALENDAR_ID || companyEventsCalendarId;
     const includeVacationRequests = searchParams.get('includeVacationRequests') !== 'false';
@@ -189,10 +191,25 @@ export async function GET(request: NextRequest) {
       });
 
       const companyEvents = response.data.items || [];
-      console.log(`✅ Found ${companyEvents.length} company calendar events`);
+      console.log(`✅ Found ${companyEvents.length} company calendar events from ${companyEventsCalendarId}`);
       events.push(...companyEvents);
-    } catch (calendarError) {
-      console.error('[CALENDAR_API] Failed to fetch from company events calendar:', calendarError);
+    } catch (calendarError: any) {
+      const errorDetails = {
+        message: calendarError instanceof Error ? calendarError.message : String(calendarError),
+        code: calendarError?.code,
+        status: calendarError?.response?.status,
+        statusText: calendarError?.response?.statusText,
+        calendarId: companyEventsCalendarId,
+        serviceAccount: loadGoogleCreds().client_email
+      };
+      console.error('[CALENDAR_API] Failed to fetch from company events calendar:', errorDetails);
+      
+      // Log specific error types for easier debugging
+      if (errorDetails.status === 403) {
+        console.error('[CALENDAR_API] Permission denied - Service account may not have read access to calendar');
+      } else if (errorDetails.status === 404) {
+        console.error('[CALENDAR_API] Calendar not found - Verify calendar ID is correct');
+      }
     }
     
     // Also fetch from fallback calendar if it's different

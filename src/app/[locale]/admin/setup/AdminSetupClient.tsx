@@ -8,6 +8,7 @@ import CreateVacationModal from '@/components/admin/CreateVacationModal';
 export default function AdminSetupClient() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isSyncingEvents, setIsSyncingEvents] = useState(false);
   const [isSendingMonthlyEmail, setIsSendingMonthlyEmail] = useState(false);
   const [actionMessage, setActionMessage] = useState<{type: 'success' | 'error', message: string} | null>(null);
   
@@ -65,6 +66,47 @@ export default function AdminSetupClient() {
       setTimeout(() => setActionMessage(null), 5000);
     } finally {
       setIsSyncing(false);
+    }
+  };
+
+  const handleSyncEventCalendar = async () => {
+    if (isSyncingEvents) return;
+    
+    setIsSyncingEvents(true);
+    setActionMessage(null);
+    
+    try {
+      const response = await fetch('/api/sync/import-remote', {
+        method: 'GET',
+      });
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Sync failed: ${response.status} ${errorText}`);
+      }
+      
+      const data = await response.json();
+      
+      if (data.status === 'ok' || data.status === 'partial') {
+        setActionMessage({
+          type: 'success',
+          message: `Event calendar sync completed! ${data.inserted || 0} new events, ${data.updated || 0} updated, ${data.deleted || 0} deleted.${data.note ? ` ${data.note}` : ''}`
+        });
+      } else {
+        throw new Error(data.note || data.error || 'Sync failed');
+      }
+      
+      setTimeout(() => setActionMessage(null), 5000);
+      
+    } catch (error) {
+      console.error('Event calendar sync error:', error);
+      setActionMessage({
+        type: 'error',
+        message: `Event calendar sync failed: ${error instanceof Error ? error.message : 'Unknown error'}`
+      });
+      setTimeout(() => setActionMessage(null), 5000);
+    } finally {
+      setIsSyncingEvents(false);
     }
   };
 
@@ -264,7 +306,7 @@ export default function AdminSetupClient() {
       )}
 
       {/* Action Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Create Vacation Card */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
@@ -307,6 +349,36 @@ export default function AdminSetupClient() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                 </svg>
                 {tSetup('syncCalendar.button')}
+              </>
+            )}
+          </button>
+        </div>
+
+        {/* Sync Event Calendar Card */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">{tSetup('syncEventCalendar.title')}</h3>
+            <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </div>
+          <p className="text-sm text-gray-600 mb-4">{tSetup('syncEventCalendar.description')}</p>
+          <button
+            onClick={handleSyncEventCalendar}
+            disabled={isSyncingEvents}
+            className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isSyncingEvents ? (
+              <>
+                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                {tSetup('syncEventCalendar.syncing')}
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                {tSetup('syncEventCalendar.button')}
               </>
             )}
           </button>

@@ -229,6 +229,12 @@ const en = {
         "button": "Sync to Calendar",
         "syncing": "Syncing..."
       },
+      "syncEventCalendar": {
+        "title": "Sync Event Calendar",
+        "description": "Import company events from Google Calendar (c_1ee147e8254f6b2d5985d9ce6c4f9b39983d00cdcfe3c3732fa3aa33a1e30e0e@group.calendar.google.com)",
+        "button": "Sync Event Calendar",
+        "syncing": "Syncing events..."
+      },
       "sendEmail": {
         "title": "Send Monthly Summary",
         "description": "Send the current month's validated vacations summary to accounting",
@@ -524,6 +530,12 @@ const fr = {
         "button": "Synchroniser le calendrier",
         "syncing": "Synchronisation..."
       },
+      "syncEventCalendar": {
+        "title": "Synchroniser le calendrier d'événements",
+        "description": "Importer les événements de l'entreprise depuis Google Calendar (c_1ee147e8254f6b2d5985d9ce6c4f9b39983d00cdcfe3c3732fa3aa33a1e30e0e@group.calendar.google.com)",
+        "button": "Synchroniser le calendrier d'événements",
+        "syncing": "Synchronisation des événements..."
+      },
       "sendEmail": {
         "title": "Envoyer le résumé mensuel",
         "description": "Envoyer le résumé des vacances validées du mois en cours à la comptabilité",
@@ -818,6 +830,12 @@ const it = {
         "description": "Sincronizza le richieste di ferie approvate con Google Calendar",
         "button": "Sincronizza calendario",
         "syncing": "Sincronizzazione..."
+      },
+      "syncEventCalendar": {
+        "title": "Sincronizza calendario eventi",
+        "description": "Importa eventi aziendali da Google Calendar (c_1ee147e8254f6b2d5985d9ce6c4f9b39983d00cdcfe3c3732fa3aa33a1e30e0e@group.calendar.google.com)",
+        "button": "Sincronizza calendario eventi",
+        "syncing": "Sincronizzazione eventi..."
       },
       "sendEmail": {
         "title": "Invia riepilogo mensile",

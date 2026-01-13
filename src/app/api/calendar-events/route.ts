@@ -217,7 +217,7 @@ export async function GET(request: NextRequest) {
               if (item.start) {
                 eventStart = item.start instanceof Date ? item.start : new Date(item.start);
                 // Validate date
-                if (isNaN(eventStart.getTime())) {
+                if (!eventStart || isNaN(eventStart.getTime())) {
                   console.warn(`[CALENDAR_API] Invalid start date for event: ${item.summary || item.uid}`);
                   return null;
                 }
@@ -225,7 +225,7 @@ export async function GET(request: NextRequest) {
               if (item.end) {
                 eventEnd = item.end instanceof Date ? item.end : new Date(item.end);
                 // Validate date
-                if (isNaN(eventEnd.getTime())) {
+                if (!eventEnd || isNaN(eventEnd.getTime())) {
                   console.warn(`[CALENDAR_API] Invalid end date for event: ${item.summary || item.uid}`);
                   return null;
                 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useTranslations } from 'next-intl';
-import GoogleCalendar from './GoogleCalendar';
+import EmbeddedCalendar from './EmbeddedCalendar';
 
 export default function PersistentCalendar() {
   const tCalendar = useTranslations('calendar');
@@ -48,7 +48,7 @@ export default function PersistentCalendar() {
           minHeight: '500px',
         }}
       >
-        <GoogleCalendar />
+        <EmbeddedCalendar height="600px" />
       </div>
     </div>
   );

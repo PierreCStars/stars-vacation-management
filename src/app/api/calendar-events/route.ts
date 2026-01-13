@@ -11,7 +11,6 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { isAdmin } from '@/config/admins';
 import { getAllExternalEvents } from '@/lib/db/calendar-sync.store';
-import ical from 'node-ical';
 
 // Utility function to load and parse Google credentials
 function loadGoogleCreds() {
@@ -199,6 +198,11 @@ export async function GET(request: NextRequest) {
       
       if (icalResponse.ok) {
         const icalData = await icalResponse.text();
+        // Dynamic import to avoid BigInt polyfill issues during Next.js build
+        // This prevents Next.js from trying to bundle node-ical during build phase
+        // node-ical uses CommonJS, so we need to handle the default export
+        const icalModule = await import('node-ical');
+        const ical = (icalModule.default || icalModule) as typeof import('node-ical');
         const parsedEvents = ical.parseICS(icalData);
         
         // Convert iCal events to Google Calendar API format

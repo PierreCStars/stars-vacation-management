@@ -12,7 +12,6 @@ import { authOptions } from '@/lib/auth';
 import { isAdmin } from '@/config/admins';
 import { getAllExternalEvents } from '@/lib/db/calendar-sync.store';
 import ical from 'node-ical';
-import ical from 'node-ical';
 
 // Utility function to load and parse Google credentials
 function loadGoogleCreds() {

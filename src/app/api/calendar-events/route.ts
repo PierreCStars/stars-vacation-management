@@ -247,14 +247,19 @@ export async function GET(request: NextRequest) {
               return null;
             }
             
+            // At this point, eventStart and eventEnd are guaranteed to be non-null
+            // (we return null earlier if they're missing or invalid)
+            const startDate = eventStart!;
+            const endDate = eventEnd!;
+            
             // Determine if it's an all-day event
             // iCal all-day events have dates without time components
             // Check if both start and end are at midnight (00:00:00)
-            const isAllDay = eventStart && eventEnd && (
-              (eventStart.getHours() === 0 && eventStart.getMinutes() === 0 && eventStart.getSeconds() === 0) &&
-              (eventEnd.getHours() === 0 && eventEnd.getMinutes() === 0 && eventEnd.getSeconds() === 0) &&
+            const isAllDay = (
+              (startDate.getHours() === 0 && startDate.getMinutes() === 0 && startDate.getSeconds() === 0) &&
+              (endDate.getHours() === 0 && endDate.getMinutes() === 0 && endDate.getSeconds() === 0) &&
               // Also check if the duration is a whole number of days
-              (eventEnd.getTime() - eventStart.getTime()) % (24 * 60 * 60 * 1000) === 0
+              (endDate.getTime() - startDate.getTime()) % (24 * 60 * 60 * 1000) === 0
             ) || (
               // Fallback: check if item.start is a string in YYYYMMDD format
               typeof item.start === 'string' && item.start.length === 8 && !item.start.includes('T')
@@ -266,9 +271,9 @@ export async function GET(request: NextRequest) {
             
             if (isAllDay) {
               // All-day event - format as YYYY-MM-DD
-              const startDateStr = eventStart.toISOString().split('T')[0];
+              const startDateStr = startDate.toISOString().split('T')[0];
               // For all-day events, iCal uses exclusive end dates, convert to inclusive
-              let endDateStr = eventEnd.toISOString().split('T')[0];
+              let endDateStr = endDate.toISOString().split('T')[0];
               if (endDateStr && endDateStr !== startDateStr) {
                 // Subtract one day from exclusive end date to get inclusive end date
                 const endDateObj = new Date(endDateStr + 'T00:00:00');
@@ -279,8 +284,8 @@ export async function GET(request: NextRequest) {
               end = { date: endDateStr || startDateStr };
             } else {
               // Timed event
-              start = { dateTime: eventStart.toISOString() };
-              end = { dateTime: eventEnd.toISOString() };
+              start = { dateTime: startDate.toISOString() };
+              end = { dateTime: endDate.toISOString() };
             }
             
             return {

@@ -11,6 +11,8 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { isAdmin } from '@/config/admins';
 import { getAllExternalEvents } from '@/lib/db/calendar-sync.store';
+import ical from 'node-ical';
+import ical from 'node-ical';
 
 // Utility function to load and parse Google credentials
 function loadGoogleCreds() {
@@ -181,35 +183,134 @@ export async function GET(request: NextRequest) {
 
     let events: any[] = [];
     
-    // Fetch from company events calendar
+    // Try fetching from public iCal feed first (for public calendars)
+    let icalEventsFetched = false;
     try {
-      const response = await calendar.events.list({
-        calendarId: companyEventsCalendarId,
-        timeMin: startDate.toISOString(),
-        timeMax: endDate.toISOString(),
-        singleEvents: true,
-        orderBy: 'startTime',
-      });
-
-      const companyEvents = response.data.items || [];
-      console.log(`✅ Found ${companyEvents.length} company calendar events from ${companyEventsCalendarId}`);
-      events.push(...companyEvents);
-    } catch (calendarError: any) {
-      const errorDetails = {
-        message: calendarError instanceof Error ? calendarError.message : String(calendarError),
-        code: calendarError?.code,
-        status: calendarError?.response?.status,
-        statusText: calendarError?.response?.statusText,
-        calendarId: companyEventsCalendarId,
-        serviceAccount: loadGoogleCreds().client_email
-      };
-      console.error('[CALENDAR_API] Failed to fetch from company events calendar:', errorDetails);
+      // Convert calendar ID to iCal feed URL format
+      // Format: https://calendar.google.com/calendar/ical/{calendarId}/public/basic.ics
+      const encodedCalendarId = encodeURIComponent(companyEventsCalendarId);
+      const icalUrl = `https://calendar.google.com/calendar/ical/${encodedCalendarId}/public/basic.ics`;
       
-      // Log specific error types for easier debugging
-      if (errorDetails.status === 403) {
-        console.error('[CALENDAR_API] Permission denied - Service account may not have read access to calendar');
-      } else if (errorDetails.status === 404) {
-        console.error('[CALENDAR_API] Calendar not found - Verify calendar ID is correct');
+      console.log(`[CALENDAR_API] Attempting to fetch from public iCal feed: ${icalUrl}`);
+      const icalResponse = await fetch(icalUrl, {
+        headers: {
+          'User-Agent': 'Stars Vacation Management/2.0',
+        },
+      });
+      
+      if (icalResponse.ok) {
+        const icalData = await icalResponse.text();
+        const parsedEvents = ical.parseICS(icalData);
+        
+        // Convert iCal events to Google Calendar API format
+        const convertedEvents = Object.values(parsedEvents)
+          .filter((item: any) => item.type === 'VEVENT')
+          .map((item: any) => {
+            // Handle iCal date format (can be Date object or string)
+            let eventStart: Date | null = null;
+            let eventEnd: Date | null = null;
+            
+            if (item.start) {
+              eventStart = item.start instanceof Date ? item.start : new Date(item.start);
+            }
+            if (item.end) {
+              eventEnd = item.end instanceof Date ? item.end : new Date(item.end);
+            }
+            
+            // Filter events within the requested time range
+            if (eventStart && eventEnd) {
+              if (eventStart >= endDate || eventEnd <= startDate) {
+                return null; // Event is outside the requested range
+              }
+            }
+            
+            // Determine if it's an all-day event
+            // iCal all-day events have dates without time components
+            const isAllDay = item.start && (
+              typeof item.start === 'string' && item.start.length === 8 && !item.start.includes('T') ||
+              (item.start instanceof Date && item.start.getHours() === 0 && item.start.getMinutes() === 0 && item.start.getSeconds() === 0)
+            );
+            
+            // Format dates for Google Calendar API compatibility
+            let start: any = {};
+            let end: any = {};
+            
+            if (isAllDay) {
+              // All-day event - format as YYYY-MM-DD
+              const startDateStr = eventStart ? eventStart.toISOString().split('T')[0] : '';
+              // For all-day events, iCal uses exclusive end dates, convert to inclusive
+              let endDateStr = eventEnd ? eventEnd.toISOString().split('T')[0] : '';
+              if (endDateStr && endDateStr !== startDateStr) {
+                // Subtract one day from exclusive end date
+                const endDateObj = new Date(endDateStr + 'T00:00:00');
+                endDateObj.setDate(endDateObj.getDate() - 1);
+                endDateStr = endDateObj.toISOString().split('T')[0];
+              }
+              start = { date: startDateStr };
+              end = { date: endDateStr || startDateStr };
+            } else {
+              // Timed event
+              start = { dateTime: eventStart ? eventStart.toISOString() : '' };
+              end = { dateTime: eventEnd ? eventEnd.toISOString() : '' };
+            }
+            
+            return {
+              id: item.uid || `ical_${Date.now()}_${Math.random()}`,
+              summary: item.summary || 'Untitled Event',
+              description: item.description || '',
+              location: item.location || '',
+              start,
+              end,
+              htmlLink: item.url || '',
+              status: item.status || 'confirmed',
+              iCalUID: item.uid,
+            };
+          })
+          .filter((event: any) => event !== null);
+        
+        if (convertedEvents.length > 0) {
+          console.log(`✅ Found ${convertedEvents.length} events from public iCal feed`);
+          events.push(...convertedEvents);
+          icalEventsFetched = true;
+        }
+      } else {
+        console.log(`[CALENDAR_API] iCal feed returned status ${icalResponse.status}, falling back to API`);
+      }
+    } catch (icalError) {
+      console.log('[CALENDAR_API] Failed to fetch from iCal feed, falling back to API:', icalError instanceof Error ? icalError.message : String(icalError));
+    }
+    
+    // Fetch from company events calendar using API (fallback or if iCal didn't work)
+    if (!icalEventsFetched) {
+      try {
+        const response = await calendar.events.list({
+          calendarId: companyEventsCalendarId,
+          timeMin: startDate.toISOString(),
+          timeMax: endDate.toISOString(),
+          singleEvents: true,
+          orderBy: 'startTime',
+        });
+
+        const companyEvents = response.data.items || [];
+        console.log(`✅ Found ${companyEvents.length} company calendar events from ${companyEventsCalendarId}`);
+        events.push(...companyEvents);
+      } catch (calendarError: any) {
+        const errorDetails = {
+          message: calendarError instanceof Error ? calendarError.message : String(calendarError),
+          code: calendarError?.code,
+          status: calendarError?.response?.status,
+          statusText: calendarError?.response?.statusText,
+          calendarId: companyEventsCalendarId,
+          serviceAccount: loadGoogleCreds().client_email
+        };
+        console.error('[CALENDAR_API] Failed to fetch from company events calendar:', errorDetails);
+        
+        // Log specific error types for easier debugging
+        if (errorDetails.status === 403) {
+          console.error('[CALENDAR_API] Permission denied - Service account may not have read access to calendar');
+        } else if (errorDetails.status === 404) {
+          console.error('[CALENDAR_API] Calendar not found - Verify calendar ID is correct');
+        }
       }
     }
     

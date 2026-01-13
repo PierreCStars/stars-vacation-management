@@ -213,25 +213,51 @@ export async function GET(request: NextRequest) {
             let eventStart: Date | null = null;
             let eventEnd: Date | null = null;
             
-            if (item.start) {
-              eventStart = item.start instanceof Date ? item.start : new Date(item.start);
-            }
-            if (item.end) {
-              eventEnd = item.end instanceof Date ? item.end : new Date(item.end);
-            }
-            
-            // Filter events within the requested time range
-            if (eventStart && eventEnd) {
+            try {
+              if (item.start) {
+                eventStart = item.start instanceof Date ? item.start : new Date(item.start);
+                // Validate date
+                if (isNaN(eventStart.getTime())) {
+                  console.warn(`[CALENDAR_API] Invalid start date for event: ${item.summary || item.uid}`);
+                  return null;
+                }
+              }
+              if (item.end) {
+                eventEnd = item.end instanceof Date ? item.end : new Date(item.end);
+                // Validate date
+                if (isNaN(eventEnd.getTime())) {
+                  console.warn(`[CALENDAR_API] Invalid end date for event: ${item.summary || item.uid}`);
+                  return null;
+                }
+              }
+              
+              // Skip events without valid dates
+              if (!eventStart || !eventEnd) {
+                console.warn(`[CALENDAR_API] Event missing dates: ${item.summary || item.uid}`);
+                return null;
+              }
+              
+              // Filter events within the requested time range
+              // Use overlap check: event overlaps if it starts before timeMax and ends after timeMin
               if (eventStart >= endDate || eventEnd <= startDate) {
                 return null; // Event is outside the requested range
               }
+            } catch (dateError) {
+              console.warn(`[CALENDAR_API] Error parsing dates for event ${item.summary || item.uid}:`, dateError);
+              return null;
             }
             
             // Determine if it's an all-day event
             // iCal all-day events have dates without time components
-            const isAllDay = item.start && (
-              typeof item.start === 'string' && item.start.length === 8 && !item.start.includes('T') ||
-              (item.start instanceof Date && item.start.getHours() === 0 && item.start.getMinutes() === 0 && item.start.getSeconds() === 0)
+            // Check if both start and end are at midnight (00:00:00)
+            const isAllDay = eventStart && eventEnd && (
+              (eventStart.getHours() === 0 && eventStart.getMinutes() === 0 && eventStart.getSeconds() === 0) &&
+              (eventEnd.getHours() === 0 && eventEnd.getMinutes() === 0 && eventEnd.getSeconds() === 0) &&
+              // Also check if the duration is a whole number of days
+              (eventEnd.getTime() - eventStart.getTime()) % (24 * 60 * 60 * 1000) === 0
+            ) || (
+              // Fallback: check if item.start is a string in YYYYMMDD format
+              typeof item.start === 'string' && item.start.length === 8 && !item.start.includes('T')
             );
             
             // Format dates for Google Calendar API compatibility
@@ -240,11 +266,11 @@ export async function GET(request: NextRequest) {
             
             if (isAllDay) {
               // All-day event - format as YYYY-MM-DD
-              const startDateStr = eventStart ? eventStart.toISOString().split('T')[0] : '';
+              const startDateStr = eventStart.toISOString().split('T')[0];
               // For all-day events, iCal uses exclusive end dates, convert to inclusive
-              let endDateStr = eventEnd ? eventEnd.toISOString().split('T')[0] : '';
+              let endDateStr = eventEnd.toISOString().split('T')[0];
               if (endDateStr && endDateStr !== startDateStr) {
-                // Subtract one day from exclusive end date
+                // Subtract one day from exclusive end date to get inclusive end date
                 const endDateObj = new Date(endDateStr + 'T00:00:00');
                 endDateObj.setDate(endDateObj.getDate() - 1);
                 endDateStr = endDateObj.toISOString().split('T')[0];
@@ -253,8 +279,8 @@ export async function GET(request: NextRequest) {
               end = { date: endDateStr || startDateStr };
             } else {
               // Timed event
-              start = { dateTime: eventStart ? eventStart.toISOString() : '' };
-              end = { dateTime: eventEnd ? eventEnd.toISOString() : '' };
+              start = { dateTime: eventStart.toISOString() };
+              end = { dateTime: eventEnd.toISOString() };
             }
             
             return {
@@ -499,12 +525,23 @@ export async function GET(request: NextRequest) {
           // Filter out cancelled events
           if (event.status === 'cancelled') return false;
           
-          // Check if event overlaps with requested time range
-          const eventStart = new Date(event.startISO);
-          const eventEnd = new Date(event.endISO);
-          
-          // Event overlaps if it starts before timeMax and ends after timeMin
-          return eventStart < timeMaxDate && eventEnd > timeMinDate;
+          try {
+            // Check if event overlaps with requested time range
+            const eventStart = new Date(event.startISO);
+            const eventEnd = new Date(event.endISO);
+            
+            // Validate dates
+            if (isNaN(eventStart.getTime()) || isNaN(eventEnd.getTime())) {
+              console.warn(`[CALENDAR_API] External event has invalid dates: ${event.title}`);
+              return false;
+            }
+            
+            // Event overlaps if it starts before timeMax and ends after timeMin
+            return eventStart < timeMaxDate && eventEnd > timeMinDate;
+          } catch (error) {
+            console.warn(`[CALENDAR_API] Error processing external event ${event.title}:`, error);
+            return false;
+          }
         })
         .map(event => {
           // Format dates - extract date part (YYYY-MM-DD) from ISO string

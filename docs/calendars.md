@@ -69,11 +69,32 @@ en-gb.mc#holiday@group.v.calendar.google.com
 **Access**: Public calendar (no authentication required)
 
 **Location in Code**:
-- `src/app/api/calendar-events/route.ts` (line 143): Hardcoded as `monacoHolidaysCalendarId`
+- `src/app/api/calendar-events/route.ts` (line 146): Hardcoded as `monacoHolidaysCalendarId`
 
 **Usage**: Public holidays from this calendar are fetched and displayed in the app to show official days off.
 
 **Note**: This is a Google-provided public calendar for Monaco holidays.
+
+---
+
+### 4. French Public Holidays Calendar (Source)
+
+**Purpose**: Calendar containing official French public holidays.
+
+**Calendar ID**: 
+```
+en-gb.french#holiday@group.v.calendar.google.com
+```
+
+**Access**: Public calendar (no authentication required)
+
+**Location in Code**:
+- `src/app/api/calendar-events/route.ts` (line 147): Hardcoded as `frenchHolidaysCalendarId`
+- `src/components/EmbeddedCalendar.tsx`: Included in embed URL
+
+**Usage**: Public holidays from this calendar are fetched and displayed in the app to show French official days off. Also included in the embedded calendar view.
+
+**Note**: This is a Google-provided public calendar for French holidays.
 
 ---
 

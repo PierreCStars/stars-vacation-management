@@ -88,7 +88,7 @@ export default function VacationRequestCalendar({
         style={{
           padding: '8px',
           textAlign: 'center',
-          border: '1px solid #e2e8f0',
+          border: isCurrentDay ? '3px solid #d8B11B' : '1px solid #e2e8f0',
           position: 'relative',
           minHeight: '60px',
           display: 'flex',
@@ -96,9 +96,9 @@ export default function VacationRequestCalendar({
           justifyContent: 'center',
           alignItems: 'center',
           backgroundColor: isVacation ? getCompanyHexColor(company) : '#ffffff',
-          borderColor: isVacation ? '#374151' : '#e2e8f0',
+          borderColor: isCurrentDay ? '#d8B11B' : (isVacation ? '#374151' : '#e2e8f0'),
           fontWeight: isVacation ? '600' : '400',
-          color: isVacation ? '#ffffff' : '#374151'
+          color: isVacation ? '#ffffff' : (isCurrentDay ? '#d8B11B' : '#374151')
         }}
       >
         <span style={{ fontSize: '14px', marginBottom: '4px' }}>{day}</span>

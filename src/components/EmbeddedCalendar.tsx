@@ -4,10 +4,12 @@ import { useTranslations } from 'next-intl';
 
 /**
  * REQUIRED Google Calendar embed URL - this is the ONLY source for embedded calendar events
- * Calendar ID: c_1ee147e8254f6b2d5985d9ce6c4f9b39983d00cdcfe3c3732fa3aa33a1e30e0e@group.calendar.google.com
+ * Includes:
+ * - Company events calendar: c_1ee147e8254f6b2d5985d9ce6c4f9b39983d00cdcfe3c3732fa3aa33a1e30e0e@group.calendar.google.com
+ * - French holidays calendar: en-gb.french#holiday@group.v.calendar.google.com
  * Timezone: Europe/Monaco
  */
-const EMBED_CALENDAR_URL = 'https://calendar.google.com/calendar/embed?src=c_1ee147e8254f6b2d5985d9ce6c4f9b39983d00cdcfe3c3732fa3aa33a1e30e0e%40group.calendar.google.com&ctz=Europe%2FMonaco';
+const EMBED_CALENDAR_URL = 'https://calendar.google.com/calendar/embed?src=c_1ee147e8254f6b2d5985d9ce6c4f9b39983d00cdcfe3c3732fa3aa33a1e30e0e%40group.calendar.google.com&src=en-gb.french%23holiday%40group.v.calendar.google.com&ctz=Europe%2FMonaco';
 
 interface EmbeddedCalendarProps {
   height?: string;
@@ -28,11 +30,21 @@ export default function EmbeddedCalendar({
   // Dev-only validation guard
   if (process.env.NODE_ENV === 'development') {
     const url = new URL(EMBED_CALENDAR_URL);
-    const src = url.searchParams.get('src');
+    const srcParams = url.searchParams.getAll('src');
     const ctz = url.searchParams.get('ctz');
     
-    if (!src?.includes('c_1ee147e8254f6b2d5985d9ce6c4f9b39983d00cdcfe3c3732fa3aa33a1e30e0e@group.calendar.google.com')) {
-      console.error('[EmbeddedCalendar] Invalid calendar ID in embed URL');
+    const hasCompanyCalendar = srcParams.some(src => 
+      src.includes('c_1ee147e8254f6b2d5985d9ce6c4f9b39983d00cdcfe3c3732fa3aa33a1e30e0e@group.calendar.google.com')
+    );
+    const hasFrenchHolidays = srcParams.some(src => 
+      src.includes('en-gb.french#holiday@group.v.calendar.google.com')
+    );
+    
+    if (!hasCompanyCalendar) {
+      console.error('[EmbeddedCalendar] Missing company events calendar ID in embed URL');
+    }
+    if (!hasFrenchHolidays) {
+      console.error('[EmbeddedCalendar] Missing French holidays calendar ID in embed URL');
     }
     if (ctz !== 'Europe/Monaco') {
       console.warn('[EmbeddedCalendar] Timezone mismatch - expected Europe/Monaco');

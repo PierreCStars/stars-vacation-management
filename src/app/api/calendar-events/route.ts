@@ -139,11 +139,12 @@ export async function GET(request: NextRequest) {
     const timeMin = searchParams.get('timeMin');
     const timeMax = searchParams.get('timeMax');
     
-    // Define calendar IDs - company events calendar and Monaco holidays calendar
+    // Define calendar IDs - company events calendar, Monaco holidays calendar, and French holidays calendar
     // Use environment variable if available, otherwise fallback to hardcoded ID
     const companyEventsCalendarId = process.env.GOOGLE_CALENDAR_SOURCE_ID || 
       'c_1ee147e8254f6b2d5985d9ce6c4f9b39983d00cdcfe3c3732fa3aa33a1e30e0e@group.calendar.google.com';
     const monacoHolidaysCalendarId = 'en-gb.mc#holiday@group.v.calendar.google.com';
+    const frenchHolidaysCalendarId = 'en-gb.french#holiday@group.v.calendar.google.com';
     const fallbackCalendarId = process.env.GOOGLE_CALENDAR_ID || companyEventsCalendarId;
     const includeVacationRequests = searchParams.get('includeVacationRequests') !== 'false';
 
@@ -382,6 +383,23 @@ export async function GET(request: NextRequest) {
       events.push(...holidaysEvents);
     } catch (holidaysError) {
       console.error('[CALENDAR_API] Failed to fetch from Monaco holidays calendar:', holidaysError);
+    }
+    
+    // Also fetch from French holidays calendar
+    try {
+      const frenchHolidaysResponse = await calendar.events.list({
+        calendarId: frenchHolidaysCalendarId,
+        timeMin: startDate.toISOString(),
+        timeMax: endDate.toISOString(),
+        singleEvents: true,
+        orderBy: 'startTime',
+      });
+
+      const frenchHolidaysEvents = frenchHolidaysResponse.data.items || [];
+      console.log(`✅ Found ${frenchHolidaysEvents.length} French holidays calendar events`);
+      events.push(...frenchHolidaysEvents);
+    } catch (frenchHolidaysError) {
+      console.error('[CALENDAR_API] Failed to fetch from French holidays calendar:', frenchHolidaysError);
     }
     
     console.log(`✅ Total calendar events: ${events.length}`);

@@ -206,20 +206,22 @@ export default function VacationConflictCalendar({
               <div
                 key={index}
                 className={`
-                  min-h-[90px] p-2 border border-gray-200 transition-all duration-200 cursor-pointer relative
+                  min-h-[90px] p-2 border transition-all duration-200 cursor-pointer relative
                   ${conflictStyle.bg} ${conflictStyle.border} ${conflictStyle.ring}
                   ${day.isCurrentMonth ? 'bg-white' : 'bg-gray-50'}
-                  ${day.isToday ? 'ring-2 ring-blue-400' : ''}
+                  ${day.isToday ? '' : 'border-gray-200'}
                   hover:shadow-md hover:bg-gray-50
                 `}
+                style={day.isToday ? { border: '3px solid #d8B11B' } : {}}
                 onClick={() => setSelectedDate(day.date)}
               >
                 {/* Day number */}
                 <div className={`
                   text-sm font-bold mb-1 text-center
                   ${day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}
-                  ${day.isToday ? 'text-blue-600' : ''}
-                `}>
+                `}
+                style={day.isToday ? { color: '#d8B11B' } : {}}
+                >
                   {day.dayNumber}
                 </div>
 

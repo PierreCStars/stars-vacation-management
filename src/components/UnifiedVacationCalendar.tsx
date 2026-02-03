@@ -409,15 +409,18 @@ export default function UnifiedVacationCalendar({
               key={index}
               className={`p-1 sm:p-2 min-h-[60px] sm:min-h-[80px] border rounded-lg transition-all duration-200 ${
                 readOnly ? 'cursor-default' : 'cursor-pointer hover:shadow-md'
-              } ${bgColor} ${
-                day.isToday ? 'ring-2 ring-blue-500 ring-opacity-50' : ''
-              }`}
-              style={bgColorStyle}
+              } ${bgColor}`}
+              style={{
+                ...bgColorStyle,
+                ...(day.isToday ? { border: '3px solid #d8B11B' } : {})
+              }}
               onClick={() => !readOnly && setSelectedDate(selectedDate?.toDateString() === day.date.toDateString() ? null : day.date)}
             >
               <div className={`text-xs sm:text-sm font-medium ${
                 day.isWeekend ? 'text-gray-500' : day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'
-              } ${day.isToday ? 'text-blue-600 font-bold' : ''}`}>
+              } ${day.isToday ? 'font-bold' : ''}`}
+              style={day.isToday ? { color: '#d8B11B' } : {}}
+              >
                 {day.dayNumber}
               </div>
               

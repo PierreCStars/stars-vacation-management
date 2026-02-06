@@ -176,7 +176,14 @@ export async function sendEmailWithFallbacks(config: EmailConfig): Promise<Email
       console.log('✅ Email sent successfully via SMTP');
       return smtpResult;
     }
-    console.log('⚠️ SMTP failed:', smtpResult.error);
+    console.error('❌ SMTP failed:', smtpResult.error);
+    // Return detailed error for debugging
+    return {
+      success: false,
+      error: `SMTP failed: ${smtpResult.error}`,
+      provider: 'smtp',
+      details: smtpResult.error
+    };
   }
 
   // Fallback: console logging

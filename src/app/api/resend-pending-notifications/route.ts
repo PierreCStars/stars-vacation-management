@@ -20,9 +20,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Get all pending vacation requests
-    // Note: Removed orderBy to avoid requiring a composite index
+    // Note: Status is stored as 'Pending' (capitalized) in the database
     const snapshot = await db.collection('vacationRequests')
-      .where('status', '==', 'pending')
+      .where('status', '==', 'Pending')
       .get();
 
     if (snapshot.empty) {
@@ -131,9 +131,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all pending vacation requests
-    // Note: Removed orderBy to avoid requiring a composite index
+    // Note: Status is stored as 'Pending' (capitalized) in the database
     const snapshot = await db.collection('vacationRequests')
-      .where('status', '==', 'pending')
+      .where('status', '==', 'Pending')
       .get();
 
     // Sort in memory by createdAt descending

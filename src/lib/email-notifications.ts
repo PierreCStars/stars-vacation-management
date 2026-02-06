@@ -181,8 +181,7 @@ export async function sendEmailWithFallbacks(config: EmailConfig): Promise<Email
     return {
       success: false,
       error: `SMTP failed: ${smtpResult.error}`,
-      provider: 'smtp',
-      details: smtpResult.error
+      provider: 'smtp'
     };
   }
 

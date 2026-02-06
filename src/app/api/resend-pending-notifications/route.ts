@@ -20,9 +20,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Get all pending vacation requests
-    // Note: Status is stored as 'Pending' (capitalized) in the database
+    // Query for all possible status variations (pending, Pending, PENDING)
+    // to handle any legacy data or case variations
     const snapshot = await db.collection('vacationRequests')
-      .where('status', '==', 'Pending')
+      .where('status', 'in', ['pending', 'PENDING', 'Pending'])
       .get();
 
     if (snapshot.empty) {
@@ -131,9 +132,10 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all pending vacation requests
-    // Note: Status is stored as 'Pending' (capitalized) in the database
+    // Query for all possible status variations (pending, Pending, PENDING)
+    // to handle any legacy data or case variations
     const snapshot = await db.collection('vacationRequests')
-      .where('status', '==', 'Pending')
+      .where('status', 'in', ['pending', 'PENDING', 'Pending'])
       .get();
 
     // Sort in memory by createdAt descending

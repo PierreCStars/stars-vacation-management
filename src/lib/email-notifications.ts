@@ -4,6 +4,7 @@
  */
 
 import nodemailer from 'nodemailer';
+import { ADMINS } from '@/config/admins';
 
 export interface EmailConfig {
   subject: string;
@@ -21,19 +22,30 @@ export interface EmailResult {
 }
 
 /**
- * Get admin email recipients from environment
+ * Get admin email recipients from environment or ADMINS config
  */
 export function getAdminEmails(): string[] {
+  // First, try environment variables (takes precedence)
   const adminEmails = process.env.NOTIFY_ADMIN_EMAILS || process.env.ADMIN_EMAILS;
-  if (!adminEmails) {
-    console.warn('⚠️ No admin emails configured, using fallback');
-    return ['pierre@stars.mc']; // Fallback
+  if (adminEmails) {
+    return adminEmails
+      .split(',')
+      .map(email => email.trim())
+      .filter(Boolean);
   }
   
-  return adminEmails
-    .split(',')
-    .map(email => email.trim())
-    .filter(Boolean);
+  // Fallback to ADMINS config array
+  if (ADMINS && Array.isArray(ADMINS) && ADMINS.length > 0) {
+    const emails = ADMINS.map(admin => admin.email).filter(Boolean);
+    if (emails.length > 0) {
+      console.log('📧 Using admin emails from ADMINS config:', emails);
+      return emails;
+    }
+  }
+  
+  // Final fallback
+  console.warn('⚠️ No admin emails configured, using single fallback');
+  return ['pierre@stars.mc'];
 }
 
 /**

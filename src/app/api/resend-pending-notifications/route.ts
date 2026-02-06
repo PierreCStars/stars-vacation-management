@@ -20,9 +20,9 @@ export async function POST(request: NextRequest) {
     }
 
     // Get all pending vacation requests
+    // Note: Removed orderBy to avoid requiring a composite index
     const snapshot = await db.collection('vacationRequests')
       .where('status', '==', 'pending')
-      .orderBy('createdAt', 'desc')
       .get();
 
     if (snapshot.empty) {
@@ -131,26 +131,33 @@ export async function GET(request: NextRequest) {
     }
 
     // Get all pending vacation requests
+    // Note: Removed orderBy to avoid requiring a composite index
     const snapshot = await db.collection('vacationRequests')
       .where('status', '==', 'pending')
-      .orderBy('createdAt', 'desc')
       .get();
 
-    const pendingRequests = snapshot.docs.map(doc => {
-      const data = doc.data();
-      return {
-        id: doc.id,
-        userName: data.userName || 'Unknown Employee',
-        userEmail: data.userEmail || data.userId || 'unknown@example.com',
-        startDate: data.startDate,
-        endDate: data.endDate,
-        reason: data.reason || 'No reason provided',
-        company: data.company || 'Unknown Company',
-        type: data.type || 'Full day',
-        createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
-        durationDays: data.durationDays || 1
-      };
-    });
+    // Sort in memory by createdAt descending
+    const pendingRequests = snapshot.docs
+      .map(doc => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          userName: data.userName || 'Unknown Employee',
+          userEmail: data.userEmail || data.userId || 'unknown@example.com',
+          startDate: data.startDate,
+          endDate: data.endDate,
+          reason: data.reason || 'No reason provided',
+          company: data.company || 'Unknown Company',
+          type: data.type || 'Full day',
+          createdAt: data.createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+          durationDays: data.durationDays || 1
+        };
+      })
+      .sort((a, b) => {
+        const dateA = new Date(a.createdAt).getTime();
+        const dateB = new Date(b.createdAt).getTime();
+        return dateB - dateA; // Descending order
+      });
 
     return NextResponse.json({
       success: true,

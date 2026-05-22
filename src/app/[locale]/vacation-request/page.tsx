@@ -26,18 +26,12 @@ export default function VacationRequestPage() {
   const [vacationRequests, setVacationRequests] = useState<VacationRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Use next-intl translations
   const tVacations = useTranslations('vacations');
   const tCommon = useTranslations('common');
 
-  // Extract current locale from pathname
   const pathname = usePathname();
   const currentLocale = pathname?.split('/')[1] || 'en';
 
-  // Helper function to create locale-aware links
-  const createLocaleLink = (href: string) => `/${currentLocale}${href}`;
-
-  // Fetch existing vacation requests for the calendar
   useEffect(() => {
     const fetchVacationRequests = async () => {
       try {
@@ -89,19 +83,11 @@ export default function VacationRequestPage() {
     setErrorMessage('');
 
     try {
-      // Calculate duration in days
       const startDate = new Date(formData.startDate);
       const endDate = new Date(formData.isHalfDay ? formData.startDate : formData.endDate);
       const timeDiff = endDate.getTime() - startDate.getTime();
-      const durationDays = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1; // +1 to include both start and end days
+      const durationDays = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
 
-      console.log('🔍 Form data:', formData);
-      console.log('🔍 Start date:', startDate);
-      console.log('🔍 End date:', endDate);
-      console.log('🔍 Time diff:', timeDiff);
-      console.log('🔍 Calculated durationDays:', durationDays);
-
-      // Check if dates overlap forbidden windows
       const locale = resolveLocale(currentLocale);
       const overlapsForbidden = overlapsForbiddenWindow(startDate, endDate);
 
@@ -114,31 +100,26 @@ export default function VacationRequestPage() {
         isHalfDay: formData.isHalfDay,
         halfDayType: formData.isHalfDay ? formData.halfDayType : null,
         durationDays: formData.isHalfDay ? 0.5 : durationDays,
-        // If dates overlap forbidden windows, set status to denied with reason
         ...(overlapsForbidden && {
           status: 'denied',
           denialReason: autoDenyMessage(locale)
         })
       };
 
-      console.log('📤 Sending payload to API:', payload);
-
       const response = await fetch('/api/vacation-requests', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Accept-Language': currentLocale, // Send current locale to API
+          'Accept-Language': currentLocale,
         },
         body: JSON.stringify(payload),
       });
 
       if (response.ok) {
-        // If request was auto-denied, show the denial message
         if (overlapsForbidden) {
           const denyMessage = autoDenyMessage(locale);
           setErrorMessage(denyMessage);
           setSubmitStatus('error');
-          // Still show success state but with denial message
           setFormData({
             startDate: '',
             endDate: '',
@@ -148,7 +129,6 @@ export default function VacationRequestPage() {
             isHalfDay: false,
             halfDayType: ''
           });
-          // Refresh the calendar
           const refreshResponse = await fetch('/api/vacation-requests');
           if (refreshResponse.ok) {
             const data = await refreshResponse.json();
@@ -165,7 +145,6 @@ export default function VacationRequestPage() {
             isHalfDay: false,
             halfDayType: ''
           });
-          // Refresh the calendar after successful submission
           const refreshResponse = await fetch('/api/vacation-requests');
           if (refreshResponse.ok) {
             const data = await refreshResponse.json();
@@ -202,262 +181,294 @@ export default function VacationRequestPage() {
   };
 
   return (
-    <>
-      <main className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-12">
-        <div className="w-full max-w-6xl mx-auto px-6">
-          {/* Header with Navigation - REMOVED as Navigation component handles it */}
-          <div className="text-center mb-8">
-            <Link href={createLocaleUrl('/dashboard', currentLocale)}>
-              <Image
-                src="/stars-logo.png"
-                alt="Stars Logo"
-                width={120}
-                height={120}
-                className="mb-4 drop-shadow-lg mx-auto cursor-pointer"
-                priority
-              />
-            </Link>
-            <h1 className="text-4xl font-bold tracking-tight mb-4 text-gray-900">
-              {tVacations('title')}
-            </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              {tVacations('subtitle')}
-            </p>
+    <main className="py-10 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-4xl mx-auto">
+        {/* Header */}
+        <header className="text-center mb-10">
+          <Link
+            href={createLocaleUrl('/dashboard', currentLocale)}
+            className="inline-block mb-5 transition-transform hover:scale-105"
+            aria-label="Stars"
+          >
+            <Image src="/stars-logo.png" alt="Stars" width={64} height={64} priority />
+          </Link>
+          <p className="eyebrow mb-3">Star Luxury Group</p>
+          <h1 className="!font-light tracking-tight">
+            {tVacations('title')}
+          </h1>
+          <div className="mt-4 flex justify-center">
+            <span className="filet-gold" />
           </div>
+          <p className="mt-6 text-base text-slate-ardoise/90 max-w-2xl mx-auto leading-relaxed">
+            {tVacations('subtitle')}
+          </p>
+        </header>
 
-          <div className="bg-white/95 rounded-2xl border shadow-xl p-8 backdrop-blur-sm">
-            {submitStatus === 'success' ? (
-              <div className="text-center">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
-                  <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </div>
-                <h2 className="text-2xl font-semibold mb-4 text-gray-900">
-                  {tVacations('requestSubmittedSuccessfully')}
-                </h2>
-                <p className="text-gray-600 mb-6">
-                  {tVacations('requestSubmittedMessage')}
-                </p>
-                <div className="flex justify-center space-x-4">
-                  <Link
-                    href={createLocaleUrl('/dashboard', currentLocale)}
-                    className="px-6 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200"
-                  >
-                    {tVacations('backToDashboard')}
-                  </Link>
-                  <button
-                    onClick={() => setSubmitStatus('idle')}
-                    className="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-                  >
-                    {tVacations('submitAnotherRequest')}
-                  </button>
-                </div>
+        <div className="card">
+          {submitStatus === 'success' ? (
+            <div className="text-center py-6">
+              <div className="w-14 h-14 bg-[#ECF5EE] rounded-full flex items-center justify-center mx-auto mb-6">
+                <svg className="w-7 h-7 text-[#1F6E3A]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
               </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-8">
-                {/* Duration Type */}
-                <div className="bg-gray-50 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-4">{tVacations('durationType')}</h3>
-                  <div className="flex gap-6">
-                    <label className="inline-flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="duration"
-                        value="full"
-                        checked={!formData.isHalfDay}
-                        onChange={handleInputChange}
-                        className="text-blue-600 focus:ring-blue-500 w-5 h-5"
-                      />
-                      <span className="text-gray-700 font-medium">{tVacations('fullDay')}</span>
-                    </label>
-                    <label className="inline-flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="duration"
-                        value="half"
-                        checked={formData.isHalfDay}
-                        onChange={handleInputChange}
-                        className="text-blue-600 focus:ring-blue-500 w-5 h-5"
-                      />
-                      <span className="text-gray-700 font-medium">{tVacations('halfDay')}</span>
-                    </label>
-                  </div>
-                </div>
-
-                {/* Half Day Type */}
-                {formData.isHalfDay && (
-                  <div className="bg-blue-50 rounded-lg p-6">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-4">{tVacations('halfDayType')}</h3>
-                    <div className="flex gap-6">
-                      <label className="inline-flex items-center gap-3">
-                        <input
-                          type="radio"
-                          name="halfDayType"
-                          value="morning"
-                          checked={formData.halfDayType === 'morning'}
-                          onChange={handleInputChange}
-                          className="text-blue-600 focus:ring-blue-500 w-5 h-5"
-                        />
-                        <span className="text-gray-700 font-medium">{tVacations('morning')}</span>
-                      </label>
-                      <label className="inline-flex items-center gap-3">
-                        <input
-                          type="radio"
-                          name="halfDayType"
-                          value="afternoon"
-                          checked={formData.halfDayType === 'afternoon'}
-                          onChange={handleInputChange}
-                          className="text-blue-600 focus:ring-blue-500 w-5 h-5"
-                        />
-                        <span className="text-gray-700 font-medium">{tVacations('afternoon')}</span>
-                      </label>
-                    </div>
-                  </div>
-                )}
-
-                {/* Date Fields */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {tVacations('startDate')} *
-                    </label>
+              <h2 className="!text-2xl !font-semibold mb-3">
+                {tVacations('requestSubmittedSuccessfully')}
+              </h2>
+              <p className="text-sm text-slate-ardoise/90 mb-8 max-w-md mx-auto leading-relaxed">
+                {tVacations('requestSubmittedMessage')}
+              </p>
+              <div className="flex flex-col sm:flex-row justify-center gap-3">
+                <Link
+                  href={createLocaleUrl('/dashboard', currentLocale)}
+                  className="btn-primary"
+                >
+                  {tVacations('backToDashboard')}
+                </Link>
+                <button
+                  onClick={() => setSubmitStatus('idle')}
+                  className="btn-secondary"
+                >
+                  {tVacations('submitAnotherRequest')}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* Duration type */}
+              <fieldset>
+                <legend className="eyebrow mb-3">{tVacations('durationType')}</legend>
+                <div className="flex flex-wrap gap-3">
+                  <label
+                    className={`inline-flex items-center gap-3 px-5 py-3 rounded-lg border cursor-pointer transition-colors ${
+                      !formData.isHalfDay
+                        ? 'border-gold bg-gold/10 text-ink'
+                        : 'border-black/10 bg-white text-slate-ardoise hover:border-gold/40'
+                    }`}
+                  >
                     <input
-                      type="date"
-                      name="startDate"
-                      value={formData.startDate}
+                      type="radio"
+                      name="duration"
+                      value="full"
+                      checked={!formData.isHalfDay}
                       onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                      data-testid="start-date"
+                      className="accent-gold w-4 h-4"
                     />
-                  </div>
-                  <div>
-                    <label className={`block text-sm font-medium mb-2 ${formData.isHalfDay ? 'text-gray-400' : 'text-gray-700'}`}>
-                      {tVacations('endDate')} {formData.isHalfDay ? tVacations('autoFilledForHalfDay') : '*'}
-                    </label>
-                    <input
-                      type="date"
-                      name="endDate"
-                      value={formData.isHalfDay ? formData.startDate : formData.endDate}
-                      onChange={handleInputChange}
-                      required={!formData.isHalfDay}
-                      disabled={formData.isHalfDay}
-                      min={formData.startDate}
-                      className={`w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        formData.isHalfDay ? 'bg-gray-100 cursor-not-allowed' : ''
-                      }`}
-                      data-testid="end-date"
-                    />
-                  </div>
-                </div>
-
-                {/* Company and Leave Type */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {tVacations('company')} *
-                    </label>
-                    <select
-                      name="company"
-                      value={formData.company}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">{tVacations('selectCompany')}</option>
-                      <option value="STARS_MC">Stars MC</option>
-                      <option value="STARS_YACHTING">Stars Yachting</option>
-                      <option value="STARS_REAL_ESTATE">Stars Real Estate</option>
-                      <option value="LE_PNEU">Le Pneu</option>
-                      <option value="MIDI_PNEU">Midi Pneu</option>
-                      <option value="STARS_AVIATION">Stars Aviation</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {tVacations('typeOfLeave')} *
-                    </label>
-                    <select
-                      name="type"
-                      value={formData.type}
-                      onChange={handleInputChange}
-                      required
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">{tVacations('selectLeaveType')}</option>
-                      <option value="PAID_LEAVE">{tVacations('paidLeave')}</option>
-                      <option value="UNPAID_LEAVE">{tVacations('unpaidLeave')}</option>
-                      <option value="FAMILY_EVENT_LEAVE">{tVacations('familyEventLeave')}</option>
-                      <option value="OVERTIME_COMPENSATION">{tVacations('overtimeCompensation')}</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Reason */}
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    {tVacations('reasonOptional')}
+                    <span className="font-medium text-sm">{tVacations('fullDay')}</span>
                   </label>
-                  <textarea
-                    name="reason"
-                    value={formData.reason}
+                  <label
+                    className={`inline-flex items-center gap-3 px-5 py-3 rounded-lg border cursor-pointer transition-colors ${
+                      formData.isHalfDay
+                        ? 'border-gold bg-gold/10 text-ink'
+                        : 'border-black/10 bg-white text-slate-ardoise hover:border-gold/40'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="duration"
+                      value="half"
+                      checked={formData.isHalfDay}
+                      onChange={handleInputChange}
+                      className="accent-gold w-4 h-4"
+                    />
+                    <span className="font-medium text-sm">{tVacations('halfDay')}</span>
+                  </label>
+                </div>
+              </fieldset>
+
+              {/* Half day type */}
+              {formData.isHalfDay && (
+                <fieldset>
+                  <legend className="eyebrow mb-3">{tVacations('halfDayType')}</legend>
+                  <div className="flex flex-wrap gap-3">
+                    <label
+                      className={`inline-flex items-center gap-3 px-5 py-3 rounded-lg border cursor-pointer transition-colors ${
+                        formData.halfDayType === 'morning'
+                          ? 'border-gold bg-gold/10 text-ink'
+                          : 'border-black/10 bg-white text-slate-ardoise hover:border-gold/40'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="halfDayType"
+                        value="morning"
+                        checked={formData.halfDayType === 'morning'}
+                        onChange={handleInputChange}
+                        className="accent-gold w-4 h-4"
+                      />
+                      <span className="font-medium text-sm">{tVacations('morning')}</span>
+                    </label>
+                    <label
+                      className={`inline-flex items-center gap-3 px-5 py-3 rounded-lg border cursor-pointer transition-colors ${
+                        formData.halfDayType === 'afternoon'
+                          ? 'border-gold bg-gold/10 text-ink'
+                          : 'border-black/10 bg-white text-slate-ardoise hover:border-gold/40'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="halfDayType"
+                        value="afternoon"
+                        checked={formData.halfDayType === 'afternoon'}
+                        onChange={handleInputChange}
+                        className="accent-gold w-4 h-4"
+                      />
+                      <span className="font-medium text-sm">{tVacations('afternoon')}</span>
+                    </label>
+                  </div>
+                </fieldset>
+              )}
+
+              {/* Dates */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="eyebrow block mb-2" htmlFor="startDate">
+                    {tVacations('startDate')} *
+                  </label>
+                  <input
+                    id="startDate"
+                    type="date"
+                    name="startDate"
+                    value={formData.startDate}
                     onChange={handleInputChange}
-                    rows={4}
-                    placeholder={tVacations('reasonPlaceholder')}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-vertical"
+                    required
+                    className="input-field"
+                    data-testid="start-date"
                   />
                 </div>
-
-                {/* Error Message */}
-                {submitStatus === 'error' && (
-                  <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <p className="text-red-800 font-medium">
-                      {errorMessage}
-                    </p>
-                  </div>
-                )}
-
-                {/* Form Actions */}
-                <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
-                  <Link
-                    href={createLocaleUrl('/dashboard', currentLocale)}
-                    className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors duration-200 font-medium"
+                <div>
+                  <label
+                    className={`eyebrow block mb-2 ${formData.isHalfDay ? 'opacity-40' : ''}`}
+                    htmlFor="endDate"
                   >
-                    {tCommon('cancel')}
-                  </Link>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting || !validateForm()}
-                    className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200 font-medium"
-                    data-testid="submit-button"
-                  >
-                    {isSubmitting ? tVacations('submitting') : tVacations('submitRequest')}
-                  </button>
+                    {tVacations('endDate')} {formData.isHalfDay ? tVacations('autoFilledForHalfDay') : '*'}
+                  </label>
+                  <input
+                    id="endDate"
+                    type="date"
+                    name="endDate"
+                    value={formData.isHalfDay ? formData.startDate : formData.endDate}
+                    onChange={handleInputChange}
+                    required={!formData.isHalfDay}
+                    disabled={formData.isHalfDay}
+                    min={formData.startDate}
+                    className={`input-field ${formData.isHalfDay ? 'bg-cream-100 cursor-not-allowed opacity-60' : ''}`}
+                    data-testid="end-date"
+                  />
                 </div>
-              </form>
-            )}
-          </div>
-
-          {/* Calendar Integration */}
-          <div className="mt-12 bg-white/95 rounded-2xl border shadow-xl p-8 backdrop-blur-sm">
-            <h2 className="text-2xl font-semibold text-gray-900 mb-6">Vacation Calendar</h2>
-            {loading ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                <p className="text-gray-600">Loading vacation calendar...</p>
               </div>
-            ) : (
-              <UnifiedVacationCalendar
-                vacationRequests={vacationRequests.filter(r => r.status?.toLowerCase() === 'approved')}
-                className="w-full"
-                showLegend={true}
-                compact={false}
-              />
-            )}
-          </div>
+
+              {/* Company + leave type */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="eyebrow block mb-2" htmlFor="company">
+                    {tVacations('company')} *
+                  </label>
+                  <select
+                    id="company"
+                    name="company"
+                    value={formData.company}
+                    onChange={handleInputChange}
+                    required
+                    className="input-field"
+                  >
+                    <option value="">{tVacations('selectCompany')}</option>
+                    <option value="STARS_MC">Stars MC</option>
+                    <option value="STARS_YACHTING">Stars Yachting</option>
+                    <option value="STARS_REAL_ESTATE">Stars Real Estate</option>
+                    <option value="LE_PNEU">Le Pneu</option>
+                    <option value="MIDI_PNEU">Midi Pneu</option>
+                    <option value="STARS_AVIATION">Stars Aviation</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="eyebrow block mb-2" htmlFor="type">
+                    {tVacations('typeOfLeave')} *
+                  </label>
+                  <select
+                    id="type"
+                    name="type"
+                    value={formData.type}
+                    onChange={handleInputChange}
+                    required
+                    className="input-field"
+                  >
+                    <option value="">{tVacations('selectLeaveType')}</option>
+                    <option value="PAID_LEAVE">{tVacations('paidLeave')}</option>
+                    <option value="UNPAID_LEAVE">{tVacations('unpaidLeave')}</option>
+                    <option value="FAMILY_EVENT_LEAVE">{tVacations('familyEventLeave')}</option>
+                    <option value="OVERTIME_COMPENSATION">{tVacations('overtimeCompensation')}</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Reason */}
+              <div>
+                <label className="eyebrow block mb-2" htmlFor="reason">
+                  {tVacations('reasonOptional')}
+                </label>
+                <textarea
+                  id="reason"
+                  name="reason"
+                  value={formData.reason}
+                  onChange={handleInputChange}
+                  rows={4}
+                  placeholder={tVacations('reasonPlaceholder')}
+                  className="input-field resize-vertical"
+                />
+              </div>
+
+              {/* Error */}
+              {submitStatus === 'error' && (
+                <div className="bg-[#FBECEE] border border-[#8E2630]/20 rounded-lg p-4">
+                  <p className="text-sm text-[#8E2630] font-medium">
+                    {errorMessage}
+                  </p>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-6 border-t border-black/5">
+                <Link
+                  href={createLocaleUrl('/dashboard', currentLocale)}
+                  className="btn-secondary"
+                >
+                  {tCommon('cancel')}
+                </Link>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !validateForm()}
+                  className="btn-primary"
+                  data-testid="submit-button"
+                >
+                  {isSubmitting ? tVacations('submitting') : tVacations('submitRequest')}
+                </button>
+              </div>
+            </form>
+          )}
         </div>
-      </main>
-    </>
+
+        {/* Calendar */}
+        <section className="card mt-10">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="!text-xl !font-semibold">Vacation Calendar</h2>
+            <span className="hidden sm:block filet-gold !w-12" />
+          </div>
+          {loading ? (
+            <div className="py-12 text-center">
+              <div className="inline-block h-8 w-8 rounded-full border-2 border-gold/30 border-t-gold animate-spin mb-3" />
+              <p className="text-sm text-slate-ardoise">Loading vacation calendar…</p>
+            </div>
+          ) : (
+            <UnifiedVacationCalendar
+              vacationRequests={vacationRequests.filter(r => r.status?.toLowerCase() === 'approved')}
+              className="w-full"
+              showLegend={true}
+              compact={false}
+            />
+          )}
+        </section>
+      </div>
+    </main>
   );
-} 
+}

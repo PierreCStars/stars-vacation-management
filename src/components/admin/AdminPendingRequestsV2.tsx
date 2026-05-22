@@ -348,11 +348,11 @@ export default function AdminPendingRequestsV2() {
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border">
           <div className="text-sm font-medium text-gray-500">Total Requests</div>
-          <div className="text-2xl font-bold text-blue-600">{requests.length}</div>
+          <div className="text-2xl font-light text-ink">{requests.length}</div>
         </div>
         <div className="bg-white p-4 rounded-lg shadow-sm border">
           <div className="text-sm font-medium text-gray-500">Selected</div>
-          <div className="text-2xl font-bold text-purple-600">{selectedRequests.size}</div>
+          <div className="text-2xl font-light text-gold">{selectedRequests.size}</div>
         </div>
       </div>
 
@@ -373,7 +373,7 @@ export default function AdminPendingRequestsV2() {
                     <button
                       onClick={handleSyncToCalendar}
                       disabled={isSyncing}
-                      className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center px-4 py-2 border border-gold rounded-md text-xs font-semibold uppercase tracking-wider text-ink bg-gold hover:bg-[#C49E15] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       {isSyncing ? (
                         <>
@@ -392,7 +392,7 @@ export default function AdminPendingRequestsV2() {
                     <button
                       onClick={handleCSVExport}
                       disabled={isExporting || requests.length === 0}
-                      className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center px-4 py-2 border border-black/15 rounded-md text-xs font-semibold uppercase tracking-wider text-ink bg-white hover:bg-cream-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                     >
                       {isExporting ? (
                         <>
@@ -415,7 +415,7 @@ export default function AdminPendingRequestsV2() {
       {/* Pending Requests Table */}
       {isLoading ? (
         <div className="bg-white rounded-lg shadow-sm border p-8 text-center">
-          <div className="animate-spin mx-auto h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></div>
+          <div className="animate-spin mx-auto h-8 w-8 border-2 border-gold/30 border-t-gold rounded-full mb-4"></div>
           <p className="text-gray-600">Loading vacation requests...</p>
         </div>
       ) : pendingRequests.length === 0 ? (
@@ -457,7 +457,7 @@ export default function AdminPendingRequestsV2() {
                   
                   {isLoading ? (
                     <div className="text-center py-8">
-                      <div className="animate-spin mx-auto h-8 w-8 border-4 border-blue-600 border-t-transparent rounded-full mb-4"></div>
+                      <div className="animate-spin mx-auto h-8 w-8 border-2 border-gold/30 border-t-gold rounded-full mb-4"></div>
                       <p className="text-gray-600">Loading calendar...</p>
                     </div>
                   ) : (
@@ -614,7 +614,7 @@ function RequestsTable({
                       requests.forEach(req => onToggleSelection(req.id));
                     }
                   }}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 accent-gold focus:ring-gold border-black/20 rounded"
                 />
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -647,7 +647,7 @@ function RequestsTable({
                       e.stopPropagation();
                       onToggleSelection(request.id);
                     }}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="h-4 w-4 accent-gold focus:ring-gold border-black/20 rounded"
                   />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -655,7 +655,7 @@ function RequestsTable({
                     <span className="font-medium">{request.userName}</span>
                     <a
                       href={absoluteUrl(`/en/admin/vacation-requests/${request.id}`)}
-                      className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md hover:bg-blue-700 hover:text-white transition-colors shadow-sm"
+                      className="inline-flex items-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-ink bg-gold border border-gold rounded-md hover:bg-[#C49E15] transition-colors"
                       aria-label={`More information about ${request.userName}'s request`}
                       data-test="more-info-link"
                     >
@@ -740,7 +740,7 @@ function RequestsTable({
                     e.stopPropagation();
                     onToggleSelection(request.id);
                   }}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
+                  className="h-4 w-4 accent-gold focus:ring-gold border-black/20 rounded mt-1"
                 />
                 <div className="flex-1 min-w-0">
                   <div className="text-lg font-medium text-gray-900 truncate">
@@ -751,7 +751,7 @@ function RequestsTable({
                   </p>
                   <a
                     href={absoluteUrl(`/en/admin/vacation-requests/${request.id}`)}
-                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md hover:bg-blue-700 hover:text-white transition-colors shadow-sm mt-2"
+                    className="inline-flex items-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-ink bg-gold border border-gold rounded-md hover:bg-[#C49E15] transition-colors mt-2"
                     aria-label={`More information about ${request.userName}'s request`}
                     data-test="more-info-link"
                   >
@@ -993,7 +993,7 @@ function ReviewedRequestsTable({
       );
     }
     return (
-      <span className="ml-1 text-blue-600">
+      <span className="ml-1 text-gold">
         {sortDirection === 'asc' ? (
           <svg className="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 15l7-7 7 7" />
@@ -1013,7 +1013,7 @@ function ReviewedRequestsTable({
       <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
         <button
           onClick={exportToCSV}
-          className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
+          className="inline-flex items-center px-4 py-2 border border-gold text-xs font-semibold uppercase tracking-wider rounded-md text-ink bg-gold hover:bg-[#C49E15] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold transition-colors"
         >
           <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -1037,7 +1037,7 @@ function ReviewedRequestsTable({
                       sortedRequests.forEach(req => onToggleSelection(req.id));
                     }
                   }}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 accent-gold focus:ring-gold border-black/20 rounded"
                 />
               </th>
               <th 
@@ -1086,7 +1086,7 @@ function ReviewedRequestsTable({
                       e.stopPropagation();
                       onToggleSelection(request.id);
                     }}
-                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    className="h-4 w-4 accent-gold focus:ring-gold border-black/20 rounded"
                   />
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
@@ -1094,7 +1094,7 @@ function ReviewedRequestsTable({
                     <span className="font-medium">{request.userName}</span>
                     <a
                       href={absoluteUrl(`/en/admin/vacation-requests/${request.id}`)}
-                      className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md hover:bg-blue-700 hover:text-white transition-colors shadow-sm"
+                      className="inline-flex items-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-ink bg-gold border border-gold rounded-md hover:bg-[#C49E15] transition-colors"
                       aria-label={`More information about ${request.userName}'s request`}
                       data-test="more-info-link"
                     >
@@ -1175,7 +1175,7 @@ function ReviewedRequestsTable({
                     e.stopPropagation();
                     onToggleSelection(request.id);
                   }}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
+                  className="h-4 w-4 accent-gold focus:ring-gold border-black/20 rounded mt-1"
                 />
                 <div className="flex-1 min-w-0">
                   <div className="text-lg font-medium text-gray-900 truncate">
@@ -1186,7 +1186,7 @@ function ReviewedRequestsTable({
                   </p>
                   <a
                     href={absoluteUrl(`/en/admin/vacation-requests/${request.id}`)}
-                    className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md hover:bg-blue-700 hover:text-white transition-colors shadow-sm mt-2"
+                    className="inline-flex items-center px-3 py-1.5 text-xs font-semibold uppercase tracking-wider text-ink bg-gold border border-gold rounded-md hover:bg-[#C49E15] transition-colors mt-2"
                     aria-label={`More information about ${request.userName}'s request`}
                     data-test="more-info-link"
                   >

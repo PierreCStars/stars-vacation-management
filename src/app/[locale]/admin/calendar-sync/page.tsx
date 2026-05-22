@@ -91,7 +91,7 @@ export default function CalendarSyncAdmin() {
           <button 
             disabled={loading} 
             onClick={runSync} 
-            className="rounded-lg bg-blue-600 px-4 py-2 text-white hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="rounded-lg bg-gold px-4 py-2 text-ink hover:bg-[#C49E15] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
           >
             {loading ? "Running..." : "Run Sync Now"}
           </button>
@@ -114,7 +114,7 @@ export default function CalendarSyncAdmin() {
           
           <div className="space-y-2">
             <div className="text-sm text-gray-600">Total Imported</div>
-            <div className="font-medium text-2xl text-blue-600">
+            <div className="font-medium text-2xl text-gold">
               {state?.totalImported ?? 0}
             </div>
           </div>
@@ -136,8 +136,8 @@ export default function CalendarSyncAdmin() {
         )}
 
         {note && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-            <div className="text-sm text-blue-800">{note}</div>
+          <div className="bg-gold/10 border border-gold/30 rounded-lg p-3">
+            <div className="text-sm text-ink">{note}</div>
           </div>
         )}
       </div>
@@ -191,9 +191,9 @@ export default function CalendarSyncAdmin() {
       </div>
 
       {/* Information Card */}
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="text-lg font-medium text-blue-900 mb-2">How it works</h3>
-        <div className="text-sm text-blue-800 space-y-1">
+      <div className="bg-gold/10 border border-gold/30 rounded-lg p-4">
+        <h3 className="text-lg font-medium text-ink mb-2">How it works</h3>
+        <div className="text-sm text-ink space-y-1">
           <p>• <strong>Incremental Sync:</strong> Uses Google Calendar's syncToken for efficient updates</p>
           <p>• <strong>Conflict Resolution:</strong> App-internal vacations take precedence over external events</p>
           <p>• <strong>Automatic Recovery:</strong> Handles expired sync tokens by performing full resync</p>

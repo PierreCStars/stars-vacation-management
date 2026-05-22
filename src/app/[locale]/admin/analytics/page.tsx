@@ -105,7 +105,7 @@ export default function AnalyticsPage() {
           <p className="text-gray-600 mb-4">{error}</p>
           <button 
             onClick={() => window.location.reload()} 
-            className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+            className="bg-gold text-ink px-4 py-2 rounded hover:bg-[#C49E15]"
           >
             Retry
           </button>
@@ -144,7 +144,7 @@ export default function AnalyticsPage() {
             <select 
               value={status} 
               onChange={e=>setStatus(e.target.value as any)} 
-              className="border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-gold focus:border-gold"
             >
               <option value="approved">Approved Only</option>
               <option value="pending">Pending Only</option>
@@ -153,7 +153,7 @@ export default function AnalyticsPage() {
             </select>
             <a
               href={`/api/analytics/vacations.csv?status=${status}`}
-              className="inline-flex items-center gap-2 rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              className="inline-flex items-center gap-2 rounded border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors focus:ring-2 focus:ring-gold focus:border-gold"
               download
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -204,7 +204,7 @@ export default function AnalyticsPage() {
               <select 
                 value={sortKey} 
                 onChange={e=>setSortKey(e.target.value as any)} 
-                className="border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="border border-gray-300 rounded px-3 py-2 text-sm focus:ring-2 focus:ring-gold focus:border-gold"
               >
                 <option value="totalDays">Days taken</option>
                 <option value="count">Frequency</option>

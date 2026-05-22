@@ -365,7 +365,7 @@ export default function VacationRequestDetailPage() {
     return (
       <div className="py-8">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-2 border-gold/30 border-t-gold mx-auto mb-4"></div>
           <p className="text-gray-600">Loading vacation request...</p>
           <p className="text-sm text-gray-500 mt-2">Request ID: {requestId}</p>
           <p className="text-sm text-gray-500">Loading state: {loading.toString()}</p>
@@ -385,7 +385,7 @@ export default function VacationRequestDetailPage() {
           </div>
           <button
             onClick={handleRetry}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-4 py-2 bg-gold text-ink rounded hover:bg-[#C49E15]"
           >
             Retry
           </button>
@@ -417,7 +417,7 @@ export default function VacationRequestDetailPage() {
           </div>
           <button
             onClick={() => router.push('/en/admin/vacation-requests')}
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            className="px-4 py-2 bg-gold text-ink rounded hover:bg-[#C49E15]"
           >
             Back to All Requests
           </button>
@@ -586,7 +586,7 @@ export default function VacationRequestDetailPage() {
                         <input
                           type="date"
                           defaultValue={vacationRequest.startDate}
-                          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gold focus:border-gold"
                           id="startDate"
                         />
                       </div>
@@ -595,7 +595,7 @@ export default function VacationRequestDetailPage() {
                         <input
                           type="date"
                           defaultValue={vacationRequest.endDate}
-                          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          className="px-3 py-2 border border-gray-300 rounded-md text-sm focus:ring-2 focus:ring-gold focus:border-gold"
                           id="endDate"
                         />
                       </div>
@@ -608,10 +608,10 @@ export default function VacationRequestDetailPage() {
                           }
                         }}
                         disabled={actionLoading || isPending}
-                        className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        className="px-4 py-2 bg-gold text-ink rounded hover:bg-[#C49E15] disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                       >
                         {(actionLoading || isPending) && (
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-ink"></div>
                         )}
                         Update Dates
                       </button>

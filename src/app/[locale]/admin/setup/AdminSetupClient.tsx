@@ -311,14 +311,14 @@ export default function AdminSetupClient() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">{tSetup('createVacation.title')}</h3>
-            <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-8 h-8 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
           </div>
           <p className="text-sm text-gray-600 mb-4">{tSetup('createVacation.description')}</p>
           <button
             onClick={() => setShowCreateModal(true)}
-            className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+            className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-ink bg-gold hover:bg-[#C49E15] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold"
           >
             {tSetup('createVacation.button')}
           </button>
@@ -388,7 +388,7 @@ export default function AdminSetupClient() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">{tSetup('sendEmail.title')}</h3>
-            <svg className="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-8 h-8 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
@@ -396,11 +396,11 @@ export default function AdminSetupClient() {
           <button
             onClick={handleSendMonthlyEmail}
             disabled={isSendingMonthlyEmail}
-            className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-ink bg-gold hover:bg-[#C49E15] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSendingMonthlyEmail ? (
               <>
-                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                <div className="animate-spin h-4 w-4 border-2 border-ink border-t-transparent rounded-full mr-2"></div>
                 {tSetup('sendEmail.sending')}
               </>
             ) : (

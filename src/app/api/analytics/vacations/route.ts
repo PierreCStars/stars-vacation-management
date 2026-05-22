@@ -39,6 +39,12 @@ function resolveDuration(v: VR): number {
   });
 }
 
+// normalizeVacationStatus returns capitalized canonical values ("Approved", "Pending", ...);
+// our comparisons throughout this file use lowercase, so we lowercase after normalization.
+function statusOf(v: VR): string {
+  return normalizeVacationStatus(v.status || '').toLowerCase();
+}
+
 function toIsoDate(v: any): string | null {
   if (!v) return null;
   if (typeof v === 'string') {
@@ -99,8 +105,7 @@ export async function GET(req: Request) {
 
     const matchStatus = (r: VR): boolean => {
       if (statusFilter === 'all') return true;
-      const s = normalizeVacationStatus(r.status || 'unknown');
-      return s === statusFilter;
+      return statusOf(r) === statusFilter;
     };
 
     const matchDateRange = (r: VR): boolean => {
@@ -113,8 +118,8 @@ export async function GET(req: Request) {
     const filteredAll = allRows.filter(matchFilters);
 
     // ── Zone 1: Now — operational ─────────────────────────────────────────────
-    const approved = filteredAll.filter(r => normalizeVacationStatus(r.status || '') === 'approved');
-    const pending  = filteredAll.filter(r => normalizeVacationStatus(r.status || '') === 'pending');
+    const approved = filteredAll.filter(r => statusOf(r) === 'approved');
+    const pending  = filteredAll.filter(r => statusOf(r) === 'pending');
 
     const currentlyAwayList = approved
       .filter(r => r.startDate && r.endDate)
@@ -181,7 +186,7 @@ export async function GET(req: Request) {
     const coverageMap = new Map<string, { userName: string; company: string; leaves: Array<{ start: string; end: string; status: string; type: string }> }>();
     filteredAll
       .filter(r => r.startDate && r.endDate)
-      .filter(r => ['approved', 'pending'].includes(normalizeVacationStatus(r.status || '')))
+      .filter(r => ['approved', 'pending'].includes(statusOf(r)))
       .filter(r => {
         const s = new Date(r.startDate!);
         const e = new Date(r.endDate!);
@@ -195,7 +200,7 @@ export async function GET(req: Request) {
         coverageMap.get(key)!.leaves.push({
           start: r.startDate!,
           end: r.endDate!,
-          status: normalizeVacationStatus(r.status || ''),
+          status: statusOf(r),
           type: normalizeVacationType(r.type || ''),
         });
       });
@@ -262,11 +267,11 @@ export async function GET(req: Request) {
 
     // Approval performance: among reviewed requests (approved + denied)
     const reviewed = filteredAll.filter(r => {
-      const s = normalizeVacationStatus(r.status || '');
+      const s = statusOf(r);
       return s === 'approved' || s === 'denied';
     });
-    const approvedCount = reviewed.filter(r => normalizeVacationStatus(r.status || '') === 'approved').length;
-    const deniedCount = reviewed.filter(r => normalizeVacationStatus(r.status || '') === 'denied').length;
+    const approvedCount = reviewed.filter(r => statusOf(r) === 'approved').length;
+    const deniedCount = reviewed.filter(r => statusOf(r) === 'denied').length;
     const approvalTimes: number[] = reviewed
       .map(r => {
         const c = toIsoDate(r.createdAt);
@@ -306,7 +311,7 @@ export async function GET(req: Request) {
       const key = r.userEmail || r.userId || r.userName || r.id;
       const days = resolveDuration(r);
       const created = toIsoDate(r.createdAt) || new Date().toISOString();
-      const s = normalizeVacationStatus(r.status || '');
+      const s = statusOf(r);
 
       if (!perEmployee[key]) {
         perEmployee[key] = {
@@ -385,7 +390,7 @@ export async function GET(req: Request) {
       byCompanyTypeDaysLegacy[cmp][typ] = (byCompanyTypeDaysLegacy[cmp][typ] || 0) + days;
       const reason = r.reason || 'No reason provided';
       byReasonCount[reason] = (byReasonCount[reason] || 0) + 1;
-      const sn = normalizeVacationStatus(r.status || 'unknown');
+      const sn = statusOf(r) || 'unknown';
       byStatusCount[sn] = (byStatusCount[sn] || 0) + 1;
       const mk = new Date(created).toISOString().slice(0, 7);
       if (!monthlyDataLegacy[mk]) monthlyDataLegacy[mk] = { requests: 0, days: 0 };

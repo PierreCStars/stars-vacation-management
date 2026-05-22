@@ -12,7 +12,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  
+
   const handleDevLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -36,79 +36,103 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
-  
+
   return (
-    <main className="min-h-dvh flex items-center justify-center bg-gray-50 p-6">
-      <div className="w-full max-w-sm rounded-2xl bg-white shadow p-8 text-center">
-        <div className="mx-auto mb-6 h-14 w-14 relative">
-          {/* Using the existing stars logo */}
-          <Image src="/stars-logo.png" alt="Stars" fill className="object-contain" priority />
+    <main className="min-h-[calc(100dvh-4rem)] flex items-center justify-center p-6">
+      <div className="w-full max-w-md">
+        <div className="card text-center">
+          <div className="mx-auto mb-6 h-16 w-16 relative">
+            <Image
+              src="/stars-logo.png"
+              alt="Stars"
+              fill
+              className="object-contain"
+              priority
+            />
+          </div>
+
+          <p className="eyebrow mb-3">Star Luxury Group</p>
+          <h1 className="!text-2xl !font-light tracking-tight">
+            Stars Vacation Management
+          </h1>
+          <div className="mt-4 mb-6 flex justify-center">
+            <span className="filet-gold" />
+          </div>
+
+          <p className="text-sm text-slate-ardoise/90 mb-8">
+            Sign in with your <span className="font-medium text-ink">@stars.mc</span> account
+          </p>
+
+          {!showDevLogin ? (
+            <div className="space-y-3">
+              <button
+                onClick={() => signIn("google", { callbackUrl: `/${locale}/dashboard` })}
+                className="btn-primary w-full"
+              >
+                Continue with Google
+              </button>
+              <button
+                onClick={() => setShowDevLogin(true)}
+                className="btn-ghost w-full !text-xs !tracking-widest !uppercase"
+              >
+                Development login
+              </button>
+            </div>
+          ) : (
+            <form onSubmit={handleDevLogin} className="space-y-4 text-left">
+              <div>
+                <label className="eyebrow block mb-2" htmlFor="dev-email">Email</label>
+                <input
+                  id="dev-email"
+                  type="email"
+                  placeholder="your.email@stars.mc"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="input-field"
+                  required
+                />
+              </div>
+              <div>
+                <label className="eyebrow block mb-2" htmlFor="dev-password">Password</label>
+                <input
+                  id="dev-password"
+                  type="password"
+                  placeholder="Any password (dev mode)"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="input-field"
+                  required
+                />
+              </div>
+              {error && (
+                <div className="text-sm text-[#8E2630] bg-[#FBECEE] border border-[#8E2630]/20 rounded-md px-3 py-2">
+                  {error}
+                </div>
+              )}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-primary flex-1"
+                >
+                  {loading ? 'Signing in…' : 'Sign in'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowDevLogin(false)}
+                  className="btn-secondary flex-1"
+                >
+                  Back
+                </button>
+              </div>
+            </form>
+          )}
+
+          <p className="mt-8 text-[11px] uppercase tracking-[0.2em] text-slate-ardoise/70">
+            Members of stars.mc only
+          </p>
         </div>
-        <h1 className="text-xl font-semibold">Stars Vacation Management</h1>
-        <p className="mt-2 text-sm text-gray-600">Connect with your @stars.mc account</p>
-        
-        {!showDevLogin ? (
-          <>
-            <button
-              onClick={() => signIn("google", { callbackUrl: `/${locale}/dashboard` })}
-              className="mt-6 w-full rounded-xl border px-4 py-2 hover:bg-gray-100 transition-colors"
-            >
-              Continue with Google
-            </button>
-            <button
-              onClick={() => setShowDevLogin(true)}
-              className="mt-3 w-full text-sm text-blue-600 hover:text-blue-800"
-            >
-              Development Login (if Google OAuth fails)
-            </button>
-          </>
-        ) : (
-          <form onSubmit={handleDevLogin} className="mt-6 space-y-4">
-            <div>
-              <input
-                type="email"
-                placeholder="your.email@stars.mc"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                required
-              />
-            </div>
-            <div>
-              <input
-                type="password"
-                placeholder="Any password (dev mode)"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
-                required
-              />
-            </div>
-            {error && (
-              <div className="text-sm text-red-600">{error}</div>
-            )}
-            <div className="flex space-x-2">
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50"
-              >
-                {loading ? 'Signing in...' : 'Sign in'}
-              </button>
-              <button
-                type="button"
-                onClick={() => setShowDevLogin(false)}
-                className="flex-1 border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50"
-              >
-                Back
-              </button>
-            </div>
-          </form>
-        )}
-        
-        <p className="mt-3 text-xs text-gray-500">Only members of stars.mc are allowed.</p>
       </div>
     </main>
   );
 }
-// Force deployment Mon Oct  6 13:37:26 CEST 2025

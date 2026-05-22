@@ -54,10 +54,10 @@ export function AdminDropdown({ currentLocale }: AdminDropdownProps) {
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-1 ${
+        className={`px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1 border-b-2 -mb-px ${
           hasActiveChild
-            ? 'bg-indigo-100 text-indigo-700'
-            : 'text-gray-700 hover:bg-gray-100 hover:text-gray-900'
+            ? 'text-ink border-gold'
+            : 'text-slate-ardoise border-transparent hover:text-ink hover:border-gold/40'
         }`}
         aria-expanded={isOpen}
         aria-haspopup="true"
@@ -75,10 +75,10 @@ export function AdminDropdown({ currentLocale }: AdminDropdownProps) {
       </button>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-1 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+        <div className="absolute top-full left-0 mt-2 w-60 bg-white rounded-xl shadow-card border border-black/5 py-2 z-50">
           {/* Management Section */}
           <div className="px-4 py-2">
-            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+            <div className="text-[10px] font-medium text-slate-ardoise uppercase tracking-[0.2em] mb-2">
               {tNav('managementSection')}
             </div>
             <Link
@@ -86,8 +86,8 @@ export function AdminDropdown({ currentLocale }: AdminDropdownProps) {
               onClick={() => setIsOpen(false)}
               className={`block px-4 py-2 rounded-md text-sm transition-colors ${
                 isActive('/admin/vacation-requests')
-                  ? 'bg-indigo-50 text-indigo-700 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                  ? 'bg-gold/10 text-ink font-medium'
+                  : 'text-slate-ardoise hover:bg-cream hover:text-ink'
               }`}
             >
               <div className="flex items-center gap-2">
@@ -102,8 +102,8 @@ export function AdminDropdown({ currentLocale }: AdminDropdownProps) {
               onClick={() => setIsOpen(false)}
               className={`block px-4 py-2 rounded-md text-sm transition-colors ${
                 isActive('/admin/setup')
-                  ? 'bg-indigo-50 text-indigo-700 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                  ? 'bg-gold/10 text-ink font-medium'
+                  : 'text-slate-ardoise hover:bg-cream hover:text-ink'
               }`}
             >
               <div className="flex items-center gap-2">
@@ -117,11 +117,11 @@ export function AdminDropdown({ currentLocale }: AdminDropdownProps) {
           </div>
 
           {/* Divider */}
-          <div className="border-t border-gray-200 my-1" />
+          <div className="border-t border-black/5 my-1" />
 
           {/* Analytics Section */}
           <div className="px-4 py-2">
-            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+            <div className="text-[10px] font-medium text-slate-ardoise uppercase tracking-[0.2em] mb-2">
               {tNav('analyticsSection')}
             </div>
             <Link
@@ -129,8 +129,8 @@ export function AdminDropdown({ currentLocale }: AdminDropdownProps) {
               onClick={() => setIsOpen(false)}
               className={`block px-4 py-2 rounded-md text-sm transition-colors ${
                 isActive('/admin/analytics')
-                  ? 'bg-indigo-50 text-indigo-700 font-medium'
-                  : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                  ? 'bg-gold/10 text-ink font-medium'
+                  : 'text-slate-ardoise hover:bg-cream hover:text-ink'
               }`}
             >
               <div className="flex items-center gap-2">

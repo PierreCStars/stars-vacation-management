@@ -1,6 +1,7 @@
 import { setRequestLocale } from 'next-intl/server';
 import IntlProvider from '../../i18n/intl-provider'; // keep relative path
 import { Topbar } from '../../components/nav/Topbar';
+import { Footer } from '../../components/nav/Footer';
 import ForbiddenDatesNotice from '../../components/ForbiddenDatesNotice';
 
 export default async function LocaleLayout({
@@ -23,11 +24,12 @@ export default async function LocaleLayout({
 
   return (
     <IntlProvider messages={messages} locale={safeLocale}>
-      <div className="min-h-screen bg-gray-50">
+      <div className="min-h-screen flex flex-col bg-cream-50">
         <Topbar />
-        <main className="min-h-screen">
+        <main className="flex-1">
           {children}
         </main>
+        <Footer />
         <ForbiddenDatesNotice />
       </div>
     </IntlProvider>

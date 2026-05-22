@@ -286,9 +286,10 @@ export default function UnifiedVacationCalendar({
 
   const getStatusColorClass = (status: string) => {
     switch (status.toLowerCase()) {
-      case 'approved': return 'bg-green-500';
-      case 'rejected': return 'bg-red-500';
-      case 'pending': return 'bg-yellow-500';
+      case 'approved': return 'bg-[#1F6E3A]';
+      case 'rejected':
+      case 'denied': return 'bg-[#C92B12]';
+      case 'pending': return 'bg-[#F59B42]';
       default: return 'bg-gray-500';
     }
   };
@@ -317,41 +318,42 @@ export default function UnifiedVacationCalendar({
   return (
     <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className} ${compact ? 'mini-calendar' : ''} overflow-hidden`}>
       {/* Calendar Header */}
-      <div className="bg-gradient-to-r from-ink to-slate-ardoise text-white p-3 sm:p-4 rounded-t-lg">
+      <div className="bg-white text-ink p-3 sm:p-4 rounded-t-lg border-b border-gold/30">
         <div className="flex items-center justify-between">
           <div className="flex-1 min-w-0">
-            <h2 className={`font-bold ${compact ? 'text-lg' : 'text-lg sm:text-xl'} truncate`}>
-              🗓️ <span className="hidden sm:inline">{tCalendar('vacationCompanyCalendar')}</span>
+            <h2 className={`font-semibold text-ink ${compact ? 'text-lg' : 'text-lg sm:text-xl'} truncate`}>
+              <span className="hidden sm:inline">{tCalendar('vacationCompanyCalendar')}</span>
               <span className="sm:hidden">{tCalendar('calendar')}</span>
-              <span className="ml-2 text-xs bg-yellow-200 text-yellow-800 px-1.5 py-0.5 rounded" data-version="responsive-v1">📱</span>
             </h2>
-            <p className="text-cream-100 text-xs sm:text-sm mt-1">
+            <p className="text-slate-ardoise/80 text-xs sm:text-sm mt-1">
               {compact ? tCalendar('teamAvailabilityCompanyEvents') : tCalendar('monitorTeamAvailability')}
             </p>
           </div>
           <div className="flex items-center space-x-1 sm:space-x-2">
             <button
               onClick={goToPreviousMonth}
-              className="p-1.5 sm:p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-all duration-200"
+              className="p-1.5 sm:p-2 rounded-lg bg-cream-100 hover:bg-cream-200 text-ink transition-colors"
               title={tCalendar('previousMonth')}
+              aria-label={tCalendar('previousMonth')}
             >
               <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            
+
             <button
               onClick={goToToday}
-              className="px-2 sm:px-3 py-1 bg-white text-ink rounded-lg hover:bg-gold/10 transition-all duration-200 font-semibold text-xs sm:text-sm"
+              className="px-2 sm:px-3 py-1 bg-gold text-ink rounded-lg hover:bg-[#C49E15] transition-colors font-semibold text-xs sm:text-sm"
             >
               <span className="hidden sm:inline">{tCalendar('today')}</span>
               <span className="sm:hidden">Now</span>
             </button>
-            
+
             <button
               onClick={goToNextMonth}
-              className="p-1.5 sm:p-2 rounded-lg bg-white/20 hover:bg-white/30 transition-all duration-200"
+              className="p-1.5 sm:p-2 rounded-lg bg-cream-100 hover:bg-cream-200 text-ink transition-colors"
               title={tCalendar('nextMonth')}
+              aria-label={tCalendar('nextMonth')}
             >
               <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -362,8 +364,8 @@ export default function UnifiedVacationCalendar({
       </div>
 
       {/* Month/Year Display */}
-      <div className="text-center py-3 sm:py-4 bg-gray-50 border-b border-gray-200">
-        <h3 className="text-lg sm:text-xl font-bold text-gray-800">
+      <div className="text-center py-3 sm:py-4 bg-white border-b border-black/5">
+        <h3 className="text-lg sm:text-xl font-light text-ink tracking-tight">
           {monthNames[monthInfo.currentMonth]} {monthInfo.currentYear}
         </h3>
       </div>
@@ -383,25 +385,27 @@ export default function UnifiedVacationCalendar({
         {/* Calendar days */}
         <div className="grid grid-cols-7 gap-1">
           {calendarDays.map((day, index) => {
-            // Determine background color priority: Monaco holiday (pale blue) > Company event (pale red) > Weekend (grey)
+            // Determine background color priority:
+            // Conflict (vivid red) > Holiday/Event (grey) > Weekend (darker grey) > selected > default
             const hasMonacoHoliday = day.monacoHolidays.length > 0;
             const hasCompanyEvent = day.companyEvents.length > 0;
-            
-            // Determine the background color priority
-            // Priority: Monaco holiday/Company event (#de9090) > Weekend grey > regular
+            const hasConflictEvent = day.conflictEvents && day.conflictEvents.length > 0;
+
             let bgColor = '';
-            let bgColorStyle = {};
-            if (hasMonacoHoliday || hasCompanyEvent) {
-              bgColorStyle = { backgroundColor: '#de9090' }; // Custom color for holidays and events
-            } else if (day.isWeekend && !hasMonacoHoliday && !hasCompanyEvent) {
-              // Custom grey color for weekends
-              bgColorStyle = { backgroundColor: '#808080' };
-            } else if (day.conflictEvents && day.conflictEvents.length > 0) {
-              bgColor = 'bg-red-50'; // Red for conflicts
+            let bgColorStyle: React.CSSProperties = {};
+            if (hasConflictEvent) {
+              // Vivid red tint for conflicts — saturated but readable
+              bgColorStyle = { backgroundColor: 'rgba(201, 43, 18, 0.15)' };
+            } else if (hasMonacoHoliday || hasCompanyEvent) {
+              // Neutral grey for holidays and company events
+              bgColorStyle = { backgroundColor: '#9CA3AF' };
+            } else if (day.isWeekend) {
+              // Slightly darker grey for weekends, distinct from holidays
+              bgColorStyle = { backgroundColor: '#E5E7EB' };
             } else if (day.isInSelectedRange) {
-              bgColor = 'bg-gold/10'; // Selected range
+              bgColor = 'bg-gold/10';
             } else {
-              bgColor = day.isCurrentMonth ? 'bg-white' : 'bg-gray-50';
+              bgColor = day.isCurrentMonth ? 'bg-white' : 'bg-cream-50';
             }
             
             return (
@@ -445,9 +449,7 @@ export default function UnifiedVacationCalendar({
                   {day.companyEvents.map((event, eventIndex) => (
                     <div
                       key={`event-${eventIndex}`}
-                      className={`text-xs p-1 rounded truncate font-medium ${
-                        hasMonacoHoliday ? 'text-ink' : 'text-red-800'
-                      }`}
+                      className="text-xs p-1 rounded truncate font-medium text-ink"
                       title={`${event.title}${event.location ? ` • ${event.location}` : ''}`}
                     >
                       📅 {event.title}
@@ -462,7 +464,7 @@ export default function UnifiedVacationCalendar({
                   {day.conflictEvents.map((conflict, conflictIndex) => (
                     <div
                       key={`conflict-${conflictIndex}`}
-                      className="text-xs p-1 rounded truncate font-medium bg-red-100 border border-red-300 text-red-800"
+                      className="text-xs p-1 rounded truncate font-semibold bg-[#C92B12] text-white"
                       title={`CONFLICT: ${conflict.userName} - ${conflict.company || 'Unknown'} (${conflict.status})`}
                     >
                       ⚠️ {conflict.userName}
@@ -514,8 +516,8 @@ export default function UnifiedVacationCalendar({
               {day.hasConflict && (
                 <div className="mt-1">
                   <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
-                    day.severity === 'high' ? 'bg-red-100 text-red-800' :
-                    day.severity === 'medium' ? 'bg-orange-100 text-orange-800' :
+                    day.severity === 'high' ? 'bg-[#C92B12] text-white' :
+                    day.severity === 'medium' ? 'bg-[#F59B42] text-ink' :
                     'bg-gold/10 text-ink'
                   }`}>
                     {day.conflictCount} conflicts
@@ -565,19 +567,19 @@ export default function UnifiedVacationCalendar({
                 {calendarDays
                   .find(d => d.date.toDateString() === selectedDate.toDateString())
                   ?.conflictEvents?.map(conflict => (
-                    <div key={conflict.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg border border-red-200">
+                    <div key={conflict.id} className="flex items-center justify-between p-3 rounded-lg border" style={{ backgroundColor: 'rgba(201, 43, 18, 0.10)', borderColor: 'rgba(201, 43, 18, 0.3)' }}>
                       <div className="flex-1">
                         <div className="flex items-center space-x-3">
-                          <span className="text-red-600">⚠️</span>
-                          <span className="font-bold text-red-800">{conflict.userName}</span>
-                          <span className="text-sm px-2 py-1 rounded bg-red-100 text-red-800 font-medium">
-                            CONFLICT
+                          <span style={{ color: '#C92B12' }}>⚠️</span>
+                          <span className="font-bold" style={{ color: '#C92B12' }}>{conflict.userName}</span>
+                          <span className="text-xs px-2 py-1 rounded font-semibold uppercase tracking-wider text-white" style={{ backgroundColor: '#C92B12' }}>
+                            Conflict
                           </span>
-                          <span className="text-xs text-gray-400">{conflict.type}</span>
+                          <span className="text-xs text-slate-ardoise/60">{conflict.type}</span>
                         </div>
-                        <p className="text-sm text-red-600 mt-1">
-                          {conflict.startDate === conflict.endDate ? 
-                            conflict.startDate : 
+                        <p className="text-sm mt-1" style={{ color: '#C92B12' }}>
+                          {conflict.startDate === conflict.endDate ?
+                            conflict.startDate :
                             `${conflict.startDate} - ${conflict.endDate}`
                           }
                         </p>
@@ -665,25 +667,25 @@ export default function UnifiedVacationCalendar({
               )}
               {conflicts.length > 0 && (
                 <div className="flex items-center space-x-1 sm:space-x-2">
-                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-100 border border-red-300 rounded"></div>
-                  <span className="text-xs sm:text-sm text-gray-600">Conflicts</span>
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: 'rgba(201, 43, 18, 0.15)', border: '1px solid #C92B12' }}></div>
+                  <span className="text-xs sm:text-sm text-slate-ardoise">Conflict day</span>
                 </div>
               )}
               <div className="flex items-center space-x-1 sm:space-x-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#de9090' }}></div>
-                <span className="text-xs sm:text-sm text-gray-600">Holidays & Events</span>
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#9CA3AF' }}></div>
+                <span className="text-xs sm:text-sm text-slate-ardoise">Holidays & Events</span>
               </div>
               <div className="flex items-center space-x-1 sm:space-x-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#5af542' }}></div>
-                <span className="text-xs sm:text-sm text-gray-600">Validated (Green)</span>
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#1F6E3A' }}></div>
+                <span className="text-xs sm:text-sm text-slate-ardoise">Validated</span>
               </div>
               <div className="flex items-center space-x-1 sm:space-x-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#f59b42' }}></div>
-                <span className="text-xs sm:text-sm text-gray-600">Pending (Orange)</span>
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#F59B42' }}></div>
+                <span className="text-xs sm:text-sm text-slate-ardoise">Pending</span>
               </div>
               <div className="flex items-center space-x-1 sm:space-x-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#c92b12' }}></div>
-                <span className="text-xs sm:text-sm text-gray-600">Conflict (Red)</span>
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#C92B12' }}></div>
+                <span className="text-xs sm:text-sm text-slate-ardoise">Conflict</span>
               </div>
             </div>
           </div>

@@ -4,9 +4,9 @@
  */
 
 export const VACATION_STATUS_COLOR = {
-  VALIDATED: '#5af542',  // Green - approved/granted vacations
-  PENDING:   '#f59b42',  // Orange - pending requests
-  CONFLICT:  '#c92b12',  // Red - conflicts (overrides other statuses)
+  VALIDATED: '#1F6E3A',  // Elegant forest green - approved/granted vacations
+  PENDING:   '#F59B42',  // Orange - pending requests
+  CONFLICT:  '#C92B12',  // Vivid red - conflicts (overrides other statuses)
 } as const;
 
 export type StatusColorType = keyof typeof VACATION_STATUS_COLOR;

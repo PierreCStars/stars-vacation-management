@@ -59,7 +59,7 @@ export default function AdminPendingRequestsV2() {
     }
   };
 
-  const handleStatusUpdate = async (id: string, status: "approved" | "denied") => {
+  const handleStatusUpdate = async (id: string, status: "approved" | "denied" | "cancelled") => {
     setProcessingRequests(prev => new Set(prev).add(id));
     setActionMessage(null); // Clear previous messages
     
@@ -68,7 +68,12 @@ export default function AdminPendingRequestsV2() {
         status,
         reviewerName: session?.user?.name || 'Admin',
         reviewerEmail: session?.user?.email || 'admin@stars.mc',
-        adminComment: status === 'approved' ? 'Approved via admin panel' : 'Rejected via admin panel'
+        adminComment:
+          status === 'approved'
+            ? 'Approved via admin panel'
+            : status === 'denied'
+              ? 'Rejected via admin panel'
+              : 'Cancelled via admin panel'
       };
       
       const response = await fetch(`/api/vacation-requests/${id}`, {
@@ -100,7 +105,7 @@ export default function AdminPendingRequestsV2() {
         // Show success message
         setActionMessage({
           type: 'success',
-          message: `Request ${status === 'approved' ? 'approved' : 'denied'} successfully!`
+          message: `Request ${status} successfully!`
         });
         
         // Auto-hide message after 3 seconds
@@ -240,6 +245,13 @@ export default function AdminPendingRequestsV2() {
 
 
   const isProcessing = (id: string) => processingRequests.has(id);
+
+  const handleCancelApprovedRequest = async (id: string) => {
+    if (!confirm('Cancel this approved vacation request? This will remove it from approved planning views.')) {
+      return;
+    }
+    await handleStatusUpdate(id, 'cancelled');
+  };
   
   // Filter requests by status
   const pendingRequests = requests.filter(req => isPendingStatus(req.status));
@@ -544,6 +556,8 @@ export default function AdminPendingRequestsV2() {
                           requests={reviewedSorted}
                           selectedRequests={selectedRequests}
                           onToggleSelection={toggleRequestSelection}
+                          onCancelRequest={handleCancelApprovedRequest}
+                          isProcessing={isProcessing}
                           t={t}
                           tCommon={tCommon}
                           tVacations={tVacations}
@@ -822,6 +836,8 @@ function ReviewedRequestsTable({
   requests, 
   selectedRequests, 
   onToggleSelection, 
+  onCancelRequest,
+  isProcessing,
   t, 
   tCommon, 
   tVacations 
@@ -829,6 +845,8 @@ function ReviewedRequestsTable({
   requests: VacationRequestWithConflicts[];
   selectedRequests: Set<string>;
   onToggleSelection: (id: string) => void;
+  onCancelRequest: (id: string) => Promise<void>;
+  isProcessing: (id: string) => boolean;
   t: any;
   tCommon: any;
   tVacations: any;
@@ -1052,6 +1070,9 @@ function ReviewedRequestsTable({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {t('reviewedAt')}
               </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
@@ -1118,6 +1139,22 @@ function ReviewedRequestsTable({
                       {request.reviewedAt ? new Date(request.reviewedAt).toLocaleTimeString() : ''}
                     </div>
                   </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {request.status === 'approved' ? (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        void onCancelRequest(request.id);
+                      }}
+                      disabled={isProcessing(request.id)}
+                      className="inline-flex items-center px-3 py-1.5 border border-orange-300 text-xs font-medium rounded-md text-orange-700 bg-orange-50 hover:bg-orange-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isProcessing(request.id) ? 'Cancelling...' : 'Cancel vacation'}
+                    </button>
+                  ) : (
+                    <span className="text-xs text-gray-400">—</span>
+                  )}
                 </td>
               </tr>
             ))}
@@ -1205,6 +1242,19 @@ function ReviewedRequestsTable({
                 {request.reviewedAt ? new Date(request.reviewedAt).toLocaleTimeString() : ''}
               </div>
             </div>
+
+            {request.status === 'approved' && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  void onCancelRequest(request.id);
+                }}
+                disabled={isProcessing(request.id)}
+                className="w-full inline-flex items-center justify-center px-3 py-2 border border-orange-300 text-sm font-medium rounded-md text-orange-700 bg-orange-50 hover:bg-orange-100 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isProcessing(request.id) ? 'Cancelling...' : 'Cancel vacation'}
+              </button>
+            )}
           </div>
         ))}
       </div>

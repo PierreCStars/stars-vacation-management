@@ -45,3 +45,5 @@ next-env.d.ts
 !postcss.config.mjs
 !tailwind.config.ts
 !eslint.config.mjs
+
+/generated/prisma

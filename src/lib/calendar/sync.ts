@@ -17,7 +17,7 @@ export interface CalendarEventData {
   type: string;
   company: string;
   reason?: string;
-  status: 'pending' | 'approved' | 'denied';
+  status: 'pending' | 'approved' | 'denied' | 'cancelled';
 }
 
 export interface CalendarSyncResult {

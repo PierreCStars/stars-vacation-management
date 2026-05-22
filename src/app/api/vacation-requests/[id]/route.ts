@@ -30,7 +30,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
 
     const { id } = await params;
     const body = await req.json();
-    const newStatus = body?.status; // "approved" | "denied"
+    const newStatus = body?.status; // "approved" | "denied" | "cancelled"
     const newStartDate = body?.startDate;
     const newEndDate = body?.endDate;
     const newDurationDays = body?.durationDays;
@@ -47,14 +47,14 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     });
     
     // Check if this is a status update or a general update
-    const isStatusUpdate = newStatus && ["approved", "denied"].includes(newStatus);
+    const isStatusUpdate = newStatus && ["approved", "denied", "cancelled"].includes(newStatus);
     const isDateUpdate = newStartDate && newEndDate;
     
     console.log('🔍 [INVESTIGATION] Update type check:', { 
       isStatusUpdate, 
       isDateUpdate, 
       newStatus, 
-      validStatuses: ["approved", "denied"].includes(newStatus) 
+      validStatuses: ["approved", "denied", "cancelled"].includes(newStatus) 
     });
     
     // CRITICAL FIX: Check admin authorization for status updates (approve/deny)
@@ -183,7 +183,7 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
             type: requestData.type || 'Full day',
             company: requestData.company || 'Unknown',
             reason: requestData.reason,
-            status: currentStatus as 'pending' | 'approved' | 'denied'
+            status: currentStatus as 'pending' | 'approved' | 'denied' | 'cancelled'
           };
           
           const calendarResult = await syncEventForRequest(calendarData);

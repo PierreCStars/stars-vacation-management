@@ -63,6 +63,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/api/') ||
     pathname.startsWith('/auth/') ||
     pathname.startsWith('/login') ||
+    pathname.startsWith('/checklists') ||
     pathname === '/favicon.ico' ||
     pathname.endsWith('.png') ||
     pathname.endsWith('.jpg') ||

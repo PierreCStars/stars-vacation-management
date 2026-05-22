@@ -12,7 +12,7 @@ export type VacationRequest = {
   endDate: string;   // ISO
   company: string;
   type: string;
-  status: "pending" | "approved" | "denied"; // (no 'rejected')
+  status: "pending" | "approved" | "denied" | "cancelled"; // (no 'rejected')
   createdAt: string;            // ISO
   updatedAt?: string;           // ISO optional
   reviewedAt?: string | null;   // allow null
@@ -43,7 +43,7 @@ export type VacationRequestForm = {
 };
 
 export type VacationRequestUpdate = {
-  status: 'approved' | 'denied';
+  status: 'approved' | 'denied' | 'cancelled';
   reviewedBy: {
     id: string;
     name: string;

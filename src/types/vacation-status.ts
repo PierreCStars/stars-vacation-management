@@ -2,16 +2,17 @@
  * Unified vacation request status types and utilities
  */
 
-export type VacationStatus = 'pending' | 'approved' | 'denied';
+export type VacationStatus = 'pending' | 'approved' | 'denied' | 'cancelled';
 
 export const VACATION_STATUS = {
   PENDING: 'pending',
   APPROVED: 'approved',
   DENIED: 'denied',
+  CANCELLED: 'cancelled',
 } as const;
 
 export const VACATION_STATUS_VALUES: VacationStatus[] = [
-  'pending', 'approved', 'denied'
+  'pending', 'approved', 'denied', 'cancelled'
 ];
 
 /** Normalize any input to our canonical VacationStatus */
@@ -20,6 +21,7 @@ export function normalizeVacationStatus(input: unknown): VacationStatus {
   const s = String(input).toLowerCase().trim();
   if (s === 'approved' || s === 'approve' || s === 'ok' || s === 'accepted' || s === 'validated') return 'approved';
   if (s === 'denied' || s === 'reject' || s === 'rejected' || s === 'declined') return 'denied';
+  if (s === 'cancelled' || s === 'canceled' || s === 'cancel' || s === 'withdrawn') return 'cancelled';
   return 'pending';
 }
 
@@ -40,7 +42,11 @@ export function isPendingStatus(status: string | undefined | null): boolean {
  */
 export function isReviewedStatus(status: string | undefined | null): boolean {
   const normalized = normalizeVacationStatus(status);
-  return normalized === VACATION_STATUS.APPROVED || normalized === VACATION_STATUS.DENIED;
+  return (
+    normalized === VACATION_STATUS.APPROVED ||
+    normalized === VACATION_STATUS.DENIED ||
+    normalized === VACATION_STATUS.CANCELLED
+  );
 }
 
 // Legacy exports for backward compatibility

@@ -148,7 +148,7 @@ export default function VacationAnalytics() {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="text-center">
-          <div className="w-16 h-16 border-4 border-blue-200 border-t-blue-600 rounded-full animate-spin mx-auto mb-4"></div>
+          <div className="w-16 h-16 border-2 border-gold/30 border-t-gold rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading analytics...</p>
         </div>
       </div>
@@ -182,10 +182,10 @@ export default function VacationAnalytics() {
     return (
       <div className="max-w-7xl mx-auto space-y-8">
         {/* Header Section */}
-        <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white shadow-xl">
+        <div className="bg-gradient-to-r from-ink to-slate-ardoise rounded-2xl p-8 text-white shadow-xl">
           <div className="text-center">
             <h1 className="text-3xl font-bold mb-2">📊 Historical Vacation Analytics</h1>
-            <p className="text-blue-100 text-lg">Comprehensive insights into your team's vacation patterns over time</p>
+            <p className="text-cream-100 text-lg">Comprehensive insights into your team's vacation patterns over time</p>
           </div>
         </div>
 
@@ -217,7 +217,7 @@ export default function VacationAnalytics() {
                 onClick={() => handlePeriodChange('last3months')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                   selectedPeriod === 'last3months'
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-gold text-ink'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -227,8 +227,8 @@ export default function VacationAnalytics() {
                 onClick={() => handlePeriodChange('last6months')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                   selectedPeriod === 'last6months'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                    ? 'bg-gold text-ink'
+                    : 'bg-gold/10 text-ink hover:bg-gold/20'
                 }`}
               >
                 📅 Last 6 Months
@@ -237,7 +237,7 @@ export default function VacationAnalytics() {
                 onClick={() => handlePeriodChange('lastYear')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                   selectedPeriod === 'lastYear'
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-gold text-ink'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -247,8 +247,8 @@ export default function VacationAnalytics() {
                 onClick={() => handlePeriodChange('thisYear')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                   selectedPeriod === 'thisYear'
-                    ? 'bg-blue-600 text-white'
-                    : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                    ? 'bg-gold text-ink'
+                    : 'bg-gold/10 text-ink hover:bg-gold/20'
                 }`}
               >
                 📅 This Year
@@ -257,7 +257,7 @@ export default function VacationAnalytics() {
                 onClick={() => handlePeriodChange('all')}
                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                   selectedPeriod === 'all'
-                    ? 'bg-blue-600 text-white'
+                    ? 'bg-gold text-ink'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
@@ -277,7 +277,7 @@ export default function VacationAnalytics() {
                   setStartDate(e.target.value);
                   setSelectedPeriod('custom');
                 }}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent transition-all duration-200"
               />
             </div>
             <div>
@@ -289,7 +289,7 @@ export default function VacationAnalytics() {
                   setEndDate(e.target.value);
                   setSelectedPeriod('custom');
                 }}
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent transition-all duration-200"
               />
             </div>
             <div className="flex items-end">
@@ -308,11 +308,11 @@ export default function VacationAnalytics() {
           <p className="text-gray-600 mb-6 text-lg">
             There are currently no approved vacation requests in the system.
           </p>
-          <div className="bg-blue-50 p-6 max-w-2xl mx-auto">
-            <p className="text-blue-800 text-lg">
+          <div className="bg-gold/10 p-6 max-w-2xl mx-auto">
+            <p className="text-ink text-lg">
               <strong>💡 Tip:</strong> Vacation analytics will appear here once employees submit and admins approve vacation requests.
             </p>
-            <div className="mt-4 text-sm text-blue-600">
+            <div className="mt-4 text-sm text-slate-ardoise">
               <p>• Submit vacation requests through the main form</p>
               <p>• Admins can approve requests in the Vacation Requests tab</p>
               <p>• Analytics will automatically populate with real data</p>
@@ -326,10 +326,10 @@ export default function VacationAnalytics() {
   return (
     <div className="max-w-7xl mx-auto space-y-8">
       {/* Header Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-8 text-white shadow-xl">
+      <div className="bg-gradient-to-r from-ink to-slate-ardoise rounded-2xl p-8 text-white shadow-xl">
         <div className="text-center mb-6">
           <h1 className="text-3xl font-bold mb-2">📊 Historical Vacation Analytics</h1>
-          <p className="text-blue-100 text-lg">Comprehensive insights into your team's vacation patterns over time</p>
+          <p className="text-cream-100 text-lg">Comprehensive insights into your team's vacation patterns over time</p>
         </div>
         
         {/* Quick Stats - 2 rows layout */}
@@ -337,13 +337,13 @@ export default function VacationAnalytics() {
           {/* First row - Labels */}
           <div className="flex justify-center gap-6">
             <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center min-w-[160px]">
-              <div className="text-blue-100 text-base font-semibold">Total Days</div>
+              <div className="text-cream-100 text-base font-semibold">Total Days</div>
             </div>
             <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center min-w-[160px]">
-              <div className="text-blue-100 text-base font-semibold">Employees</div>
+              <div className="text-cream-100 text-base font-semibold">Employees</div>
             </div>
             <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 text-center min-w-[160px]">
-              <div className="text-blue-100 text-base font-semibold">Vacation Types</div>
+              <div className="text-cream-100 text-base font-semibold">Vacation Types</div>
             </div>
           </div>
           
@@ -390,7 +390,7 @@ export default function VacationAnalytics() {
               onClick={() => handlePeriodChange('last3months')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 selectedPeriod === 'last3months'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-gold text-ink'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -400,8 +400,8 @@ export default function VacationAnalytics() {
               onClick={() => handlePeriodChange('last6months')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 selectedPeriod === 'last6months'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                  ? 'bg-gold text-ink'
+                  : 'bg-gold/10 text-ink hover:bg-gold/20'
               }`}
             >
               📅 Last 6 Months
@@ -410,7 +410,7 @@ export default function VacationAnalytics() {
               onClick={() => handlePeriodChange('lastYear')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 selectedPeriod === 'lastYear'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-gold text-ink'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -420,8 +420,8 @@ export default function VacationAnalytics() {
               onClick={() => handlePeriodChange('thisYear')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 selectedPeriod === 'thisYear'
-                  ? 'bg-blue-600 text-white'
-                  : 'bg-blue-100 text-blue-700 hover:bg-blue-200'
+                  ? 'bg-gold text-ink'
+                  : 'bg-gold/10 text-ink hover:bg-gold/20'
               }`}
             >
               📅 This Year
@@ -430,7 +430,7 @@ export default function VacationAnalytics() {
               onClick={() => handlePeriodChange('all')}
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
                 selectedPeriod === 'all'
-                  ? 'bg-blue-600 text-white'
+                  ? 'bg-gold text-ink'
                   : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
@@ -449,7 +449,7 @@ export default function VacationAnalytics() {
                 setStartDate(e.target.value);
                 setSelectedPeriod('custom');
               }}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent transition-all duration-200"
             />
           </div>
           <div>
@@ -461,7 +461,7 @@ export default function VacationAnalytics() {
                 setEndDate(e.target.value);
                 setSelectedPeriod('custom');
               }}
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-200"
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-gold focus:border-transparent transition-all duration-200"
             />
           </div>
           <div className="flex items-end">
@@ -589,16 +589,16 @@ export default function VacationAnalytics() {
                   {/* Row 2 - Values */}
                   <div className="grid grid-cols-4 gap-4">
                     <div className="px-4 py-3 text-center">
-                      <div className="text-4xl font-bold text-blue-600 mb-1">{analytics.totalVacations}</div>
-                      <div className="text-blue-600 text-sm">requests</div>
+                      <div className="text-4xl font-bold text-gold mb-1">{analytics.totalVacations}</div>
+                      <div className="text-gold text-sm">requests</div>
                     </div>
                     <div className="px-4 py-3 text-center">
                       <div className="text-4xl font-bold text-green-600 mb-1">{analytics.totalDays}</div>
                       <div className="text-green-600 text-sm">days</div>
                     </div>
                     <div className="px-4 py-3 text-center">
-                      <div className="text-4xl font-bold text-purple-600 mb-1">{analytics.byPerson.length}</div>
-                      <div className="text-purple-600 text-sm">employees</div>
+                      <div className="text-4xl font-bold text-slate-ardoise mb-1">{analytics.byPerson.length}</div>
+                      <div className="text-slate-ardoise text-sm">employees</div>
                     </div>
                     <div className="px-4 py-3 text-center">
                       <div className="text-4xl font-bold text-orange-600 mb-1">
@@ -622,7 +622,7 @@ export default function VacationAnalytics() {
                   <div key={person.userId} className="bg-white rounded-xl p-4 shadow-sm hover:shadow-md transition-all duration-200">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold">
+                        <div className="w-12 h-12 bg-gradient-to-br from-gold to-slate-ardoise rounded-full flex items-center justify-center text-white text-xl font-bold">
                           {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : '👤'}
                         </div>
                         <div>
@@ -631,7 +631,7 @@ export default function VacationAnalytics() {
                         </div>
                       </div>
                       <div className="text-right">
-                        <div className="text-2xl font-bold text-blue-600">{person.totalDays}</div>
+                        <div className="text-2xl font-bold text-gold">{person.totalDays}</div>
                         <div className="text-gray-600">days</div>
                         <div className="text-sm text-gray-500">{person.totalVacations} vacations</div>
                       </div>
@@ -662,14 +662,14 @@ export default function VacationAnalytics() {
                   {/* Person Header */}
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center space-x-4">
-                      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                      <div className="w-16 h-16 bg-gradient-to-br from-gold to-slate-ardoise rounded-full flex items-center justify-center text-white text-2xl font-bold">
                         {person.userName.charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <h3 className="text-2xl font-bold text-gray-900">{person.userName}</h3>
                         <p className="text-gray-600">{person.userEmail}</p>
                         <div className="flex items-center space-x-4 mt-2">
-                          <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                          <span className="px-3 py-1 bg-gold/10 text-ink rounded-full text-sm font-medium">
                             #{index + 1} Rank
                           </span>
                           <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
@@ -679,7 +679,7 @@ export default function VacationAnalytics() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-4xl font-bold text-blue-600">{person.totalDays}</div>
+                      <div className="text-4xl font-bold text-gold">{person.totalDays}</div>
                       <div className="text-gray-600 text-lg">total days</div>
                       <div className="text-sm text-gray-500">
                         Avg: {person.totalVacations > 0 ? Math.round(person.totalDays / person.totalVacations * 10) / 10 : 0} days/vacation
@@ -701,12 +701,12 @@ export default function VacationAnalytics() {
                               <div className="text-sm text-gray-600">
                                 {new Date(vacation.startDate).toLocaleDateString()} - {new Date(vacation.endDate).toLocaleDateString()}
                               </div>
-                              <span className="px-3 py-1 bg-blue-500 text-white rounded-full text-sm font-bold">
+                              <span className="px-3 py-1 bg-gold text-ink rounded-full text-sm font-bold">
                                 {vacation.days} days
                               </span>
                             </div>
                             <div className="flex items-center space-x-3 text-sm">
-                              <span className="px-2 py-1 bg-purple-100 text-purple-800 rounded-lg">
+                              <span className="px-2 py-1 bg-cream-100 text-slate-ardoise rounded-lg">
                                 🏢 {vacation.company}
                               </span>
                               <span className="px-2 py-1 bg-green-100 text-green-800 rounded-lg">
@@ -727,7 +727,7 @@ export default function VacationAnalytics() {
                         <div className="space-y-4">
                           <div className="flex justify-between items-center">
                             <span className="text-gray-700 font-medium">Total Vacations:</span>
-                            <span className="text-2xl font-bold text-blue-600">{person.totalVacations}</span>
+                            <span className="text-2xl font-bold text-gold">{person.totalVacations}</span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-gray-700 font-medium">Total Days:</span>
@@ -735,7 +735,7 @@ export default function VacationAnalytics() {
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-gray-700 font-medium">Average per Vacation:</span>
-                            <span className="text-2xl font-bold text-purple-600">
+                            <span className="text-2xl font-bold text-slate-ardoise">
                               {person.totalVacations > 0 ? Math.round(person.totalDays / person.totalVacations * 10) / 10 : 0} days
                             </span>
                           </div>
@@ -780,7 +780,7 @@ export default function VacationAnalytics() {
                           <span className="px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm font-medium">
                             #{index + 1} Company
                           </span>
-                          <span className="px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
+                          <span className="px-3 py-1 bg-gold/10 text-ink rounded-full text-sm font-medium">
                             {company.totalVacations} vacations
                           </span>
                         </div>
@@ -805,7 +805,7 @@ export default function VacationAnalytics() {
                       <div className="bg-gray-50 rounded-xl p-4">
                         <div className="flex flex-wrap gap-2">
                           {company.employees.map((employee) => (
-                            <span key={employee} className="px-3 py-2 bg-blue-100 text-blue-800 rounded-lg text-sm font-medium hover:bg-blue-200 transition-colors duration-200">
+                            <span key={employee} className="px-3 py-2 bg-gold/10 text-ink rounded-lg text-sm font-medium hover:bg-gold/20 transition-colors duration-200">
                               👤 {employee}
                             </span>
                           ))}
@@ -826,11 +826,11 @@ export default function VacationAnalytics() {
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-gray-700 font-medium">Total Days:</span>
-                            <span className="text-2xl font-bold text-blue-600">{company.totalDays}</span>
+                            <span className="text-2xl font-bold text-gold">{company.totalDays}</span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-gray-700 font-medium">Average per Employee:</span>
-                            <span className="text-2xl font-bold text-purple-600">
+                            <span className="text-2xl font-bold text-slate-ardoise">
                               {company.employees.length > 0 ? Math.round(company.totalDays / company.employees.length * 10) / 10 : 0} days
                             </span>
                           </div>
@@ -865,14 +865,14 @@ export default function VacationAnalytics() {
                   {/* Type Header */}
                   <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center space-x-4">
-                      <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                      <div className="w-16 h-16 bg-gradient-to-br from-slate-ardoise to-ink rounded-full flex items-center justify-center text-white text-2xl font-bold">
                         🏖️
                       </div>
                       <div>
                         <h3 className="text-2xl font-bold text-gray-900">{type.type}</h3>
                         <p className="text-gray-600">{type.employees.length} employees</p>
                         <div className="flex items-center space-x-4 mt-2">
-                          <span className="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm font-medium">
+                          <span className="px-3 py-1 bg-cream-100 text-slate-ardoise rounded-full text-sm font-medium">
                             #{index + 1} Type
                           </span>
                           <span className="px-3 py-1 bg-pink-100 text-pink-800 rounded-full text-sm font-medium">
@@ -882,7 +882,7 @@ export default function VacationAnalytics() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-4xl font-bold text-purple-600">{type.totalDays}</div>
+                      <div className="text-4xl font-bold text-slate-ardoise">{type.totalDays}</div>
                       <div className="text-gray-600 text-lg">total days</div>
                       <div className="text-sm text-gray-500">
                         Avg: {type.totalVacations > 0 ? Math.round(type.totalDays / type.totalVacations * 10) / 10 : 0} days/vacation
@@ -900,7 +900,7 @@ export default function VacationAnalytics() {
                       <div className="bg-gray-50 rounded-xl p-4">
                         <div className="flex flex-wrap gap-2">
                           {type.employees.map((employee) => (
-                            <span key={employee} className="px-3 py-2 bg-purple-100 text-purple-800 rounded-lg text-sm font-medium hover:bg-purple-200 transition-colors duration-200">
+                            <span key={employee} className="px-3 py-2 bg-cream-100 text-slate-ardoise rounded-lg text-sm font-medium hover:bg-cream-200 transition-colors duration-200">
                               👤 {employee}
                             </span>
                           ))}
@@ -913,11 +913,11 @@ export default function VacationAnalytics() {
                         <span className="text-xl mr-2">📊</span>
                         Type Statistics
                       </h4>
-                      <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl p-6">
+                      <div className="bg-gradient-to-br from-cream-50 to-cream-100 rounded-xl p-6">
                         <div className="space-y-4">
                           <div className="flex justify-between items-center">
                             <span className="text-gray-700 font-medium">Total Vacations:</span>
-                            <span className="text-2xl font-bold text-purple-600">{type.totalVacations}</span>
+                            <span className="text-2xl font-bold text-slate-ardoise">{type.totalVacations}</span>
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-gray-700 font-medium">Total Days:</span>
@@ -925,7 +925,7 @@ export default function VacationAnalytics() {
                           </div>
                           <div className="flex justify-between items-center">
                             <span className="text-gray-700 font-medium">Average per Vacation:</span>
-                            <span className="text-2xl font-bold text-blue-600">
+                            <span className="text-2xl font-bold text-gold">
                               {type.totalVacations > 0 ? Math.round(type.totalDays / type.totalVacations * 10) / 10 : 0} days
                             </span>
                           </div>

@@ -297,7 +297,7 @@ export default function UnifiedVacationCalendar({
     switch (severity) {
       case 'high': return 'bg-red-100 border-red-300';
       case 'medium': return 'bg-orange-100 border-orange-300';
-      case 'low': return 'bg-blue-100 border-blue-300';
+      case 'low': return 'bg-gold/10 border-gold';
       default: return 'bg-gray-50 border-gray-200';
     }
   };
@@ -307,7 +307,7 @@ export default function UnifiedVacationCalendar({
     return (
       <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className} ${compact ? 'mini-calendar' : ''}`}>
         <div className="p-8 text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-gold/30 border-t-gold mx-auto"></div>
           <p className="mt-2 text-gray-600">Loading calendar...</p>
         </div>
       </div>
@@ -317,7 +317,7 @@ export default function UnifiedVacationCalendar({
   return (
     <div className={`bg-white rounded-lg shadow-sm border border-gray-200 ${className} ${compact ? 'mini-calendar' : ''} overflow-hidden`}>
       {/* Calendar Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-3 sm:p-4 rounded-t-lg">
+      <div className="bg-gradient-to-r from-ink to-slate-ardoise text-white p-3 sm:p-4 rounded-t-lg">
         <div className="flex items-center justify-between">
           <div className="flex-1 min-w-0">
             <h2 className={`font-bold ${compact ? 'text-lg' : 'text-lg sm:text-xl'} truncate`}>
@@ -325,7 +325,7 @@ export default function UnifiedVacationCalendar({
               <span className="sm:hidden">{tCalendar('calendar')}</span>
               <span className="ml-2 text-xs bg-yellow-200 text-yellow-800 px-1.5 py-0.5 rounded" data-version="responsive-v1">📱</span>
             </h2>
-            <p className="text-blue-100 text-xs sm:text-sm mt-1">
+            <p className="text-cream-100 text-xs sm:text-sm mt-1">
               {compact ? tCalendar('teamAvailabilityCompanyEvents') : tCalendar('monitorTeamAvailability')}
             </p>
           </div>
@@ -342,7 +342,7 @@ export default function UnifiedVacationCalendar({
             
             <button
               onClick={goToToday}
-              className="px-2 sm:px-3 py-1 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-all duration-200 font-semibold text-xs sm:text-sm"
+              className="px-2 sm:px-3 py-1 bg-white text-ink rounded-lg hover:bg-gold/10 transition-all duration-200 font-semibold text-xs sm:text-sm"
             >
               <span className="hidden sm:inline">{tCalendar('today')}</span>
               <span className="sm:hidden">Now</span>
@@ -399,7 +399,7 @@ export default function UnifiedVacationCalendar({
             } else if (day.conflictEvents && day.conflictEvents.length > 0) {
               bgColor = 'bg-red-50'; // Red for conflicts
             } else if (day.isInSelectedRange) {
-              bgColor = 'bg-blue-50'; // Blue for selected range
+              bgColor = 'bg-gold/10'; // Selected range
             } else {
               bgColor = day.isCurrentMonth ? 'bg-white' : 'bg-gray-50';
             }
@@ -430,7 +430,7 @@ export default function UnifiedVacationCalendar({
                   {day.monacoHolidays.map((holiday, holidayIndex) => (
                     <div
                       key={`holiday-${holidayIndex}`}
-                      className="text-xs p-1 rounded truncate font-medium text-blue-800"
+                      className="text-xs p-1 rounded truncate font-medium text-ink"
                       title={`${holiday.title}${holiday.description ? ` • ${holiday.description}` : ''}`}
                     >
                       🏛️ {holiday.title}
@@ -446,7 +446,7 @@ export default function UnifiedVacationCalendar({
                     <div
                       key={`event-${eventIndex}`}
                       className={`text-xs p-1 rounded truncate font-medium ${
-                        hasMonacoHoliday ? 'text-blue-800' : 'text-red-800'
+                        hasMonacoHoliday ? 'text-ink' : 'text-red-800'
                       }`}
                       title={`${event.title}${event.location ? ` • ${event.location}` : ''}`}
                     >
@@ -516,7 +516,7 @@ export default function UnifiedVacationCalendar({
                   <span className={`inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-medium ${
                     day.severity === 'high' ? 'bg-red-100 text-red-800' :
                     day.severity === 'medium' ? 'bg-orange-100 text-orange-800' :
-                    'bg-blue-100 text-blue-800'
+                    'bg-gold/10 text-ink'
                   }`}>
                     {day.conflictCount} conflicts
                   </span>
@@ -594,19 +594,19 @@ export default function UnifiedVacationCalendar({
                 {calendarDays
                   .find(d => d.date.toDateString() === selectedDate.toDateString())
                   ?.companyEvents.map(event => (
-                    <div key={event.id} className="flex items-center justify-between p-3 bg-purple-50 rounded-lg border border-purple-200">
+                    <div key={event.id} className="flex items-center justify-between p-3 bg-gold/10 rounded-lg border border-gold">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3">
-                          <span className="text-purple-600">📅</span>
-                          <span className="font-bold text-purple-800">{event.title}</span>
-                          <span className="text-sm px-2 py-1 rounded bg-purple-100 text-purple-800 font-medium">
+                          <span className="text-gold">📅</span>
+                          <span className="font-bold text-ink">{event.title}</span>
+                          <span className="text-sm px-2 py-1 rounded bg-gold/10 text-ink font-medium">
                             Company Event
                           </span>
                         </div>
                         {event.location && (
-                          <p className="text-sm text-purple-600 mt-1">📍 {event.location}</p>
+                          <p className="text-sm text-slate-ardoise mt-1">📍 {event.location}</p>
                         )}
-                        <p className="text-xs text-purple-500 mt-1">
+                        <p className="text-xs text-slate-ardoise mt-1">
                           {event.startDate === event.endDate ? 
                             event.startDate : 
                             `${event.startDate} - ${event.endDate}`
@@ -641,7 +641,7 @@ export default function UnifiedVacationCalendar({
                           {vacation.status}
                         </span>
                         {vacation.id === currentRequestId && (
-                          <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full font-semibold">
+                          <span className="px-2 py-1 text-xs bg-gold/10 text-ink rounded-full font-semibold">
                             Current Request
                           </span>
                         )}
@@ -659,7 +659,7 @@ export default function UnifiedVacationCalendar({
             <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               {highlightRange && initialRange && (
                 <div className="flex items-center space-x-1 sm:space-x-2">
-                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-blue-50 border border-blue-300 rounded"></div>
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gold/10 border border-gold rounded"></div>
                   <span className="text-xs sm:text-sm text-gray-600">Selected Range</span>
                 </div>
               )}

@@ -38,7 +38,7 @@ export function AdminSidebar() {
                 href={createLocaleUrl('/admin/vacation-requests', currentLocale)}
                 className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                   isActive('/admin/vacation-requests')
-                    ? 'bg-indigo-100 text-indigo-700 border border-indigo-200'
+                    ? 'bg-gold/10 text-ink border border-gold'
                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
@@ -53,7 +53,7 @@ export function AdminSidebar() {
                 href={createLocaleUrl('/admin/setup', currentLocale)}
                 className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                   isActive('/admin/setup')
-                    ? 'bg-indigo-100 text-indigo-700 border border-indigo-200'
+                    ? 'bg-gold/10 text-ink border border-gold'
                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >
@@ -78,7 +78,7 @@ export function AdminSidebar() {
                 href={createLocaleUrl('/admin/analytics', currentLocale)}
                 className={`block px-4 py-3 rounded-lg text-sm font-medium transition-colors ${
                   isActive('/admin/analytics')
-                    ? 'bg-indigo-100 text-indigo-700 border border-indigo-200'
+                    ? 'bg-gold/10 text-ink border border-gold'
                     : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                 }`}
               >

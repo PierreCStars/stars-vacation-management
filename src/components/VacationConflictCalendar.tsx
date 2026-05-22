@@ -114,7 +114,7 @@ export default function VacationConflictCalendar({
   const getConflictStyling = (severity: string) => {
     switch (severity) {
       case 'none': return { bg: 'bg-white', border: 'border-slate-200', ring: '' };
-      case 'low': return { bg: 'bg-blue-50', border: 'border-blue-200', ring: 'ring-2 ring-blue-300' };
+      case 'low': return { bg: 'bg-gold/10', border: 'border-gold', ring: 'ring-2 ring-gold' };
       case 'medium': return { bg: 'bg-orange-50', border: 'border-orange-200', ring: 'ring-2 ring-orange-400' };
       case 'high': return { bg: 'bg-red-50', border: 'border-red-200', ring: 'ring-2 ring-red-500' };
       default: return { bg: 'bg-white', border: 'border-slate-200', ring: '' };
@@ -124,7 +124,7 @@ export default function VacationConflictCalendar({
   // Get severity icon and color
   const getSeverityIndicator = (severity: string) => {
     switch (severity) {
-      case 'low': return { icon: '💡', color: 'text-blue-600', bg: 'bg-blue-100' };
+      case 'low': return { icon: '💡', color: 'text-gold', bg: 'bg-gold/10' };
       case 'medium': return { icon: '⚠️', color: 'text-orange-600', bg: 'bg-orange-100' };
       case 'high': return { icon: '🚨', color: 'text-red-600', bg: 'bg-red-100' };
       default: return { icon: '', color: '', bg: '' };
@@ -139,13 +139,13 @@ export default function VacationConflictCalendar({
   return (
     <div className="card overflow-hidden">
       {/* Calendar Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6 -m-6 mb-6">
+      <div className="bg-gradient-to-r from-ink to-slate-ardoise text-white p-6 -m-6 mb-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold mb-2">
               🗓️ Vacation Conflict Calendar
             </h2>
-            <p className="text-blue-100">
+            <p className="text-cream-100">
               Monitor team availability and detect scheduling conflicts
             </p>
           </div>
@@ -161,7 +161,7 @@ export default function VacationConflictCalendar({
             
             <button
               onClick={goToToday}
-              className="px-4 py-2 bg-white text-blue-600 rounded-lg hover:bg-blue-50 transition-all duration-200 font-semibold"
+              className="px-4 py-2 bg-white text-ink rounded-lg hover:bg-gold/10 transition-all duration-200 font-semibold"
             >
               Today
             </button>
@@ -241,7 +241,7 @@ export default function VacationConflictCalendar({
                       key={vacation.id}
                       className={`
                         text-xs p-1 rounded truncate
-                        ${vacation.id === currentRequestId ? 'ring-2 ring-blue-400' : ''}
+                        ${vacation.id === currentRequestId ? 'ring-2 ring-gold' : ''}
                         ${getStatusColor(vacation.status)}
                         text-white font-medium
                       `}
@@ -281,7 +281,7 @@ export default function VacationConflictCalendar({
             <span className="text-gray-600">Rejected</span>
           </div>
           <div className="flex items-center space-x-2">
-            <div className="w-4 h-4 bg-blue-100 text-blue-600 text-xs rounded-full flex items-center justify-center font-bold">💡</div>
+            <div className="w-4 h-4 bg-gold/10 text-gold text-xs rounded-full flex items-center justify-center font-bold">💡</div>
             <span className="text-gray-600">Low Conflict</span>
           </div>
           <div className="flex items-center space-x-2">
@@ -293,8 +293,8 @@ export default function VacationConflictCalendar({
 
       {/* Selected Date Details */}
       {selectedDate && (
-        <div className="bg-blue-50 p-4 border-t border-blue-200 -mx-6 -mb-6">
-          <h4 className="font-bold text-blue-800 mb-3">
+        <div className="bg-cream-100 p-4 border-t border-gold -mx-6 -mb-6">
+          <h4 className="font-bold text-ink mb-3">
             📅 {selectedDate.toLocaleDateString('en-US', { 
               weekday: 'long', 
               year: 'numeric', 
@@ -306,8 +306,8 @@ export default function VacationConflictCalendar({
           {calendarDays.find(d => d.date.toDateString() === selectedDate.toDateString())?.vacations.length === 0 ? (
             <div className="text-center py-3">
               <div className="text-3xl mb-2">✅</div>
-              <p className="text-blue-600 font-medium">No vacation requests on this date</p>
-              <p className="text-blue-500 text-sm">Team is fully available</p>
+              <p className="text-ink font-medium">No vacation requests on this date</p>
+              <p className="text-slate-ardoise text-sm">Team is fully available</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -335,7 +335,7 @@ export default function VacationConflictCalendar({
                         {vacation.status}
                       </span>
                       {vacation.id === currentRequestId && (
-                        <span className="px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full font-semibold">
+                        <span className="px-2 py-1 text-xs bg-gold/10 text-ink rounded-full font-semibold">
                           Current Request
                         </span>
                       )}

@@ -34,7 +34,7 @@ export function LanguageSwitcher() {
     <select
       value={pathname?.split('/')[1] || 'en'} // Assuming locale is the second segment
       onChange={(e) => handleLanguageChange(e.target.value)}
-      className="border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white text-gray-700 hover:border-blue-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 focus:outline-none transition-colors"
+      className="border border-gray-300 rounded-md px-3 py-1.5 text-sm bg-white text-gray-700 hover:border-gold focus:border-gold focus:ring-2 focus:ring-gold focus:outline-none transition-colors"
       aria-label="Language"
     >
       <option value="en">EN</option>

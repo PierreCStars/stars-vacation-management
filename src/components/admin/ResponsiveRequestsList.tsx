@@ -176,7 +176,7 @@ function RequestTableRow({
             e.stopPropagation();
             onToggleSelection(request.id);
           }}
-          className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+          className="h-4 w-4 accent-gold focus:ring-gold border-gray-300 rounded"
         />
       </td>
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 align-middle">
@@ -184,7 +184,7 @@ function RequestTableRow({
           <span className="font-medium">{request.userName}</span>
           <a
             href={moreInfoUrl}
-            className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md hover:bg-blue-700 hover:text-white transition-colors shadow-sm"
+            className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-ink bg-gold border border-gold rounded-md hover:bg-[#C49E15] hover:text-ink transition-colors shadow-sm"
             aria-label={`More information about ${request.userName}'s request`}
             data-test="more-info-link"
           >
@@ -241,7 +241,7 @@ function RequestCard({
               e.stopPropagation();
               onToggleSelection(request.id);
             }}
-            className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded mt-1"
+            className="h-4 w-4 accent-gold focus:ring-gold border-gray-300 rounded mt-1"
           />
           <div className="flex-1 min-w-0">
             <div className="text-lg font-medium text-gray-900 truncate">
@@ -252,7 +252,7 @@ function RequestCard({
             </p>
             <a
               href={moreInfoUrl}
-              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-white bg-blue-600 border border-blue-600 rounded-md hover:bg-blue-700 hover:text-white transition-colors shadow-sm mt-2"
+              className="inline-flex items-center px-3 py-1.5 text-sm font-medium text-ink bg-gold border border-gold rounded-md hover:bg-[#C49E15] hover:text-ink transition-colors shadow-sm mt-2"
               aria-label={`More information about ${request.userName}'s request`}
               data-test="more-info-link"
             >
@@ -303,7 +303,7 @@ function ConflictBadge({ conflicts, onViewConflicts, t, compact = false }: Confl
       </span>
       <button
         onClick={onViewConflicts}
-        className="text-blue-600 hover:text-blue-800 text-xs underline"
+        className="text-gold hover:text-[#C49E15] text-xs underline"
       >
         {t('viewDetails')}
       </button>

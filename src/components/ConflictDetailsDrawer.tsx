@@ -154,9 +154,9 @@ export default function ConflictDetailsDrawer({
                         <h4 className="font-medium text-gray-900 mb-2">Conflicting Company Events:</h4>
                         <div className="space-y-2">
                           {conflict.calendarEvents.map((event, eventIndex) => (
-                            <div key={eventIndex} className="bg-blue-50 rounded-lg p-3 border border-blue-200">
-                              <div className="font-medium text-blue-900 mb-1">{event.title}</div>
-                              <div className="text-sm text-blue-700">
+                            <div key={eventIndex} className="bg-gold/10 rounded-lg p-3 border border-gold">
+                              <div className="font-medium text-ink mb-1">{event.title}</div>
+                              <div className="text-sm text-slate-ardoise">
                                 <div>Dates: {event.startDate} to {event.endDate}</div>
                                 {event.location && <div>Location: {event.location}</div>}
                               </div>

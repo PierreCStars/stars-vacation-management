@@ -161,7 +161,7 @@ export default function VacationCalendar({ vacationRequests, className = '' }: V
                 key={index}
                 className={`p-2 min-h-[80px] border border-gray-200 ${
                   isCurrentMonth(day) ? 'bg-white' : 'bg-gray-50'
-                } ${hasRequests ? 'bg-blue-50 border-blue-200' : ''}`}
+                } ${hasRequests ? 'bg-gold/10 border-gold' : ''}`}
               >
                 <div className={`text-sm font-medium ${
                   isCurrentMonth(day) ? 'text-gray-900' : 'text-gray-400'

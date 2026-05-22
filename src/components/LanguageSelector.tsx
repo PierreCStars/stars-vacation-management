@@ -107,7 +107,7 @@ export default function LanguageSelector() {
                   key={lang}
                   onClick={() => handleLanguageChange(lang)}
                   className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors duration-150 flex items-center space-x-3 ${
-                    currentLocale === lang ? 'bg-blue-50 text-blue-700' : 'text-gray-700'
+                    currentLocale === lang ? 'bg-gold/10 text-ink' : 'text-gray-700'
                   }`}
                   style={{
                     width: '100%',
@@ -118,8 +118,8 @@ export default function LanguageSelector() {
                     display: 'flex',
                     alignItems: 'center',
                     gap: '0.75rem',
-                    backgroundColor: currentLocale === lang ? '#eff6ff' : 'transparent',
-                    color: currentLocale === lang ? '#1d4ed8' : '#374151'
+                    backgroundColor: currentLocale === lang ? 'rgba(216, 177, 27, 0.1)' : 'transparent',
+                    color: currentLocale === lang ? '#0A0A0A' : '#374151'
                   }}
                   onMouseEnter={(e) => {
                     if (currentLocale !== lang) {

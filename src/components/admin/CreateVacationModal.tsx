@@ -265,7 +265,7 @@ export default function CreateVacationModal({ isOpen, onClose, onSuccess }: Crea
                   type="text"
                   value={formData.firstName}
                   onChange={(e) => handleInputChange('firstName', e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold ${
                     errors.firstName ? 'border-red-300' : 'border-gray-300'
                   }`}
                   placeholder="Enter first name"
@@ -284,7 +284,7 @@ export default function CreateVacationModal({ isOpen, onClose, onSuccess }: Crea
                   type="text"
                   value={formData.lastName}
                   onChange={(e) => handleInputChange('lastName', e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold ${
                     errors.lastName ? 'border-red-300' : 'border-gray-300'
                   }`}
                   placeholder="Enter last name"
@@ -306,7 +306,7 @@ export default function CreateVacationModal({ isOpen, onClose, onSuccess }: Crea
                   type="tel"
                   value={formData.phone}
                   onChange={(e) => handleInputChange('phone', e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold ${
                     errors.phone ? 'border-red-300' : 'border-gray-300'
                   }`}
                   placeholder="Enter phone number"
@@ -325,7 +325,7 @@ export default function CreateVacationModal({ isOpen, onClose, onSuccess }: Crea
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold ${
                     errors.email ? 'border-red-300' : 'border-gray-300'
                   }`}
                   placeholder="Enter email address (optional)"
@@ -345,7 +345,7 @@ export default function CreateVacationModal({ isOpen, onClose, onSuccess }: Crea
               <select
                 value={formData.companyId}
                 onChange={(e) => handleInputChange('companyId', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold ${
                   errors.companyId ? 'border-red-300' : 'border-gray-300'
                 }`}
                 disabled={isSubmitting}
@@ -372,7 +372,7 @@ export default function CreateVacationModal({ isOpen, onClose, onSuccess }: Crea
                   type="date"
                   value={formData.startDate}
                   onChange={(e) => handleInputChange('startDate', e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold ${
                     errors.startDate ? 'border-red-300' : 'border-gray-300'
                   }`}
                   disabled={isSubmitting}
@@ -390,7 +390,7 @@ export default function CreateVacationModal({ isOpen, onClose, onSuccess }: Crea
                   type="date"
                   value={formData.endDate}
                   onChange={(e) => handleInputChange('endDate', e.target.value)}
-                  className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold ${
                     errors.endDate ? 'border-red-300' : 'border-gray-300'
                   }`}
                   disabled={isSubmitting}
@@ -409,7 +409,7 @@ export default function CreateVacationModal({ isOpen, onClose, onSuccess }: Crea
               <select
                 value={formData.vacationType}
                 onChange={(e) => handleInputChange('vacationType', e.target.value)}
-                className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-gold focus:border-gold ${
                   errors.vacationType ? 'border-red-300' : 'border-gray-300'
                 }`}
                 disabled={isSubmitting}
@@ -432,14 +432,14 @@ export default function CreateVacationModal({ isOpen, onClose, onSuccess }: Crea
                 type="button"
                 onClick={handleClose}
                 disabled={isSubmitting}
-                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-6 py-3 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {t('cancel')}
               </button>
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                className="px-6 py-3 bg-gold text-ink rounded-lg hover:bg-[#C49E15] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
                 {isSubmitting ? (
                   <>

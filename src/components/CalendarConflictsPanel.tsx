@@ -169,7 +169,7 @@ export default function CalendarConflictsPanel({
                       setSelectedCalendars(selectedCalendars.filter(id => id !== 'primary'));
                     }
                   }}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 accent-gold focus:ring-gold border-gray-300 rounded"
                 />
                 <span className="ml-2 text-sm text-gray-700">Primary Calendar</span>
               </label>
@@ -185,7 +185,7 @@ export default function CalendarConflictsPanel({
                       setSelectedCalendars(selectedCalendars.filter(id => id !== teamCalendarId));
                     }
                   }}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  className="h-4 w-4 accent-gold focus:ring-gold border-gray-300 rounded"
                 />
                 <span className="ml-2 text-sm text-gray-700">Team Calendar</span>
               </label>
@@ -195,7 +195,7 @@ export default function CalendarConflictsPanel({
           <button
             onClick={checkConflicts}
             disabled={loading || selectedCalendars.length === 0}
-            className="w-full mb-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
+            className="w-full mb-4 px-4 py-2 bg-gold text-ink rounded-lg hover:bg-[#C49E15] disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
           >
             {loading ? '🔍 Checking...' : '🔍 Check for Calendar Conflicts'}
           </button>

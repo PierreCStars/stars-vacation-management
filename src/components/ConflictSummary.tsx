@@ -51,9 +51,9 @@ export default function ConflictSummary({ conflicts, vacationRequests }: Conflic
     <div className="space-y-6">
       {/* Statistics Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-          <div className="text-2xl font-bold text-blue-600">{totalRequests}</div>
-          <div className="text-sm text-blue-600">Total Requests</div>
+        <div className="bg-gold/10 p-4 rounded-lg border border-gold">
+          <div className="text-2xl font-bold text-gold">{totalRequests}</div>
+          <div className="text-sm text-gold">Total Requests</div>
         </div>
         <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
           <div className="text-2xl font-bold text-yellow-600">{pendingRequests}</div>

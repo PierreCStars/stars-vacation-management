@@ -356,9 +356,11 @@ export async function GET(req: Request) {
       firstRequestDate?: string;
       statusCounts: { approved: number; pending: number; denied: number; cancelled: number };
       monthly: Record<string, number>; // YYYY-MM -> days (approved)
-      approvedSpells: number;          // distinct approved leaves
-      approvedTotalDays: number;        // sum of approved days
+      approvedSpells: number;          // distinct approved leaves (all time)
+      approvedTotalDays: number;        // sum of approved days (all time)
       approvedDaysYTD: number;          // approved days with startDate ≥ Jan 1 current year
+      approvedSpellsWindow: number;    // approved leaves with startDate within filter window
+      approvedDaysWindow: number;       // approved days within filter window
       lastApprovedStartDate: string | null;
     };
 
@@ -386,6 +388,8 @@ export async function GET(req: Request) {
           approvedSpells: 0,
           approvedTotalDays: 0,
           approvedDaysYTD: 0,
+          approvedSpellsWindow: 0,
+          approvedDaysWindow: 0,
           lastApprovedStartDate: null,
         };
       }
@@ -398,7 +402,7 @@ export async function GET(req: Request) {
       if (created < emp.firstRequestDate!) emp.firstRequestDate = created;
       if (created > emp.lastRequestDate!) emp.lastRequestDate = created;
 
-      // Approved-only metrics (used for sparkline, Bradford, days-to-zero, no-leave signal)
+      // Approved-only metrics (sparkline, days-to-zero, leave score)
       if (r.startDate && s === 'approved') {
         emp.approvedSpells += 1;
         emp.approvedTotalDays += days;
@@ -407,6 +411,11 @@ export async function GET(req: Request) {
 
         if (sd >= startOfYear) {
           emp.approvedDaysYTD += days;
+        }
+
+        if (sd >= filterFrom && sd <= filterTo) {
+          emp.approvedSpellsWindow += 1;
+          emp.approvedDaysWindow += days;
         }
 
         if (!emp.lastApprovedStartDate || r.startDate > emp.lastApprovedStartDate) {
@@ -431,23 +440,30 @@ export async function GET(req: Request) {
     // Months elapsed since Jan 1 (used for pace / projection)
     const monthsElapsed = Math.max(0.1, (now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24 * 30.4375));
 
+    // Length of the analytics filter window in months — denominator for the leave score.
+    const monthsInWindow = Math.max(
+      0.5,
+      (filterTo.getTime() - filterFrom.getTime()) / (1000 * 60 * 60 * 24 * 30.4375),
+    );
+
+    const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
+
     const employees = Object.values(perEmployee).map(e => {
-      // Bradford Factor: spells² × days (over the analytics window).
-      // Tiers: <50 low, 50-99 medium, ≥100 high.
-      const bradfordScore = e.approvedSpells * e.approvedSpells * Math.round(e.approvedTotalDays);
-      const bradfordTier: 'low' | 'medium' | 'high' =
-        bradfordScore >= 100 ? 'high' : bradfordScore >= 50 ? 'medium' : 'low';
+      // ── Leave score (0-100, frequency × duration over the filter window) ────
+      // freqNorm  : 0 →  0, 1×/mo → 33, 3×/mo → 99 (clamped to 100)
+      // durNorm   : 1d →  0, 5d → 80, 6d+ → 100
+      // score     : (freqNorm + durNorm) / 2 — equal weight, both must matter.
+      // Lower score = more present, higher score = more often / longer absent.
+      const freqPerMonth = e.approvedSpellsWindow / monthsInWindow;
+      const avgDuration =
+        e.approvedSpellsWindow > 0 ? e.approvedDaysWindow / e.approvedSpellsWindow : 0;
+      const freqNorm = clamp(freqPerMonth * 33, 0, 100);
+      const durNorm = clamp((avgDuration - 1) * 20, 0, 100);
+      const leaveScoreValue = Math.round((freqNorm + durNorm) / 2);
+      const leaveScoreTier: 'low' | 'medium' | 'high' =
+        leaveScoreValue >= 60 ? 'high' : leaveScoreValue >= 30 ? 'medium' : 'low';
 
-      // Months since last approved leave (used for the "no leave 6mo+" signal)
-      let monthsSinceLastApproved: number | null = null;
-      if (e.lastApprovedStartDate) {
-        const last = new Date(e.lastApprovedStartDate);
-        monthsSinceLastApproved =
-          (now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24 * 30.4375);
-      }
-
-      // Days-to-zero projection using the default entitlement.
-      // pace = days used YTD / months elapsed → linear projection.
+      // ── Days-to-zero projection (Sprint 3) ──────────────────────────────────
       const usedYTD = +e.approvedDaysYTD.toFixed(1);
       const remaining = Math.max(0, ENTITLEMENT - usedYTD);
       const pace = usedYTD / monthsElapsed; // days per month
@@ -471,13 +487,11 @@ export async function GET(req: Request) {
         firstRequestDate: e.firstRequestDate,
         statusCounts: e.statusCounts,
         monthlySparkline: monthBuckets.map(m => ({ month: m, days: e.monthly[m] || 0 })),
-        // Sprint 3: signals
-        signals: {
-          monthsSinceLastApproved:
-            monthsSinceLastApproved === null ? null : +monthsSinceLastApproved.toFixed(1),
-          noLeaveAlert: monthsSinceLastApproved !== null && monthsSinceLastApproved >= 6,
-          bradfordScore,
-          bradfordTier,
+        leaveScore: {
+          value: leaveScoreValue,
+          tier: leaveScoreTier,
+          freqPerMonth: +freqPerMonth.toFixed(2),
+          avgDuration: +avgDuration.toFixed(2),
         },
         leaveBalance: {
           entitlement: ENTITLEMENT,

@@ -14,11 +14,11 @@ export type EmployeeRow = {
   firstRequestDate?: string;
   statusCounts: { approved: number; pending: number; denied: number; cancelled: number };
   monthlySparkline: Array<{ month: string; days: number }>;
-  signals: {
-    monthsSinceLastApproved: number | null;
-    noLeaveAlert: boolean;
-    bradfordScore: number;
-    bradfordTier: 'low' | 'medium' | 'high';
+  leaveScore: {
+    value: number;                       // 0..100
+    tier: 'low' | 'medium' | 'high';
+    freqPerMonth: number;                // sub-factor (transparency)
+    avgDuration: number;                 // sub-factor (transparency)
   };
   leaveBalance: {
     entitlement: number;

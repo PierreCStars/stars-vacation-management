@@ -109,17 +109,16 @@ export function EmployeeTable({ rows }: Props) {
               </th>
               <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-ardoise">
                 <span className="inline-flex items-center gap-1">
-                  Signals
+                  Score congés
                   <InfoTooltip
                     content={
                       <>
-                        <strong className="block text-ink mb-1">Anomaly signals</strong>
-                        <span className="block mb-1.5">
-                          <strong style={{ color: '#A85F0E' }}>Xmo</strong> — no approved leave in X months (X ≥ 6). Burnout / well-being signal.
-                        </span>
-                        <span className="block">
-                          <strong style={{ color: '#C92B12' }}>B&lt;score&gt;</strong> — Bradford Factor = (spells² × days). Captures
-                          frequency × duration of absence. Tiers: medium 50-99, high ≥100. Use as alert, not as judgment.
+                        <strong className="block text-ink mb-1">Score congés</strong>
+                        Pondération entre la <strong>fréquence</strong> (nombre de congés par mois)
+                        et la <strong>durée</strong> moyenne, calculée sur la période filtrée.
+                        <span className="block mt-1.5">
+                          Plus le score est faible, plus l'employé est <strong>présent</strong>.
+                          Tiers&nbsp;: 0-30 bas, 30-60 moyen, 60-100 élevé.
                         </span>
                       </>
                     }
@@ -186,7 +185,7 @@ export function EmployeeTable({ rows }: Props) {
                   <Sparkline data={emp.monthlySparkline} />
                 </td>
                 <td className="px-4 py-3">
-                  <SignalBadges signals={emp.signals} />
+                  <LeaveScoreCell score={emp.leaveScore} />
                 </td>
                 <td className="px-4 py-3">
                   <BalanceCell balance={emp.leaveBalance} />
@@ -226,76 +225,31 @@ export function EmployeeTable({ rows }: Props) {
   );
 }
 
-// ─── SignalBadges ──────────────────────────────────────────────────────────
-function SignalBadges({ signals }: { signals: EmployeeRow['signals'] }) {
-  const badges: Array<{
-    key: string;
-    label: string;
-    bg: string;
-    fg: string;
-    tooltip: React.ReactNode;
-  }> = [];
+// ─── LeaveScoreCell ────────────────────────────────────────────────────────
+function LeaveScoreCell({ score }: { score: EmployeeRow['leaveScore'] }) {
+  // Tier colours:
+  //   low    → elegant green (#1F6E3A) — very present
+  //   medium → gold           (#D8B11B) — balanced
+  //   high   → orange         (#F59B42) — frequent + long absences
+  const color =
+    score.tier === 'low' ? '#1F6E3A' : score.tier === 'medium' ? '#D8B11B' : '#F59B42';
 
-  if (signals.noLeaveAlert) {
-    const months = Math.round(signals.monthsSinceLastApproved!);
-    badges.push({
-      key: 'noLeave',
-      label: `${months}mo`,
-      bg: 'rgba(245, 155, 66, 0.15)',
-      fg: '#A85F0E',
-      tooltip: (
-        <>
-          <strong className="block text-ink mb-1">Long no-leave streak</strong>
-          <span className="block">
-            No approved leave for <strong>{months} months</strong>. This is a well-being signal,
-            not a productivity badge — long periods without rest correlate with burnout risk.
-          </span>
-        </>
-      ),
-    });
-  }
-
-  if (signals.bradfordTier !== 'low') {
-    const isHigh = signals.bradfordTier === 'high';
-    badges.push({
-      key: 'bradford',
-      label: `B${signals.bradfordScore}`,
-      bg: isHigh ? 'rgba(201, 43, 18, 0.12)' : 'rgba(216, 177, 27, 0.18)',
-      fg: isHigh ? '#C92B12' : '#6E590D',
-      tooltip: (
-        <>
-          <strong className="block text-ink mb-1">
-            Bradford Factor · {signals.bradfordScore} ({signals.bradfordTier})
-          </strong>
-          <span className="block mb-1.5">
-            Formula: <code>spells² × days</code>. Penalises frequent short absences more than long single ones.
-          </span>
-          <span className="block">
-            Tiers: <strong>&lt;50</strong> low (silent), <strong>50–99</strong> medium,{' '}
-            <strong>≥100</strong> high. Frame this as an attention signal, not a discipline metric —
-            it can over-penalise chronic illness.
-          </span>
-        </>
-      ),
-    });
-  }
-
-  if (badges.length === 0) {
+  // Edge case: no leave at all over the window → "—"
+  if (score.freqPerMonth === 0 && score.avgDuration === 0) {
     return <span className="text-xs text-slate-ardoise/40">—</span>;
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-1.5">
-      {badges.map(b => (
-        <InfoTooltip key={b.key} content={b.tooltip} width={300}>
-          <span
-            className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider cursor-help"
-            style={{ backgroundColor: b.bg, color: b.fg }}
-          >
-            {b.label}
-          </span>
-        </InfoTooltip>
-      ))}
+    <div className="min-w-[80px]">
+      <div className="text-sm font-semibold tabular-nums" style={{ color }}>
+        {score.value}
+      </div>
+      <div className="mt-1 h-1.5 bg-cream-100 rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${score.value}%`, backgroundColor: color }}
+        />
+      </div>
     </div>
   );
 }

@@ -339,6 +339,12 @@ export async function GET(req: Request) {
     };
 
     // ── Zone 3: Employees ─────────────────────────────────────────────────────
+    // Default leave entitlement per employee per year (in days).
+    // Override via env var DEFAULT_LEAVE_ENTITLEMENT.
+    // Defaults to 25 — the statutory minimum in France & Monaco.
+    const ENTITLEMENT = Number(process.env.DEFAULT_LEAVE_ENTITLEMENT) || 25;
+    const startOfYear = new Date(now.getFullYear(), 0, 1);
+
     type EmpAcc = {
       userId?: string;
       userEmail?: string;
@@ -349,7 +355,11 @@ export async function GET(req: Request) {
       lastRequestDate?: string;
       firstRequestDate?: string;
       statusCounts: { approved: number; pending: number; denied: number; cancelled: number };
-      monthly: Record<string, number>; // YYYY-MM -> days
+      monthly: Record<string, number>; // YYYY-MM -> days (approved)
+      approvedSpells: number;          // distinct approved leaves
+      approvedTotalDays: number;        // sum of approved days
+      approvedDaysYTD: number;          // approved days with startDate ≥ Jan 1 current year
+      lastApprovedStartDate: string | null;
     };
 
     const perEmployee: Record<string, EmpAcc> = {};
@@ -373,6 +383,10 @@ export async function GET(req: Request) {
           firstRequestDate: created,
           statusCounts: { approved: 0, pending: 0, denied: 0, cancelled: 0 },
           monthly: {},
+          approvedSpells: 0,
+          approvedTotalDays: 0,
+          approvedDaysYTD: 0,
+          lastApprovedStartDate: null,
         };
       }
       const emp = perEmployee[key];
@@ -384,9 +398,22 @@ export async function GET(req: Request) {
       if (created < emp.firstRequestDate!) emp.firstRequestDate = created;
       if (created > emp.lastRequestDate!) emp.lastRequestDate = created;
 
-      // Sparkline data uses startDate (when leave is taken), 12 months back
+      // Approved-only metrics (used for sparkline, Bradford, days-to-zero, no-leave signal)
       if (r.startDate && s === 'approved') {
+        emp.approvedSpells += 1;
+        emp.approvedTotalDays += days;
+
         const sd = new Date(r.startDate);
+
+        if (sd >= startOfYear) {
+          emp.approvedDaysYTD += days;
+        }
+
+        if (!emp.lastApprovedStartDate || r.startDate > emp.lastApprovedStartDate) {
+          emp.lastApprovedStartDate = r.startDate;
+        }
+
+        // Sparkline data (12 months back)
         const monthKey = sd.toISOString().slice(0, 7);
         const cutoff = new Date(now.getFullYear(), now.getMonth() - 11, 1);
         if (sd >= cutoff) {
@@ -401,19 +428,66 @@ export async function GET(req: Request) {
       return d.toISOString().slice(0, 7);
     });
 
-    const employees = Object.values(perEmployee).map(e => ({
-      userId: e.userId,
-      userEmail: e.userEmail,
-      userName: e.userName,
-      company: e.company,
-      totalDays: +e.totalDays.toFixed(2),
-      count: e.count,
-      avg: e.count ? +(e.totalDays / e.count).toFixed(2) : 0,
-      lastRequestDate: e.lastRequestDate,
-      firstRequestDate: e.firstRequestDate,
-      statusCounts: e.statusCounts,
-      monthlySparkline: monthBuckets.map(m => ({ month: m, days: e.monthly[m] || 0 })),
-    })).sort((a, b) => b.totalDays - a.totalDays);
+    // Months elapsed since Jan 1 (used for pace / projection)
+    const monthsElapsed = Math.max(0.1, (now.getTime() - startOfYear.getTime()) / (1000 * 60 * 60 * 24 * 30.4375));
+
+    const employees = Object.values(perEmployee).map(e => {
+      // Bradford Factor: spells² × days (over the analytics window).
+      // Tiers: <50 low, 50-99 medium, ≥100 high.
+      const bradfordScore = e.approvedSpells * e.approvedSpells * Math.round(e.approvedTotalDays);
+      const bradfordTier: 'low' | 'medium' | 'high' =
+        bradfordScore >= 100 ? 'high' : bradfordScore >= 50 ? 'medium' : 'low';
+
+      // Months since last approved leave (used for the "no leave 6mo+" signal)
+      let monthsSinceLastApproved: number | null = null;
+      if (e.lastApprovedStartDate) {
+        const last = new Date(e.lastApprovedStartDate);
+        monthsSinceLastApproved =
+          (now.getTime() - last.getTime()) / (1000 * 60 * 60 * 24 * 30.4375);
+      }
+
+      // Days-to-zero projection using the default entitlement.
+      // pace = days used YTD / months elapsed → linear projection.
+      const usedYTD = +e.approvedDaysYTD.toFixed(1);
+      const remaining = Math.max(0, ENTITLEMENT - usedYTD);
+      const pace = usedYTD / monthsElapsed; // days per month
+      let projectedZeroDate: string | null = null;
+      if (pace > 0 && remaining > 0) {
+        const monthsToZero = remaining / pace;
+        const projected = new Date(now);
+        projected.setMonth(projected.getMonth() + Math.round(monthsToZero));
+        projectedZeroDate = projected.toISOString().slice(0, 10);
+      }
+
+      return {
+        userId: e.userId,
+        userEmail: e.userEmail,
+        userName: e.userName,
+        company: e.company,
+        totalDays: +e.totalDays.toFixed(2),
+        count: e.count,
+        avg: e.count ? +(e.totalDays / e.count).toFixed(2) : 0,
+        lastRequestDate: e.lastRequestDate,
+        firstRequestDate: e.firstRequestDate,
+        statusCounts: e.statusCounts,
+        monthlySparkline: monthBuckets.map(m => ({ month: m, days: e.monthly[m] || 0 })),
+        // Sprint 3: signals
+        signals: {
+          monthsSinceLastApproved:
+            monthsSinceLastApproved === null ? null : +monthsSinceLastApproved.toFixed(1),
+          noLeaveAlert: monthsSinceLastApproved !== null && monthsSinceLastApproved >= 6,
+          bradfordScore,
+          bradfordTier,
+        },
+        leaveBalance: {
+          entitlement: ENTITLEMENT,
+          usedYTD,
+          remaining: +remaining.toFixed(1),
+          projectedZeroDate,
+          overQuota: usedYTD > ENTITLEMENT,
+        },
+      };
+    }).sort((a, b) => b.totalDays - a.totalDays);
 
     // Filter options for the UI
     const availableCompanies = Array.from(new Set(allRows.map(r => r.company || '—'))).sort();

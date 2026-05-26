@@ -103,9 +103,14 @@ export function EmployeeTable({ rows }: Props) {
               {headerCell('company', 'Company')}
               {headerCell('totalDays', 'Days', 'right')}
               {headerCell('count', 'Requests', 'right')}
-              {headerCell('avg', 'Avg', 'right')}
               <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-ardoise">
                 12m
+              </th>
+              <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-ardoise">
+                Signals
+              </th>
+              <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-ardoise">
+                Balance
               </th>
               <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-ardoise">
                 Status
@@ -125,11 +130,14 @@ export function EmployeeTable({ rows }: Props) {
                   {emp.totalDays.toFixed(1)}
                 </td>
                 <td className="px-4 py-3 text-right text-sm text-slate-ardoise tabular-nums">{emp.count}</td>
-                <td className="px-4 py-3 text-right text-sm text-slate-ardoise tabular-nums">
-                  {emp.avg.toFixed(1)}
-                </td>
                 <td className="px-4 py-3">
                   <Sparkline data={emp.monthlySparkline} />
+                </td>
+                <td className="px-4 py-3">
+                  <SignalBadges signals={emp.signals} />
+                </td>
+                <td className="px-4 py-3">
+                  <BalanceCell balance={emp.leaveBalance} />
                 </td>
                 <td className="px-4 py-3">
                   <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wider">
@@ -154,13 +162,100 @@ export function EmployeeTable({ rows }: Props) {
             ))}
             {filteredSorted.length === 0 && (
               <tr>
-                <td colSpan={8} className="px-4 py-12 text-center text-sm text-slate-ardoise/70">
+                <td colSpan={9} className="px-4 py-12 text-center text-sm text-slate-ardoise/70">
                   No employees match the current filters.
                 </td>
               </tr>
             )}
           </tbody>
         </table>
+      </div>
+    </div>
+  );
+}
+
+// ─── SignalBadges ──────────────────────────────────────────────────────────
+function SignalBadges({ signals }: { signals: EmployeeRow['signals'] }) {
+  const badges: Array<{ key: string; label: string; tooltip: string; bg: string; fg: string }> = [];
+
+  if (signals.noLeaveAlert) {
+    const months = Math.round(signals.monthsSinceLastApproved!);
+    badges.push({
+      key: 'noLeave',
+      label: `${months}mo`,
+      tooltip: `No approved leave in ${months} months — well-being signal`,
+      bg: 'rgba(245, 155, 66, 0.15)',
+      fg: '#A85F0E',
+    });
+  }
+
+  if (signals.bradfordTier !== 'low') {
+    const isHigh = signals.bradfordTier === 'high';
+    badges.push({
+      key: 'bradford',
+      label: `B${signals.bradfordScore}`,
+      tooltip: `Bradford ${signals.bradfordScore} (${signals.bradfordTier}) — frequency × duration of absence`,
+      bg: isHigh ? 'rgba(201, 43, 18, 0.12)' : 'rgba(216, 177, 27, 0.18)',
+      fg: isHigh ? '#C92B12' : '#6E590D',
+    });
+  }
+
+  if (badges.length === 0) {
+    return <span className="text-xs text-slate-ardoise/40">—</span>;
+  }
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {badges.map(b => (
+        <span
+          key={b.key}
+          title={b.tooltip}
+          className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider"
+          style={{ backgroundColor: b.bg, color: b.fg }}
+        >
+          {b.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+// ─── BalanceCell ───────────────────────────────────────────────────────────
+function BalanceCell({ balance }: { balance: EmployeeRow['leaveBalance'] }) {
+  const pct = balance.entitlement > 0 ? Math.min(150, (balance.usedYTD / balance.entitlement) * 100) : 0;
+  const isOver = balance.overQuota;
+  const willHitZeroSoon =
+    balance.projectedZeroDate &&
+    new Date(balance.projectedZeroDate).getFullYear() === new Date().getFullYear();
+
+  // Bar color: green calm → gold tight → red over
+  const barColor = isOver
+    ? '#C92B12'
+    : pct >= 80
+      ? '#D8B11B'
+      : '#1F6E3A';
+
+  return (
+    <div className="min-w-[120px]">
+      <div className="flex items-baseline justify-between gap-2">
+        <span className="text-xs font-semibold tabular-nums" style={{ color: barColor }}>
+          {balance.usedYTD.toFixed(1)} / {balance.entitlement}
+        </span>
+        {isOver ? (
+          <span className="text-[10px] uppercase tracking-wider" style={{ color: '#C92B12' }}>
+            over
+          </span>
+        ) : willHitZeroSoon ? (
+          <span className="text-[10px] uppercase tracking-wider text-slate-ardoise/80">
+            ~{new Date(balance.projectedZeroDate!).toLocaleDateString('en-US', { month: 'short' })}
+          </span>
+        ) : null}
+      </div>
+      <div className="mt-1 h-1.5 bg-cream-100 rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full"
+          style={{ width: `${Math.min(100, pct)}%`, backgroundColor: barColor }}
+        />
       </div>
     </div>
   );

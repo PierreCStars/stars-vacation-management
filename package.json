@@ -4,7 +4,6 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "postinstall": "prisma generate",
     "dev": "node scripts/startup-log.cjs && next dev -p 3000",
     "dev:ready": "concurrently -k -r \"npm run dev\" \"npm run wait:health\"",
     "wait:health": "node scripts/wait-on-http.mjs",

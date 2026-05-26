@@ -13,6 +13,7 @@ export const CANONICAL_STATUS = {
   APPROVED: 'Approved',
   PENDING: 'Pending',
   DENIED: 'Denied',
+  CANCELLED: 'Cancelled',
 } as const;
 
 /**
@@ -29,29 +30,34 @@ export const CANONICAL_TYPE = {
  * Normalize vacation status to canonical value
  * 
  * @param input - Status value to normalize
- * @returns Canonical status value (Approved, Pending, or Denied)
+ * @returns Canonical status value (Approved, Pending, Denied, or Cancelled)
  */
 export function normalizeVacationStatus(input: unknown): string {
   if (!input) return CANONICAL_STATUS.PENDING;
-  
+
   const s = String(input).trim();
   const lower = s.toLowerCase();
-  
+
   // Normalize to "Approved"
   if (lower === 'approved' || lower === 'approve' || lower === 'ok' || lower === 'accepted' || lower === 'validated') {
     return CANONICAL_STATUS.APPROVED;
   }
-  
+
   // Normalize to "Denied"
   if (lower === 'denied' || lower === 'reject' || lower === 'rejected' || lower === 'declined') {
     return CANONICAL_STATUS.DENIED;
   }
-  
+
+  // Normalize to "Cancelled"
+  if (lower === 'cancelled' || lower === 'canceled' || lower === 'cancel' || lower === 'withdrawn') {
+    return CANONICAL_STATUS.CANCELLED;
+  }
+
   // Normalize to "Pending"
   if (lower === 'pending' || lower === 'waiting' || lower === 'submitted') {
     return CANONICAL_STATUS.PENDING;
   }
-  
+
   // Default to Pending for unknown values
   return CANONICAL_STATUS.PENDING;
 }

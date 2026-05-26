@@ -24,16 +24,21 @@ export function AnalyticsKpi({ label, value, hint, trend, accent = 'ink' }: Prop
     <div className="card !p-5 flex flex-col gap-2">
       <div className="flex items-start justify-between">
         <p className="eyebrow">{label}</p>
-        {trend && trend.pct !== null && (
-          <span
-            className="text-xs font-semibold tracking-wider"
-            style={{ color: trend.pct >= 0 ? '#1F6E3A' : '#C92B12' }}
-            aria-label={`${trend.pct >= 0 ? 'up' : 'down'} ${Math.abs(trend.pct)} percent`}
-          >
-            {trend.pct >= 0 ? '▲' : '▼'} {Math.abs(trend.pct)}%
-            {trend.label ? <span className="ml-1 text-slate-ardoise/70">{trend.label}</span> : null}
-          </span>
-        )}
+        {trend && trend.pct !== null && (() => {
+          const direction = trend.pct > 0 ? 'up' : trend.pct < 0 ? 'down' : 'flat';
+          const color = direction === 'up' ? '#1F6E3A' : direction === 'down' ? '#C92B12' : '#7F94A9';
+          const glyph = direction === 'up' ? '▲' : direction === 'down' ? '▼' : '◆';
+          return (
+            <span
+              className="text-xs font-semibold tracking-wider"
+              style={{ color }}
+              aria-label={`${direction} ${Math.abs(trend.pct)} percent`}
+            >
+              {glyph} {Math.abs(trend.pct)}%
+              {trend.label ? <span className="ml-1 text-slate-ardoise/70">{trend.label}</span> : null}
+            </span>
+          );
+        })()}
       </div>
       <div className="text-3xl font-light tracking-tight" style={{ color: accentColor }}>
         {value}

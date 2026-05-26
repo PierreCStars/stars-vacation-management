@@ -7,7 +7,7 @@ import { SeasonalityChart } from './_components/SeasonalityChart';
 import { CompanyBreakdown } from './_components/CompanyBreakdown';
 import { EmployeeTable } from './_components/EmployeeTable';
 import { AnalyticsFilters, FilterState } from './_components/AnalyticsFilters';
-import { AnalyticsPayload, AnalyticsStatus } from './_components/types';
+import { AnalyticsPayload } from './_components/types';
 
 function rangeToDates(range: FilterState['range']): { from?: string; to?: string } {
   const now = new Date();

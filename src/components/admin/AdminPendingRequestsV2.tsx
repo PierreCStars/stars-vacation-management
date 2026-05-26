@@ -492,13 +492,15 @@ export default function AdminPendingRequestsV2() {
                             googleEventId: undefined
                           }));
                         
-                        console.log('[CALENDAR DEBUG] Final data passed to UnifiedVacationCalendar:', {
-                          count: filteredAndMapped.length,
-                          sample: filteredAndMapped[0]
-                        });
-                        
+                        if (process.env.NEXT_PUBLIC_DEBUG_CALENDAR === '1') {
+                          console.log('[CALENDAR DEBUG] Final data passed to UnifiedVacationCalendar:', {
+                            count: filteredAndMapped.length,
+                            sample: filteredAndMapped[0]
+                          });
+                        }
+
                         return (
-                          <UnifiedVacationCalendar 
+                          <UnifiedVacationCalendar
                             vacationRequests={filteredAndMapped}
                             className="w-full"
                             showLegend={true}
@@ -1114,11 +1116,7 @@ function ReviewedRequestsTable({
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
-                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                    request.status === 'approved' 
-                      ? 'bg-green-100 text-green-800'
-                      : 'bg-red-100 text-red-800'
-                  }`}>
+                  <span className={`badge badge-${(request.status || '').toLowerCase()}`}>
                     {request.status}
                   </span>
                 </td>
@@ -1214,11 +1212,7 @@ function ReviewedRequestsTable({
             
             <div className="mb-3">
               <div className="text-sm font-medium text-gray-500">Status</div>
-              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                request.status === 'approved' 
-                  ? 'bg-green-100 text-green-800'
-                  : 'bg-red-100 text-red-800'
-              }`}>
+              <span className={`badge badge-${(request.status || '').toLowerCase()}`}>
                 {request.status}
               </span>
             </div>

@@ -367,51 +367,17 @@ export async function GET(req: Request) {
       monthlySparkline: monthBuckets.map(m => ({ month: m, days: e.monthly[m] || 0 })),
     })).sort((a, b) => b.totalDays - a.totalDays);
 
-    // ── Legacy aggregations (kept for CSV / back-compat) ──────────────────────
-    const legacyPool = statusFilter === 'all' ? filteredAll : filteredAll.filter(matchStatus);
-
-    const byTypeCount: Record<string, number> = {};
-    const byCompanyTypeCountLegacy: Record<string, Record<string, number>> = {};
-    const byCompanyTypeDaysLegacy: Record<string, Record<string, number>> = {};
-    const byReasonCount: Record<string, number> = {};
-    const byStatusCount: Record<string, number> = {};
-    const monthlyDataLegacy: Record<string, { requests: number; days: number }> = {};
-
-    legacyPool.forEach(r => {
-      const days = resolveDuration(r);
-      const cmp = r.company || '—';
-      const typ = normalizeVacationType(r.type || (r.isHalfDay ? 'Half day' : 'Full day'));
-      const created = toIsoDate(r.createdAt) || new Date().toISOString();
-
-      byTypeCount[typ] = (byTypeCount[typ] || 0) + 1;
-      if (!byCompanyTypeCountLegacy[cmp]) byCompanyTypeCountLegacy[cmp] = {};
-      byCompanyTypeCountLegacy[cmp][typ] = (byCompanyTypeCountLegacy[cmp][typ] || 0) + 1;
-      if (!byCompanyTypeDaysLegacy[cmp]) byCompanyTypeDaysLegacy[cmp] = {};
-      byCompanyTypeDaysLegacy[cmp][typ] = (byCompanyTypeDaysLegacy[cmp][typ] || 0) + days;
-      const reason = r.reason || 'No reason provided';
-      byReasonCount[reason] = (byReasonCount[reason] || 0) + 1;
-      const sn = statusOf(r) || 'unknown';
-      byStatusCount[sn] = (byStatusCount[sn] || 0) + 1;
-      const mk = new Date(created).toISOString().slice(0, 7);
-      if (!monthlyDataLegacy[mk]) monthlyDataLegacy[mk] = { requests: 0, days: 0 };
-      monthlyDataLegacy[mk].requests += 1;
-      monthlyDataLegacy[mk].days += days;
-    });
-
-    const types = Object.keys(byTypeCount).sort();
-    const companies = Object.keys(byCompanyTypeCountLegacy).sort();
-    const reasons = Object.keys(byReasonCount).sort();
-    const statuses = Object.keys(byStatusCount).sort();
-    const months = Object.keys(monthlyDataLegacy).sort();
-
     // Filter options for the UI
     const availableCompanies = Array.from(new Set(allRows.map(r => r.company || '—'))).sort();
     const availableTypes = Array.from(new Set(allRows.map(r => normalizeVacationType(r.type || '')))).filter(Boolean).sort();
 
+    // The current "view" — what the user has filtered to by status
+    const inViewCount = statusFilter === 'all' ? filteredAll.length : filteredAll.filter(matchStatus).length;
+
     return NextResponse.json({
       meta: {
         statusFilter,
-        totalRequests: legacyPool.length,
+        totalRequests: inViewCount,
         totalAllRequests: allRows.length,
         generatedAt: new Date().toISOString(),
         filterRange: { from: filterFrom.toISOString().slice(0, 10), to: filterTo.toISOString().slice(0, 10) },
@@ -421,14 +387,13 @@ export async function GET(req: Request) {
         } : undefined,
       },
 
-      // ── New: filter options ──
       filterOptions: {
         companies: availableCompanies,
         types: availableTypes,
         statuses: ['approved', 'pending', 'denied', 'cancelled', 'all'],
       },
 
-      // ── New zone 1: now ──
+      // Zone 1 — Now (operational)
       now: {
         currentlyAway: { count: currentlyAwayList.length, list: currentlyAwayList },
         returningThisWeek: { count: returningThisWeekList.length, list: returningThisWeekList },
@@ -444,28 +409,15 @@ export async function GET(req: Request) {
         },
       },
 
-      // ── New: coverage timeline ──
       coverageTimeline,
 
-      // ── New zone 2: patterns ──
+      // Zone 2 — Patterns
       seasonality,
       companyTypeBreakdown,
       approvalPerf,
 
-      // ── New zone 3: employees (with sparklines + status counts) ──
+      // Zone 3 — Employees
       employees,
-
-      // ── Legacy fields (CSV compat) ──
-      freqByType: types.map(t => ({ type: t, count: byTypeCount[t] })),
-      freqByCompanyStack: companies.map(c => ({ company: c, ...(byCompanyTypeCountLegacy[c]) })),
-      daysByCompanyStack: companies.map(c => ({ company: c, ...(byCompanyTypeDaysLegacy[c]) })),
-      freqByReason: reasons.map(r => ({ reason: r, count: byReasonCount[r] })),
-      freqByStatus: statuses.map(s => ({ status: s, count: byStatusCount[s] })),
-      monthlyTrends: months.map(m => ({ month: m, requests: monthlyDataLegacy[m].requests, days: monthlyDataLegacy[m].days })),
-      typeKeys: types,
-      companyKeys: companies,
-      reasonKeys: reasons,
-      statusKeys: statuses,
     });
 
   } catch (error) {

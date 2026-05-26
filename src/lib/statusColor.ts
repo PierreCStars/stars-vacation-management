@@ -31,10 +31,14 @@ export function getStatusColor(status: string, hasConflict: boolean = false): st
       return VACATION_STATUS_COLOR.PENDING;
     case 'denied':
     case 'rejected':
-      // Rejected should not appear in calendars, but if it does, use gray
-      return '#9ca3af';
+      // Denied — soft grey (should not normally appear in calendars)
+      return '#9CA3AF';
+    case 'cancelled':
+    case 'canceled':
+      // Cancelled — neutral darker grey, distinct from denied
+      return '#4A4A4A';
     default:
-      return '#6b7280'; // gray
+      return '#6B7280';
   }
 }
 

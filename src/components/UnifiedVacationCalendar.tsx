@@ -156,11 +156,11 @@ export default function UnifiedVacationCalendar({
       const dayOfWeek = date.getDay();
       const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;
       
-      // Find vacations for this date (exclude rejected)
+      // Find vacations for this date (exclude rejected and cancelled)
       // Note: Vacation requests use inclusive end dates (stored in Firestore)
       const dayVacations = vacationRequests.filter(request => {
-        const isRejected = (request.status || '').toLowerCase() === 'rejected' || (request.status || '').toLowerCase() === 'denied';
-        if (isRejected) return false;
+        const status = (request.status || '').toLowerCase();
+        if (status === 'rejected' || status === 'denied' || status === 'cancelled' || status === 'canceled') return false;
         
         try {
           // Use safe local date parsing to prevent timezone issues

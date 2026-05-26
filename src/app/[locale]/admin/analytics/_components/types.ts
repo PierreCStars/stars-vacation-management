@@ -78,6 +78,12 @@ export type AnalyticsPayload = {
     deniedPct: number;
     avgApprovalHours: number | null;
   };
+  dayOfWeekHeatmap: {
+    from: string;
+    to: string;
+    maxCellValue: number;
+    weeks: Array<{ weekStart: string; days: number[] }>; // days[0..6] = Mon..Sun person-days
+  };
   employees: EmployeeRow[];
 };
 

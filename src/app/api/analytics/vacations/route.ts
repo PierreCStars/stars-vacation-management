@@ -265,6 +265,54 @@ export async function GET(req: Request) {
       types,
     })).sort((a, b) => b.totalDays - a.totalDays);
 
+    // Day-of-week heatmap: 7 rows (Mon..Sun) × N weeks across the filter range.
+    // Each cell = person-days of approved leave on that specific date.
+    // Useful to surface "Monday spikes" / "everyone takes Fridays" patterns.
+    const perDateCount: Map<string, number> = new Map();
+    inRange.forEach(r => {
+      if (!r.startDate || !r.endDate) return;
+      const start = new Date(r.startDate);
+      const end = new Date(r.endDate);
+      const cursor = new Date(Math.max(start.getTime(), filterFrom.getTime()));
+      const stop = new Date(Math.min(end.getTime(), filterTo.getTime()));
+      while (cursor <= stop) {
+        const dateKey = cursor.toISOString().slice(0, 10);
+        perDateCount.set(dateKey, (perDateCount.get(dateKey) || 0) + 1);
+        cursor.setDate(cursor.getDate() + 1);
+      }
+    });
+
+    // Walk every Monday in the filter range to build week buckets
+    const heatmapWeeks: Array<{ weekStart: string; days: number[] }> = [];
+    const heatmapStart = new Date(filterFrom);
+    // Rewind to Monday of that week
+    const dayOffset = (heatmapStart.getDay() + 6) % 7; // Mon=0, Sun=6
+    heatmapStart.setDate(heatmapStart.getDate() - dayOffset);
+    const heatmapCursor = new Date(heatmapStart);
+    while (heatmapCursor <= filterTo) {
+      const weekStart = heatmapCursor.toISOString().slice(0, 10);
+      const days: number[] = [];
+      for (let i = 0; i < 7; i++) {
+        const d = new Date(heatmapCursor);
+        d.setDate(d.getDate() + i);
+        const dateKey = d.toISOString().slice(0, 10);
+        days.push(perDateCount.get(dateKey) || 0);
+      }
+      heatmapWeeks.push({ weekStart, days });
+      heatmapCursor.setDate(heatmapCursor.getDate() + 7);
+    }
+
+    // Pre-compute the max across all cells so the client doesn't have to
+    let heatmapMax = 0;
+    heatmapWeeks.forEach(w => w.days.forEach(d => { if (d > heatmapMax) heatmapMax = d; }));
+
+    const dayOfWeekHeatmap = {
+      from: filterFrom.toISOString().slice(0, 10),
+      to: filterTo.toISOString().slice(0, 10),
+      maxCellValue: heatmapMax,
+      weeks: heatmapWeeks,
+    };
+
     // Approval performance: among reviewed requests (approved + denied)
     const reviewed = filteredAll.filter(r => {
       const s = statusOf(r);
@@ -415,6 +463,7 @@ export async function GET(req: Request) {
       seasonality,
       companyTypeBreakdown,
       approvalPerf,
+      dayOfWeekHeatmap,
 
       // Zone 3 — Employees
       employees,

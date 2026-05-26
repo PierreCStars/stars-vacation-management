@@ -6,6 +6,7 @@ import { CoverageTimeline } from './_components/CoverageTimeline';
 import { CoverageDensityTracker } from './_components/CoverageDensityTracker';
 import { SeasonalityChart } from './_components/SeasonalityChart';
 import { CompanyBreakdown } from './_components/CompanyBreakdown';
+import { DayOfWeekHeatmap } from './_components/DayOfWeekHeatmap';
 import { EmployeeTable } from './_components/EmployeeTable';
 import { AnalyticsFilters, FilterState } from './_components/AnalyticsFilters';
 import { AnalyticsPayload } from './_components/types';
@@ -267,6 +268,28 @@ export default function AnalyticsPage() {
             </div>
           </div>
           <CompanyBreakdown data={data.companyTypeBreakdown} metric={metric} />
+        </div>
+
+        {/* Day-of-week heatmap */}
+        <div className="card mt-6">
+          <div className="flex items-baseline justify-between mb-5">
+            <div>
+              <h2 className="!text-lg !font-semibold">Day-of-week rhythm</h2>
+              <p className="text-xs text-slate-ardoise/80 mt-1">
+                Each cell = person-days of approved leave on that specific date. Surfaces patterns
+                like Monday spikes (sick proxy) or popular Fridays.
+              </p>
+            </div>
+            <span className="text-[10px] uppercase tracking-widest text-slate-ardoise/70">
+              {data.dayOfWeekHeatmap.from} → {data.dayOfWeekHeatmap.to}
+            </span>
+          </div>
+          <DayOfWeekHeatmap
+            from={data.dayOfWeekHeatmap.from}
+            to={data.dayOfWeekHeatmap.to}
+            maxCellValue={data.dayOfWeekHeatmap.maxCellValue}
+            weeks={data.dayOfWeekHeatmap.weeks}
+          />
         </div>
       </section>
 

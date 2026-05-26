@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { AnalyticsKpi } from './_components/AnalyticsKpi';
 import { CoverageTimeline } from './_components/CoverageTimeline';
+import { CoverageDensityTracker } from './_components/CoverageDensityTracker';
 import { SeasonalityChart } from './_components/SeasonalityChart';
 import { CompanyBreakdown } from './_components/CompanyBreakdown';
 import { EmployeeTable } from './_components/EmployeeTable';
@@ -152,22 +153,33 @@ export default function AnalyticsPage() {
         </div>
 
         {/* Coverage timeline */}
-        <div className="card mt-6">
-          <div className="flex items-baseline justify-between mb-5">
+        <div className="card mt-6 space-y-6">
+          <div className="flex items-baseline justify-between">
             <div>
               <h2 className="!text-lg !font-semibold">Coverage — next 60 days</h2>
-              <p className="text-xs text-slate-ardoise/80 mt-1">Approved (solid) and pending (dashed) leave per employee.</p>
+              <p className="text-xs text-slate-ardoise/80 mt-1">
+                Density strip + per-employee timeline. Approved (solid) and pending (dashed).
+              </p>
             </div>
             <span className="text-[10px] uppercase tracking-widest text-slate-ardoise/70">
               {data.coverageTimeline.from} → {data.coverageTimeline.to}
             </span>
           </div>
-          <CoverageTimeline
+          <CoverageDensityTracker
             from={data.coverageTimeline.from}
             to={data.coverageTimeline.to}
             employees={data.coverageTimeline.employees}
+            totalHeadcount={data.employees.length}
             companyFilter={filters.companies.length ? filters.companies : null}
           />
+          <div className="border-t border-black/5 pt-4">
+            <CoverageTimeline
+              from={data.coverageTimeline.from}
+              to={data.coverageTimeline.to}
+              employees={data.coverageTimeline.employees}
+              companyFilter={filters.companies.length ? filters.companies : null}
+            />
+          </div>
         </div>
       </section>
 

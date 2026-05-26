@@ -10,6 +10,7 @@ import { DayOfWeekHeatmap } from './_components/DayOfWeekHeatmap';
 import { EmployeeTable } from './_components/EmployeeTable';
 import { AnalyticsFilters, FilterState } from './_components/AnalyticsFilters';
 import { AnalyticsPayload } from './_components/types';
+import { InfoTooltip } from '@/components/ui/InfoTooltip';
 
 function rangeToDates(range: FilterState['range']): { from?: string; to?: string } {
   const now = new Date();
@@ -128,6 +129,14 @@ export default function AnalyticsPage() {
             hint={data.now.currentlyAway.list.length > 0
               ? data.now.currentlyAway.list.slice(0, 3).map(p => p.userName).join(' · ') + (data.now.currentlyAway.list.length > 3 ? ` +${data.now.currentlyAway.list.length - 3}` : '')
               : 'Nobody is away today.'}
+            info={
+              <>
+                <strong className="block text-ink mb-1">Currently away</strong>
+                People whose approved leave covers <em>today</em>:
+                <code className="block mt-1.5 text-[11px] text-slate-ardoise/80">startDate ≤ today ≤ endDate</code>
+                Hover the card hint to see the first names. Pending leaves are excluded.
+              </>
+            }
           />
           <AnalyticsKpi
             label="Returning this week"
@@ -135,6 +144,13 @@ export default function AnalyticsPage() {
             hint={data.now.returningThisWeek.list.length > 0
               ? data.now.returningThisWeek.list.slice(0, 3).map(p => p.userName).join(' · ')
               : 'No returns this week.'}
+            info={
+              <>
+                <strong className="block text-ink mb-1">Returning this week</strong>
+                Approved leaves whose <em>endDate</em> falls between Monday and Sunday of the
+                current week. Useful to anticipate next week's headcount bump.
+              </>
+            }
           />
           <AnalyticsKpi
             label="Pending approvals"
@@ -143,6 +159,14 @@ export default function AnalyticsPage() {
             hint={data.now.pendingApprovals.count > 0
               ? `Oldest: ${data.now.pendingApprovals.oldestAgeDays}d`
               : 'All caught up.'}
+            info={
+              <>
+                <strong className="block text-ink mb-1">Pending approvals</strong>
+                Requests still in <em>pending</em> status. The hint shows the age of the
+                <strong> oldest</strong> pending in days. The card turns red when the oldest is
+                ≥ 7 days, orange when there's any pending, neutral when empty.
+              </>
+            }
           />
           <AnalyticsKpi
             label="Days approved YTD"
@@ -150,6 +174,16 @@ export default function AnalyticsPage() {
             accent="success"
             trend={{ pct: data.now.daysApprovedYTD.deltaPct, label: 'vs prev year' }}
             hint={`Previous YTD: ${data.now.daysApprovedYTD.prevYearTotal.toFixed(1)} days`}
+            info={
+              <>
+                <strong className="block text-ink mb-1">Days approved YTD</strong>
+                Sum of approved leave days with <em>startDate</em> in the current year so far.
+                <span className="block mt-1.5">
+                  The trend arrow compares to the <strong>same period last year</strong>
+                  (Jan 1 → today's date in the previous year), not the full previous year.
+                </span>
+              </>
+            }
           />
         </div>
 
@@ -157,7 +191,26 @@ export default function AnalyticsPage() {
         <div className="card mt-6 space-y-6">
           <div className="flex items-baseline justify-between">
             <div>
-              <h2 className="!text-lg !font-semibold">Coverage — next 60 days</h2>
+              <h2 className="!text-lg !font-semibold inline-flex items-center gap-2">
+                Coverage — next 60 days
+                <InfoTooltip
+                  content={
+                    <>
+                      <strong className="block text-ink mb-1">Coverage block</strong>
+                      Two views of the same window:
+                      <span className="block mt-1.5">
+                        <strong>Density strip</strong> — one cell per day, colour = share of the team
+                        present. Reveals the days where coverage is tight at a glance.
+                      </span>
+                      <span className="block mt-1.5">
+                        <strong>Per-employee timeline</strong> — every person's leaves laid out on the
+                        same 60-day timeline, grouped by company. Approved leaves render solid;
+                        pending leaves are dashed and orange.
+                      </span>
+                    </>
+                  }
+                />
+              </h2>
               <p className="text-xs text-slate-ardoise/80 mt-1">
                 Density strip + per-employee timeline. Approved (solid) and pending (dashed).
               </p>
@@ -195,7 +248,19 @@ export default function AnalyticsPage() {
           {/* Seasonality */}
           <div className="card lg:col-span-2">
             <div className="flex items-baseline justify-between mb-3">
-              <h2 className="!text-lg !font-semibold">Seasonality</h2>
+              <h2 className="!text-lg !font-semibold inline-flex items-center gap-2">
+                Seasonality
+                <InfoTooltip
+                  content={
+                    <>
+                      <strong className="block text-ink mb-1">Seasonality</strong>
+                      Approved leave days bucketed by <em>start date</em> per month (not by request
+                      creation date). The dashed slate line overlays the same metric for the
+                      previous year for direct year-over-year comparison.
+                    </>
+                  }
+                />
+              </h2>
               <span className="text-xs text-slate-ardoise/80">By start date · approved only</span>
             </div>
             <SeasonalityChart
@@ -206,7 +271,26 @@ export default function AnalyticsPage() {
 
           {/* Approval performance */}
           <div className="card flex flex-col">
-            <h2 className="!text-lg !font-semibold mb-4">Approval rhythm</h2>
+            <h2 className="!text-lg !font-semibold mb-4 inline-flex items-center gap-2">
+              Approval rhythm
+              <InfoTooltip
+                content={
+                  <>
+                    <strong className="block text-ink mb-1">Approval rhythm</strong>
+                    Computed across requests in <em>reviewed</em> states (approved + denied) in the
+                    current filter view.
+                    <span className="block mt-1.5">
+                      <strong>% approved / denied</strong> is the share of each outcome.
+                    </span>
+                    <span className="block mt-1.5">
+                      <strong>Avg review time</strong> = mean delay between request creation and
+                      admin decision, across all reviewed requests. Displayed in hours under 48h,
+                      then days.
+                    </span>
+                  </>
+                }
+              />
+            </h2>
             <div className="space-y-5 flex-1">
               <div>
                 <div className="flex items-baseline justify-between">
@@ -247,7 +331,23 @@ export default function AnalyticsPage() {
         <div className="card mt-6">
           <div className="flex items-baseline justify-between mb-5">
             <div>
-              <h2 className="!text-lg !font-semibold">By company & leave type</h2>
+              <h2 className="!text-lg !font-semibold inline-flex items-center gap-2">
+                By company & leave type
+                <InfoTooltip
+                  content={
+                    <>
+                      <strong className="block text-ink mb-1">By company & leave type</strong>
+                      One horizontal bar per subsidiary, sized by the total selected metric.
+                      Segments show the leave-type breakdown within each company.
+                      <span className="block mt-1.5">
+                        Toggle <strong>Days</strong> ↔ <strong>Requests</strong> with the chips on
+                        the right. Days reflect volume (long leaves matter); Requests reflect
+                        frequency (many short ones matter).
+                      </span>
+                    </>
+                  }
+                />
+              </h2>
               <p className="text-xs text-slate-ardoise/80 mt-1">Horizontal bars sized by total — segments by leave type.</p>
             </div>
             <div className="inline-flex bg-cream-100 rounded-lg p-1 text-xs">
@@ -274,7 +374,24 @@ export default function AnalyticsPage() {
         <div className="card mt-6">
           <div className="flex items-baseline justify-between mb-5">
             <div>
-              <h2 className="!text-lg !font-semibold">Day-of-week rhythm</h2>
+              <h2 className="!text-lg !font-semibold inline-flex items-center gap-2">
+                Day-of-week rhythm
+                <InfoTooltip
+                  content={
+                    <>
+                      <strong className="block text-ink mb-1">Day-of-week rhythm</strong>
+                      A 7-row × N-week grid covering the filter range. Each cell counts the
+                      <strong> person-days of approved leave</strong> on that specific date —
+                      one person away for 3 days adds +1 to each of those 3 cells.
+                      <span className="block mt-1.5">
+                        Look for patterns: Monday spikes (sick-leave proxy), Friday clusters
+                        (long weekends), summer concentration. The totals row below sums each
+                        weekday across the whole range.
+                      </span>
+                    </>
+                  }
+                />
+              </h2>
               <p className="text-xs text-slate-ardoise/80 mt-1">
                 Each cell = person-days of approved leave on that specific date. Surfaces patterns
                 like Monday spikes (sick proxy) or popular Fridays.

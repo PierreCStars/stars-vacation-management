@@ -3,6 +3,7 @@
 import { useMemo, useState } from 'react';
 import { EmployeeRow } from './types';
 import { Sparkline } from './Sparkline';
+import { InfoTooltip } from '@/components/ui/InfoTooltip';
 
 type SortKey = 'userName' | 'company' | 'totalDays' | 'count' | 'avg' | 'lastRequestDate';
 
@@ -107,13 +108,64 @@ export function EmployeeTable({ rows }: Props) {
                 12m
               </th>
               <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-ardoise">
-                Signals
+                <span className="inline-flex items-center gap-1">
+                  Signals
+                  <InfoTooltip
+                    content={
+                      <>
+                        <strong className="block text-ink mb-1">Anomaly signals</strong>
+                        <span className="block mb-1.5">
+                          <strong style={{ color: '#A85F0E' }}>Xmo</strong> — no approved leave in X months (X ≥ 6). Burnout / well-being signal.
+                        </span>
+                        <span className="block">
+                          <strong style={{ color: '#C92B12' }}>B&lt;score&gt;</strong> — Bradford Factor = (spells² × days). Captures
+                          frequency × duration of absence. Tiers: medium 50-99, high ≥100. Use as alert, not as judgment.
+                        </span>
+                      </>
+                    }
+                  />
+                </span>
               </th>
               <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-ardoise">
-                Balance
+                <span className="inline-flex items-center gap-1">
+                  Balance
+                  <InfoTooltip
+                    content={
+                      <>
+                        <strong className="block text-ink mb-1">Leave balance</strong>
+                        <span className="block mb-1.5">
+                          Days approved YTD vs the default entitlement (25 d/yr — FR/Monaco statutory).
+                          Override with the <code>DEFAULT_LEAVE_ENTITLEMENT</code> env var.
+                        </span>
+                        <span className="block">
+                          The <strong>~Mon</strong> hint = projected month the employee hits zero, based on
+                          current pace (usedYTD / months elapsed).
+                        </span>
+                      </>
+                    }
+                  />
+                </span>
               </th>
               <th className="px-4 py-3 text-left text-[10px] font-semibold uppercase tracking-[0.15em] text-slate-ardoise">
-                Status
+                <span className="inline-flex items-center gap-1">
+                  Status
+                  <InfoTooltip
+                    content={
+                      <>
+                        <span className="block">Dots count requests in each status for the current filter:</span>
+                        <span className="block mt-1.5">
+                          <span style={{ color: '#1F6E3A' }}>●</span> approved
+                          {' · '}
+                          <span style={{ color: '#F59B42' }}>●</span> pending
+                          {' · '}
+                          <span style={{ color: '#C92B12' }}>●</span> denied
+                          {' · '}
+                          <span style={{ color: '#4A4A4A' }}>●</span> cancelled
+                        </span>
+                      </>
+                    }
+                  />
+                </span>
               </th>
               {headerCell('lastRequestDate', 'Last', 'left')}
             </tr>
@@ -176,16 +228,30 @@ export function EmployeeTable({ rows }: Props) {
 
 // ─── SignalBadges ──────────────────────────────────────────────────────────
 function SignalBadges({ signals }: { signals: EmployeeRow['signals'] }) {
-  const badges: Array<{ key: string; label: string; tooltip: string; bg: string; fg: string }> = [];
+  const badges: Array<{
+    key: string;
+    label: string;
+    bg: string;
+    fg: string;
+    tooltip: React.ReactNode;
+  }> = [];
 
   if (signals.noLeaveAlert) {
     const months = Math.round(signals.monthsSinceLastApproved!);
     badges.push({
       key: 'noLeave',
       label: `${months}mo`,
-      tooltip: `No approved leave in ${months} months — well-being signal`,
       bg: 'rgba(245, 155, 66, 0.15)',
       fg: '#A85F0E',
+      tooltip: (
+        <>
+          <strong className="block text-ink mb-1">Long no-leave streak</strong>
+          <span className="block">
+            No approved leave for <strong>{months} months</strong>. This is a well-being signal,
+            not a productivity badge — long periods without rest correlate with burnout risk.
+          </span>
+        </>
+      ),
     });
   }
 
@@ -194,9 +260,23 @@ function SignalBadges({ signals }: { signals: EmployeeRow['signals'] }) {
     badges.push({
       key: 'bradford',
       label: `B${signals.bradfordScore}`,
-      tooltip: `Bradford ${signals.bradfordScore} (${signals.bradfordTier}) — frequency × duration of absence`,
       bg: isHigh ? 'rgba(201, 43, 18, 0.12)' : 'rgba(216, 177, 27, 0.18)',
       fg: isHigh ? '#C92B12' : '#6E590D',
+      tooltip: (
+        <>
+          <strong className="block text-ink mb-1">
+            Bradford Factor · {signals.bradfordScore} ({signals.bradfordTier})
+          </strong>
+          <span className="block mb-1.5">
+            Formula: <code>spells² × days</code>. Penalises frequent short absences more than long single ones.
+          </span>
+          <span className="block">
+            Tiers: <strong>&lt;50</strong> low (silent), <strong>50–99</strong> medium,{' '}
+            <strong>≥100</strong> high. Frame this as an attention signal, not a discipline metric —
+            it can over-penalise chronic illness.
+          </span>
+        </>
+      ),
     });
   }
 
@@ -207,14 +287,14 @@ function SignalBadges({ signals }: { signals: EmployeeRow['signals'] }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       {badges.map(b => (
-        <span
-          key={b.key}
-          title={b.tooltip}
-          className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider"
-          style={{ backgroundColor: b.bg, color: b.fg }}
-        >
-          {b.label}
-        </span>
+        <InfoTooltip key={b.key} content={b.tooltip} width={300}>
+          <span
+            className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wider cursor-help"
+            style={{ backgroundColor: b.bg, color: b.fg }}
+          >
+            {b.label}
+          </span>
+        </InfoTooltip>
       ))}
     </div>
   );

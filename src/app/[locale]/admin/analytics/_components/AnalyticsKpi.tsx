@@ -1,6 +1,7 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { InfoTooltip } from '@/components/ui/InfoTooltip';
 
 type Props = {
   label: string;
@@ -8,6 +9,8 @@ type Props = {
   hint?: ReactNode;
   trend?: { pct: number | null; label?: string };
   accent?: 'gold' | 'ink' | 'pending' | 'success' | 'danger';
+  /** Optional explanatory tooltip shown next to the label. */
+  info?: ReactNode;
 };
 
 const ACCENT_COLOR: Record<NonNullable<Props['accent']>, string> = {
@@ -18,12 +21,15 @@ const ACCENT_COLOR: Record<NonNullable<Props['accent']>, string> = {
   danger: '#C92B12',
 };
 
-export function AnalyticsKpi({ label, value, hint, trend, accent = 'ink' }: Props) {
+export function AnalyticsKpi({ label, value, hint, trend, accent = 'ink', info }: Props) {
   const accentColor = ACCENT_COLOR[accent];
   return (
     <div className="card !p-5 flex flex-col gap-2">
       <div className="flex items-start justify-between">
-        <p className="eyebrow">{label}</p>
+        <p className="eyebrow inline-flex items-center gap-1.5">
+          {label}
+          {info && <InfoTooltip content={info} />}
+        </p>
         {trend && trend.pct !== null && (() => {
           const direction = trend.pct > 0 ? 'up' : trend.pct < 0 ? 'down' : 'flat';
           const color = direction === 'up' ? '#1F6E3A' : direction === 'down' ? '#C92B12' : '#7F94A9';

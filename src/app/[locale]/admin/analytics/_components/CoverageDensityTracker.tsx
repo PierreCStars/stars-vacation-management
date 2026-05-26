@@ -73,16 +73,18 @@ export function CoverageDensityTracker({
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <p className="eyebrow text-slate-ardoise">Coverage density · 60 days</p>
-        <div className="flex items-center gap-3 text-[10px] uppercase tracking-widest text-slate-ardoise/70">
-          <Legend swatch="#F5F2EC" label="≥ 85% present" />
-          <Legend swatch="rgba(216, 177, 27, 0.35)" label="70–85%" />
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] uppercase tracking-widest text-slate-ardoise/80">
+          <Legend swatch="#D5E3D9" label="≥ 95%" />
+          <Legend swatch="#EFE7C8" label="85–95%" />
+          <Legend swatch="#D8B11B" label="70–85%" />
           <Legend swatch="#F59B42" label="50–70%" />
           <Legend swatch="#C92B12" label="< 50%" />
+          <Legend swatch="#E5E7EB" label="weekend" />
         </div>
       </div>
-      <Tracker data={blocks} blockHeight={20} gap={1} />
+      <Tracker data={blocks} blockHeight={28} gap={2} />
     </div>
   );
 }

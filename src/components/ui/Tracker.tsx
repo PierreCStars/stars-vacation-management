@@ -111,16 +111,21 @@ function TrackerCell({
 
 /**
  * Convenience helper: map a per-day coverage ratio (0..1, where 1 = full team
- * present, 0 = nobody) to a TrackerBlock color from the SLG semantic palette.
+ * present, 0 = nobody) to a TrackerBlock color.
  *
- * - ≥ 85%       → cream (calm)
- * - 70–85%      → gold-soft
- * - 50–70%      → orange (attention)
- * - < 50%       → red (alert)
+ * 5-step ramp with strong contrast jumps so cells read at a glance even at
+ * 20px wide on a 60-day strip.
+ *
+ * - ≥ 95% present  → soft sage          (very calm, all good)
+ * - 85–95%         → cream paper        (calm with eye on it)
+ * - 70–85%         → gold accent        (clearly tight)
+ * - 50–70%         → orange             (attention required)
+ * - < 50%          → red                (coverage alert)
  */
 export function coverageColor(ratio: number): string {
-  if (ratio >= 0.85) return '#F5F2EC';
-  if (ratio >= 0.7)  return 'rgba(216, 177, 27, 0.35)';
-  if (ratio >= 0.5)  return '#F59B42';
-  return '#C92B12';
+  if (ratio >= 0.95) return '#D5E3D9'; // sage tint
+  if (ratio >= 0.85) return '#EFE7C8'; // warm cream — visible against white card
+  if (ratio >= 0.7)  return '#D8B11B'; // gold solid
+  if (ratio >= 0.5)  return '#F59B42'; // orange
+  return '#C92B12';                     // red
 }

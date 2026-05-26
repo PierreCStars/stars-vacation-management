@@ -116,15 +116,37 @@ ${colorEntries
 // ─── ChartTooltip ──────────────────────────────────────────────────────────
 export const ChartTooltip = RechartsPrimitive.Tooltip;
 
+type TooltipRenderProps = {
+  active?: boolean;
+  payload?: Array<{
+    dataKey?: string | number;
+    name?: string;
+    value?: number | string;
+    color?: string;
+    payload?: any;
+  }>;
+  label?: string | number;
+  labelFormatter?: (label: any, payload: any) => React.ReactNode;
+  formatter?: (
+    value: any,
+    name: any,
+    item: any,
+    index: number,
+    payload: any,
+  ) => React.ReactNode;
+  color?: string;
+};
+
 export const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
-  React.ComponentProps<typeof RechartsPrimitive.Tooltip> &
+  TooltipRenderProps &
     React.ComponentProps<'div'> & {
       hideLabel?: boolean;
       hideIndicator?: boolean;
       indicator?: 'line' | 'dot' | 'dashed';
       nameKey?: string;
       labelKey?: string;
+      labelClassName?: string;
     }
 >(
   (
@@ -256,10 +278,19 @@ ChartTooltipContent.displayName = 'ChartTooltipContent';
 // ─── ChartLegend ───────────────────────────────────────────────────────────
 export const ChartLegend = RechartsPrimitive.Legend;
 
+type LegendRenderProps = {
+  payload?: Array<{
+    value?: any;
+    dataKey?: string | number;
+    color?: string;
+  }>;
+  verticalAlign?: 'top' | 'middle' | 'bottom';
+};
+
 export const ChartLegendContent = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<'div'> &
-    Pick<RechartsPrimitive.LegendProps, 'payload' | 'verticalAlign'> & {
+    LegendRenderProps & {
       hideIcon?: boolean;
       nameKey?: string;
     }

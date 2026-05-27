@@ -118,27 +118,33 @@ async function cleanupTestRequests() {
   const twentyFourHoursAgo = new Date();
   twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
-  // Find all test user requests older than 24 hours
+  // Query by userEmail ONLY (single-field index), filter age in memory.
+  // The previous composite where()+where() query needed a Firestore composite
+  // index that was never created, which silently broke this cron.
   const testUserEmail = 'test@stars.mc';
-  const { Timestamp } = await import('firebase-admin/firestore');
-  const twentyFourHoursAgoTimestamp = Timestamp.fromDate(twentyFourHoursAgo);
-  
   const snapshot = await db.collection('vacationRequests')
     .where('userEmail', '==', testUserEmail)
-    .where('createdAt', '<', twentyFourHoursAgoTimestamp)
     .get();
 
-  const requestsToDelete = snapshot.docs.map(doc => ({
+  const toMs = (v: any): number => {
+    if (!v) return 0;
+    if (typeof v?.toDate === 'function') return v.toDate().getTime();
+    const t = new Date(v).getTime();
+    return Number.isNaN(t) ? 0 : t;
+  };
+
+  const requestsToDelete = (snapshot.docs.map(doc => ({
     id: doc.id,
     ...doc.data()
-  })) as Array<{ 
-    id: string; 
-    userName?: string; 
-    calendarEventId?: string; 
-    googleCalendarEventId?: string; 
+  })) as Array<{
+    id: string;
+    userName?: string;
+    calendarEventId?: string;
+    googleCalendarEventId?: string;
     googleEventId?: string;
+    createdAt?: any;
     [key: string]: any;
-  }>;
+  }>).filter(r => toMs(r.createdAt) < twentyFourHoursAgo.getTime());
 
   if (requestsToDelete.length === 0) {
     return {

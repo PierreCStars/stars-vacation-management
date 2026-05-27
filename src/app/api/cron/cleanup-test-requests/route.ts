@@ -21,10 +21,10 @@ export const revalidate = 0;
  * Environment variables:
  * - TEST_USER_CLEANUP_ENABLED: Set to 'false' to disable cleanup (default: true)
  */
-export async function GET() {
+export async function GET(req: Request) {
   try {
     const cleanupEnabled = process.env.TEST_USER_CLEANUP_ENABLED !== 'false';
-    
+
     if (!cleanupEnabled) {
       console.log('[CLEANUP_TEST] Cleanup disabled via TEST_USER_CLEANUP_ENABLED');
       return NextResponse.json({
@@ -34,8 +34,12 @@ export async function GET() {
       });
     }
 
-    console.log('[CLEANUP_TEST] Starting cleanup of test user vacation requests...');
-    
+    // ?all=true → delete ALL test requests regardless of age (manual full cleanup).
+    // Default (cron) → only requests older than 24 hours.
+    const deleteAll = new URL(req.url).searchParams.get('all') === 'true';
+
+    console.log(`[CLEANUP_TEST] Starting cleanup of test user vacation requests (all=${deleteAll})...`);
+
     // Get Firebase Admin
     const { db, error } = getFirebaseAdmin();
     if (error || !db) {
@@ -51,29 +55,34 @@ export async function GET() {
     const twentyFourHoursAgo = new Date();
     twentyFourHoursAgo.setHours(twentyFourHoursAgo.getHours() - 24);
 
-    console.log('[CLEANUP_TEST] Looking for test requests created before:', twentyFourHoursAgo.toISOString());
-
-    // Find all test user requests older than 24 hours
+    // Query by userEmail ONLY (single-field index — no composite index needed),
+    // then filter by age in memory. The previous composite where()+where()
+    // query required a Firestore composite index that was never created,
+    // which silently broke the daily cron.
     const testUserEmail = 'test@stars.mc';
-    const { Timestamp } = await import('firebase-admin/firestore');
-    const twentyFourHoursAgoTimestamp = Timestamp.fromDate(twentyFourHoursAgo);
-    
     const snapshot = await db.collection('vacationRequests')
       .where('userEmail', '==', testUserEmail)
-      .where('createdAt', '<', twentyFourHoursAgoTimestamp)
       .get();
 
-    const requestsToDelete = snapshot.docs.map(doc => ({
+    const toIso = (v: any): number => {
+      if (!v) return 0;
+      if (typeof v?.toDate === 'function') return v.toDate().getTime();
+      const t = new Date(v).getTime();
+      return Number.isNaN(t) ? 0 : t;
+    };
+
+    const requestsToDelete = (snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
-    })) as Array<{ 
-      id: string; 
-      userName?: string; 
-      calendarEventId?: string; 
-      googleCalendarEventId?: string; 
+    })) as Array<{
+      id: string;
+      userName?: string;
+      calendarEventId?: string;
+      googleCalendarEventId?: string;
       googleEventId?: string;
+      createdAt?: any;
       [key: string]: any;
-    }>;
+    }>).filter(r => deleteAll || toIso(r.createdAt) < twentyFourHoursAgo.getTime());
 
     console.log(`[CLEANUP_TEST] Found ${requestsToDelete.length} test requests to delete`);
 
@@ -149,8 +158,8 @@ export async function GET() {
   }
 }
 
-// Allow POST for manual triggering
-export async function POST() {
-  return GET();
+// Allow POST for manual triggering (forwards the URL so ?all=true works)
+export async function POST(req: Request) {
+  return GET(req);
 }
 

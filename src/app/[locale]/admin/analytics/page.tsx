@@ -12,6 +12,12 @@ import { AnalyticsFilters, FilterState } from './_components/AnalyticsFilters';
 import { AnalyticsPayload } from './_components/types';
 import { InfoTooltip } from '@/components/ui/InfoTooltip';
 
+/** Format a duration in hours as "Nh" (<48h) or "N.N d" (≥48h). "—" if null. */
+function fmtHours(h: number | null): string {
+  if (h === null || h === undefined) return '—';
+  return h > 48 ? `${(h / 24).toFixed(1)} d` : `${h.toFixed(0)} h`;
+}
+
 function rangeToDates(range: FilterState['range']): { from?: string; to?: string } {
   const now = new Date();
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
@@ -283,8 +289,9 @@ export default function AnalyticsPage() {
                       <strong>% approved / denied</strong> is the share of each outcome.
                     </span>
                     <span className="block mt-1.5">
-                      <strong>Avg review time</strong> = mean delay between request creation and
-                      admin decision, across all reviewed requests. Displayed in hours under 48h,
+                      <strong>Avg / median / fastest / slowest review time</strong> = the delay
+                      between request creation and admin decision (the per-request submission→validation
+                      delta), summarised across all reviewed requests. Displayed in hours under 48h,
                       then days.
                     </span>
                   </>
@@ -312,16 +319,24 @@ export default function AnalyticsPage() {
               </div>
               <div className="pt-4 border-t border-black/5">
                 <p className="eyebrow mb-1">Avg review time</p>
-                <p className="text-2xl font-light text-ink">
-                  {data.approvalPerf.avgApprovalHours === null
-                    ? '—'
-                    : data.approvalPerf.avgApprovalHours > 48
-                      ? `${(data.approvalPerf.avgApprovalHours / 24).toFixed(1)} d`
-                      : `${data.approvalPerf.avgApprovalHours.toFixed(0)} h`}
-                </p>
+                <p className="text-2xl font-light text-ink">{fmtHours(data.approvalPerf.avgApprovalHours)}</p>
                 <p className="text-xs text-slate-ardoise/70 mt-1">
                   Across {data.approvalPerf.totalReviewed} reviewed requests
                 </p>
+                <div className="mt-3 grid grid-cols-3 gap-2 text-center">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-slate-ardoise/70">Fastest</p>
+                    <p className="text-sm font-semibold text-ink">{fmtHours(data.approvalPerf.minApprovalHours)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-slate-ardoise/70">Median</p>
+                    <p className="text-sm font-semibold text-ink">{fmtHours(data.approvalPerf.medianApprovalHours)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] uppercase tracking-widest text-slate-ardoise/70">Slowest</p>
+                    <p className="text-sm font-semibold text-ink">{fmtHours(data.approvalPerf.maxApprovalHours)}</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

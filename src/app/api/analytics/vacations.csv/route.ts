@@ -7,16 +7,40 @@ import { getVacationRequests } from "@/lib/analytics/data";
 
 type VR = {
   id: string;
-  userId?: string; 
-  userName?: string; 
+  userId?: string;
+  userName?: string;
   company?: string;
-  type?: string; 
+  type?: string;
   status?: string;
-  isHalfDay?: boolean; 
+  isHalfDay?: boolean;
   durationDays?: number;
-  startDate?: string; 
+  startDate?: string;
   endDate?: string;
+  createdAt?: any;
+  reviewedAt?: any;
+  reviewedBy?: string;
 };
+
+/** Convert a Firestore Timestamp / ISO string / Date to epoch ms (0 if unknown). */
+function toMs(v: any): number {
+  if (!v) return 0;
+  if (typeof v?.toDate === 'function') return v.toDate().getTime();
+  const t = new Date(v).getTime();
+  return isNaN(t) ? 0 : t;
+}
+
+function toIso(v: any): string {
+  const ms = toMs(v);
+  return ms ? new Date(ms).toISOString() : '';
+}
+
+/** Whole-day delay (1 decimal) between submission and review, '' if not reviewed. */
+function reviewDelayDays(createdAt: any, reviewedAt: any): string {
+  const c = toMs(createdAt);
+  const r = toMs(reviewedAt);
+  if (!c || !r || r < c) return '';
+  return ((r - c) / (1000 * 60 * 60 * 24)).toFixed(1);
+}
 
 function inclusiveDays(startISO?: string, endISO?: string) {
   if (!startISO) return 0;
@@ -77,7 +101,11 @@ export async function GET(req: Request) {
         status: r.status || "",
         startDate: r.startDate || "",
         endDate: r.endDate || r.startDate || "",
-        days: resolveDuration(r)
+        days: resolveDuration(r),
+        submittedAt: toIso((r as VR).createdAt),
+        reviewedAt: toIso((r as VR).reviewedAt),
+        reviewedBy: (r as VR).reviewedBy || "",
+        reviewDelayDays: reviewDelayDays((r as VR).createdAt, (r as VR).reviewedAt),
       };
     });
 

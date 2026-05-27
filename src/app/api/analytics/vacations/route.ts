@@ -329,6 +329,13 @@ export async function GET(req: Request) {
       })
       .filter((n): n is number => n !== null && n >= 0);
 
+    const sortedTimes = [...approvalTimes].sort((a, b) => a - b);
+    const median = sortedTimes.length
+      ? sortedTimes.length % 2
+        ? sortedTimes[(sortedTimes.length - 1) / 2]
+        : (sortedTimes[sortedTimes.length / 2 - 1] + sortedTimes[sortedTimes.length / 2]) / 2
+      : null;
+
     const approvalPerf = {
       totalReviewed: reviewed.length,
       approvedPct: reviewed.length ? Math.round((approvedCount / reviewed.length) * 100) : 0,
@@ -336,6 +343,9 @@ export async function GET(req: Request) {
       avgApprovalHours: approvalTimes.length
         ? +(approvalTimes.reduce((a, b) => a + b, 0) / approvalTimes.length).toFixed(1)
         : null,
+      medianApprovalHours: median === null ? null : +median.toFixed(1),
+      minApprovalHours: sortedTimes.length ? +sortedTimes[0].toFixed(1) : null,
+      maxApprovalHours: sortedTimes.length ? +sortedTimes[sortedTimes.length - 1].toFixed(1) : null,
     };
 
     // ── Zone 3: Employees ─────────────────────────────────────────────────────

@@ -90,6 +90,9 @@ export type AnalyticsPayload = {
     approvedPct: number;
     deniedPct: number;
     avgApprovalHours: number | null;
+    medianApprovalHours: number | null;
+    minApprovalHours: number | null;
+    maxApprovalHours: number | null;
   };
   dayOfWeekHeatmap: {
     from: string;

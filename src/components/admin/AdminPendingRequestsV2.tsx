@@ -17,6 +17,23 @@ function calculateDays(startDate: string, endDate: string): number {
   return diffDays;
 }
 
+/**
+ * Human-readable delay between submission and review (e.g. "3h", "2d 4h", "<1h").
+ * Returns "—" when either timestamp is missing.
+ */
+function formatReviewDelay(createdAt?: string | null, reviewedAt?: string | null): string {
+  if (!createdAt || !reviewedAt) return '—';
+  const ms = new Date(reviewedAt).getTime() - new Date(createdAt).getTime();
+  if (isNaN(ms) || ms < 0) return '—';
+  const minutes = Math.round(ms / 60000);
+  if (minutes < 60) return minutes <= 1 ? '<1h' : `${minutes}min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  const remH = hours % 24;
+  return remH > 0 ? `${days}d ${remH}h` : `${days}d`;
+}
+
 export default function AdminPendingRequestsV2() {
   const [mounted, setMounted] = useState(false);
   const [requests, setRequests] = useState<VacationRequestWithConflicts[]>([]);
@@ -929,39 +946,34 @@ function ReviewedRequestsTable({
   tCommon: any;
   tVacations: any;
 }) {
-  // Sorting state
-  const [sortColumn, setSortColumn] = useState<'userName' | 'startDate' | null>(null);
-  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  // Sorting state — default: by submission date (createdAt), most recent first.
+  type ReviewedSortCol = 'userName' | 'startDate' | 'createdAt' | 'reviewedAt';
+  const [sortColumn, setSortColumn] = useState<ReviewedSortCol>('createdAt');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
   // Handle column header click for sorting
-  const handleSort = (column: 'userName' | 'startDate') => {
+  const handleSort = (column: ReviewedSortCol) => {
     if (sortColumn === column) {
-      // Toggle direction if clicking the same column
       setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc');
     } else {
-      // Set new column and default to ascending
       setSortColumn(column);
-      setSortDirection('asc');
+      setSortDirection(column === 'createdAt' || column === 'reviewedAt' ? 'desc' : 'asc');
     }
   };
 
   // Sort requests based on current sort state
   const sortedRequests = useMemo(() => {
-    if (!sortColumn) return requests;
-
     return [...requests].sort((a, b) => {
       let comparison = 0;
 
       if (sortColumn === 'userName') {
-        // Alphabetical sorting for employee name
-        const nameA = (a.userName || '').toLowerCase();
-        const nameB = (b.userName || '').toLowerCase();
-        comparison = nameA.localeCompare(nameB);
+        comparison = (a.userName || '').toLowerCase().localeCompare((b.userName || '').toLowerCase());
       } else if (sortColumn === 'startDate') {
-        // Chronological sorting for month (using underlying date value)
-        const dateA = new Date(a.startDate).getTime();
-        const dateB = new Date(b.startDate).getTime();
-        comparison = dateA - dateB;
+        comparison = new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
+      } else if (sortColumn === 'createdAt') {
+        comparison = new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime();
+      } else if (sortColumn === 'reviewedAt') {
+        comparison = new Date(a.reviewedAt || 0).getTime() - new Date(b.reviewedAt || 0).getTime();
       }
 
       return sortDirection === 'asc' ? comparison : -comparison;
@@ -1130,23 +1142,41 @@ function ReviewedRequestsTable({
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 {tVacations('type')}
               </th>
-              <th 
+              <th
                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
                 onClick={() => handleSort('startDate')}
               >
                 <div className="flex items-center">
-                  Month of Vacation Taken
+                  Vacation dates
                   <SortIndicator column="startDate" />
                 </div>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Status
               </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Approved by
+              <th
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                onClick={() => handleSort('createdAt')}
+              >
+                <div className="flex items-center">
+                  Submitted
+                  <SortIndicator column="createdAt" />
+                </div>
+              </th>
+              <th
+                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100 select-none"
+                onClick={() => handleSort('reviewedAt')}
+              >
+                <div className="flex items-center">
+                  Reviewed
+                  <SortIndicator column="reviewedAt" />
+                </div>
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                {t('reviewedAt')}
+                Delay
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Reviewed by
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Actions
@@ -1197,11 +1227,13 @@ function ReviewedRequestsTable({
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <div className="font-medium">
-                    {request.reviewedBy || 'Admin'}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {request.reviewerEmail || ''}
+                  <div>
+                    <div className="font-medium">
+                      {request.createdAt ? new Date(request.createdAt).toLocaleDateString() : '—'}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {request.createdAt ? new Date(request.createdAt).toLocaleTimeString() : ''}
+                    </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -1212,6 +1244,17 @@ function ReviewedRequestsTable({
                     <div className="text-xs text-gray-500">
                       {request.reviewedAt ? new Date(request.reviewedAt).toLocaleTimeString() : ''}
                     </div>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-ink">
+                  {formatReviewDelay(request.createdAt, request.reviewedAt)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <div className="font-medium">
+                    {request.reviewedBy || 'Admin'}
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {request.reviewerEmail || ''}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -1293,23 +1336,32 @@ function ReviewedRequestsTable({
               </span>
             </div>
             
-            <div className="mb-3">
-              <div className="text-sm font-medium text-gray-500">Approved by</div>
-              <div className="text-sm text-gray-900">
-                {request.reviewedBy || 'Admin'}
+            <div className="grid grid-cols-2 gap-4 mb-3">
+              <div>
+                <div className="text-sm font-medium text-gray-500">Submitted</div>
+                <div className="text-sm text-gray-900">
+                  {request.createdAt ? new Date(request.createdAt).toLocaleDateString() : '—'}
+                </div>
               </div>
-              <div className="text-xs text-gray-500">
-                {request.reviewerEmail || ''}
+              <div>
+                <div className="text-sm font-medium text-gray-500">Reviewed</div>
+                <div className="text-sm text-gray-900">
+                  {request.reviewedAt ? new Date(request.reviewedAt).toLocaleDateString() : '—'}
+                </div>
               </div>
             </div>
-            
-            <div className="mb-3">
-              <div className="text-sm font-medium text-gray-500">Reviewed</div>
-              <div className="text-sm text-gray-900">
-                {request.reviewedAt ? new Date(request.reviewedAt).toLocaleDateString() : '—'}
+
+            <div className="grid grid-cols-2 gap-4 mb-3">
+              <div>
+                <div className="text-sm font-medium text-gray-500">Delay</div>
+                <div className="text-sm font-medium text-ink">
+                  {formatReviewDelay(request.createdAt, request.reviewedAt)}
+                </div>
               </div>
-              <div className="text-xs text-gray-500">
-                {request.reviewedAt ? new Date(request.reviewedAt).toLocaleTimeString() : ''}
+              <div>
+                <div className="text-sm font-medium text-gray-500">Reviewed by</div>
+                <div className="text-sm text-gray-900">{request.reviewedBy || 'Admin'}</div>
+                <div className="text-xs text-gray-500">{request.reviewerEmail || ''}</div>
               </div>
             </div>
 

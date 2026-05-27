@@ -50,18 +50,24 @@ export function AdminDropdown({ currentLocale }: AdminDropdownProps) {
   const hasActiveChild = isActive('/admin/vacation-requests') || isActive('/admin/analytics') || isActive('/admin/setup');
 
   return (
-    <div className="relative" ref={dropdownRef}>
-      <button
-        type="button"
-        onClick={() => setIsOpen(!isOpen)}
+    <div
+      className="relative"
+      ref={dropdownRef}
+      onMouseEnter={() => setIsOpen(true)}
+      onMouseLeave={() => setIsOpen(false)}
+    >
+      {/* Clicking "Administration" goes straight to Vacation requests; the
+          dropdown (sub-items) opens on hover. */}
+      <Link
+        href={createLocaleUrl('/admin/vacation-requests', currentLocale)}
+        onClick={() => setIsOpen(false)}
         className={`px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1 border-b-2 -mb-px ${
           hasActiveChild
             ? 'text-ink border-gold'
             : 'text-slate-ardoise border-transparent hover:text-ink hover:border-gold/40'
         }`}
-        aria-expanded={isOpen}
         aria-haspopup="true"
-        aria-label={tNav('administration')}
+        aria-expanded={isOpen}
       >
         {tNav('administration')}
         <svg
@@ -72,7 +78,7 @@ export function AdminDropdown({ currentLocale }: AdminDropdownProps) {
         >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
-      </button>
+      </Link>
 
       {isOpen && (
         <div className="absolute top-full left-0 mt-2 w-60 bg-white rounded-xl shadow-card border border-black/5 py-2 z-50">

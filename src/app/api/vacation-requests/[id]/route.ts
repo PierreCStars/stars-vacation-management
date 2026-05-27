@@ -63,8 +63,15 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       const userEmail = session.user.email;
       if (!isFullAdmin(userEmail)) {
         console.log('🔍 [INVESTIGATION] Forbidden - user is not a full admin:', { userEmail });
-        return NextResponse.json({ 
-          error: 'Forbidden - Admin access required to approve or deny vacation requests' 
+        return NextResponse.json({
+          error: 'Forbidden - Admin access required to approve or deny vacation requests'
+        }, { status: 403 });
+      }
+      // Cancelling an already-validated leave is restricted to a single admin.
+      if (newStatus === 'cancelled' && userEmail.toLowerCase() !== 'johnny@stars.mc') {
+        console.log('🔍 [INVESTIGATION] Forbidden - only johnny@stars.mc may cancel validated leaves:', { userEmail });
+        return NextResponse.json({
+          error: 'Forbidden - Only johnny@stars.mc can cancel a validated vacation request',
         }, { status: 403 });
       }
       console.log('🔍 [INVESTIGATION] Admin authorization verified:', { userEmail });

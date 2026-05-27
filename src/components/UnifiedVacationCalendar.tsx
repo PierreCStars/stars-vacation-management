@@ -75,7 +75,11 @@ export default function UnifiedVacationCalendar({
   onRangeChange
 }: UnifiedVacationCalendarProps) {
 
-  const [currentDate, setCurrentDate] = useState(() => new Date());
+  // Open on the requested period's month when a range is provided (e.g. the
+  // email "Review Request" link), so the highlighted days are immediately visible.
+  const [currentDate, setCurrentDate] = useState<Date>(
+    () => (initialRange?.start ? new Date(initialRange.start) : new Date()),
+  );
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [companyEvents, setCompanyEvents] = useState<CompanyEvent[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
@@ -386,7 +390,8 @@ export default function UnifiedVacationCalendar({
         <div className="grid grid-cols-7 gap-1">
           {calendarDays.map((day, index) => {
             // Determine background color priority:
-            // Conflict (vivid red) > Holiday/Event (grey) > Weekend (darker grey) > selected > default
+            // Conflict (vivid red) > Requested period (vivid orange) > Holiday/Event (grey)
+            //   > Weekend (darker grey) > default
             const hasMonacoHoliday = day.monacoHolidays.length > 0;
             const hasCompanyEvent = day.companyEvents.length > 0;
             const hasConflictEvent = day.conflictEvents && day.conflictEvents.length > 0;
@@ -396,14 +401,19 @@ export default function UnifiedVacationCalendar({
             if (hasConflictEvent) {
               // Vivid red tint for conflicts — saturated but readable
               bgColorStyle = { backgroundColor: 'rgba(201, 43, 18, 0.15)' };
+            } else if (day.isInSelectedRange) {
+              // The requested period — vivid orange "pastille" so the reviewer
+              // immediately sees the days being requested (and any overlap).
+              bgColorStyle = {
+                backgroundColor: 'rgba(249, 115, 22, 0.28)',
+                boxShadow: 'inset 0 0 0 2px #F97316',
+              };
             } else if (hasMonacoHoliday || hasCompanyEvent) {
               // Neutral grey for holidays and company events
               bgColorStyle = { backgroundColor: '#9CA3AF' };
             } else if (day.isWeekend) {
               // Slightly darker grey for weekends, distinct from holidays
               bgColorStyle = { backgroundColor: '#E5E7EB' };
-            } else if (day.isInSelectedRange) {
-              bgColor = 'bg-gold/10';
             } else {
               bgColor = day.isCurrentMonth ? 'bg-white' : 'bg-cream-50';
             }
@@ -661,8 +671,8 @@ export default function UnifiedVacationCalendar({
             <div className="flex flex-wrap items-center gap-2 sm:gap-4">
               {highlightRange && initialRange && (
                 <div className="flex items-center space-x-1 sm:space-x-2">
-                  <div className="w-3 h-3 sm:w-4 sm:h-4 bg-gold/10 border border-gold rounded"></div>
-                  <span className="text-xs sm:text-sm text-gray-600">Selected Range</span>
+                  <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: 'rgba(249, 115, 22, 0.28)', boxShadow: 'inset 0 0 0 2px #F97316' }}></div>
+                  <span className="text-xs sm:text-sm text-slate-ardoise">Requested period</span>
                 </div>
               )}
               {conflicts.length > 0 && (

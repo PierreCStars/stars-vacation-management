@@ -71,7 +71,7 @@ const en = {
     "administration": "Administration",
     "managementSection": "Management",
     "analyticsSection": "Analytics",
-    "setup": "Set Up"
+    "setup": "Options"
   },
   "vacations": {
     "title": "Vacation Management",
@@ -372,7 +372,7 @@ const fr = {
     "administration": "Administration",
     "managementSection": "Gestion",
     "analyticsSection": "Analyses",
-    "setup": "Réglages"
+    "setup": "Options"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -673,7 +673,7 @@ const it = {
     "administration": "Amministrazione",
     "managementSection": "Gestione",
     "analyticsSection": "Analisi",
-    "setup": "Impostazioni"
+    "setup": "Opzioni"
   },
   "dashboard": {
     "title": "Dashboard",

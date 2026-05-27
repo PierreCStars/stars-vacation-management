@@ -647,12 +647,13 @@ export default function AdminPendingRequestsV2() {
                     
                     {showReviewed && (
                       <div className="border-t border-gray-200">
-                        <ReviewedRequestsTable 
+                        <ReviewedRequestsTable
                           requests={reviewedSorted}
                           selectedRequests={selectedRequests}
                           onToggleSelection={toggleRequestSelection}
                           onCancelRequest={handleCancelApprovedRequest}
                           isProcessing={isProcessing}
+                          canCancelApproved={(session?.user?.email || '').toLowerCase() === 'johnny@stars.mc'}
                           t={t}
                           tCommon={tCommon}
                           tVacations={tVacations}
@@ -927,21 +928,23 @@ function RequestsTable({
 }
 
 // Reviewed Requests Table Component
-function ReviewedRequestsTable({ 
-  requests, 
-  selectedRequests, 
-  onToggleSelection, 
+function ReviewedRequestsTable({
+  requests,
+  selectedRequests,
+  onToggleSelection,
   onCancelRequest,
   isProcessing,
-  t, 
-  tCommon, 
-  tVacations 
+  canCancelApproved,
+  t,
+  tCommon,
+  tVacations
 }: {
   requests: VacationRequestWithConflicts[];
   selectedRequests: Set<string>;
   onToggleSelection: (id: string) => void;
   onCancelRequest: (id: string) => Promise<void>;
   isProcessing: (id: string) => boolean;
+  canCancelApproved: boolean;
   t: any;
   tCommon: any;
   tVacations: any;
@@ -1258,7 +1261,7 @@ function ReviewedRequestsTable({
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {request.status === 'approved' ? (
+                  {request.status === 'approved' && canCancelApproved ? (
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -1365,7 +1368,7 @@ function ReviewedRequestsTable({
               </div>
             </div>
 
-            {request.status === 'approved' && (
+            {request.status === 'approved' && canCancelApproved && (
               <button
                 onClick={(e) => {
                   e.stopPropagation();

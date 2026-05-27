@@ -1072,7 +1072,7 @@ function ReviewedRequestsTable({
   };
 
   // Sort indicator component
-  const SortIndicator = ({ column }: { column: 'userName' | 'startDate' }) => {
+  const SortIndicator = ({ column }: { column: ReviewedSortCol }) => {
     if (sortColumn !== column) {
       return (
         <span className="ml-1 text-gray-400">

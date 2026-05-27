@@ -372,6 +372,8 @@ export async function GET(req: Request) {
       approvedSpellsWindow: number;    // approved leaves with startDate within filter window
       approvedDaysWindow: number;       // approved days within filter window
       lastApprovedStartDate: string | null;
+      reviewDelayMsSum: number;        // sum of (reviewedAt - createdAt) over reviewed requests
+      reviewDelayCount: number;        // number of reviewed requests with a measurable delay
     };
 
     const perEmployee: Record<string, EmpAcc> = {};
@@ -401,6 +403,8 @@ export async function GET(req: Request) {
           approvedSpellsWindow: 0,
           approvedDaysWindow: 0,
           lastApprovedStartDate: null,
+          reviewDelayMsSum: 0,
+          reviewDelayCount: 0,
         };
       }
       const emp = perEmployee[key];
@@ -411,6 +415,17 @@ export async function GET(req: Request) {
       }
       if (created < emp.firstRequestDate!) emp.firstRequestDate = created;
       if (created > emp.lastRequestDate!) emp.lastRequestDate = created;
+
+      // Per-employee review delay (submission → decision) for reviewed requests
+      if (s === 'approved' || s === 'denied') {
+        const createdMs = new Date(created).getTime();
+        const reviewedIso = toIsoDate(r.reviewedAt);
+        const reviewedMs = reviewedIso ? new Date(reviewedIso).getTime() : 0;
+        if (reviewedMs && reviewedMs >= createdMs) {
+          emp.reviewDelayMsSum += reviewedMs - createdMs;
+          emp.reviewDelayCount += 1;
+        }
+      }
 
       // Approved-only metrics (sparkline, days-to-zero, leave score)
       if (r.startDate && s === 'approved') {
@@ -510,6 +525,11 @@ export async function GET(req: Request) {
           projectedZeroDate,
           overQuota: usedYTD > ENTITLEMENT,
         },
+        // Average submission → validation delay (hours) across this employee's
+        // reviewed requests. null when none reviewed.
+        avgReviewDelayHours: e.reviewDelayCount
+          ? +((e.reviewDelayMsSum / e.reviewDelayCount) / 3_600_000).toFixed(1)
+          : null,
       };
     }).sort((a, b) => b.totalDays - a.totalDays);
 

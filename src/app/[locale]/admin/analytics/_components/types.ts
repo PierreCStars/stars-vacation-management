@@ -27,6 +27,8 @@ export type EmployeeRow = {
     projectedZeroDate: string | null;
     overQuota: boolean;
   };
+  /** Avg submission→validation delay (hours) across this employee's reviewed requests. */
+  avgReviewDelayHours: number | null;
 };
 
 export type AwayPerson = {

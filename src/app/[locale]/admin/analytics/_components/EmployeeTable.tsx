@@ -5,7 +5,13 @@ import { EmployeeRow } from './types';
 import { Sparkline } from './Sparkline';
 import { InfoTooltip } from '@/components/ui/InfoTooltip';
 
-type SortKey = 'userName' | 'company' | 'totalDays' | 'count' | 'avg' | 'lastRequestDate';
+type SortKey = 'userName' | 'company' | 'totalDays' | 'count' | 'avg' | 'lastRequestDate' | 'avgReviewDelayHours';
+
+/** Format a duration in hours as "Nh" (<48h) or "N.N d" (≥48h). "—" if null. */
+function fmtHours(h: number | null): string {
+  if (h === null || h === undefined) return '—';
+  return h > 48 ? `${(h / 24).toFixed(1)} d` : `${h.toFixed(0)} h`;
+}
 
 type Props = {
   rows: EmployeeRow[];
@@ -48,6 +54,15 @@ export function EmployeeTable({ rows }: Props) {
       if (sortKey === 'lastRequestDate') {
         const av = a.lastRequestDate ? new Date(a.lastRequestDate).getTime() : 0;
         const bv = b.lastRequestDate ? new Date(b.lastRequestDate).getTime() : 0;
+        return (av - bv) * dir;
+      }
+      if (sortKey === 'avgReviewDelayHours') {
+        // nulls (no reviewed requests) always sort last
+        const av = a.avgReviewDelayHours;
+        const bv = b.avgReviewDelayHours;
+        if (av === null && bv === null) return 0;
+        if (av === null) return 1;
+        if (bv === null) return -1;
         return (av - bv) * dir;
       }
       return ((a[sortKey] as number) - (b[sortKey] as number)) * dir;
@@ -166,6 +181,7 @@ export function EmployeeTable({ rows }: Props) {
                   />
                 </span>
               </th>
+              {headerCell('avgReviewDelayHours', 'Review Δ', 'right')}
               {headerCell('lastRequestDate', 'Last', 'left')}
             </tr>
           </thead>
@@ -206,6 +222,12 @@ export function EmployeeTable({ rows }: Props) {
                     )}
                   </div>
                 </td>
+                <td
+                  className="px-4 py-3 text-right text-sm text-slate-ardoise tabular-nums whitespace-nowrap"
+                  title="Average time between submission and review for this employee's reviewed requests"
+                >
+                  {fmtHours(emp.avgReviewDelayHours)}
+                </td>
                 <td className="px-4 py-3 text-sm text-slate-ardoise/80 whitespace-nowrap">
                   {relativeDate(emp.lastRequestDate)}
                 </td>
@@ -213,7 +235,7 @@ export function EmployeeTable({ rows }: Props) {
             ))}
             {filteredSorted.length === 0 && (
               <tr>
-                <td colSpan={9} className="px-4 py-12 text-center text-sm text-slate-ardoise/70">
+                <td colSpan={10} className="px-4 py-12 text-center text-sm text-slate-ardoise/70">
                   No employees match the current filters.
                 </td>
               </tr>

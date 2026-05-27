@@ -13,11 +13,9 @@
  * - The logo uses an absolute https URL (email cannot resolve local assets).
  */
 
-const BASE_URL =
-  process.env.NEXT_PUBLIC_APP_URL?.trim() ||
-  'https://starsvacationmanagementv2.vercel.app';
+import { getEmailBaseUrl } from '@/lib/urls';
 
-const LOGO_URL = `${BASE_URL}/stars-logo.png`;
+const LOGO_URL = `${getEmailBaseUrl()}/stars-logo.png`;
 
 // SLG palette
 const INK = '#0A0A0A';

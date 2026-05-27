@@ -1,12 +1,14 @@
 /**
  * Localized Email Service
- * Handles email sending with proper headers and localization
+ * Sends employee-facing emails (submission / approval / denial) in the user's
+ * locale (FR / EN / IT), wrapped in the shared SLG email shell.
  */
 
 import { getTranslations } from 'next-intl/server';
 import { VacationRequest } from '@/types/vacation';
 import { getVacationTypeLabelFromTranslations } from '@/lib/vacation-types';
 import { sendEmailToRecipients } from '@/lib/email-notifications';
+import { renderSlgEmail, detailsTable, slgTextFooter, type EmailAccent } from '@/lib/email/slg-theme';
 
 export interface LocalizedEmailData {
   request: VacationRequest;
@@ -28,13 +30,27 @@ export interface GenericLocalizedEmailData extends Omit<LocalizedEmailData, 'req
   createdAt?: string;
 }
 
+type TemplateKey = 'submissionConfirmation' | 'approvalNotice' | 'denialNotice';
+
+const ACCENT_BY_TEMPLATE: Record<TemplateKey, EmailAccent> = {
+  submissionConfirmation: 'gold',
+  approvalNotice: 'green',
+  denialNotice: 'red',
+};
+
+const EYEBROW_BY_TEMPLATE: Record<TemplateKey, string> = {
+  submissionConfirmation: 'Request received',
+  approvalNotice: 'Approved',
+  denialNotice: 'Declined',
+};
+
 /**
- * Generic function to send localized emails based on template type
+ * Send a localized employee email wrapped in the SLG shell.
  */
 export async function sendLocalizedEmail(
-  templateKey: 'submissionConfirmation' | 'approvalNotice' | 'denialNotice',
+  templateKey: TemplateKey,
   data: GenericLocalizedEmailData,
-  recipients: string[]
+  recipients: string[],
 ) {
   const t = await getTranslations({ locale: data.locale, namespace: `emails.${templateKey}` });
   const tVacations = await getTranslations({ locale: data.locale, namespace: 'vacations' });
@@ -44,58 +60,57 @@ export async function sendLocalizedEmail(
   const vacationTypeLabel = getVacationTypeLabelFromTranslations(data.type, tVacations);
 
   const subject = t('subject', { type: vacationTypeLabel });
-  let htmlBody = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: ${templateKey === 'approvalNotice' ? '#059669' : templateKey === 'denialNotice' ? '#dc2626' : '#2563eb'};">
-        ${t('greeting', { name: data.userName })}
-      </h2>
-      
-      <p style="font-size: 16px; line-height: 1.6; color: #374151;">
-        ${t('body')}
-      </p>
-      
-      <div style="background-color: ${templateKey === 'approvalNotice' ? '#f0fdf4' : templateKey === 'denialNotice' ? '#fef2f2' : '#f9fafb'}; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid ${templateKey === 'approvalNotice' ? '#059669' : templateKey === 'denialNotice' ? '#dc2626' : '#e5e7eb'};">
-        <h3 style="color: #111827; margin-top: 0;">${t('details')}</h3>
-        <ul style="list-style: none; padding: 0;">
-          <li style="margin: 8px 0;"><strong>${t('type', { type: vacationTypeLabel })}</strong></li>
-          <li style="margin: 8px 0;"><strong>${t('dates', { startDate: formattedStartDate, endDate: formattedEndDate })}</strong></li>
-          <li style="margin: 8px 0;"><strong>${t('duration', { duration: data.durationDays || 1 })}</strong></li>
-          ${data.reason ? `<li style="margin: 8px 0;"><strong>${t('reason', { reason: data.reason })}</strong></li>` : ''}
-  `;
 
+  // Build the details rows (translation strings already include their label,
+  // e.g. "Type: Paid leave" — we keep them whole on the value side for fidelity).
+  const rows: Array<{ label: string; value: string }> = [
+    { label: t('type', { type: vacationTypeLabel }), value: vacationTypeLabel },
+    { label: t('dates', { startDate: formattedStartDate, endDate: formattedEndDate }), value: `${formattedStartDate} → ${formattedEndDate}` },
+    { label: t('duration', { duration: data.durationDays || 1 }), value: `${data.durationDays || 1}` },
+  ];
+  if (data.reason) rows.push({ label: t('reason', { reason: data.reason }), value: data.reason });
   if (templateKey === 'approvalNotice' && data.approvedBy) {
-    htmlBody += `<li style="margin: 8px 0;"><strong>${t('approvedBy', { approvedBy: data.approvedBy })}</strong></li>`;
+    rows.push({ label: t('approvedBy', { approvedBy: data.approvedBy }), value: data.approvedBy });
   } else if (templateKey === 'denialNotice' && data.deniedBy) {
-    htmlBody += `<li style="margin: 8px 0;"><strong>${t('deniedBy', { deniedBy: data.deniedBy })}</strong></li>`;
-    if (data.adminComment) {
-      htmlBody += `<li style="margin: 8px 0;"><strong>${t('adminComment', { adminComment: data.adminComment })}</strong></li>`;
-    }
+    rows.push({ label: t('deniedBy', { deniedBy: data.deniedBy }), value: data.deniedBy });
+    if (data.adminComment) rows.push({ label: t('adminComment', { adminComment: data.adminComment }), value: data.adminComment });
   } else if (templateKey === 'submissionConfirmation') {
-    htmlBody += `<li style="margin: 8px 0;"><strong>${t('status')}</strong></li>`;
+    rows.push({ label: t('status'), value: '' });
   }
 
-  htmlBody += `
-        </ul>
-      </div>
-      
-      <p style="font-size: 14px; color: #6b7280;">
-        ${t('footer')}
-      </p>
-      
-      <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-        <p style="font-size: 14px; color: #374151;">
-          ${t('signature')}
-        </p>
-      </div>
-    </div>
+  // The translation strings are already "Label: value" sentences, so render
+  // them as a simple definition list rather than a 2-column table to avoid
+  // duplicating the label.
+  const detailItems = rows
+    .map(r => r.label)
+    .filter(Boolean)
+    .map(line => `<tr><td style="padding:6px 0;border-bottom:1px solid rgba(10,10,10,0.06);font-size:14px;color:#0A0A0A;">${line}</td></tr>`)
+    .join('');
+
+  const bodyHtml = `
+    <tr><td style="padding:0 0 16px;">${t('body')}</td></tr>
+    <tr><td>
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;margin:4px 0;">
+        ${detailItems}
+      </table>
+    </td></tr>
+    <tr><td style="padding:18px 0 0;font-size:13px;color:rgba(39,51,65,0.8);">${t('footer')}</td></tr>
+    <tr><td style="padding:8px 0 0;font-size:13px;color:#0A0A0A;">${t('signature')}</td></tr>
   `;
 
-  const textBody = `
-${t('greeting', { name: data.userName })}
+  const html = renderSlgEmail({
+    title: subject,
+    eyebrow: EYEBROW_BY_TEMPLATE[templateKey],
+    heading: t('greeting', { name: data.userName }),
+    accent: ACCENT_BY_TEMPLATE[templateKey],
+    bodyHtml,
+    preheader: subject,
+  });
+
+  const textBody = `${t('greeting', { name: data.userName })}
 
 ${t('body')}
 
-${t('details')}
 ${t('type', { type: vacationTypeLabel })}
 ${t('dates', { startDate: formattedStartDate, endDate: formattedEndDate })}
 ${t('duration', { duration: data.durationDays || 1 })}
@@ -106,238 +121,7 @@ ${templateKey === 'denialNotice' && data.adminComment ? t('adminComment', { admi
 ${templateKey === 'submissionConfirmation' ? t('status') : ''}
 
 ${t('footer')}
+${t('signature')}${slgTextFooter()}`;
 
-${t('signature')}
-  `;
-
-  await sendEmailToRecipients(
-    recipients,
-    subject,
-    htmlBody,
-    textBody
-  );
-}
-
-/**
- * Send localized submission confirmation email
- */
-export async function sendLocalizedSubmissionConfirmation(data: LocalizedEmailData) {
-  const t = await getTranslations({ locale: data.locale, namespace: 'emails.submissionConfirmation' });
-  
-  // Get localized vacation type
-  const vacationTypeLabel = getVacationTypeLabelFromTranslations(data.request.type || '', (key: string) => t(key));
-  
-  // Format dates
-  const startDate = new Date(data.request.startDate).toLocaleDateString(data.locale);
-  const endDate = new Date(data.request.endDate).toLocaleDateString(data.locale);
-  
-  // Calculate duration
-  const duration = data.request.durationDays || 
-    Math.ceil((new Date(data.request.endDate).getTime() - new Date(data.request.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1;
-  
-  const subject = t('subject', { type: vacationTypeLabel });
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: #2563eb;">${t('greeting', { name: data.request.userName })}</h2>
-      
-      <p style="font-size: 16px; line-height: 1.6; color: #374151;">
-        ${t('body')}
-      </p>
-      
-      <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
-        <h3 style="color: #111827; margin-top: 0;">${t('details')}</h3>
-        <ul style="list-style: none; padding: 0;">
-          <li style="margin: 8px 0;"><strong>${t('type', { type: vacationTypeLabel })}</strong></li>
-          <li style="margin: 8px 0;"><strong>${t('dates', { startDate, endDate })}</strong></li>
-          <li style="margin: 8px 0;"><strong>${t('duration', { duration })}</strong></li>
-          ${data.request.reason ? `<li style="margin: 8px 0;"><strong>${t('reason', { reason: data.request.reason })}</strong></li>` : ''}
-          <li style="margin: 8px 0;"><strong>${t('status')}</strong></li>
-        </ul>
-      </div>
-      
-      <p style="font-size: 14px; color: #6b7280;">
-        ${t('footer')}
-      </p>
-      
-      <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-        <p style="font-size: 14px; color: #374151;">
-          ${t('signature')}
-        </p>
-      </div>
-    </div>
-  `;
-  
-  const text = `
-${t('greeting', { name: data.request.userName })}
-
-${t('body')}
-
-${t('details')}
-${t('type', { type: vacationTypeLabel })}
-${t('dates', { startDate, endDate })}
-${t('duration', { duration })}
-${data.request.reason ? t('reason', { reason: data.request.reason }) : ''}
-${t('status')}
-
-${t('footer')}
-
-${t('signature')}
-  `;
-  
-  await sendEmailToRecipients(
-    [data.request.userEmail],
-    subject,
-    html,
-    text
-  );
-}
-
-/**
- * Send localized approval notice email
- */
-export async function sendLocalizedApprovalNotice(data: LocalizedEmailData) {
-  const t = await getTranslations({ locale: data.locale, namespace: 'emails.approvalNotice' });
-  
-  // Get localized vacation type
-  const vacationTypeLabel = getVacationTypeLabelFromTranslations(data.request.type || '', (key: string) => t(key));
-  
-  // Format dates
-  const startDate = new Date(data.request.startDate).toLocaleDateString(data.locale);
-  const endDate = new Date(data.request.endDate).toLocaleDateString(data.locale);
-  
-  // Calculate duration
-  const duration = data.request.durationDays || 
-    Math.ceil((new Date(data.request.endDate).getTime() - new Date(data.request.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1;
-  
-  const subject = t('subject', { type: vacationTypeLabel });
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: #059669;">${t('greeting', { name: data.request.userName })}</h2>
-      
-      <p style="font-size: 16px; line-height: 1.6; color: #374151;">
-        ${t('body')}
-      </p>
-      
-      <div style="background-color: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #059669;">
-        <h3 style="color: #111827; margin-top: 0;">${t('details')}</h3>
-        <ul style="list-style: none; padding: 0;">
-          <li style="margin: 8px 0;"><strong>${t('type', { type: vacationTypeLabel })}</strong></li>
-          <li style="margin: 8px 0;"><strong>${t('dates', { startDate, endDate })}</strong></li>
-          <li style="margin: 8px 0;"><strong>${t('duration', { duration })}</strong></li>
-          ${data.request.reason ? `<li style="margin: 8px 0;"><strong>${t('reason', { reason: data.request.reason })}</strong></li>` : ''}
-          ${data.approvedBy ? `<li style="margin: 8px 0;"><strong>${t('approvedBy', { approvedBy: data.approvedBy })}</strong></li>` : ''}
-        </ul>
-      </div>
-      
-      <p style="font-size: 14px; color: #6b7280;">
-        ${t('footer')}
-      </p>
-      
-      <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-        <p style="font-size: 14px; color: #374151;">
-          ${t('signature')}
-        </p>
-      </div>
-    </div>
-  `;
-  
-  const text = `
-${t('greeting', { name: data.request.userName })}
-
-${t('body')}
-
-${t('details')}
-${t('type', { type: vacationTypeLabel })}
-${t('dates', { startDate, endDate })}
-${t('duration', { duration })}
-${data.request.reason ? t('reason', { reason: data.request.reason }) : ''}
-${data.approvedBy ? t('approvedBy', { approvedBy: data.approvedBy }) : ''}
-
-${t('footer')}
-
-${t('signature')}
-  `;
-  
-  await sendEmailToRecipients(
-    [data.request.userEmail],
-    subject,
-    html,
-    text
-  );
-}
-
-/**
- * Send localized denial notice email
- */
-export async function sendLocalizedDenialNotice(data: LocalizedEmailData) {
-  const t = await getTranslations({ locale: data.locale, namespace: 'emails.denialNotice' });
-  
-  // Get localized vacation type
-  const vacationTypeLabel = getVacationTypeLabelFromTranslations(data.request.type || '', (key: string) => t(key));
-  
-  // Format dates
-  const startDate = new Date(data.request.startDate).toLocaleDateString(data.locale);
-  const endDate = new Date(data.request.endDate).toLocaleDateString(data.locale);
-  
-  // Calculate duration
-  const duration = data.request.durationDays || 
-    Math.ceil((new Date(data.request.endDate).getTime() - new Date(data.request.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1;
-  
-  const subject = t('subject', { type: vacationTypeLabel });
-  const html = `
-    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-      <h2 style="color: #dc2626;">${t('greeting', { name: data.request.userName })}</h2>
-      
-      <p style="font-size: 16px; line-height: 1.6; color: #374151;">
-        ${t('body')}
-      </p>
-      
-      <div style="background-color: #fef2f2; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #dc2626;">
-        <h3 style="color: #111827; margin-top: 0;">${t('details')}</h3>
-        <ul style="list-style: none; padding: 0;">
-          <li style="margin: 8px 0;"><strong>${t('type', { type: vacationTypeLabel })}</strong></li>
-          <li style="margin: 8px 0;"><strong>${t('dates', { startDate, endDate })}</strong></li>
-          <li style="margin: 8px 0;"><strong>${t('duration', { duration })}</strong></li>
-          ${data.request.reason ? `<li style="margin: 8px 0;"><strong>${t('reason', { reason: data.request.reason })}</strong></li>` : ''}
-          ${data.deniedBy ? `<li style="margin: 8px 0;"><strong>${t('deniedBy', { deniedBy: data.deniedBy })}</strong></li>` : ''}
-          ${data.adminComment ? `<li style="margin: 8px 0;"><strong>${t('adminComment', { adminComment: data.adminComment })}</strong></li>` : ''}
-        </ul>
-      </div>
-      
-      <p style="font-size: 14px; color: #6b7280;">
-        ${t('footer')}
-      </p>
-      
-      <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-        <p style="font-size: 14px; color: #374151;">
-          ${t('signature')}
-        </p>
-      </div>
-    </div>
-  `;
-  
-  const text = `
-${t('greeting', { name: data.request.userName })}
-
-${t('body')}
-
-${t('details')}
-${t('type', { type: vacationTypeLabel })}
-${t('dates', { startDate, endDate })}
-${t('duration', { duration })}
-${data.request.reason ? t('reason', { reason: data.request.reason }) : ''}
-${data.deniedBy ? t('deniedBy', { deniedBy: data.deniedBy }) : ''}
-${data.adminComment ? t('adminComment', { adminComment: data.adminComment }) : ''}
-
-${t('footer')}
-
-${t('signature')}
-  `;
-  
-  await sendEmailToRecipients(
-    [data.request.userEmail],
-    subject,
-    html,
-    text
-  );
+  await sendEmailToRecipients(recipients, subject, html, textBody);
 }

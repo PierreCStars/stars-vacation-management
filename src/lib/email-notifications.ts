@@ -5,6 +5,7 @@
 
 import nodemailer from 'nodemailer';
 import { ADMINS } from '@/config/admins';
+import { resolveRecipients } from '@/lib/email/recipients';
 
 export interface EmailConfig {
   subject: string;
@@ -150,6 +151,10 @@ export async function sendViaSMTP(config: EmailConfig): Promise<EmailResult> {
  * Send email with multiple fallbacks
  */
 export async function sendEmailWithFallbacks(config: EmailConfig): Promise<EmailResult> {
+  // Central test-mode redirect: in test mode, every recipient collapses to the
+  // single test inbox. This is the one chokepoint all sends pass through.
+  config = { ...config, to: resolveRecipients(config.to) };
+
   console.log('📧 Sending email notification...', {
     to: config.to,
     subject: config.subject,

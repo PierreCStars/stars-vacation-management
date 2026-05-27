@@ -1,5 +1,6 @@
 import nodemailer from "nodemailer";
 import { safeTrim } from "@/lib/strings";
+import { resolveRecipients } from "@/lib/email/recipients";
 
 export function adminRecipients(): string[] {
   const list = (process.env.ADMIN_EMAILS || "")
@@ -43,7 +44,7 @@ export async function sendAdminNotification({
 }) {
   const transporter = mailer();
   const from = process.env.SMTP_USER!;
-  const to = overrideTo ? [overrideTo] : adminRecipients();
+  const to = resolveRecipients(overrideTo ? [overrideTo] : adminRecipients());
 
   await transporter.sendMail({
     from: `"Stars Vacation" <${from}>`,

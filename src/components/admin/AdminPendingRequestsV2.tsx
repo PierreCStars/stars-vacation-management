@@ -252,7 +252,70 @@ export default function AdminPendingRequestsV2() {
     }
     await handleStatusUpdate(id, 'cancelled');
   };
-  
+
+  // Hard-delete a single pending request (admin only, pending only — enforced server-side)
+  const deleteRequest = async (id: string): Promise<boolean> => {
+    const response = await fetch(`/api/vacation-requests/${id}`, { method: 'DELETE' });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err?.message || err?.error || `HTTP ${response.status}`);
+    }
+    return true;
+  };
+
+  const handleDeleteRequest = async (id: string) => {
+    if (!confirm('Delete this pending request permanently? This cannot be undone.')) return;
+    setProcessingRequests(prev => new Set(prev).add(id));
+    setActionMessage(null);
+    try {
+      await deleteRequest(id);
+      setRequests(prev => prev.filter(r => r.id !== id));
+      setSelectedRequests(prev => { const s = new Set(prev); s.delete(id); return s; });
+      setActionMessage({ type: 'success', message: 'Request deleted.' });
+    } catch (e) {
+      setActionMessage({ type: 'error', message: `Delete failed: ${e instanceof Error ? e.message : 'Unknown error'}` });
+    } finally {
+      setProcessingRequests(prev => { const s = new Set(prev); s.delete(id); return s; });
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    // Only pending requests are deletable
+    const pendingIds = requests
+      .filter(r => isPendingStatus(r.status) && selectedRequests.has(r.id))
+      .map(r => r.id);
+    if (pendingIds.length === 0) {
+      setActionMessage({ type: 'error', message: 'Select at least one pending request to delete.' });
+      return;
+    }
+    if (!confirm(`Delete ${pendingIds.length} pending request${pendingIds.length > 1 ? 's' : ''} permanently? This cannot be undone.`)) {
+      return;
+    }
+    setActionMessage(null);
+    let ok = 0;
+    const failures: string[] = [];
+    for (const id of pendingIds) {
+      try {
+        await deleteRequest(id);
+        ok++;
+      } catch (e) {
+        failures.push(id);
+      }
+    }
+    setRequests(prev => prev.filter(r => !(pendingIds.includes(r.id) && !failures.includes(r.id))));
+    setSelectedRequests(new Set());
+    setActionMessage(
+      failures.length === 0
+        ? { type: 'success', message: `${ok} request${ok > 1 ? 's' : ''} deleted.` }
+        : { type: 'error', message: `${ok} deleted, ${failures.length} failed.` },
+    );
+  };
+
+  // Number of currently-selected requests that are pending (deletable)
+  const selectedPendingCount = requests.filter(
+    r => isPendingStatus(r.status) && selectedRequests.has(r.id),
+  ).length;
+
   // Filter requests by status
   const pendingRequests = requests.filter(req => isPendingStatus(req.status));
   const reviewedRequests = requests.filter(req => isReviewedStatus(req.status));
@@ -370,6 +433,19 @@ export default function AdminPendingRequestsV2() {
                     )}
                   </div>
                   <div className="flex items-center gap-3">
+                    {selectedPendingCount > 0 && (
+                      <button
+                        onClick={handleDeleteSelected}
+                        className="inline-flex items-center px-4 py-2 border rounded-md text-xs font-semibold uppercase tracking-wider text-white transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2"
+                        style={{ backgroundColor: '#C92B12', borderColor: '#C92B12' }}
+                        title="Permanently delete the selected pending requests"
+                      >
+                        <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                        Delete selected ({selectedPendingCount})
+                      </button>
+                    )}
                     <button
                       onClick={handleSyncToCalendar}
                       disabled={isSyncing}

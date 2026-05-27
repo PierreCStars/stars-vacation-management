@@ -7,8 +7,9 @@ import { VacationRequest } from '@/lib/firebase';
 import { decideVacation } from '@/lib/vacation-orchestration';
 import { revalidateTag, revalidatePath } from 'next/cache';
 import { syncEventForRequest, refreshCacheTags } from '@/lib/calendar/sync';
-import { normalizeVacationFields } from '@/lib/normalize-vacation-fields';
+import { normalizeVacationFields, normalizeVacationStatus } from '@/lib/normalize-vacation-fields';
 import { isFullAdmin } from '@/config/admins';
+import { calendarClient, CAL_TARGET } from '@/lib/google-calendar';
 
 // Google Calendar API for Holidays Calendar
 const GOOGLE_CALENDAR_ID = 'c_e98f5350bf743174f87e1a786038cb9d103c306b7246c6200684f81c37a6a764@group.calendar.google.com';
@@ -290,6 +291,91 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
     return NextResponse.json(
       { error: 'Failed to update vacation request' },
       { status: 500 }
+    );
+  }
+}
+
+/**
+ * Hard-delete a vacation request.
+ *
+ * Guard rails:
+ * - Full-admin only.
+ * - Only PENDING requests can be deleted (approved/denied/cancelled keep their
+ *   audit trail — cancel an approved one via PATCH status=cancelled instead).
+ * - Removes the linked Google Calendar event if any, then the Firestore doc.
+ */
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const session = await getServerSession(authOptions) as any;
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!isFullAdmin(session.user.email)) {
+      return NextResponse.json(
+        { error: 'Forbidden - Admin access required to delete vacation requests' },
+        { status: 403 },
+      );
+    }
+
+    const { id } = await params;
+    const { db, error } = getFirebaseAdmin();
+    if (error || !db) {
+      return NextResponse.json(
+        { error: 'Firebase Admin not available', details: error },
+        { status: 500 },
+      );
+    }
+
+    const docRef = db.collection('vacationRequests').doc(id);
+    const snap = await docRef.get();
+    if (!snap.exists) {
+      return NextResponse.json({ error: 'Request not found' }, { status: 404 });
+    }
+
+    const data = snap.data() as any;
+    const status = normalizeVacationStatus(data?.status).toLowerCase();
+    if (status !== 'pending') {
+      return NextResponse.json(
+        {
+          error: 'Only pending requests can be deleted',
+          message: `This request is "${status}". To remove an approved request, cancel it instead.`,
+        },
+        { status: 409 },
+      );
+    }
+
+    // Best-effort calendar event removal (a pending request usually has none,
+    // but some flows pre-create events).
+    const eventId = data?.calendarEventId || data?.googleCalendarEventId || data?.googleEventId;
+    if (eventId) {
+      try {
+        const cal = calendarClient();
+        await cal.events.delete({ calendarId: CAL_TARGET, eventId });
+      } catch (calErr: any) {
+        if (calErr?.code !== 404) {
+          console.warn(`[DELETE] Failed to remove calendar event ${eventId}:`, calErr?.message);
+        }
+      }
+    }
+
+    await docRef.delete();
+
+    // Refresh any cached views that include vacation data
+    try {
+      revalidateTag('vacations');
+      revalidatePath('/[locale]/admin/vacation-requests', 'page');
+    } catch {
+      /* non-fatal */
+    }
+
+    console.log(`[DELETE] Pending request ${id} hard-deleted by ${session.user.email}`);
+    return NextResponse.json({ success: true, deletedId: id });
+
+  } catch (error) {
+    console.error('❌ Error deleting vacation request:', error);
+    return NextResponse.json(
+      { error: 'Failed to delete vacation request' },
+      { status: 500 },
     );
   }
 }

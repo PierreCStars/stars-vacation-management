@@ -101,7 +101,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL(`/${validLocale}${pathname.substring(3)}`, request.url));
   }
 
-  return NextResponse.next();
+  // Inject the current pathname into the request headers so server components
+  // (e.g. the admin layout) can read it via `headers()` and build a precise
+  // callbackUrl after sign-in.
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set('x-pathname', pathname);
+  return NextResponse.next({ request: { headers: requestHeaders } });
 }
 
 export const config = {

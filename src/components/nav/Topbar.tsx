@@ -22,23 +22,23 @@ export function Topbar() {
     pathname === href || pathname?.startsWith(href + '/') || false;
 
   const navLinkClass = (active: boolean) =>
-    `px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
+    `no-underline px-4 py-2 text-sm font-medium transition-colors border-b-2 -mb-px ${
       active
-        ? 'text-ink border-gold'
-        : 'text-slate-ardoise border-transparent hover:text-ink hover:border-gold/40'
+        ? 'text-white border-gold'
+        : 'text-white/70 border-transparent hover:text-white hover:border-gold/60'
     }`;
 
   return (
     <header
-      className="sticky top-0 z-50 bg-white/95 backdrop-blur border-b border-black/5"
+      className="sticky top-0 z-50 bg-ink border-b border-gold/50"
       role="navigation"
       aria-label="Main"
     >
-      <div className="mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8 max-w-7xl">
+      <div className="slg-container flex h-16 items-center justify-between">
         {/* Logo + wordmark */}
         <Link
           href={createLocaleUrl('/dashboard', currentLocale)}
-          className="flex items-center gap-3 shrink-0 group"
+          className="no-underline flex items-center gap-3 shrink-0 group"
           aria-label="Go to Dashboard"
         >
           <Image
@@ -50,10 +50,10 @@ export function Topbar() {
             priority
           />
           <span className="hidden sm:flex flex-col leading-none">
-            <span className="text-[10px] tracking-[0.3em] uppercase text-slate-ardoise font-medium">
+            <span className="text-[10px] tracking-[0.3em] uppercase text-white/60 font-medium">
               Star Luxury Group
             </span>
-            <span className="text-sm font-semibold tracking-wide text-ink mt-0.5">
+            <span className="text-sm font-semibold tracking-wide text-white mt-0.5">
               {tCommon('appName')}
             </span>
           </span>
@@ -93,14 +93,12 @@ export function Topbar() {
               <SignOutButton />
             </div>
           ) : (
-            <div className="text-xs uppercase tracking-widest text-slate-ardoise">
+            <div className="text-xs uppercase tracking-widest text-white/70">
               Not signed in
             </div>
           )}
         </div>
       </div>
-      {/* Filet doré sous le header */}
-      <div className="h-px w-full bg-gradient-to-r from-transparent via-gold/40 to-transparent" />
     </header>
   );
 }

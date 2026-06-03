@@ -61,10 +61,10 @@ export function AdminDropdown({ currentLocale }: AdminDropdownProps) {
       <Link
         href={createLocaleUrl('/admin/vacation-requests', currentLocale)}
         onClick={() => setIsOpen(false)}
-        className={`px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1 border-b-2 -mb-px ${
+        className={`no-underline px-4 py-2 text-sm font-medium transition-colors flex items-center gap-1 border-b-2 -mb-px ${
           hasActiveChild
-            ? 'text-ink border-gold'
-            : 'text-slate-ardoise border-transparent hover:text-ink hover:border-gold/40'
+            ? 'text-white border-gold'
+            : 'text-white/70 border-transparent hover:text-white hover:border-gold/60'
         }`}
         aria-haspopup="true"
         aria-expanded={isOpen}

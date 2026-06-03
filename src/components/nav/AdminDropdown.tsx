@@ -81,7 +81,12 @@ export function AdminDropdown({ currentLocale }: AdminDropdownProps) {
       </Link>
 
       {isOpen && (
-        <div className="absolute top-full left-0 mt-2 w-60 bg-white rounded-xl shadow-card border border-black/5 py-2 z-50">
+        // Outer wrapper carries a transparent `pt-2` bridge so the cursor can
+        // travel from the trigger to the visible card without leaving the
+        // hover-listening area (the gap used to be 8px of `mt-2` of pure void,
+        // which collapsed the menu before users could click an item).
+        <div className="absolute top-full left-0 pt-2 w-60 z-50">
+          <div className="bg-white shadow-card border border-black/5 py-2">
           {/* Management Section */}
           <div className="px-4 py-2">
             <div className="text-[10px] font-medium text-slate-ardoise uppercase tracking-[0.2em] mb-2">
@@ -146,6 +151,7 @@ export function AdminDropdown({ currentLocale }: AdminDropdownProps) {
                 {tNav('analytics')}
               </div>
             </Link>
+          </div>
           </div>
         </div>
       )}

@@ -244,6 +244,22 @@ const en = {
         "button": "Send Monthly Email",
         "sending": "Sending..."
       }
+    },
+    "employeeTable": {
+      "scoreTooltip": {
+        "title": "Leave score",
+        "body1": "Weighting of frequency (number of leaves per month) and average duration, computed over the filtered period.",
+        "body2": "The lower the score, the more present the employee. Tiers: 0-30 low, 30-60 medium, 60-100 high."
+      },
+      "balanceTooltip": {
+        "title": "Leave balance",
+        "body1": "Days approved year-to-date versus the standard annual entitlement (25 days in France & Monaco).",
+        "body2": "The month label after the bar is a projection of when the balance hits zero at the current pace."
+      },
+      "statusTooltip": {
+        "intro": "Dots show how many requests fall in each status for the current filter:",
+        "legend": "approved · pending · denied · cancelled"
+      }
     }
   },
   "emails": {
@@ -548,6 +564,22 @@ const fr = {
         "button": "Envoyer l'email mensuel",
         "sending": "Envoi..."
       }
+    },
+    "employeeTable": {
+      "scoreTooltip": {
+        "title": "Score congés",
+        "body1": "Pondération entre la fréquence (nombre de congés par mois) et la durée moyenne, calculée sur la période filtrée.",
+        "body2": "Plus le score est faible, plus l'employé est présent. Paliers : 0-30 bas, 30-60 moyen, 60-100 élevé."
+      },
+      "balanceTooltip": {
+        "title": "Solde de congés",
+        "body1": "Jours validés depuis le début de l'année par rapport au quota annuel standard (25 jours en France et à Monaco).",
+        "body2": "Le mois affiché après la barre est une projection du moment où le solde tombera à zéro au rythme actuel."
+      },
+      "statusTooltip": {
+        "intro": "Les pastilles indiquent combien de demandes sont dans chaque statut pour le filtre courant :",
+        "legend": "validées · en attente · refusées · annulées"
+      }
     }
   },
   "emails": {
@@ -851,6 +883,22 @@ const it = {
         "description": "Invia il riepilogo delle ferie validate del mese corrente alla contabilità",
         "button": "Invia email mensile",
         "sending": "Invio..."
+      }
+    },
+    "employeeTable": {
+      "scoreTooltip": {
+        "title": "Punteggio congedi",
+        "body1": "Ponderazione tra la frequenza (numero di congedi al mese) e la durata media, calcolata sul periodo filtrato.",
+        "body2": "Più il punteggio è basso, più il dipendente è presente. Livelli: 0-30 basso, 30-60 medio, 60-100 alto."
+      },
+      "balanceTooltip": {
+        "title": "Saldo congedi",
+        "body1": "Giorni approvati dall'inizio dell'anno rispetto al monte ferie annuale standard (25 giorni in Francia e Monaco).",
+        "body2": "Il mese indicato dopo la barra è una proiezione del momento in cui il saldo raggiungerà zero al ritmo attuale."
+      },
+      "statusTooltip": {
+        "intro": "I pallini indicano quante richieste sono in ciascuno stato per il filtro corrente:",
+        "legend": "approvate · in attesa · rifiutate · annullate"
       }
     }
   },

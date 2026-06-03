@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useTranslations } from 'next-intl';
 import { EmployeeRow } from './types';
 import { Sparkline } from './Sparkline';
 import { InfoTooltip } from '@/components/ui/InfoTooltip';
@@ -34,6 +35,7 @@ export function EmployeeTable({ rows }: Props) {
   const [companyFilter, setCompanyFilter] = useState<string>('all');
   const [sortKey, setSortKey] = useState<SortKey>('totalDays');
   const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
+  const tEt = useTranslations('admin.employeeTable');
 
   const companies = useMemo(() => {
     return Array.from(new Set(rows.map(r => r.company))).sort();
@@ -128,13 +130,9 @@ export function EmployeeTable({ rows }: Props) {
                   <InfoTooltip
                     content={
                       <>
-                        <strong className="block text-ink mb-1">Score congés</strong>
-                        Pondération entre la <strong>fréquence</strong> (nombre de congés par mois)
-                        et la <strong>durée</strong> moyenne, calculée sur la période filtrée.
-                        <span className="block mt-1.5">
-                          Plus le score est faible, plus l'employé est <strong>présent</strong>.
-                          Tiers&nbsp;: 0-30 bas, 30-60 moyen, 60-100 élevé.
-                        </span>
+                        <strong className="block text-ink mb-1">{tEt('scoreTooltip.title')}</strong>
+                        <span className="block">{tEt('scoreTooltip.body1')}</span>
+                        <span className="block mt-1.5">{tEt('scoreTooltip.body2')}</span>
                       </>
                     }
                   />
@@ -146,15 +144,9 @@ export function EmployeeTable({ rows }: Props) {
                   <InfoTooltip
                     content={
                       <>
-                        <strong className="block text-ink mb-1">Leave balance</strong>
-                        <span className="block mb-1.5">
-                          Days approved YTD vs the default entitlement (25 d/yr — FR/Monaco statutory).
-                          Override with the <code>DEFAULT_LEAVE_ENTITLEMENT</code> env var.
-                        </span>
-                        <span className="block">
-                          The <strong>~Mon</strong> hint = projected month the employee hits zero, based on
-                          current pace (usedYTD / months elapsed).
-                        </span>
+                        <strong className="block text-ink mb-1">{tEt('balanceTooltip.title')}</strong>
+                        <span className="block mb-1.5">{tEt('balanceTooltip.body1')}</span>
+                        <span className="block">{tEt('balanceTooltip.body2')}</span>
                       </>
                     }
                   />
@@ -166,15 +158,13 @@ export function EmployeeTable({ rows }: Props) {
                   <InfoTooltip
                     content={
                       <>
-                        <span className="block">Dots count requests in each status for the current filter:</span>
+                        <span className="block">{tEt('statusTooltip.intro')}</span>
                         <span className="block mt-1.5">
-                          <span style={{ color: '#1F6E3A' }}>●</span> approved
-                          {' · '}
-                          <span style={{ color: '#F59B42' }}>●</span> pending
-                          {' · '}
-                          <span style={{ color: '#C92B12' }}>●</span> denied
-                          {' · '}
-                          <span style={{ color: '#4A4A4A' }}>●</span> cancelled
+                          <span style={{ color: 'var(--ui-success)' }}>●</span>{' · '}
+                          <span style={{ color: 'var(--ui-warning)' }}>●</span>{' · '}
+                          <span style={{ color: 'var(--ui-danger)' }}>●</span>{' · '}
+                          <span style={{ color: '#4A4A4A' }}>●</span>
+                          <span className="block mt-1 text-[11px]">{tEt('statusTooltip.legend')}</span>
                         </span>
                       </>
                     }

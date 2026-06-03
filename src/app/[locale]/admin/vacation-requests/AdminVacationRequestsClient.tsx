@@ -546,13 +546,13 @@ export default function AdminVacationRequestsClient({
                       onClick={() => handleBulkAction("approved")}
                       className="flex-1 px-4 py-3 text-sm font-semibold uppercase tracking-widest text-white bg-ui-success hover:brightness-95 transition"
                     >
-                      Approve All Selected ({selectedRequests.size})
+                      {tVacations('approveAllSelected')} ({selectedRequests.size})
                     </button>
                     <button
                       onClick={() => handleBulkAction("denied")}
                       className="flex-1 px-4 py-3 text-sm font-semibold uppercase tracking-widest text-white bg-ui-danger hover:brightness-95 transition"
                     >
-                      Reject All Selected ({selectedRequests.size})
+                      {tVacations('rejectAllSelected')} ({selectedRequests.size})
                     </button>
                   </div>
 

@@ -76,6 +76,7 @@ const en = {
   "vacations": {
     "title": "Vacation Management",
     "subtitle": "welcome",
+    "calendarHint": "You can enter your dates directly in the fields, or click any date in the calendar — it will be filled in automatically.",
     "request": "Request Vacation",
     "approve": "Approve",
     "reject": "Reject",
@@ -389,6 +390,7 @@ const fr = {
   "vacations": {
     "title": "Gestion des congés",
     "subtitle": "welcome",
+    "calendarHint": "Vous pouvez indiquer vos dates directement dans les champs prévus, ou bien cliquer dans le calendrier sur n'importe quelle date, qui s'inscrira automatiquement dans le formulaire.",
     "request": "Demander un congé",
     "approve": "Approuver",
     "reject": "Rejeter",
@@ -692,6 +694,7 @@ const it = {
   "vacations": {
     "title": "Gestione Vacanze",
     "subtitle": "welcome",
+    "calendarHint": "Puoi inserire le date direttamente nei campi, oppure cliccare una qualsiasi data nel calendario: verrà compilata automaticamente nel modulo.",
     "request": "Richiedi Vacanza",
     "approve": "Approva",
     "reject": "Rifiuta",

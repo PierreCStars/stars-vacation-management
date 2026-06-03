@@ -230,6 +230,9 @@ export default function VacationRequestPage() {
           <p className="mt-6 text-base text-slate-ardoise/90 max-w-2xl mx-auto leading-relaxed">
             {tVacations('subtitle')}
           </p>
+          <p className="mt-3 text-sm text-slate-ardoise/80 max-w-2xl mx-auto leading-relaxed">
+            {tVacations('calendarHint')}
+          </p>
         </header>
 
         <div className="card">

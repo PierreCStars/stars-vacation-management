@@ -63,5 +63,8 @@ export default async function AdminLayout({
     );
   }
 
-  return <>{children}</>;
+  // SLG charte: any full-width band requires its content to be encadré.
+  // Wrap every /admin/** page in the shared `.slg-container` so the page
+  // body never spills edge-to-edge under the dark header.
+  return <div className="slg-container py-8">{children}</div>;
 }

@@ -32,6 +32,9 @@ interface UnifiedVacationCalendarProps {
   conflicts?: ConflictEvent[];
   highlightRange?: boolean;
   onRangeChange?: (range: { start: Date; end: Date }) => void;
+  /** Fires when the user clicks a day cell. Lets the parent (e.g. the
+   *  request form) react — typically by pre-filling its start-date input. */
+  onDayClick?: (date: Date) => void;
 }
 
 interface CalendarDay {
@@ -72,7 +75,8 @@ export default function UnifiedVacationCalendar({
   initialRange,
   conflicts = [],
   highlightRange = false,
-  onRangeChange
+  onRangeChange,
+  onDayClick
 }: UnifiedVacationCalendarProps) {
 
   // Open on the requested period's month when a range is provided (e.g. the
@@ -428,7 +432,13 @@ export default function UnifiedVacationCalendar({
                 ...bgColorStyle,
                 ...(day.isToday ? { border: '3px solid #d8B11B' } : {})
               }}
-              onClick={() => !readOnly && setSelectedDate(selectedDate?.toDateString() === day.date.toDateString() ? null : day.date)}
+              onClick={() => {
+                if (readOnly) return;
+                // 1. Toggle the local "details panel" for the clicked day.
+                setSelectedDate(selectedDate?.toDateString() === day.date.toDateString() ? null : day.date);
+                // 2. Surface the click to the parent (e.g. the request form).
+                onDayClick?.(day.date);
+              }}
             >
               <div className={`text-xs sm:text-sm font-medium ${
                 day.isWeekend ? 'text-gray-500' : day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'

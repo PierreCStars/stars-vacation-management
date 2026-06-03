@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useTranslations } from 'next-intl';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
@@ -25,6 +25,34 @@ export default function VacationRequestPage() {
   const [errorMessage, setErrorMessage] = useState('');
   const [vacationRequests, setVacationRequests] = useState<VacationRequest[]>([]);
   const [loading, setLoading] = useState(true);
+  const startDateInputRef = useRef<HTMLInputElement | null>(null);
+
+  /** Format a Date as `YYYY-MM-DD` using local time (not UTC) so that
+   *  clicking June 4 in Monaco resolves to "2026-06-04", not "2026-06-03". */
+  const toYMD = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  /** Calendar-cell click handler: pre-fill the form's start date with the
+   *  clicked day, default the end date to the same day if empty (or move
+   *  it forward if it would otherwise sit before the new start), then
+   *  scroll the start-date input into view + focus it. */
+  const handleCalendarDayClick = (date: Date) => {
+    const ymd = toYMD(date);
+    setFormData(prev => {
+      const nextEnd =
+        !prev.endDate || new Date(prev.endDate) < date ? ymd : prev.endDate;
+      return { ...prev, startDate: ymd, endDate: nextEnd };
+    });
+    // Scroll + focus on the next paint so the form is in view.
+    setTimeout(() => {
+      startDateInputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      startDateInputRef.current?.focus({ preventScroll: true });
+    }, 0);
+  };
 
   const tVacations = useTranslations('vacations');
   const tCommon = useTranslations('common');
@@ -327,6 +355,7 @@ export default function VacationRequestPage() {
                   </label>
                   <input
                     id="startDate"
+                    ref={startDateInputRef}
                     type="date"
                     name="startDate"
                     value={formData.startDate}
@@ -465,6 +494,7 @@ export default function VacationRequestPage() {
               className="w-full"
               showLegend={true}
               compact={false}
+              onDayClick={handleCalendarDayClick}
             />
           )}
         </section>

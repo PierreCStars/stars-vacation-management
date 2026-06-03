@@ -138,14 +138,14 @@ export default function AdminPendingRequestsV2() {
           type: 'error',
           message: `Failed to ${status} request: ${response.status} ${errorText}`
         });
-        console.error(`[V2] Failed to ${status} request:`, response.status);
+        console.error('[V2] Failed to %s request:', status, response.status);
       }
     } catch (error) {
       setActionMessage({
         type: 'error',
         message: `Error ${status} request: ${error instanceof Error ? error.message : 'Unknown error'}`
       });
-      console.error(`[V2] Error ${status} request:`, error);
+      console.error('[V2] Error %s request:', status, error);
     } finally {
       setProcessingRequests(prev => {
         const newSet = new Set(prev);
@@ -396,10 +396,10 @@ export default function AdminPendingRequestsV2() {
 
       {/* Action Message */}
       {actionMessage && (
-        <div className={`mb-4 p-4 rounded-lg ${
-          actionMessage.type === 'success' 
-            ? 'bg-green-50 border border-green-200 text-green-800' 
-            : 'bg-red-50 border border-red-200 text-red-800'
+        <div className={`mb-4 p-4 border ${
+          actionMessage.type === 'success'
+            ? 'border-ui-success/40 text-ui-success bg-ui-success/5'
+            : 'border-ui-danger/40 text-ui-danger bg-ui-danger/5'
         }`}>
           <div className="flex items-center">
             <div className="flex-shrink-0">
@@ -619,7 +619,7 @@ export default function AdminPendingRequestsV2() {
                         <h2 className="text-lg font-semibold text-gray-900">
                           📋 Reviewed Requests
                         </h2>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                        <span className="badge badge-approved">
                           {reviewedRequests.length}
                         </span>
                       </div>
@@ -772,11 +772,11 @@ function RequestsTable({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   {request.conflicts && request.conflicts.length > 0 ? (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                    <span className="badge badge-rejected">
                       {request.conflicts.length} conflicts
                     </span>
                   ) : (
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    <span className="badge badge-approved">
                       No conflicts
                     </span>
                   )}
@@ -790,7 +790,7 @@ function RequestsTable({
                           onStatusUpdate(request.id, 'approved');
                         }}
                         disabled={isProcessing(request.id)}
-                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="inline-flex items-center px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-white bg-ui-success hover:brightness-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
                         data-test="approve-btn"
                       >
                         {isProcessing(request.id) ? (
@@ -805,7 +805,7 @@ function RequestsTable({
                           onStatusUpdate(request.id, 'denied');
                         }}
                         disabled={isProcessing(request.id)}
-                        className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="inline-flex items-center px-3 py-1.5 text-xs font-semibold uppercase tracking-widest text-white bg-ui-danger hover:brightness-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
                         data-test="reject-btn"
                       >
                         {isProcessing(request.id) ? (
@@ -876,11 +876,11 @@ function RequestsTable({
             <div className="mb-3">
               <div className="text-sm font-medium text-gray-500">Conflicts</div>
               {request.conflicts && request.conflicts.length > 0 ? (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                <span className="badge badge-rejected">
                   {request.conflicts.length} conflicts
                 </span>
               ) : (
-                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <span className="badge badge-approved">
                   No conflicts
                 </span>
               )}
@@ -894,7 +894,7 @@ function RequestsTable({
                     onStatusUpdate(request.id, 'approved');
                   }}
                   disabled={isProcessing(request.id)}
-                  className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-semibold uppercase tracking-widest text-white bg-ui-success hover:brightness-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   data-test="approve-btn"
                 >
                   {isProcessing(request.id) ? (
@@ -909,7 +909,7 @@ function RequestsTable({
                      onStatusUpdate(request.id, 'denied');
                   }}
                   disabled={isProcessing(request.id)}
-                  className="flex-1 inline-flex items-center justify-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 inline-flex items-center justify-center px-3 py-2 text-sm font-semibold uppercase tracking-widest text-white bg-ui-danger hover:brightness-95 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   data-test="reject-btn"
                 >
                   {isProcessing(request.id) ? (
@@ -1268,7 +1268,7 @@ function ReviewedRequestsTable({
                         void onCancelRequest(request.id);
                       }}
                       disabled={isProcessing(request.id)}
-                      className="inline-flex items-center px-3 py-1.5 border border-orange-300 text-xs font-medium rounded-md text-orange-700 bg-orange-50 hover:bg-orange-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="inline-flex items-center px-3 py-1.5 border border-ui-warning/50 text-xs font-semibold uppercase tracking-widest text-ui-warning bg-ui-warning/5 hover:bg-ui-warning/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isProcessing(request.id) ? 'Cancelling...' : 'Cancel vacation'}
                     </button>
@@ -1375,7 +1375,7 @@ function ReviewedRequestsTable({
                   void onCancelRequest(request.id);
                 }}
                 disabled={isProcessing(request.id)}
-                className="w-full inline-flex items-center justify-center px-3 py-2 border border-orange-300 text-sm font-medium rounded-md text-orange-700 bg-orange-50 hover:bg-orange-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full inline-flex items-center justify-center px-3 py-2 border border-ui-warning/50 text-sm font-semibold uppercase tracking-widest text-ui-warning bg-ui-warning/5 hover:bg-ui-warning/10 transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isProcessing(request.id) ? 'Cancelling...' : 'Cancel vacation'}
               </button>

@@ -325,44 +325,9 @@ export default function AdminVacationRequestsClient({
 
   return (
     <div className="space-y-6">
-      {/* Critical debug banner - should be visible even without JS */}
-      <div 
-        data-test="debug-banner" 
-        className="fixed top-4 left-4 z-[9999] px-4 py-2 rounded bg-red-600 text-white text-sm font-bold border-2 border-yellow-400"
-        style={{ position: 'fixed', top: '16px', left: '16px', zIndex: 9999 }}
-      >
-        🚨 HYDRATION TEST: AdminVacationRequestsClient RENDERED
-      </div>
-      
-      {/* Server-side debug banner */}
-      <div className="bg-green-100 border-b border-green-400 text-green-800 px-4 py-2 text-sm font-bold">
-        ✅ AdminVacationRequestsClient RENDERED - {initialRequests.length} requests, {pending.length} pending, {reviewed.length} reviewed
-      </div>
-      
-      {/* Session debug banner */}
-      <div 
-        data-test="session-debug" 
-        className="fixed top-16 left-4 z-[9999] px-4 py-2 rounded bg-ink text-gold text-sm font-bold border-2 border-gold"
-        style={{ position: 'fixed', top: '64px', left: '16px', zIndex: 9999 }}
-      >
-        🔐 SESSION: {status} | {session?.user?.email || 'No email'} | Requests: {initialRequests.length}
-      </div>
-      
-      {/* Secondary debug banner */}
-      <div 
-        data-test="debug-banner-2" 
-        className="fixed bottom-2 right-2 z-[9999] px-3 py-1 rounded bg-ink text-gold text-xs"
-      >
-        Admin Pending Layout v2 • {version || 'no-ver'}
-      </div>
-      
-      {/* Version tag */}
-      <div className="text-xs text-gray-500 text-right">
-        Build: <span data-test="build-commit">{commit.slice(0,7)}</span>
-      </div>
       {/* Firebase Warning Banner */}
       {!isFirebaseEnabled() && (
-        <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="mb-6 border border-ui-warning/40 text-ui-warning bg-ui-warning/5 p-4">
           <div className="flex">
             <div className="flex-shrink-0">
               <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
@@ -507,7 +472,7 @@ export default function AdminVacationRequestsClient({
         {/* Tab Content */}
         <div className="p-6">
           {/* Debug info */}
-          <div className="bg-red-100 border border-red-400 text-red-800 px-4 py-2 rounded text-sm mb-4">
+          <div className="border border-ui-danger/40 text-ui-danger bg-ui-danger/5 px-4 py-2 text-sm mb-4">
             🔧 DEBUG: activeTab = "{activeTab}", effectivePending.length = {effectivePending.length}
           </div>
           
@@ -519,7 +484,7 @@ export default function AdminVacationRequestsClient({
                 </div>
                 <div className="flex items-center gap-3">
                   {effectiveConflictCount > 0 && (
-                    <span className="inline-flex items-center gap-2 px-3 py-1 bg-red-100 text-red-800 text-sm font-medium rounded-full">
+                    <span className="badge badge-rejected">
                       ⚠️ {effectiveConflictCount} {t('conflictsFound')}
                     </span>
                   )}
@@ -579,15 +544,15 @@ export default function AdminVacationRequestsClient({
                   <div className="flex gap-3">
                     <button
                       onClick={() => handleBulkAction("approved")}
-                      className="flex-1 bg-green-600 text-white px-4 py-3 rounded-md hover:bg-green-700 font-medium transition-colors"
+                      className="flex-1 px-4 py-3 text-sm font-semibold uppercase tracking-widest text-white bg-ui-success hover:brightness-95 transition"
                     >
-                      ✅ Approve All Selected ({selectedRequests.size})
+                      Approve All Selected ({selectedRequests.size})
                     </button>
                     <button
                       onClick={() => handleBulkAction("denied")}
-                      className="flex-1 bg-red-600 text-white px-4 py-3 rounded-md hover:bg-red-700 font-medium transition-colors"
+                      className="flex-1 px-4 py-3 text-sm font-semibold uppercase tracking-widest text-white bg-ui-danger hover:brightness-95 transition"
                     >
-                      ❌ Reject All Selected ({selectedRequests.size})
+                      Reject All Selected ({selectedRequests.size})
                     </button>
                   </div>
 
@@ -676,8 +641,8 @@ export default function AdminVacationRequestsClient({
                         {r.startDate}{r.endDate!==r.startDate ? ` to ${r.endDate}` : ""}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          r.status?.toLowerCase() === 'approved' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                        <span className={`badge ${
+                          r.status?.toLowerCase() === 'approved' ? 'badge-approved' : 'badge-rejected'
                         }`}>
                           {r.status}
                         </span>

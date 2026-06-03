@@ -105,6 +105,17 @@ body {
     background: var(--slg-gold);
     color: var(--slg-ink);
   }
+
+  /* SLG charte: gold rule under table headers. Applied via `thead th` so it
+     only affects actual column-header cells, not <th> tags used in summary
+     rows (some components use <th scope="row">). Components that need a
+     plain header can opt out by adding `.th-plain` on the cell. */
+  thead th {
+    border-bottom: 2px solid var(--slg-gold);
+  }
+  .th-plain {
+    border-bottom: 0 !important;
+  }
 }
 
 @layer components {
@@ -272,6 +283,29 @@ body {
   }
 
   /* Badges (status) ------------------------------------------------------- */
+  /* Modal / dialog — SLG charte: every modal carries a 3px gold strip on
+     top, which is the brand's signature on contextual overlays. Pair with
+     `.slg-modal-backdrop`. */
+  .slg-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background: rgba(10, 10, 10, 0.55);
+  }
+  .slg-modal {
+    width: 100%;
+    max-width: 32rem;
+    background: #FFFFFF;
+    border-top: 3px solid var(--slg-gold);
+    border-radius: var(--slg-radius);
+    padding: 1.75rem;
+    box-shadow: 0 24px 60px -20px rgba(10, 10, 10, 0.6);
+  }
+
   /* Status badges — square corners per SLG charte, muted SLG sem colours.
      The dot inside (::before) stays round on purpose: it's a status pip. */
   .badge {

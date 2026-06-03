@@ -16,13 +16,13 @@ export default function NoticeModal({ open, onClose, locale }: Props) {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl">
+    <div className="slg-modal-backdrop">
+      <div className="slg-modal max-w-lg">
         <h2 className="mb-3 text-xl font-semibold">Information</h2>
-        <p className="mb-6 leading-relaxed">{text}</p>
+        <p className="mb-6 leading-relaxed text-slate-ardoise">{text}</p>
         <div className="flex justify-end">
           <button
-            className="rounded-xl px-4 py-2 shadow-sm ring-1 ring-black/10 hover:bg-gray-50"
+            className="btn-secondary"
             onClick={() => {
               setIsOpen(false);
               onClose?.();

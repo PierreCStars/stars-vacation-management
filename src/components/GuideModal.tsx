@@ -27,11 +27,12 @@ export default function GuideModal({ isOpen, onClose }: GuideModalProps) {
       }}
       onClick={onClose}
     >
-      <div 
-        className="bg-white rounded-lg shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden"
+      <div
+        className="bg-white shadow-2xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-hidden"
         style={{
           backgroundColor: 'white',
-          borderRadius: '0.5rem',
+          borderTop: '3px solid #D8B11B',
+          borderRadius: '2px',
           boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
           maxWidth: '64rem',
           width: '100%',

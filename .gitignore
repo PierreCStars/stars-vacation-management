@@ -49,3 +49,4 @@ next-env.d.ts
 !eslint.config.mjs
 
 /generated/prisma
+.email-snapshots/

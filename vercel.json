@@ -17,6 +17,14 @@
     {
       "path": "/api/cron/monthly-vacation-summary",
       "schedule": "0 1 27 * *"
+    },
+    {
+      "path": "/api/cron/health-watch",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/sync-forbidden-windows",
+      "schedule": "0 2 1 * *"
     }
   ]
 }

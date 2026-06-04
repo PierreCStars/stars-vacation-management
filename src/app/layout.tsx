@@ -1,5 +1,6 @@
 import './globals.css';
 import { Montserrat } from 'next/font/google';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import SessionProviderWrapper from '@/components/SessionProviderWrapper';
 import { assertRequiredEnv } from "@/lib/assertEnv";
 
@@ -34,6 +35,9 @@ export default function RootLayout({ children }: any) {
         <SessionProviderWrapper>
           {children}
         </SessionProviderWrapper>
+        {/* Vercel Speed Insights — passive collection of real Web Vitals
+            (LCP, FID, CLS, INP) from production users. No-op in dev. */}
+        <SpeedInsights />
       </body>
     </html>
   );

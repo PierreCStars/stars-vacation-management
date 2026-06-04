@@ -1,4 +1,5 @@
 'use client';
+import { useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { createLocaleUrl } from '@/i18n/routing';
 import { useTranslations } from 'next-intl';
@@ -17,6 +18,7 @@ export function Topbar() {
   const tCommon = useTranslations('common');
   const tNav = useTranslations('nav');
   const currentLocale = pathname?.split('/')[1] || 'en';
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const isActive = (href: string) =>
     pathname === href || pathname?.startsWith(href + '/') || false;
@@ -41,12 +43,15 @@ export function Topbar() {
           className="no-underline flex items-center gap-3 shrink-0 group"
           aria-label="Go to Dashboard"
         >
+          {/* Real intrinsic aspect ratio: 1894x1339 (~1.41). NEVER force a
+              square box on the logo — preserve the source ratio at all sizes
+              (SLG brand rule: the logo is never deformed). */}
           <Image
             src="/stars-logo.png"
             alt="Stars Logo"
-            width={36}
-            height={36}
-            className="h-9 w-9 transition-transform group-hover:scale-105"
+            width={1894}
+            height={1339}
+            className="h-9 w-auto transition-transform group-hover:scale-105"
             priority
           />
           <span className="hidden sm:flex flex-col leading-none">
@@ -85,7 +90,7 @@ export function Topbar() {
           <LanguageSwitcher />
 
           {session?.user ? (
-            <div className="flex items-center gap-3">
+            <div className="hidden sm:flex items-center gap-3">
               <Avatar
                 name={session.user.name || session.user.email || 'User'}
                 src={session.user.image}
@@ -93,12 +98,100 @@ export function Topbar() {
               <SignOutButton />
             </div>
           ) : (
-            <div className="text-xs uppercase tracking-widest text-white/70">
+            <div className="hidden sm:block text-xs uppercase tracking-widest text-white/70">
               Not signed in
             </div>
           )}
+
+          {/* Mobile hamburger — surfaces nav + sign-out on viewports < md
+              where the desktop nav is hidden. */}
+          <button
+            type="button"
+            onClick={() => setMobileMenuOpen(v => !v)}
+            className="md:hidden inline-flex items-center justify-center w-10 h-10 text-white/80 hover:text-white border border-white/20 hover:border-white/40 transition-colors"
+            aria-label="Toggle menu"
+            aria-expanded={mobileMenuOpen}
+            aria-controls="mobile-menu"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              {mobileMenuOpen ? (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              ) : (
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              )}
+            </svg>
+          </button>
         </div>
       </div>
+
+      {/* Mobile menu panel — full-width dropdown under the header, only on < md */}
+      {mobileMenuOpen && (
+        <div id="mobile-menu" className="md:hidden bg-ink border-t border-white/10">
+          <nav className="slg-container py-3 flex flex-col gap-1">
+            <Link
+              href={createLocaleUrl('/dashboard', currentLocale)}
+              onClick={() => setMobileMenuOpen(false)}
+              className={`no-underline px-3 py-2 text-sm font-medium transition-colors ${
+                isActive('/dashboard') ? 'text-white border-l-2 border-gold pl-3' : 'text-white/80 hover:text-white pl-3'
+              }`}
+            >
+              {tNav('dashboard')}
+            </Link>
+            <Link
+              href={createLocaleUrl('/vacation-request', currentLocale)}
+              onClick={() => setMobileMenuOpen(false)}
+              className={`no-underline px-3 py-2 text-sm font-medium transition-colors ${
+                isActive('/vacation-request') ? 'text-white border-l-2 border-gold pl-3' : 'text-white/80 hover:text-white pl-3'
+              }`}
+            >
+              {tNav('vacationRequests')}
+            </Link>
+            {isAdmin(session?.user?.email) && (
+              <>
+                <Link
+                  href={createLocaleUrl('/admin/vacation-requests', currentLocale)}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`no-underline px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive('/admin/vacation-requests') ? 'text-white border-l-2 border-gold pl-3' : 'text-white/80 hover:text-white pl-3'
+                  }`}
+                >
+                  {tNav('administration')} — {tNav('vacationRequests')}
+                </Link>
+                <Link
+                  href={createLocaleUrl('/admin/analytics', currentLocale)}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`no-underline px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive('/admin/analytics') ? 'text-white border-l-2 border-gold pl-3' : 'text-white/80 hover:text-white pl-3'
+                  }`}
+                >
+                  {tNav('administration')} — {tNav('analytics')}
+                </Link>
+                <Link
+                  href={createLocaleUrl('/admin/setup', currentLocale)}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`no-underline px-3 py-2 text-sm font-medium transition-colors ${
+                    isActive('/admin/setup') ? 'text-white border-l-2 border-gold pl-3' : 'text-white/80 hover:text-white pl-3'
+                  }`}
+                >
+                  {tNav('administration')} — {tNav('setup')}
+                </Link>
+              </>
+            )}
+            {/* Avatar + Sign out collapse here on small screens since the
+                right-side controls are hidden via `hidden sm:flex`. */}
+            {session?.user && (
+              <div className="mt-2 pt-3 border-t border-white/10 flex items-center gap-3 sm:hidden">
+                <Avatar
+                  name={session.user.name || session.user.email || 'User'}
+                  src={session.user.image}
+                />
+                <span className="text-xs text-white/70 truncate">{session.user.email}</span>
+                <span className="ml-auto"><SignOutButton /></span>
+              </div>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

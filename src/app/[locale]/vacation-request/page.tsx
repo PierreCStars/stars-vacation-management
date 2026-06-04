@@ -218,7 +218,9 @@ export default function VacationRequestPage() {
             className="inline-block mb-5 transition-transform hover:scale-105"
             aria-label="Stars"
           >
-            <Image src="/stars-logo.png" alt="Stars" width={64} height={64} priority />
+            {/* SLG brand rule: logo never deformed. Pass real intrinsic
+                dimensions (1894x1339) and let h-16 + w-auto preserve ratio. */}
+            <Image src="/stars-logo.png" alt="Stars" width={1894} height={1339} className="h-16 w-auto" priority />
           </Link>
           <p className="eyebrow mb-3">Star Luxury Group</p>
           <h1 className="!font-light tracking-tight">

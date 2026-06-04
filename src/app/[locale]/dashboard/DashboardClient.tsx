@@ -57,11 +57,14 @@ export default function DashboardClient() {
             className="inline-block mb-6 transition-transform hover:scale-105"
             aria-label="Stars"
           >
+            {/* SLG brand rule: logo never deformed. Intrinsic 1894x1339 +
+                h-22 w-auto preserve ratio. */}
             <Image
               src="/stars-logo.png"
               alt="Stars"
-              width={88}
-              height={88}
+              width={1894}
+              height={1339}
+              className="h-20 w-auto"
               priority
             />
           </Link>

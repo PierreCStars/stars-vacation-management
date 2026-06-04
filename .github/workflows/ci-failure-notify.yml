@@ -1,0 +1,58 @@
+name: CI failure → email pierre
+
+# Trigger on completion of the main CI workflow. Fires regardless of
+# branch (main pushes and pull requests both). Only the "failure" /
+# "cancelled" / "timed_out" conclusions actually send a mail; success
+# is a no-op (handled in the script below).
+on:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  notify:
+    if: github.event.workflow_run.conclusion != 'success'
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+
+    steps:
+      - name: Notify Vercel webhook
+        env:
+          CI_ALERT_SECRET: ${{ secrets.CI_ALERT_SECRET }}
+          # Run details — these are auto-populated by the workflow_run event.
+          WORKFLOW: ${{ github.event.workflow_run.name }}
+          CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          BRANCH: ${{ github.event.workflow_run.head_branch }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          ACTOR: ${{ github.event.workflow_run.actor.login }}
+          ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+        run: |
+          if [ -z "$CI_ALERT_SECRET" ]; then
+            echo "::warning::CI_ALERT_SECRET not set in repo secrets — skipping mail."
+            exit 0
+          fi
+          payload=$(jq -nc \
+            --arg workflow "$WORKFLOW" \
+            --arg conclusion "$CONCLUSION" \
+            --arg branch "$BRANCH" \
+            --arg sha "$SHA" \
+            --arg runUrl "$RUN_URL" \
+            --arg actor "$ACTOR" \
+            --argjson attempt "${ATTEMPT:-1}" \
+            '{workflow:$workflow,conclusion:$conclusion,branch:$branch,sha:$sha,runUrl:$runUrl,actor:$actor,attempt:$attempt}')
+          echo "Sending alert: $payload"
+          http_code=$(curl -s -o /tmp/resp.json -w '%{http_code}' \
+            -X POST 'https://starsvacationmanagementv2.vercel.app/api/internal/ci-failure-alert' \
+            -H "Authorization: Bearer $CI_ALERT_SECRET" \
+            -H 'Content-Type: application/json' \
+            --data "$payload")
+          echo "HTTP $http_code"
+          cat /tmp/resp.json
+          if [ "$http_code" != "200" ]; then
+            echo "::warning::CI failure webhook returned $http_code"
+          fi

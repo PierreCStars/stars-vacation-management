@@ -1,0 +1,51 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    name: Typecheck · Lint · Build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Wipe the incremental build cache so typecheck sees the real state.
+      # (Local dev has been bitten by stale tsbuildinfo letting bad code
+      # ship to prod before — see commit 8e2aae6.)
+      - name: Typecheck (clean)
+        run: |
+          rm -f tsconfig.tsbuildinfo
+          npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+        continue-on-error: true # don't block merges on lint warnings yet
+
+      - name: Build
+        run: npm run build
+        env:
+          # Build needs NEXTAUTH_SECRET to satisfy `assertRequiredEnv()` in
+          # `src/lib/auth.ts`. We provide a throwaway value — runtime secrets
+          # come from Vercel env in production, not from CI.
+          NEXTAUTH_SECRET: ci-placeholder-do-not-use-at-runtime
+          NEXTAUTH_URL: http://localhost:3000

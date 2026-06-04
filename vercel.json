@@ -20,7 +20,7 @@
     },
     {
       "path": "/api/cron/health-watch",
-      "schedule": "0 */6 * * *"
+      "schedule": "0 9 * * *"
     },
     {
       "path": "/api/cron/sync-forbidden-windows",

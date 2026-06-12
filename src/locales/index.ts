@@ -1,5 +1,28 @@
 // Direct JSON content to avoid import issues with Next.js 15
 const en = {
+  "adminOptions": {
+    "noticeSection": "Information periods (popup)",
+    "noticeHelp": "Configure the popup shown to users at sign-in. A period appears if it is enabled and today's date is within its range.",
+    "addWindow": "Add a period",
+    "remove": "Remove",
+    "enabled": "Enabled",
+    "label": "Label",
+    "startDate": "Start date",
+    "endDate": "End date",
+    "messageFr": "Message (FR)",
+    "messageEn": "Message (EN)",
+    "messageIt": "Message (IT)",
+    "save": "Save",
+    "saving": "Saving…",
+    "saved": "Saved",
+    "saveError": "Error while saving",
+    "loading": "Loading…",
+    "translate": "Translate",
+    "translating": "Translating…",
+    "translateError": "Translation failed",
+    "actionsSection": "Actions",
+    "settingsSection": "Settings"
+  },
   "common": {
     "appName": "Stars Vacation Management",
     "loading": "Loading...",
@@ -320,6 +343,29 @@ const en = {
 };
 
 const fr = {
+  "adminOptions": {
+    "noticeSection": "Périodes d'information (popup)",
+    "noticeHelp": "Configurez la popup affichée aux utilisateurs à la connexion. Une période s'affiche si elle est activée et que la date du jour est dans sa plage.",
+    "addWindow": "Ajouter une période",
+    "remove": "Supprimer",
+    "enabled": "Activée",
+    "label": "Libellé",
+    "startDate": "Date de début",
+    "endDate": "Date de fin",
+    "messageFr": "Message (FR)",
+    "messageEn": "Message (EN)",
+    "messageIt": "Message (IT)",
+    "save": "Enregistrer",
+    "saving": "Enregistrement…",
+    "saved": "Enregistré",
+    "saveError": "Erreur lors de l'enregistrement",
+    "loading": "Chargement…",
+    "translate": "Traduire",
+    "translating": "Traduction…",
+    "translateError": "Échec de la traduction",
+    "actionsSection": "Actions",
+    "settingsSection": "Réglages"
+  },
   "common": {
     "appName": "Gestion des congés Stars",
     "loading": "Chargement...",
@@ -640,6 +686,29 @@ const fr = {
 };
 
 const it = {
+  "adminOptions": {
+    "noticeSection": "Periodi informativi (popup)",
+    "noticeHelp": "Configura il popup mostrato agli utenti all'accesso. Un periodo appare se è attivo e la data odierna rientra nel suo intervallo.",
+    "addWindow": "Aggiungi un periodo",
+    "remove": "Rimuovi",
+    "enabled": "Attiva",
+    "label": "Etichetta",
+    "startDate": "Data di inizio",
+    "endDate": "Data di fine",
+    "messageFr": "Messaggio (FR)",
+    "messageEn": "Messaggio (EN)",
+    "messageIt": "Messaggio (IT)",
+    "save": "Salva",
+    "saving": "Salvataggio…",
+    "saved": "Salvato",
+    "saveError": "Errore durante il salvataggio",
+    "loading": "Caricamento…",
+    "translate": "Traduci",
+    "translating": "Traduzione…",
+    "translateError": "Traduzione non riuscita",
+    "actionsSection": "Azioni",
+    "settingsSection": "Impostazioni"
+  },
   "common": {
     "appName": "Gestione Vacanze Stars",
     "loading": "Caricamento...",

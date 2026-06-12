@@ -3,8 +3,9 @@
 /**
  * Year-specific forbidden windows (inclusive ISO dates).
  * Datés volontairement : ces événements ont une date précise chaque année,
- * donc on ne bloque QUE l'occurrence 2026 — pas tous les 6-10 mai à perpétuité.
+ * donc on ne bloque QUE l'occurrence concernée — pas tous les 6-10 mai à perpétuité.
  * Mettre à jour ces dates chaque année (ou les déplacer en config/env).
+ * NOTE 2026-06 : occurrences 2026 passées ; à actualiser en 2027.
  */
 export const FORBIDDEN_WINDOWS = [
   { label: 'Top Marques', start: '2026-05-06', end: '2026-05-10' },

@@ -17,6 +17,7 @@ export default function AdminSetupClient() {
   const t = useTranslations('admin');
   const tSetup = useTranslations('admin.setup');
   const tCommon = useTranslations('common');
+  const tOpt = useTranslations('adminOptions');
 
   const handleVacationCreated = () => {
     setActionMessage({
@@ -306,13 +307,14 @@ export default function AdminSetupClient() {
         </div>
       )}
 
-      {/* Action Cards */}
+      {/* Actions */}
+      <h2 className="text-xs uppercase tracking-widest text-slate-ardoise mb-4">{tOpt('actionsSection')}</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Create Vacation Card */}
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">{tSetup('createVacation.title')}</h3>
-            <svg className="w-8 h-8 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-8 h-8 text-slate-ardoise" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
           </div>
@@ -329,7 +331,7 @@ export default function AdminSetupClient() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">{tSetup('syncCalendar.title')}</h3>
-            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-8 h-8 text-slate-ardoise" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
@@ -337,11 +339,11 @@ export default function AdminSetupClient() {
           <button
             onClick={handleSyncToCalendar}
             disabled={isSyncing}
-            className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-ink bg-gold hover:bg-[#C49E15] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSyncing ? (
               <>
-                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                <div className="animate-spin h-4 w-4 border-2 border-ink border-t-transparent rounded-full mr-2"></div>
                 {tSetup('syncCalendar.syncing')}
               </>
             ) : (
@@ -359,7 +361,7 @@ export default function AdminSetupClient() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">{tSetup('syncEventCalendar.title')}</h3>
-            <svg className="w-8 h-8 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-8 h-8 text-slate-ardoise" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </div>
@@ -367,11 +369,11 @@ export default function AdminSetupClient() {
           <button
             onClick={handleSyncEventCalendar}
             disabled={isSyncingEvents}
-            className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-orange-600 hover:bg-orange-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-ink bg-gold hover:bg-[#C49E15] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSyncingEvents ? (
               <>
-                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full mr-2"></div>
+                <div className="animate-spin h-4 w-4 border-2 border-ink border-t-transparent rounded-full mr-2"></div>
                 {tSetup('syncEventCalendar.syncing')}
               </>
             ) : (
@@ -389,7 +391,7 @@ export default function AdminSetupClient() {
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">{tSetup('sendEmail.title')}</h3>
-            <svg className="w-8 h-8 text-gold" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-8 h-8 text-slate-ardoise" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
@@ -416,8 +418,12 @@ export default function AdminSetupClient() {
         </div>
       </div>
 
-      {/* Notice (popup) settings */}
-      <NoticeSettingsSection />
+      {/* Settings */}
+      <h2 className="text-xs uppercase tracking-widest text-slate-ardoise mt-12 mb-4">{tOpt('settingsSection')}</h2>
+      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-1">{tOpt('noticeSection')}</h3>
+        <NoticeSettingsSection />
+      </div>
 
       {/* Create Vacation Modal */}
       <CreateVacationModal

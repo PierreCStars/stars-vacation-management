@@ -16,7 +16,12 @@ const en = {
     "saving": "Saving…",
     "saved": "Saved",
     "saveError": "Error while saving",
-    "loading": "Loading…"
+    "loading": "Loading…",
+    "translate": "Translate",
+    "translating": "Translating…",
+    "translateError": "Translation failed",
+    "actionsSection": "Actions",
+    "settingsSection": "Settings"
   },
   "common": {
     "appName": "Stars Vacation Management",
@@ -354,7 +359,12 @@ const fr = {
     "saving": "Enregistrement…",
     "saved": "Enregistré",
     "saveError": "Erreur lors de l'enregistrement",
-    "loading": "Chargement…"
+    "loading": "Chargement…",
+    "translate": "Traduire",
+    "translating": "Traduction…",
+    "translateError": "Échec de la traduction",
+    "actionsSection": "Actions",
+    "settingsSection": "Réglages"
   },
   "common": {
     "appName": "Gestion des congés Stars",
@@ -692,7 +702,12 @@ const it = {
     "saving": "Salvataggio…",
     "saved": "Salvato",
     "saveError": "Errore durante il salvataggio",
-    "loading": "Caricamento…"
+    "loading": "Caricamento…",
+    "translate": "Traduci",
+    "translating": "Traduzione…",
+    "translateError": "Traduzione non riuscita",
+    "actionsSection": "Azioni",
+    "settingsSection": "Impostazioni"
   },
   "common": {
     "appName": "Gestione Vacanze Stars",

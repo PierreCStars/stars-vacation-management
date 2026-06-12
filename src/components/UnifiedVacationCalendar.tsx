@@ -17,7 +17,19 @@ interface CompanyEvent {
   startDate: string;
   endDate: string;
   location: string;
+  /** 'holiday-fr' = férié français (calendrier Google FR), stylé en hachures bleues. */
+  kind?: string;
 }
+
+// Hachures fériés — palette SLG muted (brique pour Monaco, bleu retenu pour la France).
+const MC_HOLIDAY_STRIPES: React.CSSProperties = {
+  backgroundImage:
+    'repeating-linear-gradient(135deg, rgba(162,59,45,0.32) 0 6px, rgba(162,59,45,0.10) 6px 12px)',
+};
+const FR_HOLIDAY_STRIPES: React.CSSProperties = {
+  backgroundImage:
+    'repeating-linear-gradient(135deg, rgba(62,95,138,0.32) 0 6px, rgba(62,95,138,0.10) 6px 12px)',
+};
 
 
 interface UnifiedVacationCalendarProps {
@@ -45,6 +57,7 @@ interface CalendarDay {
   isWeekend: boolean;
   vacations: VacationRequest[];
   companyEvents: CompanyEvent[];
+  frenchHolidays: CompanyEvent[];
   monacoHolidays: MonacoHoliday[];
   conflictCount: number;
   hasConflict: boolean;
@@ -190,7 +203,7 @@ export default function UnifiedVacationCalendar({
 
       // Find company events for this date
       // Note: Company events from Google Calendar are normalized to use inclusive end dates
-      const dayCompanyEvents = companyEvents.filter(event => {
+      const isOnDate = (event: CompanyEvent) => {
         try {
           const start = parseLocalDate(event.startDate);
           const end = parseLocalDate(event.endDate);
@@ -199,7 +212,11 @@ export default function UnifiedVacationCalendar({
         } catch (error) {
           return false;
         }
-      });
+      };
+      // Les fériés français (kind 'holiday-fr') sont séparés des événements
+      // d'entreprise : style dédié (hachures bleues) et exclus du comptage de conflits.
+      const dayCompanyEvents = companyEvents.filter(e => e.kind !== 'holiday-fr' && isOnDate(e));
+      const dayFrenchHolidays = companyEvents.filter(e => e.kind === 'holiday-fr' && isOnDate(e));
 
       // Find conflict events for this date
       const dayConflictEvents = conflicts.filter(conflict => {
@@ -254,6 +271,7 @@ export default function UnifiedVacationCalendar({
         isWeekend,
         vacations: dayVacations,
         companyEvents: dayCompanyEvents,
+        frenchHolidays: dayFrenchHolidays,
         monacoHolidays: dayMonacoHolidays,
         conflictCount: totalEvents,
         hasConflict,
@@ -397,6 +415,7 @@ export default function UnifiedVacationCalendar({
             // Conflict (vivid red) > Requested period (vivid orange) > Holiday/Event (grey)
             //   > Weekend (darker grey) > default
             const hasMonacoHoliday = day.monacoHolidays.length > 0;
+            const hasFrenchHoliday = day.frenchHolidays.length > 0;
             const hasCompanyEvent = day.companyEvents.length > 0;
             const hasConflictEvent = day.conflictEvents && day.conflictEvents.length > 0;
 
@@ -412,8 +431,20 @@ export default function UnifiedVacationCalendar({
                 backgroundColor: 'rgba(249, 115, 22, 0.28)',
                 boxShadow: 'inset 0 0 0 2px #F97316',
               };
-            } else if (hasMonacoHoliday || hasCompanyEvent) {
-              // Neutral grey for holidays and company events
+            } else if (hasMonacoHoliday && hasFrenchHoliday) {
+              // Férié commun MC + FR : hachures rouges + liseré bleu.
+              bgColorStyle = {
+                ...MC_HOLIDAY_STRIPES,
+                boxShadow: 'inset 0 0 0 2px rgba(62,95,138,0.55)',
+              };
+            } else if (hasMonacoHoliday) {
+              // Férié monégasque : hachures rouges (brique SLG)
+              bgColorStyle = { ...MC_HOLIDAY_STRIPES };
+            } else if (hasFrenchHoliday) {
+              // Férié français : hachures bleues
+              bgColorStyle = { ...FR_HOLIDAY_STRIPES };
+            } else if (hasCompanyEvent) {
+              // Neutral grey for company events
               bgColorStyle = { backgroundColor: '#9CA3AF' };
             } else if (day.isWeekend) {
               // Slightly darker grey for weekends, distinct from holidays
@@ -448,16 +479,33 @@ export default function UnifiedVacationCalendar({
                 {day.dayNumber}
               </div>
               
-              {/* Monaco Holidays - Display with name */}
+              {/* Monaco Holidays - Display with name (hachures rouges) */}
               {day.monacoHolidays.length > 0 && (
                 <div className="mt-1 space-y-0.5">
                   {day.monacoHolidays.map((holiday, holidayIndex) => (
                     <div
                       key={`holiday-${holidayIndex}`}
-                      className="text-xs p-1 rounded truncate font-medium text-ink"
-                      title={`${holiday.title}${holiday.description ? ` • ${holiday.description}` : ''}`}
+                      className="text-xs p-1 rounded truncate font-medium"
+                      style={{ color: '#A23B2D' }}
+                      title={`Férié Monaco — ${holiday.title}${holiday.description ? ` • ${holiday.description}` : ''}`}
                     >
-                      🏛️ {holiday.title}
+                      MC · {holiday.title}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* French Holidays - Display with name (hachures bleues) */}
+              {day.frenchHolidays.length > 0 && (
+                <div className="mt-1 space-y-0.5">
+                  {day.frenchHolidays.map((holiday, holidayIndex) => (
+                    <div
+                      key={`fr-holiday-${holidayIndex}`}
+                      className="text-xs p-1 rounded truncate font-medium"
+                      style={{ color: '#3E5F8A' }}
+                      title={`Férié France — ${holiday.title}`}
+                    >
+                      FR · {holiday.title}
                     </div>
                   ))}
                 </div>
@@ -692,8 +740,16 @@ export default function UnifiedVacationCalendar({
                 </div>
               )}
               <div className="flex items-center space-x-1 sm:space-x-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={MC_HOLIDAY_STRIPES}></div>
+                <span className="text-xs sm:text-sm text-slate-ardoise">Férié Monaco</span>
+              </div>
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={FR_HOLIDAY_STRIPES}></div>
+                <span className="text-xs sm:text-sm text-slate-ardoise">Férié France</span>
+              </div>
+              <div className="flex items-center space-x-1 sm:space-x-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#9CA3AF' }}></div>
-                <span className="text-xs sm:text-sm text-slate-ardoise">Holidays & Events</span>
+                <span className="text-xs sm:text-sm text-slate-ardoise">Events</span>
               </div>
               <div className="flex items-center space-x-1 sm:space-x-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#1F6E3A' }}></div>

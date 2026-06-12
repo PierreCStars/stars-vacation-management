@@ -139,11 +139,14 @@ export async function GET(request: NextRequest) {
     const timeMin = searchParams.get('timeMin');
     const timeMax = searchParams.get('timeMax');
     
-    // Define calendar IDs - company events calendar, Monaco holidays calendar, and French holidays calendar
-    // Use environment variable if available, otherwise fallback to hardcoded ID
-    const companyEventsCalendarId = process.env.GOOGLE_CALENDAR_SOURCE_ID || 
+    // Define calendar IDs - company events calendar and French holidays calendar.
+    // Use environment variable if available, otherwise fallback to hardcoded ID.
+    // NOTE (2026-06-12) : le calendrier Google des fériés monégasques
+    // (en-gb.mc#holiday@group.v.calendar.google.com) a été RETIRÉ — ses dates
+    // étaient erronées. Les fériés MC viennent exclusivement de
+    // src/lib/monaco-holidays.ts (source officielle monservicepublic.gouv.mc).
+    const companyEventsCalendarId = process.env.GOOGLE_CALENDAR_SOURCE_ID ||
       'c_1ee147e8254f6b2d5985d9ce6c4f9b39983d00cdcfe3c3732fa3aa33a1e30e0e@group.calendar.google.com';
-    const monacoHolidaysCalendarId = 'en-gb.mc#holiday@group.v.calendar.google.com';
     const frenchHolidaysCalendarId = 'en-gb.french#holiday@group.v.calendar.google.com';
     const fallbackCalendarId = process.env.GOOGLE_CALENDAR_ID || companyEventsCalendarId;
     const includeVacationRequests = searchParams.get('includeVacationRequests') !== 'false';
@@ -368,24 +371,9 @@ export async function GET(request: NextRequest) {
       }
     }
     
-    // Also fetch from Monaco holidays calendar
-    try {
-      const holidaysResponse = await calendar.events.list({
-        calendarId: monacoHolidaysCalendarId,
-        timeMin: startDate.toISOString(),
-        timeMax: endDate.toISOString(),
-        singleEvents: true,
-        orderBy: 'startTime',
-      });
-
-      const holidaysEvents = holidaysResponse.data.items || [];
-      console.log(`✅ Found ${holidaysEvents.length} Monaco holidays calendar events`);
-      events.push(...holidaysEvents);
-    } catch (holidaysError) {
-      console.error('[CALENDAR_API] Failed to fetch from Monaco holidays calendar:', holidaysError);
-    }
-    
-    // Also fetch from French holidays calendar
+    // Fetch French holidays calendar — events tagged so the UI can style them
+    // (hachures bleues). Monaco holidays are NOT fetched from Google anymore
+    // (wrong dates) — they come from src/lib/monaco-holidays.ts only.
     try {
       const frenchHolidaysResponse = await calendar.events.list({
         calendarId: frenchHolidaysCalendarId,
@@ -395,7 +383,8 @@ export async function GET(request: NextRequest) {
         orderBy: 'startTime',
       });
 
-      const frenchHolidaysEvents = frenchHolidaysResponse.data.items || [];
+      const frenchHolidaysEvents = (frenchHolidaysResponse.data.items || [])
+        .map(e => ({ ...e, _kind: 'holiday-fr' as const }));
       console.log(`✅ Found ${frenchHolidaysEvents.length} French holidays calendar events`);
       events.push(...frenchHolidaysEvents);
     } catch (frenchHolidaysError) {
@@ -477,6 +466,7 @@ export async function GET(request: NextRequest) {
           company: company,
           userName: userName,
           htmlLink: event.htmlLink,
+          kind: (event as { _kind?: string })._kind,
         };
       });
 

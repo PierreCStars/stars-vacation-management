@@ -41,6 +41,13 @@ jobs:
         run: npm run lint
         continue-on-error: true # don't block merges on lint warnings yet
 
+      # Inherited from the old firebase-hosting-merge.yml workflow (removed
+      # with the Vercel migration). 21/165 tests currently fail on main, so
+      # this stays non-blocking until the suite is green.
+      - name: Test (vitest)
+        run: npm test
+        continue-on-error: true
+
       - name: Build
         run: npm run build
         env:

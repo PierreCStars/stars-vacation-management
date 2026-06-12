@@ -5,6 +5,13 @@ import { useTranslations } from 'next-intl';
 
 type Lang = 'fr' | 'en' | 'it';
 const LANGS: Lang[] = ['fr', 'en', 'it'];
+
+/**
+ * Service de traduction EN SOMMEIL (décision 2026-06-12).
+ * Pour réactiver : passer ce flag à true ici ET dans
+ * src/app/api/admin/translate/route.ts (TRANSLATE_ENABLED).
+ */
+const TRANSLATE_ENABLED = false;
 const MSG_KEY: Record<Lang, 'messageFr' | 'messageEn' | 'messageIt'> = {
   fr: 'messageFr',
   en: 'messageEn',
@@ -172,15 +179,17 @@ export default function NoticeSettingsSection() {
                     <div key={lang}>
                       <div className="flex items-center justify-between">
                         <span className="text-sm text-gray-700">{t(MSG_KEY[lang])}</span>
-                        <button
-                          type="button"
-                          className="text-xs font-medium text-gold hover:underline disabled:opacity-50"
-                          disabled={isBusy || !w.message[lang]?.trim()}
-                          onClick={() => translate(i, lang)}
-                          title={t('translate')}
-                        >
-                          {isBusy ? t('translating') : `↳ ${t('translate')}`}
-                        </button>
+                        {TRANSLATE_ENABLED && (
+                          <button
+                            type="button"
+                            className="text-xs font-medium text-gold hover:underline disabled:opacity-50"
+                            disabled={isBusy || !w.message[lang]?.trim()}
+                            onClick={() => translate(i, lang)}
+                            title={t('translate')}
+                          >
+                            {isBusy ? t('translating') : `↳ ${t('translate')}`}
+                          </button>
+                        )}
                       </div>
                       <textarea
                         className={inputCls}

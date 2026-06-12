@@ -13,12 +13,23 @@ const LANG_NAME: Record<Lang, string> = { fr: 'French', en: 'English', it: 'Ital
 const MODEL = 'openai/gpt-4o-mini'; // via Vercel AI Gateway (provider/model)
 
 /**
+ * Service de traduction EN SOMMEIL (décision 2026-06-12).
+ * Pour réactiver : passer ce flag à true ici ET dans
+ * src/components/admin/NoticeSettingsSection.tsx (TRANSLATE_ENABLED),
+ * puis vérifier que l'AI Gateway est actif sur l'équipe Vercel.
+ */
+const TRANSLATE_ENABLED = false;
+
+/**
  * POST /api/admin/translate
  * Body: { text: string, source: Lang, targets: Lang[] }
  * Returns: { translations: Partial<Record<Lang, string>> }
  * Admin-only. Uses Vercel AI Gateway.
  */
 export async function POST(req: NextRequest) {
+  if (!TRANSLATE_ENABLED) {
+    return NextResponse.json({ error: 'Translation service disabled' }, { status: 503 });
+  }
   const session = await getServerSession(authOptions);
   if (!session?.user?.email || !isFullAdmin(session.user.email)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });

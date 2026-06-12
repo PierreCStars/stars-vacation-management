@@ -1,7 +1,15 @@
 /**
  * Monaco Public Holidays Provider
- * Provides typed events for Monaco holidays 2025-2026
- * All dates are UTC-safe with Monday week start
+ * Provides typed events for Monaco holidays 2025-2027.
+ * All dates are UTC-safe with Monday week start.
+ *
+ * SOURCE OFFICIELLE : https://monservicepublic.gouv.mc/agenda/jours-feries
+ * Règle d'alignement (décision 2026-06-12) : on pointe UNIQUEMENT les jours
+ * indiqués par cette page — pas de report au lundi si le férié tombe un
+ * dimanche (le site affiche p.ex. Toussaint le 01/11/2026, un dimanche).
+ * Le site est un agenda glissant (prochains fériés seulement) : vérifier
+ * les dates de l'année suivante quand elles y apparaissent, et ajouter le
+ * tableau de la nouvelle année chaque année.
  */
 
 export interface MonacoHoliday {
@@ -157,9 +165,10 @@ export const MONACO_HOLIDAYS_2026: MonacoHoliday[] = [
     description: 'Assumption Day'
   },
   {
-    id: 'monaco-2026-11-02',
+    // 01/11/2026 (dimanche) — date affichée telle quelle par la source officielle, sans report.
+    id: 'monaco-2026-11-01',
     title: 'Toussaint',
-    date: '2026-11-02',
+    date: '2026-11-01',
     isAllDay: true,
     description: 'All Saints\' Day'
   },
@@ -187,6 +196,103 @@ export const MONACO_HOLIDAYS_2026: MonacoHoliday[] = [
 ];
 
 /**
+ * Jours fériés 2027.
+ * 01/01 et 27/01 confirmés par la source officielle (affichés au 2026-06-12).
+ * Les autres dates suivent le catalogue officiel : fêtes fixes invariables,
+ * fêtes mobiles selon le calendrier liturgique (Pâques 2027 = 28 mars).
+ * À re-vérifier sur https://monservicepublic.gouv.mc/agenda/jours-feries
+ * au fil de l'année, quand le site les affiche.
+ */
+export const MONACO_HOLIDAYS_2027: MonacoHoliday[] = [
+  {
+    id: 'monaco-2027-01-01',
+    title: 'Jour de l\'an',
+    date: '2027-01-01',
+    isAllDay: true,
+    description: 'New Year\'s Day'
+  },
+  {
+    id: 'monaco-2027-01-27',
+    title: 'Sainte Dévote',
+    date: '2027-01-27',
+    isAllDay: true,
+    description: 'Saint Devote Day'
+  },
+  {
+    id: 'monaco-2027-03-29',
+    title: 'Lundi de Pâques',
+    date: '2027-03-29',
+    isAllDay: true,
+    description: 'Easter Monday'
+  },
+  {
+    id: 'monaco-2027-05-01',
+    title: 'Fête du Travail',
+    date: '2027-05-01',
+    isAllDay: true,
+    description: 'Labour Day'
+  },
+  {
+    id: 'monaco-2027-05-06',
+    title: 'Ascension',
+    date: '2027-05-06',
+    isAllDay: true,
+    description: 'Ascension Day'
+  },
+  {
+    id: 'monaco-2027-05-17',
+    title: 'Lundi de Pentecôte',
+    date: '2027-05-17',
+    isAllDay: true,
+    description: 'Whit Monday'
+  },
+  {
+    id: 'monaco-2027-05-27',
+    title: 'Fête-Dieu',
+    date: '2027-05-27',
+    isAllDay: true,
+    description: 'Corpus Christi'
+  },
+  {
+    // 15/08/2027 tombe un dimanche — comme la Toussaint 2026, la source
+    // officielle n'applique pas de report : date conservée telle quelle.
+    id: 'monaco-2027-08-15',
+    title: 'Assomption',
+    date: '2027-08-15',
+    isAllDay: true,
+    description: 'Assumption Day'
+  },
+  {
+    id: 'monaco-2027-11-01',
+    title: 'Toussaint',
+    date: '2027-11-01',
+    isAllDay: true,
+    description: 'All Saints\' Day'
+  },
+  {
+    id: 'monaco-2027-11-19',
+    title: 'Fête du Prince',
+    date: '2027-11-19',
+    isAllDay: true,
+    description: 'Prince\'s Day'
+  },
+  {
+    id: 'monaco-2027-12-08',
+    title: 'Immaculée Conception',
+    date: '2027-12-08',
+    isAllDay: true,
+    description: 'Immaculate Conception'
+  },
+  {
+    id: 'monaco-2027-12-25',
+    title: 'Noël',
+    date: '2027-12-25',
+    isAllDay: true,
+    description: 'Christmas Day'
+  }
+];
+
+/**
  * Get Monaco holidays for a specific year
  */
 export function getMonacoHolidays(year: number): MonacoHoliday[] {
@@ -194,6 +300,8 @@ export function getMonacoHolidays(year: number): MonacoHoliday[] {
     return MONACO_HOLIDAYS_2025;
   } else if (year === 2026) {
     return MONACO_HOLIDAYS_2026;
+  } else if (year === 2027) {
+    return MONACO_HOLIDAYS_2027;
   }
   return [];
 }

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { useSession } from 'next-auth/react';
 import CreateVacationModal from '@/components/admin/CreateVacationModal';
+import NoticeSettingsSection from '@/components/admin/NoticeSettingsSection';
 
 export default function AdminSetupClient() {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -414,6 +415,9 @@ export default function AdminSetupClient() {
           </button>
         </div>
       </div>
+
+      {/* Notice (popup) settings */}
+      <NoticeSettingsSection />
 
       {/* Create Vacation Modal */}
       <CreateVacationModal

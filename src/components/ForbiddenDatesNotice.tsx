@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { usePathname } from 'next/navigation';
 import NoticeModal from './NoticeModal';
+import { SHOW_FORBIDDEN_NOTICE } from '@/lib/forbiddenDates';
 
 /**
  * Client component that shows the forbidden dates notice modal once per session
@@ -19,6 +20,9 @@ export default function ForbiddenDatesNotice() {
   const locale = pathname?.split('/')[1] || 'en';
 
   useEffect(() => {
+    // Popup désactivée hors période (réactivation février 2027 — voir forbiddenDates.ts).
+    if (!SHOW_FORBIDDEN_NOTICE) return;
+
     // Only show if authenticated and session is loaded
     if (status === 'loading') return;
     if (status === 'unauthenticated') return;

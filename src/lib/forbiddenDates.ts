@@ -1,10 +1,27 @@
 // lib/forbiddenDates.ts
 
 /**
+ * Affichage de la popup d'information à l'ouverture (Top Marques + Grand Prix).
+ *
+ * DÉSACTIVÉE en 2026-06 (événements 2026 passés).
+ *
+ * >>> RÉACTIVATION FÉVRIER 2027 <<<
+ *   1. Passer ce flag à `true`.
+ *   2. Actualiser les dates dans FORBIDDEN_WINDOWS ci-dessous
+ *      (Top Marques 2027 + Grand Prix F1 Monaco 2027).
+ *   3. Actualiser les dates dans les textes MODAL_TEXT et DENY_TEXT (fr/en/it).
+ *
+ * Ne contrôle QUE la popup. La logique de rejet automatique
+ * (overlapsForbiddenWindow) reste pilotée par FORBIDDEN_WINDOWS.
+ */
+export const SHOW_FORBIDDEN_NOTICE = false;
+
+/**
  * Year-specific forbidden windows (inclusive ISO dates).
  * Datés volontairement : ces événements ont une date précise chaque année,
- * donc on ne bloque QUE l'occurrence 2026 — pas tous les 6-10 mai à perpétuité.
+ * donc on ne bloque QUE l'occurrence concernée — pas tous les 6-10 mai à perpétuité.
  * Mettre à jour ces dates chaque année (ou les déplacer en config/env).
+ * NOTE 2026-06 : occurrences 2026 passées ; à actualiser en 2027 (voir SHOW_FORBIDDEN_NOTICE).
  */
 export const FORBIDDEN_WINDOWS = [
   { label: 'Top Marques', start: '2026-05-06', end: '2026-05-10' },

@@ -22,6 +22,15 @@ jobs:
         run: npm ci
       - name: Build
         run: npm run build
+        env:
+          # The build calls `assertRequiredEnv()` in src/lib/env/required.ts
+          # during page-data collection. We provide harmless placeholders so
+          # the build succeeds — real secrets come from Vercel env at runtime,
+          # never from CI.
+          NEXTAUTH_URL: http://localhost:3000
+          NEXTAUTH_SECRET: ci-placeholder-do-not-use-at-runtime
+          GOOGLE_CLIENT_ID: ci-placeholder
+          GOOGLE_CLIENT_SECRET: ci-placeholder
       - name: Deploy to Firebase
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:

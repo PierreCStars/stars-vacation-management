@@ -1,6 +1,6 @@
 /**
  * Single Source of Truth for Vacation Duration Calculation
- * 
+ *
  * This module ensures ALL vacation days are counted accurately, including:
  * - Full days (1.0)
  * - Half days (0.5)
@@ -8,10 +8,47 @@
  * - Single-day vacations
  * - Mixed ranges (partial first/last day)
  * - Any future fractional day format
- * 
+ *
  * CRITICAL: Never use Math.floor, Math.round, Math.ceil, or parseInt on duration values.
  * Always preserve fractional values (0.5, 1.5, 3.5, etc.)
+ *
+ * RÈGLE MÉTIER (2026-06-12) : les jours de congés décomptés sont les jours
+ * OUVRÉS — les samedis, dimanches et jours fériés monégasques ne sont PAS
+ * comptés. Voir countWorkingDays().
  */
+
+import { getMonacoHolidays } from './monaco-holidays';
+
+/**
+ * Compte les jours ouvrés (inclus) entre deux dates ISO : exclut samedi,
+ * dimanche et jours fériés monégasques. Calcul jour-précis en UTC.
+ */
+export function countWorkingDays(startISO: string, endISO: string): number {
+  if (!startISO) return 0;
+  const parse = (iso: string) => {
+    const [y, m, d] = iso.split('-').map(Number);
+    return new Date(Date.UTC(y, m - 1, d));
+  };
+  const start = parse(startISO);
+  const end = parse(endISO || startISO);
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || end < start) return 0;
+
+  // Set des fériés MC couvrant les années de la plage
+  const holidays = new Set<string>();
+  for (let y = start.getUTCFullYear(); y <= end.getUTCFullYear(); y++) {
+    for (const h of getMonacoHolidays(y)) holidays.add(h.date);
+  }
+
+  let count = 0;
+  const cur = new Date(start);
+  while (cur <= end) {
+    const dow = cur.getUTCDay(); // 0 = dimanche, 6 = samedi
+    const iso = cur.toISOString().slice(0, 10);
+    if (dow !== 0 && dow !== 6 && !holidays.has(iso)) count++;
+    cur.setUTCDate(cur.getUTCDate() + 1);
+  }
+  return count;
+}
 
 export interface VacationDurationInput {
   durationDays?: number;      // Explicit duration (supports 0.5, 1.5, etc.)
@@ -34,66 +71,30 @@ export interface VacationDurationInput {
  * @throws Error if validated vacation computes to 0 days
  */
 export function calculateVacationDuration(input: VacationDurationInput): number {
-  // Priority 1: Check durationDays (explicit duration) - supports 0.5, 1.5, etc.
-  if (typeof input.durationDays === "number") {
-    if (input.durationDays > 0) {
-      return input.durationDays;
-    }
-    // If durationDays is 0 or negative, fall through to check other fields
-  }
-  
-  // Priority 2: Check isHalfDay flag
+  // Priorité 1 : demi-journée → 0.5
   if (input.isHalfDay === true) {
     return 0.5;
   }
-  
-  // Priority 3: Calculate from date range
-  if (input.startDate) {
-    const days = calculateDaysFromDateRange(input.startDate, input.endDate || input.startDate);
-    return days;
-  }
-  
-  // No valid data - return 0 (but this should not happen for validated vacations)
-  return 0;
-}
 
-/**
- * Calculate days from date range (inclusive)
- * 
- * Returns the number of days between start and end dates (inclusive).
- * For same-day vacations, returns 1.0 (not 0).
- * 
- * CRITICAL: This function does NOT use Math.floor, Math.round, or Math.ceil.
- * It preserves fractional values for future support of partial days.
- * 
- * @param startISO Start date (YYYY-MM-DD)
- * @param endISO End date (YYYY-MM-DD), defaults to startISO
- * @returns Number of days (always >= 1.0 for valid date ranges)
- */
-function calculateDaysFromDateRange(startISO: string, endISO: string): number {
-  if (!startISO) {
-    return 0;
+  // Priorité 2 : durée fractionnaire explicite (ex. 0.5 sans isHalfDay)
+  if (typeof input.durationDays === 'number' && input.durationDays > 0 && input.durationDays < 1) {
+    return input.durationDays;
   }
-  
-  const start = new Date(startISO);
-  const end = new Date(endISO || startISO);
-  
-  // Validate dates
-  if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-    console.warn(`⚠️ Invalid date range: ${startISO} to ${endISO}`);
-    return 0;
+
+  // Priorité 3 : calcul à partir des dates en JOURS OUVRÉS (hors WE + fériés MC).
+  // On recalcule depuis les dates plutôt que de faire confiance à durationDays
+  // stocké : les anciennes demandes ont un comptage calendaire brut à corriger.
+  if (input.startDate) {
+    return countWorkingDays(input.startDate, input.endDate || input.startDate);
   }
-  
-  // Calculate difference in milliseconds
-  const ms = end.getTime() - start.getTime();
-  
-  // Convert to days (inclusive: +1 to include both start and end days)
-  // Use Math.floor only for the base calculation, then add 1
-  // This ensures same-day = 1.0, not 0
-  const days = Math.floor(ms / (24 * 3600 * 1000)) + 1;
-  
-  // Ensure minimum of 1.0 day for valid date ranges
-  return days > 0 ? days : 1.0;
+
+  // Priorité 4 : repli sur durationDays stocké (pas de dates disponibles)
+  if (typeof input.durationDays === 'number' && input.durationDays > 0) {
+    return input.durationDays;
+  }
+
+  // Aucune donnée exploitable
+  return 0;
 }
 
 /**

@@ -9,6 +9,7 @@ import { VacationRequest } from '@/types/vacation';
 import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 import { createLocaleUrl } from '@/i18n/routing';
 import { overlapsForbiddenWindow, resolveLocale, autoDenyMessage } from '@/lib/forbiddenDates';
+import { countWorkingDays } from '@/lib/duration-calculator';
 
 export default function VacationRequestPage() {
   const [formData, setFormData] = useState({
@@ -113,8 +114,11 @@ export default function VacationRequestPage() {
     try {
       const startDate = new Date(formData.startDate);
       const endDate = new Date(formData.isHalfDay ? formData.startDate : formData.endDate);
-      const timeDiff = endDate.getTime() - startDate.getTime();
-      const durationDays = Math.ceil(timeDiff / (1000 * 3600 * 24)) + 1;
+      // Jours OUVRÉS uniquement (hors samedi/dimanche + fériés monégasques).
+      const durationDays = countWorkingDays(
+        formData.startDate,
+        formData.isHalfDay ? formData.startDate : formData.endDate,
+      );
 
       const locale = resolveLocale(currentLocale);
       const overlapsForbidden = overlapsForbiddenWindow(startDate, endDate);

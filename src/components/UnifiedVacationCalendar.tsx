@@ -9,6 +9,7 @@ import { VacationRequestWithConflicts, ConflictEvent } from '@/app/[locale]/admi
 import { getCompanyHexColor } from '@/lib/company-colors';
 import { getMonacoHolidaysInRange, MonacoHoliday } from '@/lib/monaco-holidays';
 import { getStatusColor, detectConflictsForEmployee } from '@/lib/statusColor';
+import { countCompanyConflicts } from '@/lib/conflict-utils';
 import { parseISODate, parseLocalDate, getFirstDayOfCalendarGrid, isToday, isInMonth, formatISODate } from '@/lib/dates';
 
 interface CompanyEvent {
@@ -252,16 +253,15 @@ export default function UnifiedVacationCalendar({
         date >= initialRange.start && 
         date <= initialRange.end;
 
-      // Calculate conflicts (including company events and conflict events)
-      const totalEvents = dayVacations.length + dayCompanyEvents.length + dayConflictEvents.length;
-      const hasConflict = totalEvents > 1 || dayConflictEvents.length > 0;
-      
-      // Determine severity
-      let severity: 'none' | 'low' | 'medium' | 'high';
-      if (totalEvents === 0) severity = 'none';
-      else if (totalEvents === 1) severity = 'low';
-      else if (totalEvents === 2) severity = 'medium';
-      else severity = 'high';
+      // Conflit = au moins DEUX congés de la MÊME entreprise le même jour.
+      // Les jours fériés et les événements d'entreprise ne sont PAS des conflits,
+      // et deux personnes de sociétés différentes ne sont PAS en conflit.
+      const conflictCount = countCompanyConflicts(dayVacations);
+      const hasConflict = conflictCount > 0;
+
+      // Sévérité selon le nombre de conflits simultanés
+      const severity: 'none' | 'low' | 'medium' | 'high' =
+        conflictCount === 0 ? 'none' : conflictCount === 1 ? 'medium' : 'high';
 
       days.push({
         date,
@@ -273,7 +273,7 @@ export default function UnifiedVacationCalendar({
         companyEvents: dayCompanyEvents,
         frenchHolidays: dayFrenchHolidays,
         monacoHolidays: dayMonacoHolidays,
-        conflictCount: totalEvents,
+        conflictCount,
         hasConflict,
         severity,
         isInSelectedRange,
@@ -588,7 +588,7 @@ export default function UnifiedVacationCalendar({
                     day.severity === 'medium' ? 'bg-[#F59B42] text-ink' :
                     'bg-gold/10 text-ink'
                   }`}>
-                    {day.conflictCount} conflicts
+                    {day.conflictCount} {day.conflictCount > 1 ? 'conflicts' : 'conflict'}
                   </span>
                 </div>
               )}

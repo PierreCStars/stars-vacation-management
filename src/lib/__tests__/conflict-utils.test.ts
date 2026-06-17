@@ -1,5 +1,45 @@
 import { describe, it, expect } from 'vitest';
-import { countUniqueConflicts } from '../conflict-utils';
+import { countUniqueConflicts, countCompanyConflicts } from '../conflict-utils';
+
+describe('countCompanyConflicts (même jour)', () => {
+  it('0 quand les congés sont de sociétés différentes', () => {
+    // Cas réel : Sacha (stars.mc) + Sarah (Stars Real Estate) le même jour
+    expect(countCompanyConflicts([
+      { company: 'stars.mc' },
+      { company: 'Stars Real Estate' },
+    ])).toBe(0);
+  });
+
+  it('1 quand deux personnes de la MÊME société se chevauchent', () => {
+    expect(countCompanyConflicts([
+      { company: 'stars.mc' },
+      { company: 'stars.mc' },
+    ])).toBe(1);
+  });
+
+  it('compte une fois par société, même à 3 personnes', () => {
+    expect(countCompanyConflicts([
+      { company: 'stars.mc' },
+      { company: 'stars.mc' },
+      { company: 'stars.mc' },
+    ])).toBe(1);
+  });
+
+  it('deux sociétés en conflit simultané = 2', () => {
+    expect(countCompanyConflicts([
+      { company: 'stars.mc' }, { company: 'stars.mc' },
+      { company: 'Le Pneu' }, { company: 'Le Pneu' },
+    ])).toBe(2);
+  });
+
+  it('normalise casse/espaces et gère company manquante', () => {
+    expect(countCompanyConflicts([
+      { company: ' stars.mc ' }, { company: 'STARS.MC' },
+    ])).toBe(1);
+    expect(countCompanyConflicts([{}, {}])).toBe(1); // 2x UNKNOWN
+    expect(countCompanyConflicts([{ company: 'stars.mc' }])).toBe(0);
+  });
+});
 
 const req = (id: string, otherIds: string[] = []) => ({
   id,

@@ -63,13 +63,10 @@ async function sendEmail(subject: string, html: string, csvContent: string, file
   console.log(`📧 Sending monthly summary email to ${recipients.join(', ')}...`);
   console.log('Subject:', subject);
   
-  const htmlWithCSV = `${html}
-    <hr style="margin: 20px 0; border: none; border-top: 1px solid #ddd;">
-    <h3 style="margin: 16px 0 8px;">CSV Data (${filename}):</h3>
-    <pre style="background-color: #f5f5f5; padding: 12px; border-radius: 4px; overflow-x: auto; font-size: 12px; line-height: 1.4;">${csvContent}</pre>
-  `;
-  
-  const result = await sendEmailWithFallbacks(recipients, subject, htmlWithCSV);
+  // Plus de dump CSV brut dans le corps (non conforme à la charte) — le tableau
+  // récapitulatif suffit ; l'export détaillé se fait via Google Sheet.
+  void csvContent; void filename;
+  const result = await sendEmailWithFallbacks(recipients, subject, html);
   
   if (result.success) {
     console.log(`✅ Monthly summary email sent successfully to ${recipients.join(', ')}`);
@@ -81,84 +78,76 @@ async function sendEmail(subject: string, html: string, csvContent: string, file
 }
 
 function generateHTML(approved: VacationRow[], range: MonthRange, totalDays: number): string {
+  const esc = (s: string) => (s || '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const cellBase = 'padding:10px 12px;border-bottom:1px solid #E7E2D8;font-size:14px;color:#0A0A0A;';
+
   let tableRows = '';
   if (approved.length === 0) {
-    tableRows = '<tr><td colspan="6" style="text-align: center; padding: 20px; color: #666;">No validated vacations for this month.</td></tr>';
+    tableRows = `<tr><td colspan="6" style="text-align:center;padding:24px;color:#273341;font-size:14px;">Aucun congé validé sur cette période.</td></tr>`;
   } else {
-    // Generate table rows (sorted by employee name, then by start date)
     tableRows = approved.map((r, index) => {
       const uniqueId = r.id || `row-${index}`;
       return `
       <tr data-vacation-id="${uniqueId}" data-employee="${(r.employee || 'Unknown').replace(/"/g, '&quot;')}" data-index="${index}">
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">${(r.employee || 'Unknown').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">${(r.company || '—').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">${(r.type || 'Full day').replace(/</g, '&lt;').replace(/>/g, '&gt;')}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.startDate || '—'}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee;">${r.endDate || r.startDate || '—'}</td>
-        <td style="padding: 8px; border-bottom: 1px solid #eee; text-align: right;">${formatDuration(Number(r.days || 0))}</td>
-      </tr>
-    `;
+        <td style="${cellBase}font-weight:500;">${esc(r.employee || 'Inconnu')}</td>
+        <td style="${cellBase}">${esc(r.company || '—')}</td>
+        <td style="${cellBase}">${esc(r.type || 'Journée complète')}</td>
+        <td style="${cellBase}">${r.startDate || '—'}</td>
+        <td style="${cellBase}">${r.endDate || r.startDate || '—'}</td>
+        <td style="${cellBase}text-align:right;">${formatDuration(Number(r.days || 0))}</td>
+      </tr>`;
     }).join('');
-    
   }
+
+  const th = 'padding:10px 12px;text-align:left;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#273341;border-bottom:2px solid #D8B11B;';
 
   return `
     <!DOCTYPE html>
-    <html>
+    <html lang="fr">
     <head>
       <meta charset="utf-8">
-      <style>
-        body { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; }
-        .container { max-width: 900px; margin: 0 auto; padding: 20px; }
-        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 20px; border-radius: 8px 8px 0 0; }
-        .content { background: #f9f9f9; padding: 20px; border-radius: 0 0 8px 8px; }
-        table { width: 100%; border-collapse: collapse; background: white; margin: 16px 0; }
-        th { background: #f5f5f5; padding: 12px 8px; text-align: left; font-weight: 600; border-bottom: 2px solid #ddd; }
-        td { padding: 8px; border-bottom: 1px solid #eee; }
-        .summary { background: white; padding: 16px; margin: 16px 0; border-radius: 4px; border-left: 4px solid #667eea; }
-        .footer { text-align: center; margin-top: 20px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; }
-      </style>
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
     </head>
-    <body>
-      <div class="container">
-        <div class="header">
-          <h1 style="margin: 0 0 8px;">Monthly Vacation Summary</h1>
-          <p style="margin: 0; opacity: 0.9;">${range.displayLabel}</p>
-        </div>
-        
-        <div class="content">
-          <div class="summary">
-            <h2 style="margin: 0 0 12px;">Summary</h2>
-            <p style="margin: 4px 0;"><strong>Period:</strong> ${range.startISO} to ${range.endISO}</p>
-            <p style="margin: 4px 0;"><strong>Total Validated Vacations:</strong> ${approved.length} requests</p>
-            <p style="margin: 4px 0;"><strong>Total Days:</strong> ${totalDays.toFixed(1)} days</p>
+    <body style="margin:0;padding:0;background:#F5F2EC;font-family:'Montserrat',Arial,sans-serif;color:#0A0A0A;">
+      <div style="max-width:760px;margin:0 auto;padding:32px 20px;">
+        <div style="background:#FFFFFF;border:1px solid #E7E2D8;">
+          <!-- Header -->
+          <div style="padding:28px 28px 20px;border-bottom:2px solid #D8B11B;">
+            <div style="font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#273341;margin-bottom:10px;">Star Luxury Group</div>
+            <h1 style="margin:0;font-size:24px;font-weight:300;letter-spacing:-0.01em;color:#0A0A0A;">Récap mensuel des congés validés</h1>
+            <p style="margin:6px 0 0;font-size:14px;color:#273341;">${range.displayLabel}</p>
           </div>
+          <!-- Body -->
+          <div style="padding:24px 28px;">
+            <div style="background:#F5F2EC;border-left:3px solid #D8B11B;padding:14px 16px;margin-bottom:24px;">
+              <p style="margin:3px 0;font-size:14px;color:#273341;">Période : <strong style="color:#0A0A0A;">${range.startISO} → ${range.endISO}</strong></p>
+              <p style="margin:3px 0;font-size:14px;color:#273341;">Congés validés : <strong style="color:#0A0A0A;">${approved.length}</strong></p>
+              <p style="margin:3px 0;font-size:14px;color:#273341;">Total jours ouvrés : <strong style="color:#0A0A0A;">${totalDays.toFixed(1)}</strong></p>
+            </div>
 
-          <h3 style="margin: 24px 0 12px;">Validated Vacations Details</h3>
-          <table>
-            <thead>
-              <tr>
-                <th>Employee Name</th>
-                <th>Company</th>
-                <th>Type</th>
-                <th>Start Date</th>
-                <th>End Date</th>
-                <th style="text-align: right;">Days</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${tableRows}
-            </tbody>
-          </table>
+            <table style="width:100%;border-collapse:collapse;">
+              <thead>
+                <tr>
+                  <th style="${th}">Employé</th>
+                  <th style="${th}">Société</th>
+                  <th style="${th}">Type</th>
+                  <th style="${th}">Début</th>
+                  <th style="${th}">Fin</th>
+                  <th style="${th}text-align:right;">Jours</th>
+                </tr>
+              </thead>
+              <tbody>${tableRows}</tbody>
+            </table>
 
-          <p style="margin-top: 20px; color: #666; font-size: 14px;">
-            <em>This summary includes only validated/approved vacation requests for ${range.displayLabel}.</em>
-          </p>
-        </div>
-        
-        <div class="footer">
-          <p>© ${new Date().getFullYear()} Stars Vacation Management System</p>
-          <p>Generated: ${new Date().toLocaleString('en-US', { timeZone: 'Europe/Monaco' })}</p>
+            <p style="margin-top:20px;font-size:12px;color:#273341;font-style:italic;">
+              Récapitulatif des congés validés pour ${range.displayLabel} (jours ouvrés uniquement — week-ends et fériés monégasques exclus).
+            </p>
+          </div>
+          <!-- Footer -->
+          <div style="padding:16px 28px;border-top:1px solid #E7E2D8;">
+            <p style="margin:0;font-size:11px;color:#273341;">© ${new Date().getFullYear()} Star Luxury Group — Stars Vacation Management</p>
+          </div>
         </div>
       </div>
     </body>
@@ -219,7 +208,7 @@ export async function processMonthlySummary(manuallyTriggered = false): Promise<
   });
   
   // Generate email
-  const subject = `Monthly validated vacations summary – ${range.displayLabel}`;
+  const subject = `Récap mensuel des congés validés – ${range.displayLabel}`;
   const html = generateHTML(sortedApproved, range, totalDays);
   
   // Generate CSV (sorted by employee name, then by start date)

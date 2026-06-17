@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import { isAdmin } from '@/config/admins';
 import { VacationRequest } from '@/types/vacation';
 import { VacationRequestWithConflicts, ConflictEvent } from '@/app/[locale]/admin/vacation-requests/_server/getRequestsWithConflicts';
-import { getCompanyHexColor } from '@/lib/company-colors';
+import { getCompanyHexColor, normalizeCompanyCode, getAllCompanyColors, readableTextColor } from '@/lib/company-colors';
 import { getMonacoHolidaysInRange, MonacoHoliday } from '@/lib/monaco-holidays';
 import { getStatusColor, detectConflictsForEmployee } from '@/lib/statusColor';
 import { countCompanyConflicts } from '@/lib/conflict-utils';
@@ -558,9 +558,23 @@ export default function UnifiedVacationCalendar({
                       }))
                     );
                     
-                    // Get status-based color (conflict overrides)
-                    const backgroundColor = getStatusColor(vacation.status, hasConflict);
-                    const textColor = '#ffffff'; // Always use white text for visibility
+                    // Couleur de l'étiquette :
+                    //  - conflit → rouge (priorité, inchangé)
+                    //  - validé → couleur de l'ENTREPRISE de l'employé
+                    //  - pending / autre → couleur de statut habituelle (orange, etc.)
+                    const status = (vacation.status || '').toLowerCase();
+                    const isValidated = status === 'approved' || status === 'granted';
+                    const companyCode = isValidated && !hasConflict
+                      ? normalizeCompanyCode(vacation.company)
+                      : null;
+                    const backgroundColor = hasConflict
+                      ? getStatusColor(vacation.status, true)
+                      : companyCode
+                        ? getCompanyHexColor(companyCode)
+                        : getStatusColor(vacation.status);
+                    // Texte lisible : foncé sur couleur de filiale claire (jaune/doré),
+                    // blanc sinon. Statuts (pending/conflit) gardent le blanc.
+                    const textColor = companyCode ? readableTextColor(backgroundColor) : '#ffffff';
                     
                     return (
                       <div
@@ -694,9 +708,9 @@ export default function UnifiedVacationCalendar({
                       <div className="flex-1">
                         <div className="flex items-center space-x-3">
                           <span className="font-bold text-gray-800">{vacation.userName}</span>
-                          <span 
+                          <span
                             className="text-sm px-2 py-1 rounded text-white font-medium"
-                            style={{ backgroundColor: getCompanyHexColor(vacation.company || 'UNKNOWN') }}
+                            style={{ backgroundColor: getCompanyHexColor(normalizeCompanyCode(vacation.company) || 'STARS_MC') }}
                           >
                             {vacation.company || 'Unknown'}
                           </span>
@@ -751,9 +765,15 @@ export default function UnifiedVacationCalendar({
                 <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#9CA3AF' }}></div>
                 <span className="text-xs sm:text-sm text-slate-ardoise">Events</span>
               </div>
-              <div className="flex items-center space-x-1 sm:space-x-2">
-                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#1F6E3A' }}></div>
-                <span className="text-xs sm:text-sm text-slate-ardoise">Validated</span>
+              {/* Validé = couleur de l'entreprise de l'employé */}
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <span className="text-xs sm:text-sm text-slate-ardoise font-medium">Validé :</span>
+                {getAllCompanyColors().map(c => (
+                  <span key={c.id} className="flex items-center gap-1">
+                    <span className="w-3 h-3 sm:w-4 sm:h-4 rounded inline-block" style={{ backgroundColor: c.hex }}></span>
+                    <span className="text-xs text-slate-ardoise">{c.name}</span>
+                  </span>
+                ))}
               </div>
               <div className="flex items-center space-x-1 sm:space-x-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#F59B42' }}></div>

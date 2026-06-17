@@ -7,15 +7,8 @@ import { absoluteUrl } from '@/lib/urls';
 import { isPendingStatus, isReviewedStatus, normalizeVacationStatus } from '@/types/vacation-status';
 import { VacationRequest } from '@/types/vacation';
 import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
-
-// Helper function to calculate days between dates
-function calculateDays(startDate: string, endDate: string): number {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  const diffTime = Math.abs(end.getTime() - start.getTime());
-  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 to include both start and end days
-  return diffDays;
-}
+import { calculateVacationDuration } from '@/lib/duration-calculator';
+import { countUniqueConflicts } from '@/lib/conflict-utils';
 
 /**
  * Human-readable delay between submission and review (e.g. "3h", "2d 4h", "<1h").
@@ -522,7 +515,24 @@ export default function AdminPendingRequestsV2() {
           <p className="text-gray-600">All vacation requests have been reviewed.</p>
         </div>
       ) : (
-        <RequestsTable 
+        <>
+        {(() => {
+          const conflictCount = countUniqueConflicts(pendingRequests);
+          return (
+            <div
+              className={`mb-4 rounded-lg border p-3 text-sm font-medium ${
+                conflictCount > 0
+                  ? 'border-[#A23B2D]/30 bg-[#A23B2D]/10 text-[#A23B2D]'
+                  : 'border-[#5C7C5A]/30 bg-[#5C7C5A]/10 text-[#5C7C5A]'
+              }`}
+            >
+              {conflictCount > 0
+                ? `⚠️ ${t('conflictsDetected', { count: conflictCount })}`
+                : t('noConflictsDetected')}
+            </div>
+          );
+        })()}
+        <RequestsTable
           requests={pendingSorted}
           selectedRequests={selectedRequests}
           onToggleSelection={toggleRequestSelection}
@@ -533,6 +543,7 @@ export default function AdminPendingRequestsV2() {
           tCommon={tCommon}
           tVacations={tVacations}
         />
+        </>
       )}
 
               {/* Calendar View with Conflict Detection */}
@@ -767,18 +778,16 @@ function RequestsTable({
                   <div>
                     <div className="font-medium">From {new Date(request.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
                     <div className="text-gray-500">to {new Date(request.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
-                    <div className="text-xs text-gray-400">{request.durationDays || calculateDays(request.startDate, request.endDate)} days</div>
+                    <div className="text-xs text-gray-400">{calculateVacationDuration(request)} days</div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
                   {request.conflicts && request.conflicts.length > 0 ? (
                     <span className="badge badge-rejected">
-                      {request.conflicts.length} conflicts
+                      {t('inConflict')}
                     </span>
                   ) : (
-                    <span className="badge badge-approved">
-                      No conflicts
-                    </span>
+                    <span className="badge badge-approved">{t('noConflictShort')}</span>
                   )}
                 </td>
                 {showActions && (
@@ -870,19 +879,17 @@ function RequestsTable({
             
             <div className="mb-3">
               <div className="text-sm font-medium text-gray-500">Duration</div>
-              <div className="text-sm text-gray-900">{request.durationDays || calculateDays(request.startDate, request.endDate)} days</div>
+              <div className="text-sm text-gray-900">{calculateVacationDuration(request)} days</div>
             </div>
             
             <div className="mb-3">
               <div className="text-sm font-medium text-gray-500">Conflicts</div>
               {request.conflicts && request.conflicts.length > 0 ? (
                 <span className="badge badge-rejected">
-                  {request.conflicts.length} conflicts
+                  {t('inConflict')}
                 </span>
               ) : (
-                <span className="badge badge-approved">
-                  No conflicts
-                </span>
+                <span className="badge badge-approved">{t('noConflictShort')}</span>
               )}
             </div>
             
@@ -1049,7 +1056,7 @@ function ReviewedRequestsTable({
       escapeCSV(request.type || ''),
       escapeCSV(formatDate(request.startDate)),
       escapeCSV(formatDate(request.endDate)),
-      escapeCSV(request.durationDays || calculateDays(request.startDate, request.endDate)),
+      escapeCSV(calculateVacationDuration(request)),
       escapeCSV(request.status || ''),
       escapeCSV(request.reviewedBy || 'Admin'),
       escapeCSV(request.reviewerEmail || ''),
@@ -1221,7 +1228,7 @@ function ReviewedRequestsTable({
                   <div>
                     <div className="font-medium">From {new Date(request.startDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
                     <div className="text-gray-500">to {new Date(request.endDate).toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
-                    <div className="text-xs text-gray-400">{request.durationDays || calculateDays(request.startDate, request.endDate)} days</div>
+                    <div className="text-xs text-gray-400">{calculateVacationDuration(request)} days</div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm">
@@ -1329,7 +1336,7 @@ function ReviewedRequestsTable({
             
             <div className="mb-3">
               <div className="text-sm font-medium text-gray-500">Duration</div>
-              <div className="text-sm text-gray-900">{request.durationDays || calculateDays(request.startDate, request.endDate)} days</div>
+              <div className="text-sm text-gray-900">{calculateVacationDuration(request)} days</div>
             </div>
             
             <div className="mb-3">

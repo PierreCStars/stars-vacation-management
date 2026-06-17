@@ -225,6 +225,10 @@ const en = {
     "show": "Show",
     "hide": "Hide",
     "vacationRequestDetails": "Vacation Request Details",
+    "inConflict": "In conflict",
+    "noConflictShort": "No conflict",
+    "conflictsDetected": "{count} conflict(s) detected",
+    "noConflictsDetected": "No conflict detected",
     "createVacation": {
       "button": "Create Vacation",
       "title": "Create a vacation",
@@ -568,6 +572,10 @@ const fr = {
     "show": "Afficher",
     "hide": "Masquer",
     "vacationRequestDetails": "Détails de la demande de congé",
+    "inConflict": "En conflit",
+    "noConflictShort": "Aucun conflit",
+    "conflictsDetected": "{count} conflit(s) détecté(s)",
+    "noConflictsDetected": "Aucun conflit détecté",
     "createVacation": {
       "button": "Créer un congé",
       "title": "Créer un congé",
@@ -911,6 +919,10 @@ const it = {
     "show": "Mostra",
     "hide": "Nascondi",
     "vacationRequestDetails": "Dettagli richiesta vacanza",
+    "inConflict": "In conflitto",
+    "noConflictShort": "Nessun conflitto",
+    "conflictsDetected": "{count} conflitto/i rilevato/i",
+    "noConflictsDetected": "Nessun conflitto rilevato",
     "createVacation": {
       "button": "Crea ferie",
       "title": "Crea ferie",

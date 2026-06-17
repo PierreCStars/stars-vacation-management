@@ -68,3 +68,21 @@ export function getCompanyHexColor(companyCode: string): string {
 
 // Type for company codes
 export type CompanyCode = keyof typeof COMPANY_COLORS;
+
+/**
+ * Normalise une valeur `company` libre (code ou nom affiché, casse/espaces/points
+ * variables) vers un code d'entreprise connu. Renvoie `null` si aucune
+ * correspondance (ex. "Unknown") — l'appelant garde alors une couleur neutre.
+ * Ex : "stars.mc" → "STARS_MC", "Stars Real Estate" → "STARS_REAL_ESTATE".
+ */
+export function normalizeCompanyCode(input?: string | null): CompanyCode | null {
+  const norm = (s?: string | null) => (s || '').toString().toUpperCase().replace(/[^A-Z0-9]/g, '');
+  const target = norm(input);
+  if (!target) return null;
+  for (const [code, c] of Object.entries(COMPANY_COLORS)) {
+    if (target === norm(code) || target === norm(c.name) || target === norm(c.displayName)) {
+      return code as CompanyCode;
+    }
+  }
+  return null;
+}

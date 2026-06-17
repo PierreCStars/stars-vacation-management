@@ -62,7 +62,14 @@ export async function POST(req: NextRequest) {
   }
 
   // Données : congés validés chevauchant la période (jours ouvrés).
-  const rows = await getValidatedVacationsForMonth(startDate, endDate);
+  let rows;
+  try {
+    rows = await getValidatedVacationsForMonth(startDate, endDate);
+  } catch (e) {
+    return NextResponse.json({
+      error: `Lecture des congés impossible (Firebase indisponible sur cet environnement) : ${(e as Error).message}`,
+    }, { status: 500 });
+  }
   const totals = calculateTotals(rows);
 
   let sheets;

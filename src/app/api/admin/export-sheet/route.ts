@@ -152,12 +152,12 @@ export async function POST(req: NextRequest) {
     const url = `https://docs.google.com/spreadsheets/d/${SPREADSHEET_ID}/edit#gid=${sheetId ?? ''}`;
     return NextResponse.json({ ok: true, title, url, count: rows.length, totalDays: totals.totalDays });
   } catch (e: any) {
-    const msg = e?.errors?.[0]?.message || e?.message || String(e);
-    const status = e?.code === 403 ? 403 : 502;
+    const googleMsg = e?.errors?.[0]?.message || e?.response?.data?.error?.message || e?.message || String(e);
+    let saEmail = 'unknown';
+    try { saEmail = loadGoogleCreds().client_email || 'unknown'; } catch { /* noop */ }
+    console.error('[export-sheet] échec écriture Sheet:', { code: e?.code, googleMsg, saEmail });
     return NextResponse.json({
-      error: status === 403
-        ? `Accès refusé à la Google Sheet. Vérifie que ${'vacation-db@holiday-461710.iam.gserviceaccount.com'} a l'accès Éditeur.`
-        : `Échec de l'export Sheet : ${msg}`,
-    }, { status });
+      error: `Échec export Sheet (code ${e?.code ?? '?'}) : ${googleMsg} — compte de service utilisé : ${saEmail}`,
+    }, { status: e?.code === 403 ? 403 : 502 });
   }
 }

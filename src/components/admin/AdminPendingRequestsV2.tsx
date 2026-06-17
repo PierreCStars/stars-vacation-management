@@ -9,6 +9,7 @@ import { VacationRequest } from '@/types/vacation';
 import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 import { calculateVacationDuration } from '@/lib/duration-calculator';
 import { countUniqueConflicts } from '@/lib/conflict-utils';
+import { canValidateCompany } from '@/config/admins';
 
 /**
  * Human-readable delay between submission and review (e.g. "3h", "2d 4h", "<1h").
@@ -539,6 +540,7 @@ export default function AdminPendingRequestsV2() {
           onStatusUpdate={handleStatusUpdate}
           isProcessing={isProcessing}
           showActions={true}
+          canValidate={(company) => canValidateCompany(session?.user?.email, company)}
           t={t}
           tCommon={tCommon}
           tVacations={tVacations}
@@ -682,16 +684,17 @@ export default function AdminPendingRequestsV2() {
 }
 
 // Pending Requests Table Component
-function RequestsTable({ 
-  requests, 
-  selectedRequests, 
-  onToggleSelection, 
-  onStatusUpdate, 
-  isProcessing, 
+function RequestsTable({
+  requests,
+  selectedRequests,
+  onToggleSelection,
+  onStatusUpdate,
+  isProcessing,
   showActions,
-  t, 
-  tCommon, 
-  tVacations 
+  canValidate,
+  t,
+  tCommon,
+  tVacations
 }: {
   requests: VacationRequestWithConflicts[];
   selectedRequests: Set<string>;
@@ -699,6 +702,7 @@ function RequestsTable({
   onStatusUpdate: (id: string, status: "approved" | "denied") => void;
   isProcessing: (id: string) => boolean;
   showActions: boolean;
+  canValidate: (company?: string | null) => boolean;
   t: any;
   tCommon: any;
   tVacations: any;
@@ -792,6 +796,7 @@ function RequestsTable({
                 </td>
                 {showActions && (
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    {canValidate(request.company) ? (
                     <div className="flex items-center gap-2">
                       <button
                         onClick={(e) => {
@@ -824,6 +829,11 @@ function RequestsTable({
                         )}
                       </button>
                     </div>
+                    ) : (
+                      <span className="text-xs text-gray-400 italic" title={t('outOfScope')}>
+                        {t('outOfScope')}
+                      </span>
+                    )}
                   </td>
                 )}
               </tr>
@@ -894,6 +904,7 @@ function RequestsTable({
             </div>
             
             {showActions && (
+              canValidate(request.company) ? (
               <div className="flex items-center gap-2">
                 <button
                   onClick={(e) => {
@@ -926,6 +937,9 @@ function RequestsTable({
                   )}
                 </button>
               </div>
+              ) : (
+                <div className="text-xs text-gray-400 italic">{t('outOfScope')}</div>
+              )
             )}
           </div>
         ))}

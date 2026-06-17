@@ -567,25 +567,35 @@ export default function UnifiedVacationCalendar({
                     const companyCode = isValidated && !hasConflict
                       ? normalizeCompanyCode(vacation.company)
                       : null;
-                    const backgroundColor = hasConflict
-                      ? getStatusColor(vacation.status, true)
+                    // Jour NON décompté = week-end ou férié monégasque (cf. countWorkingDays).
+                    // On le grise dans le congé pour montrer qu'il ne consomme pas de jour.
+                    // (Les fériés français restent décomptés → non grisés.)
+                    const isNonCounted = day.isWeekend || day.monacoHolidays.length > 0;
+                    const backgroundColor = isNonCounted
+                      ? '#D1D5DB' // gris neutre — jour non décompté
+                      : hasConflict
+                        ? getStatusColor(vacation.status, true)
+                        : companyCode
+                          ? getCompanyHexColor(companyCode)
+                          : getStatusColor(vacation.status);
+                    // Texte lisible : foncé sur jour grisé ou couleur de filiale claire
+                    // (jaune/doré), blanc sinon.
+                    const textColor = isNonCounted
+                      ? '#4B5563'
                       : companyCode
-                        ? getCompanyHexColor(companyCode)
-                        : getStatusColor(vacation.status);
-                    // Texte lisible : foncé sur couleur de filiale claire (jaune/doré),
-                    // blanc sinon. Statuts (pending/conflit) gardent le blanc.
-                    const textColor = companyCode ? readableTextColor(backgroundColor) : '#ffffff';
-                    
+                        ? readableTextColor(backgroundColor)
+                        : '#ffffff';
+
                     return (
                       <div
                         key={reqIndex}
-                        className="text-xs p-1 rounded truncate font-medium border border-opacity-20"
+                        className={`text-xs p-1 rounded truncate font-medium border border-opacity-20 ${isNonCounted ? 'italic' : ''}`}
                         style={{
                           backgroundColor: backgroundColor,
                           color: textColor,
                           borderColor: `${backgroundColor}cc`
                         }}
-                        title={`${vacation.userName} - ${vacation.company || 'Unknown'} (${vacation.status})${hasConflict ? ' ⚠️ CONFLICT' : ''}`}
+                        title={`${vacation.userName} - ${vacation.company || 'Unknown'} (${vacation.status})${isNonCounted ? ' — jour non décompté (week-end/férié MC)' : ''}${hasConflict ? ' ⚠️ CONFLICT' : ''}`}
                       >
                         {vacation.userName} {hasConflict ? '⚠️' : ''}
                       </div>
@@ -778,6 +788,10 @@ export default function UnifiedVacationCalendar({
               <div className="flex items-center space-x-1 sm:space-x-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#F59B42' }}></div>
                 <span className="text-xs sm:text-sm text-slate-ardoise">Pending</span>
+              </div>
+              <div className="flex items-center space-x-1 sm:space-x-2">
+                <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#D1D5DB' }}></div>
+                <span className="text-xs sm:text-sm text-slate-ardoise">Non décompté (WE / férié MC)</span>
               </div>
               <div className="flex items-center space-x-1 sm:space-x-2">
                 <div className="w-3 h-3 sm:w-4 sm:h-4 rounded" style={{ backgroundColor: '#C92B12' }}></div>

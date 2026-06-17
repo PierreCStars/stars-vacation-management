@@ -40,7 +40,16 @@ export default function AdminPendingRequestsV2() {
   const [actionMessage, setActionMessage] = useState<{type: 'success' | 'error', message: string} | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
-  
+  // Export Google Sheet (popup de période)
+  const [showExportModal, setShowExportModal] = useState(false);
+  const today = new Date();
+  const monthStart = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-01`;
+  const todayISO = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+  const [exportStart, setExportStart] = useState(monthStart);
+  const [exportEnd, setExportEnd] = useState(todayISO);
+  const [exportResult, setExportResult] = useState<{ ok: boolean; msg: string; url?: string } | null>(null);
+
+
   const { data: session } = useSession();
   const t = useTranslations('admin');
   const tCommon = useTranslations('common');
@@ -161,48 +170,26 @@ export default function AdminPendingRequestsV2() {
     });
   };
 
-  const handleCSVExport = async () => {
+  // Export d'une période vers un nouvel onglet Google Sheet.
+  const handleSheetExport = async () => {
     if (isExporting) return;
-    
+    if (!exportStart || !exportEnd || exportStart > exportEnd) {
+      setExportResult({ ok: false, msg: 'Période invalide (début ≤ fin).' });
+      return;
+    }
     setIsExporting(true);
-    setActionMessage(null);
-    
+    setExportResult(null);
     try {
-      const response = await fetch('/api/analytics/vacations.csv?status=all');
-      
-      if (!response.ok) {
-        throw new Error(`Export failed: ${response.status} ${response.statusText}`);
-      }
-      
-      // Get the CSV content
-      const csvContent = await response.text();
-      
-      // Create and download the file
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement('a');
-      const url = URL.createObjectURL(blob);
-      
-      link.setAttribute('href', url);
-      link.setAttribute('download', `vacation-requests-${new Date().toISOString().split('T')[0]}.csv`);
-      link.style.visibility = 'hidden';
-      
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      setActionMessage({
-        type: 'success',
-        message: 'CSV export completed successfully!'
+      const res = await fetch('/api/admin/export-sheet', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ startDate: exportStart, endDate: exportEnd }),
       });
-      
-      setTimeout(() => setActionMessage(null), 3000);
-      
-    } catch (error) {
-      console.error('CSV export error:', error);
-      setActionMessage({
-        type: 'error',
-        message: `Export failed: ${error instanceof Error ? error.message : 'Unknown error'}`
-      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`);
+      setExportResult({ ok: true, msg: `Onglet créé : ${data.title} (${data.count} congé(s))`, url: data.url });
+    } catch (e) {
+      setExportResult({ ok: false, msg: (e as Error).message });
     } finally {
       setIsExporting(false);
     }
@@ -477,23 +464,13 @@ export default function AdminPendingRequestsV2() {
                       )}
                     </button>
                     <button
-                      onClick={handleCSVExport}
-                      disabled={isExporting || requests.length === 0}
-                      className="inline-flex items-center px-4 py-2 border border-black/15 rounded-md text-xs font-semibold uppercase tracking-wider text-ink bg-white hover:bg-cream-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                      onClick={() => setShowExportModal(true)}
+                      className="inline-flex items-center px-4 py-2 border border-black/15 rounded-md text-xs font-semibold uppercase tracking-wider text-ink bg-white hover:bg-cream-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gold transition-colors"
                     >
-                      {isExporting ? (
-                        <>
-                          <div className="animate-spin h-4 w-4 border-2 border-gray-300 border-t-transparent rounded-full mr-2"></div>
-                          Exporting...
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                          Export CSV
-                        </>
-                      )}
+                      <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      Export Google Sheet
                     </button>
                   </div>
                 </div>
@@ -677,8 +654,43 @@ export default function AdminPendingRequestsV2() {
                 </div>
               )}
 
-              {/* Create Vacation Modal */}
-
+      {/* Export Google Sheet — popup de période */}
+      {showExportModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowExportModal(false)}>
+          <div className="bg-white w-full max-w-md p-6 shadow-card border border-black/5" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-xl font-light tracking-tight text-ink mb-1">Export Google Sheet</h2>
+            <p className="text-sm text-slate-ardoise mb-4">Choisis la période ; un nouvel onglet « Vacation … » sera créé dans le classeur.</p>
+            <div className="grid grid-cols-2 gap-3">
+              <label className="block text-sm text-gray-700">Date de début
+                <input type="date" value={exportStart} onChange={(e) => setExportStart(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold" />
+              </label>
+              <label className="block text-sm text-gray-700">Date de fin
+                <input type="date" value={exportEnd} onChange={(e) => setExportEnd(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold" />
+              </label>
+            </div>
+            {exportResult && (
+              <div className={`mt-4 text-sm ${exportResult.ok ? 'text-[#5C7C5A]' : 'text-[#A23B2D]'}`}>
+                {exportResult.msg}
+                {exportResult.ok && exportResult.url && (
+                  <a href={exportResult.url} target="_blank" rel="noopener noreferrer" className="block mt-1 text-ink underline">
+                    Ouvrir la feuille →
+                  </a>
+                )}
+              </div>
+            )}
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button type="button" className="btn-secondary text-sm" onClick={() => { setShowExportModal(false); setExportResult(null); }}>
+                Fermer
+              </button>
+              <button type="button" className="btn-primary text-sm" disabled={isExporting} onClick={handleSheetExport}>
+                {isExporting ? 'Export en cours…' : 'Exporter'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

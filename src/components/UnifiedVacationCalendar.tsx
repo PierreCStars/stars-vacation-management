@@ -6,7 +6,7 @@ import { useSession } from 'next-auth/react';
 import { isAdmin } from '@/config/admins';
 import { VacationRequest } from '@/types/vacation';
 import { VacationRequestWithConflicts, ConflictEvent } from '@/app/[locale]/admin/vacation-requests/_server/getRequestsWithConflicts';
-import { getCompanyHexColor, normalizeCompanyCode, getAllCompanyColors } from '@/lib/company-colors';
+import { getCompanyHexColor, normalizeCompanyCode, getAllCompanyColors, readableTextColor } from '@/lib/company-colors';
 import { getMonacoHolidaysInRange, MonacoHoliday } from '@/lib/monaco-holidays';
 import { getStatusColor, detectConflictsForEmployee } from '@/lib/statusColor';
 import { countCompanyConflicts } from '@/lib/conflict-utils';
@@ -572,7 +572,9 @@ export default function UnifiedVacationCalendar({
                       : companyCode
                         ? getCompanyHexColor(companyCode)
                         : getStatusColor(vacation.status);
-                    const textColor = '#ffffff'; // Always use white text for visibility
+                    // Texte lisible : foncé sur couleur de filiale claire (jaune/doré),
+                    // blanc sinon. Statuts (pending/conflit) gardent le blanc.
+                    const textColor = companyCode ? readableTextColor(backgroundColor) : '#ffffff';
                     
                     return (
                       <div

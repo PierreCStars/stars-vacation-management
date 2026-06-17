@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeCompanyCode, getCompanyHexColor } from '../company-colors';
+import { normalizeCompanyCode, getCompanyHexColor, readableTextColor } from '../company-colors';
 
 describe('normalizeCompanyCode', () => {
   it('reconnaît les codes du formulaire', () => {
@@ -21,8 +21,22 @@ describe('normalizeCompanyCode', () => {
     expect(normalizeCompanyCode(null)).toBeNull();
   });
 
-  it('le code normalisé donne la bonne couleur', () => {
-    expect(getCompanyHexColor(normalizeCompanyCode('Stars Real Estate')!)).toBe('#ef4444');
-    expect(getCompanyHexColor(normalizeCompanyCode('stars.mc')!)).toBe('#3b82f6');
+  it('le code normalisé donne la couleur officielle de la charte', () => {
+    expect(getCompanyHexColor(normalizeCompanyCode('Stars Real Estate')!)).toBe('#273341');
+    expect(getCompanyHexColor(normalizeCompanyCode('stars.mc')!)).toBe('#D8B11B');
+    expect(getCompanyHexColor(normalizeCompanyCode('Stars Yachting')!)).toBe('#21254B');
+    expect(getCompanyHexColor(normalizeCompanyCode('Le Pneu')!)).toBe('#EDF01A');
+  });
+});
+
+describe('readableTextColor', () => {
+  it('texte foncé sur fonds clairs (jaune Le Pneu, doré Stars.mc)', () => {
+    expect(readableTextColor('#EDF01A')).toBe('#0A0A0A');
+    expect(readableTextColor('#D8B11B')).toBe('#0A0A0A');
+  });
+  it('texte blanc sur fonds sombres (bleu nuit, ardoise, bleu ciel)', () => {
+    expect(readableTextColor('#21254B')).toBe('#FFFFFF');
+    expect(readableTextColor('#273341')).toBe('#FFFFFF');
+    expect(readableTextColor('#0B77BD')).toBe('#FFFFFF');
   });
 });

@@ -1,47 +1,48 @@
-// Centralized company color configuration
-// This ensures all calendar components use the same colors
-
+// Centralized company color configuration.
+// Couleurs OFFICIELLES de la charte Star Luxury Group (couleur signature de
+// chaque filiale). Source : star-luxury-group-brand / references/<filiale>.md.
+// Ne pas remplacer par des couleurs génériques.
 export const COMPANY_COLORS = {
   'STARS_MC': {
     id: '1',
     name: 'Stars MC',
     displayName: 'Stars MC',
-    hex: '#3b82f6',        // Blue
+    hex: '#D8B11B',        // Doré SLG (couleur de marque Stars.mc)
     googleColorId: '1'     // Google Calendar color ID
   },
   'STARS_YACHTING': {
     id: '2',
     name: 'Stars Yachting',
     displayName: 'Stars Yachting',
-    hex: '#10b981',        // Green
+    hex: '#21254B',        // Bleu nuit (signature Yachting)
     googleColorId: '2'     // Google Calendar color ID
   },
   'STARS_REAL_ESTATE': {
     id: '3',
     name: 'Stars Real Estate',
     displayName: 'Stars Real Estate',
-    hex: '#ef4444',        // Red
+    hex: '#273341',        // Ardoise (signature Real Estate)
     googleColorId: '3'     // Google Calendar color ID
   },
   'LE_PNEU': {
     id: '4',
     name: 'Le Pneu',
     displayName: 'Le Pneu',
-    hex: '#f59e0b',        // Orange
+    hex: '#EDF01A',        // Jaune signaling (signature Le Pneu)
     googleColorId: '4'     // Google Calendar color ID
   },
   'MIDI_PNEU': {
     id: '5',
     name: 'Midi Pneu',
     displayName: 'Midi Pneu',
-    hex: '#8b5cf6',        // Purple
+    hex: '#EDF01A',        // Identité 100% partagée avec Le Pneu
     googleColorId: '5'     // Google Calendar color ID
   },
   'STARS_AVIATION': {
     id: '6',
     name: 'Stars Aviation',
     displayName: 'Stars Aviation',
-    hex: '#ec4899',        // Pink
+    hex: '#0B77BD',        // Bleu ciel (signature Aviation)
     googleColorId: '6'     // Google Calendar color ID
   }
 } as const;
@@ -68,6 +69,22 @@ export function getCompanyHexColor(companyCode: string): string {
 
 // Type for company codes
 export type CompanyCode = keyof typeof COMPANY_COLORS;
+
+/**
+ * Renvoie une couleur de texte lisible (#0A0A0A ink ou #FFFFFF) sur un fond hex
+ * donné, via la luminance relative. Indispensable car certaines couleurs de
+ * filiale sont claires (jaune Le Pneu #EDF01A, doré Stars.mc #D8B11B) → texte
+ * foncé, alors que bleu nuit / ardoise → texte blanc.
+ */
+export function readableTextColor(hex: string): '#0A0A0A' | '#FFFFFF' {
+  const m = /^#?([0-9a-f]{6})$/i.exec((hex || '').trim());
+  if (!m) return '#FFFFFF';
+  const int = parseInt(m[1], 16);
+  const r = (int >> 16) & 255, g = (int >> 8) & 255, b = int & 255;
+  // Luminance perçue (sRGB approx.)
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  return luminance > 0.6 ? '#0A0A0A' : '#FFFFFF';
+}
 
 /**
  * Normalise une valeur `company` libre (code ou nom affiché, casse/espaces/points

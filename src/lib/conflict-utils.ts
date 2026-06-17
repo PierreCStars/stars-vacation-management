@@ -16,6 +16,21 @@ type RequestLike = {
 };
 
 /**
+ * Compte les conflits d'un même JOUR : un conflit existe dès que ≥2 congés de
+ * la MÊME entreprise tombent ce jour-là. Chaque entreprise concernée compte
+ * pour 1 (deux personnes de sociétés différentes ne sont PAS en conflit).
+ */
+export function countCompanyConflicts(vacations: Array<{ company?: string | null }>): number {
+  if (!Array.isArray(vacations)) return 0;
+  const byCompany = new Map<string, number>();
+  for (const v of vacations) {
+    const key = (v?.company || 'UNKNOWN').trim().toUpperCase();
+    byCompany.set(key, (byCompany.get(key) || 0) + 1);
+  }
+  return Array.from(byCompany.values()).filter(n => n >= 2).length;
+}
+
+/**
  * Compte le nombre de conflits UNIQUES (paires non ordonnées de demandes en
  * chevauchement). Une paire A↔B référencée des deux côtés ne compte qu'une fois.
  */

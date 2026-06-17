@@ -229,6 +229,7 @@ const en = {
     "noConflictShort": "No conflict",
     "conflictsDetected": "{count} conflict(s) detected",
     "noConflictsDetected": "No conflict detected",
+    "outOfScope": "Out of scope",
     "createVacation": {
       "button": "Create Vacation",
       "title": "Create a vacation",
@@ -576,6 +577,7 @@ const fr = {
     "noConflictShort": "Aucun conflit",
     "conflictsDetected": "{count} conflit(s) détecté(s)",
     "noConflictsDetected": "Aucun conflit détecté",
+    "outOfScope": "Hors périmètre",
     "createVacation": {
       "button": "Créer un congé",
       "title": "Créer un congé",
@@ -923,6 +925,7 @@ const it = {
     "noConflictShort": "Nessun conflitto",
     "conflictsDetected": "{count} conflitto/i rilevato/i",
     "noConflictsDetected": "Nessun conflitto rilevato",
+    "outOfScope": "Fuori ambito",
     "createVacation": {
       "button": "Crea ferie",
       "title": "Crea ferie",

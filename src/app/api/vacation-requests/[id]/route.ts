@@ -8,7 +8,7 @@ import { decideVacation } from '@/lib/vacation-orchestration';
 import { revalidateTag, revalidatePath } from 'next/cache';
 import { syncEventForRequest, refreshCacheTags } from '@/lib/calendar/sync';
 import { normalizeVacationFields, normalizeVacationStatus } from '@/lib/normalize-vacation-fields';
-import { isFullAdmin } from '@/config/admins';
+import { isFullAdmin, canValidateCompany } from '@/config/admins';
 import { calendarClient, CAL_TARGET } from '@/lib/google-calendar';
 
 // Google Calendar API for Holidays Calendar
@@ -111,7 +111,19 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
       }
       
       const requestData = { id: docSnap.id, ...docSnap.data() } as VacationRequest;
-      
+
+      // Périmètre de validation : un admin restreint (ex. daniel = Stars.mc / Le
+      // Pneu / Midi Pneu) ne peut valider/refuser que les demandes de SES
+      // entreprises. Vérifié côté serveur après lecture de l'entreprise réelle.
+      if (isStatusUpdate && !canValidateCompany(session.user.email, requestData.company)) {
+        console.log('🔍 [INVESTIGATION] Forbidden - admin hors périmètre entreprise:', {
+          userEmail: session.user.email, company: requestData.company,
+        });
+        return NextResponse.json({
+          error: "Forbidden - vous n'êtes pas autorisé à valider les demandes de cette entreprise",
+        }, { status: 403 });
+      }
+
       // Handle status updates
       if (isStatusUpdate) {
         console.log('🔍 [INVESTIGATION] Starting status update:', { id, newStatus, reviewer });

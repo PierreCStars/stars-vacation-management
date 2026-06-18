@@ -63,8 +63,8 @@ export function detailsTable(rows: Array<{ label: string; value: string }>): str
     .map(
       r => `
       <tr>
-        <td style="padding:10px 0;border-bottom:1px solid rgba(10,10,10,0.06);font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:${SLATE};font-family:${FONT_STACK};vertical-align:top;width:42%;">${r.label}</td>
-        <td style="padding:10px 0;border-bottom:1px solid rgba(10,10,10,0.06);font-size:14px;color:${INK};font-family:${FONT_STACK};vertical-align:top;">${r.value}</td>
+        <td style="padding:9px 0;border-bottom:1px solid rgba(10,10,10,0.06);font-size:10px;letter-spacing:0.1em;text-transform:uppercase;color:${SLATE};font-family:${FONT_STACK};font-weight:400;vertical-align:top;width:42%;">${r.label}</td>
+        <td style="padding:9px 0;border-bottom:1px solid rgba(10,10,10,0.06);font-size:13px;color:${INK};font-family:${FONT_STACK};font-weight:400;vertical-align:top;">${r.value}</td>
       </tr>`,
     )
     .join('');
@@ -85,8 +85,8 @@ export function renderSlgEmail(opts: RenderEmailOptions): string {
         <td style="padding:8px 0 4px;">
           <a href="${opts.cta.url}"
              style="display:inline-block;background:${GOLD};color:${INK};text-decoration:none;
-                    font-family:${FONT_STACK};font-size:13px;font-weight:600;letter-spacing:0.08em;
-                    text-transform:uppercase;padding:13px 26px;border-radius:8px;">
+                    font-family:${FONT_STACK};font-size:11px;font-weight:500;letter-spacing:0.1em;
+                    text-transform:uppercase;padding:11px 22px;border-radius:6px;">
             ${opts.cta.label}
           </a>
         </td>
@@ -131,9 +131,9 @@ export function renderSlgEmail(opts: RenderEmailOptions): string {
           <tr>
             <td style="padding:8px 36px 32px;">
               ${eyebrowHtml}
-              <h1 style="margin:0 0 4px;font-family:${FONT_STACK};font-size:22px;font-weight:300;letter-spacing:-0.01em;color:${INK};line-height:1.25;">${opts.heading}</h1>
-              <div style="height:2px;width:40px;background:${accent};margin:12px 0 20px;"></div>
-              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="font-family:${FONT_STACK};color:${INK};font-size:15px;line-height:1.65;">
+              <h1 style="margin:0 0 4px;font-family:${FONT_STACK};font-size:18px;font-weight:300;letter-spacing:-0.01em;color:${INK};line-height:1.3;">${opts.heading}</h1>
+              <div style="height:2px;width:36px;background:${accent};margin:11px 0 18px;"></div>
+              <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="font-family:${FONT_STACK};color:${INK};font-size:13px;line-height:1.6;">
                 ${opts.bodyHtml}
                 ${ctaHtml}
               </table>

@@ -4,6 +4,7 @@ import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 import { isAdmin } from '@/config/admins';
 import Link from 'next/link';
+import { AdminSidebar } from '@/components/nav/AdminSidebar';
 
 // The admin layout is per-request: it reads the session cookie + the
 // x-pathname header injected by middleware. Static rendering would defeat
@@ -63,8 +64,15 @@ export default async function AdminLayout({
     );
   }
 
-  // SLG charte: any full-width band requires its content to be encadré.
-  // Wrap every /admin/** page in the shared `.slg-container` so the page
-  // body never spills edge-to-edge under the dark header.
-  return <div className="slg-container py-8">{children}</div>;
+  // Back office = layout sidebar (charte SLG, aligné sur le portail RH).
+  // Sidebar à gauche (nav admin) + contenu de la page à droite. Sur mobile,
+  // la sidebar passe en barre horizontale au-dessus du contenu.
+  return (
+    <div className="mx-auto flex w-full max-w-7xl flex-col lg:flex-row">
+      <AdminSidebar />
+      <main id="main" className="min-w-0 flex-1 px-4 sm:px-6 py-6 lg:py-8">
+        {children}
+      </main>
+    </div>
+  );
 }

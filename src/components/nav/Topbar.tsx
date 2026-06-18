@@ -23,6 +23,9 @@ export function Topbar() {
   // Le logo renvoie au dashboard du PORTAIL RH (le module congés est une tuile
   // du portail). Configurable via env pour basculer sur portal.stars.mc en prod.
   const portalDashboard = `${process.env.NEXT_PUBLIC_PORTAL_URL || 'https://stars-hr-portal-preview.vercel.app'}/dashboard`;
+  // Sur les pages /admin, la nav admin est dans la sidebar → on masque le
+  // doublon dans la top bar.
+  const onAdminRoute = !!pathname && pathname.includes('/admin');
 
   const isActive = (href: string) =>
     pathname === href || pathname?.startsWith(href + '/') || false;
@@ -84,7 +87,7 @@ export function Topbar() {
             {tNav('vacationRequests')}
           </Link>
 
-          {isAdmin(session?.user?.email) && (
+          {isAdmin(session?.user?.email) && !onAdminRoute && (
             <AdminDropdown currentLocale={currentLocale} />
           )}
         </nav>
@@ -150,7 +153,7 @@ export function Topbar() {
             >
               {tNav('vacationRequests')}
             </Link>
-            {isAdmin(session?.user?.email) && (
+            {isAdmin(session?.user?.email) && !onAdminRoute && (
               <>
                 <Link
                   href={createLocaleUrl('/admin/vacation-requests', currentLocale)}

@@ -94,7 +94,8 @@ const en = {
     "administration": "Administration",
     "managementSection": "Management",
     "analyticsSection": "Analytics",
-    "setup": "Options"
+    "setup": "Options",
+    "portalHome": "HR Portal"
   },
   "vacations": {
     "title": "Vacation Management",
@@ -442,7 +443,8 @@ const fr = {
     "administration": "Administration",
     "managementSection": "Gestion",
     "analyticsSection": "Analyses",
-    "setup": "Options"
+    "setup": "Options",
+    "portalHome": "Portail RH"
   },
   "dashboard": {
     "title": "Tableau de bord",
@@ -790,7 +792,8 @@ const it = {
     "administration": "Amministrazione",
     "managementSection": "Gestione",
     "analyticsSection": "Analisi",
-    "setup": "Opzioni"
+    "setup": "Opzioni",
+    "portalHome": "Portale HR"
   },
   "dashboard": {
     "title": "Dashboard",

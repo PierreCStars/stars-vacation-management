@@ -20,6 +20,10 @@ export function Topbar() {
   const currentLocale = pathname?.split('/')[1] || 'en';
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
+  // Le logo renvoie au dashboard du PORTAIL RH (le module congés est une tuile
+  // du portail). Configurable via env pour basculer sur portal.stars.mc en prod.
+  const portalDashboard = `${process.env.NEXT_PUBLIC_PORTAL_URL || 'https://stars-hr-portal-preview.vercel.app'}/dashboard`;
+
   const isActive = (href: string) =>
     pathname === href || pathname?.startsWith(href + '/') || false;
 
@@ -37,11 +41,11 @@ export function Topbar() {
       aria-label="Main"
     >
       <div className="slg-container flex h-16 items-center justify-between">
-        {/* Logo + wordmark */}
-        <Link
-          href={createLocaleUrl('/dashboard', currentLocale)}
+        {/* Logo + wordmark — renvoie au dashboard du portail RH */}
+        <a
+          href={portalDashboard}
           className="no-underline flex items-center gap-3 shrink-0 group"
-          aria-label="Go to Dashboard"
+          aria-label="Aller au portail RH"
         >
           {/* Real intrinsic aspect ratio: 1894x1339 (~1.41). NEVER force a
               square box on the logo — preserve the source ratio at all sizes
@@ -62,7 +66,7 @@ export function Topbar() {
               {tCommon('appName')}
             </span>
           </span>
-        </Link>
+        </a>
 
         {/* Main navigation - Desktop */}
         <nav className="hidden md:flex items-end gap-2 h-full">

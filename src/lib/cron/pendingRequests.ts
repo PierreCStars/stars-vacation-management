@@ -6,6 +6,7 @@
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { sendAdminNotification } from '@/lib/mailer';
 import { adminVacationRequestUrl } from '@/lib/urls';
+import { renderSlgEmail, detailsTable, slgTextFooter } from '@/lib/email/slg-theme';
 import { FieldValue } from 'firebase-admin/firestore';
 
 // Time constants
@@ -148,139 +149,52 @@ export async function notifyAdminsForOverdue(
       // Build admin URL
       const adminUrl = adminVacationRequestUrl(request.id, request.locale);
       
-      // Generate subject and content
-      const subject = `Vacation request pending for review (${threshold === '3d' ? '3 days' : '7 days'})`;
-      
-      const formattedStartDate = request.startDate ? new Date(request.startDate).toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }) : 'Not specified';
-      
-      const formattedEndDate = request.endDate ? new Date(request.endDate).toLocaleDateString('en-US', {
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric'
-      }) : 'Not specified';
+      // Sujet + contenu (charte SLG, FR, via le shell email partagé)
+      const joursLabel = threshold === '3d' ? '3 jours' : '7 jours';
+      const subject = `Demande de congés en attente de validation (${joursLabel})`;
 
-      const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${subject}</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f5f5f5; }
-    .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); overflow: hidden; }
-    .header { background: #f59e0b; color: white; padding: 20px; text-align: center; }
-    .header h1 { margin: 0; font-size: 24px; }
-    .content { padding: 30px; }
-    .request-info { background: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 20px; margin: 20px 0; }
-    .info-row { display: flex; justify-content: space-between; margin: 10px 0; padding: 8px 0; border-bottom: 1px solid #f59e0b; }
-    .info-row:last-child { border-bottom: none; }
-    .info-label { font-weight: 600; color: #92400e; }
-    .info-value { color: #b45309; }
-    .cta-button { display: inline-block; background: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: 600; margin: 20px 0; }
-    .cta-button:hover { background: #d97706; }
-    .footer { background: #f8fafc; padding: 20px; text-align: center; color: #6b7280; font-size: 14px; }
-    .badge { display: inline-block; background: #fbbf24; color: #92400e; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
-    .half-day { background: #dbeafe; color: #1e40af; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>⏰ ${subject}</h1>
-    </div>
-    
-    <div class="content">
-      <p>A vacation request has been pending for ${threshold === '3d' ? '3 days' : '7 days'} and requires your review.</p>
-      
-      <div class="request-info">
-        <div class="info-row">
-          <span class="info-label">Request ID:</span>
-          <span class="info-value">#${request.id}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Employee:</span>
-          <span class="info-value">${request.requesterName} (${request.requesterEmail})</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Company:</span>
-          <span class="info-value">${request.company}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Type:</span>
-          <span class="info-value">${request.type}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Start Date:</span>
-          <span class="info-value">${formattedStartDate}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">End Date:</span>
-          <span class="info-value">${formattedEndDate}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Duration:</span>
-          <span class="info-value">
-            ${request.durationDays} day${request.durationDays !== 1 ? 's' : ''}
-            ${request.isHalfDay ? `<span class="badge half-day">Half Day (${request.halfDayType})</span>` : ''}
-          </span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Reason:</span>
-          <span class="info-value">${request.reason}</span>
-        </div>
-        <div class="info-row">
-          <span class="info-label">Submitted:</span>
-          <span class="info-value">${request.createdAt.toLocaleString('en-US')}</span>
-        </div>
-      </div>
-      
-      <div style="text-align: center;">
-        <a href="${adminUrl}" class="cta-button">Review Request</a>
-      </div>
-      
-      <p style="margin-top: 30px; color: #6b7280; font-size: 14px;">
-        This request has been pending for ${threshold === '3d' ? '3 days' : '7 days'}. Please review and take appropriate action.
-      </p>
-    </div>
-    
-    <div class="footer">
-      <p>Stars Vacation Management System</p>
-      <p>If you cannot click the button above, copy and paste this link: <a href="${adminUrl}">${adminUrl}</a></p>
-    </div>
-  </div>
-</body>
-</html>`;
+      const fmt = (d?: string) => d
+        ? new Date(d).toLocaleDateString('fr-FR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+        : 'Non précisé';
+      const formattedStartDate = fmt(request.startDate);
+      const formattedEndDate = fmt(request.endDate);
+      const dureeLabel = `${request.durationDays} jour${request.durationDays !== 1 ? 's' : ''}${request.isHalfDay ? ` · demi-journée (${request.halfDayType})` : ''}`;
 
-      const text = `
-${subject}
+      const bodyHtml =
+        `<tr><td style="padding:0 0 16px;">Une demande de congés est en attente depuis ${joursLabel} et requiert votre validation.</td></tr>` +
+        `<tr><td>${detailsTable([
+          { label: 'Employé', value: `${request.requesterName} <span style="color:rgba(39,51,65,0.7)">${request.requesterEmail}</span>` },
+          { label: 'Société', value: request.company || '—' },
+          { label: 'Type', value: request.type || '—' },
+          { label: 'Début', value: formattedStartDate },
+          { label: 'Fin', value: formattedEndDate },
+          { label: 'Durée', value: dureeLabel },
+          { label: 'Motif', value: request.reason || '—' },
+          { label: 'Soumise le', value: request.createdAt.toLocaleString('fr-FR') },
+        ])}</td></tr>`;
 
-A vacation request has been pending for ${threshold === '3d' ? '3 days' : '7 days'} and requires your review.
+      const html = renderSlgEmail({
+        title: subject,
+        eyebrow: `Rappel · ${joursLabel}`,
+        heading: 'Une demande attend votre validation',
+        accent: 'gold',
+        bodyHtml,
+        cta: { label: 'Examiner la demande', url: adminUrl },
+        preheader: `${request.requesterName} · ${formattedStartDate} → ${formattedEndDate}`,
+      });
 
-Request Details:
-- Request ID: #${request.id}
-- Employee: ${request.requesterName} (${request.requesterEmail})
-- Company: ${request.company}
-- Type: ${request.type}
-- Start Date: ${formattedStartDate}
-- End Date: ${formattedEndDate}
-- Duration: ${request.durationDays} day${request.durationDays !== 1 ? 's' : ''}${request.isHalfDay ? ` (Half Day - ${request.halfDayType})` : ''}
-- Reason: ${request.reason}
-- Submitted: ${request.createdAt.toLocaleString('en-US')}
+      const text = `Demande de congés en attente (${joursLabel})
 
-Review this request: ${adminUrl}
+Employé : ${request.requesterName} (${request.requesterEmail})
+Société : ${request.company}
+Type : ${request.type}
+Début : ${formattedStartDate}
+Fin : ${formattedEndDate}
+Durée : ${dureeLabel}
+Motif : ${request.reason || '—'}
+Soumise le : ${request.createdAt.toLocaleString('fr-FR')}
 
-This request has been pending for ${threshold === '3d' ? '3 days' : '7 days'}. Please review and take appropriate action.
-
----
-Stars Vacation Management System
-`;
+Examiner cette demande : ${adminUrl}${slgTextFooter()}`;
 
       // Send email
       await sendAdminNotification({

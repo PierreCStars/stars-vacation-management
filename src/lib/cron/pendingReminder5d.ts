@@ -7,6 +7,7 @@
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { sendAdminNotification } from '@/lib/mailer';
 import { adminVacationRequestUrl } from '@/lib/urls';
+import { renderSlgEmail, slgTextFooter } from '@/lib/email/slg-theme';
 import { FieldValue } from 'firebase-admin/firestore';
 import { isAdmin } from '@/config/admins';
 
@@ -116,10 +117,9 @@ function generateReminderEmail(requests: PendingRequestForReminder[]): { subject
 
   const subject = `Demandes de congés en attente — rappel (${count} demande${count !== 1 ? 's' : ''})`;
 
-  const cellBase = 'padding:10px 12px;border-bottom:1px solid #E7E2D8;font-size:14px;color:#0A0A0A;';
-  const th = 'padding:10px 12px;text-align:left;font-size:11px;font-weight:600;letter-spacing:0.12em;text-transform:uppercase;color:#273341;border-bottom:2px solid #D8B11B;';
+  const cellBase = 'padding:9px 10px;border-bottom:1px solid rgba(10,10,10,0.06);font-size:13px;color:#0A0A0A;';
+  const th = 'padding:9px 10px;text-align:left;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#273341;border-bottom:2px solid #D8B11B;';
 
-  // Build table rows for requests
   const tableRows = requests.map(req => {
     const reviewUrl = adminVacationRequestUrl(req.id, 'fr');
     return `
@@ -129,69 +129,32 @@ function generateReminderEmail(requests: PendingRequestForReminder[]): { subject
         <td style="${cellBase}">${req.type || 'Journée complète'}</td>
         <td style="${cellBase}text-align:center;">${req.durationDays || 1}</td>
         <td style="${cellBase}">${req.submittedDate}</td>
-        <td style="${cellBase}text-align:center;">
-          <a href="${reviewUrl}" style="color:#0A0A0A;text-decoration:underline;">Examiner</a>
-        </td>
-      </tr>
-    `;
+        <td style="${cellBase}text-align:center;"><a href="${reviewUrl}" style="color:#0A0A0A;">Examiner</a></td>
+      </tr>`;
   }).join('');
 
-  const html = `
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${subject}</title>
-  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600&display=swap" rel="stylesheet">
-</head>
-<body style="margin:0;padding:0;background:#F5F2EC;font-family:'Montserrat',Arial,sans-serif;color:#0A0A0A;">
-  <div style="max-width:760px;margin:0 auto;padding:32px 20px;">
-    <div style="background:#FFFFFF;border:1px solid #E7E2D8;">
-      <!-- Header -->
-      <div style="padding:28px 28px 20px;border-bottom:2px solid #D8B11B;">
-        <div style="font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#273341;margin-bottom:10px;">Star Luxury Group</div>
-        <h1 style="margin:0;font-size:24px;font-weight:300;letter-spacing:-0.01em;color:#0A0A0A;">Demandes de congés en attente</h1>
-        <p style="margin:6px 0 0;font-size:14px;color:#273341;">
-          ${count} demande${count !== 1 ? 's' : ''} en attente de votre validation.
-        </p>
-      </div>
-      <!-- Body -->
-      <div style="padding:24px 28px;">
-        <table style="width:100%;border-collapse:collapse;">
-          <thead>
-            <tr>
-              <th style="${th}">Employé</th>
-              <th style="${th}">Dates</th>
-              <th style="${th}">Type</th>
-              <th style="${th}text-align:center;">Jours</th>
-              <th style="${th}">Soumise le</th>
-              <th style="${th}text-align:center;">Action</th>
-            </tr>
-          </thead>
-          <tbody>${tableRows}</tbody>
-        </table>
+  // Corps inséré dans le shell SLG partagé (renderSlgEmail)
+  const bodyHtml =
+    `<tr><td style="padding:0 0 16px;">${count} demande${count !== 1 ? 's' : ''} de congés en attente de votre validation.</td></tr>` +
+    `<tr><td>
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;">
+        <thead><tr>
+          <th style="${th}">Employé</th><th style="${th}">Dates</th><th style="${th}">Type</th>
+          <th style="${th}text-align:center;">Jours</th><th style="${th}">Soumise le</th><th style="${th}text-align:center;">Action</th>
+        </tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </td></tr>`;
 
-        <div style="text-align:center;margin:28px 0 8px;">
-          <a href="${adminUrl}" style="display:inline-block;background:#D8B11B;color:#0A0A0A;padding:13px 26px;text-decoration:none;font-size:13px;font-weight:600;letter-spacing:0.04em;text-transform:uppercase;">
-            Examiner les demandes
-          </a>
-        </div>
-
-        <p style="margin-top:20px;font-size:12px;color:#273341;font-style:italic;">
-          Rappel automatique envoyé tous les 5 jours pour les demandes de congés en attente.
-        </p>
-      </div>
-      <!-- Footer -->
-      <div style="padding:16px 28px;border-top:1px solid #E7E2D8;">
-        <p style="margin:0 0 4px;font-size:11px;color:#273341;">© ${new Date().getFullYear()} Star Luxury Group — Stars Vacation Management</p>
-        <p style="margin:0;font-size:11px;color:#273341;">Lien direct : <a href="${adminUrl}" style="color:#0A0A0A;">${adminUrl}</a></p>
-      </div>
-    </div>
-  </div>
-</body>
-</html>
-  `;
+  const html = renderSlgEmail({
+    title: subject,
+    eyebrow: 'Rappel · 5 jours',
+    heading: 'Demandes de congés en attente',
+    accent: 'gold',
+    bodyHtml,
+    cta: { label: 'Examiner les demandes', url: adminUrl },
+    preheader: `${count} demande${count !== 1 ? 's' : ''} à valider`,
+  });
 
   const text = `
 DEMANDES DE CONGÉS EN ATTENTE — RAPPEL
@@ -209,11 +172,7 @@ ${idx + 1}. ${req.userName}
 
 Examiner toutes les demandes : ${adminUrl}
 
-Rappel automatique envoyé tous les 5 jours pour les demandes de congés en attente.
-
----
-Star Luxury Group — Stars Vacation Management
-  `;
+Rappel automatique envoyé tous les 5 jours pour les demandes de congés en attente.${slgTextFooter()}`;
 
   return { subject, html, text };
 }

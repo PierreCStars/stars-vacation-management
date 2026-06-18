@@ -117,8 +117,8 @@ export function generateReminderEmail(requests: PendingRequestForReminder[]): { 
 
   const subject = `Demandes de congés en attente — rappel (${count} demande${count !== 1 ? 's' : ''})`;
 
-  const cellBase = 'padding:9px 10px;border-bottom:1px solid rgba(10,10,10,0.06);font-size:13px;color:#0A0A0A;';
-  const th = 'padding:9px 10px;text-align:left;font-size:10px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;color:#273341;border-bottom:2px solid #D8B11B;';
+  const cellBase = 'padding:8px 8px;border-bottom:1px solid rgba(10,10,10,0.06);font-size:12px;font-weight:400;color:#0A0A0A;';
+  const th = 'padding:8px 8px;text-align:left;font-size:10px;font-weight:400;letter-spacing:0.08em;text-transform:uppercase;color:#273341;border-bottom:1px solid #D8B11B;';
 
   const tableRows = requests.map(req => {
     const reviewUrl = adminVacationRequestUrl(req.id, 'fr');

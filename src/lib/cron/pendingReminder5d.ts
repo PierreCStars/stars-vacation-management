@@ -7,6 +7,7 @@
 import { getFirebaseAdmin } from '@/lib/firebaseAdmin';
 import { sendAdminNotification } from '@/lib/mailer';
 import { adminVacationRequestUrl } from '@/lib/urls';
+import { renderSlgEmail, slgTextFooter } from '@/lib/email/slg-theme';
 import { FieldValue } from 'firebase-admin/firestore';
 import { isAdmin } from '@/config/admins';
 
@@ -114,102 +115,64 @@ function generateReminderEmail(requests: PendingRequestForReminder[]): { subject
   const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'https://vacation.stars.mc';
   const adminUrl = `${baseUrl}/admin/vacation-requests`;
 
-  const subject = `Pending vacation requests — reminder (${count} request${count !== 1 ? 's' : ''})`;
+  const subject = `Demandes de congés en attente — rappel (${count} demande${count !== 1 ? 's' : ''})`;
 
-  // Build table rows for requests
+  const cellBase = 'padding:9px 10px;border-bottom:1px solid rgba(10,10,10,0.06);font-size:13px;color:#0A0A0A;';
+  const th = 'padding:9px 10px;text-align:left;font-size:10px;font-weight:600;letter-spacing:0.1em;text-transform:uppercase;color:#273341;border-bottom:2px solid #D8B11B;';
+
   const tableRows = requests.map(req => {
-    const reviewUrl = adminVacationRequestUrl(req.id, 'en');
+    const reviewUrl = adminVacationRequestUrl(req.id, 'fr');
     return `
-      <tr style="border-bottom: 1px solid #e5e7eb;">
-        <td style="padding: 12px; text-align: left;">${req.userName}</td>
-        <td style="padding: 12px; text-align: left;">${req.startDate} - ${req.endDate}</td>
-        <td style="padding: 12px; text-align: left;">${req.type || 'Full day'}</td>
-        <td style="padding: 12px; text-align: center;">${req.durationDays || 1}</td>
-        <td style="padding: 12px; text-align: left;">${req.submittedDate}</td>
-        <td style="padding: 12px; text-align: center;">
-          <a href="${reviewUrl}" style="color: #2563eb; text-decoration: underline;">Review</a>
-        </td>
-      </tr>
-    `;
+      <tr>
+        <td style="${cellBase}font-weight:500;">${req.userName}</td>
+        <td style="${cellBase}">${req.startDate} → ${req.endDate}</td>
+        <td style="${cellBase}">${req.type || 'Journée complète'}</td>
+        <td style="${cellBase}text-align:center;">${req.durationDays || 1}</td>
+        <td style="${cellBase}">${req.submittedDate}</td>
+        <td style="${cellBase}text-align:center;"><a href="${reviewUrl}" style="color:#0A0A0A;">Examiner</a></td>
+      </tr>`;
   }).join('');
 
-  const html = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${subject}</title>
-</head>
-<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 800px; margin: 0 auto; padding: 20px;">
-  <div style="background-color: #ffffff; border-radius: 8px; padding: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
-    <h1 style="color: #1f2937; margin-top: 0; font-size: 24px;">📋 Pending Vacation Requests — Reminder</h1>
-    
-    <p style="font-size: 16px; color: #4b5563;">
-      You have <strong style="color: #dc2626;">${count}</strong> pending vacation request${count !== 1 ? 's' : ''} that ${count !== 1 ? 'require' : 'requires'} your review.
-    </p>
-
-    <div style="margin: 30px 0; overflow-x: auto;">
-      <table style="width: 100%; border-collapse: collapse; background-color: #f9fafb; border-radius: 6px; overflow: hidden;">
-        <thead>
-          <tr style="background-color: #f3f4f6;">
-            <th style="padding: 12px; text-align: left; font-weight: 600; color: #374151;">Employee</th>
-            <th style="padding: 12px; text-align: left; font-weight: 600; color: #374151;">Dates</th>
-            <th style="padding: 12px; text-align: left; font-weight: 600; color: #374151;">Type</th>
-            <th style="padding: 12px; text-align: center; font-weight: 600; color: #374151;">Days</th>
-            <th style="padding: 12px; text-align: left; font-weight: 600; color: #374151;">Submitted</th>
-            <th style="padding: 12px; text-align: center; font-weight: 600; color: #374151;">Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${tableRows}
-        </tbody>
+  // Corps inséré dans le shell SLG partagé (renderSlgEmail)
+  const bodyHtml =
+    `<tr><td style="padding:0 0 16px;">${count} demande${count !== 1 ? 's' : ''} de congés en attente de votre validation.</td></tr>` +
+    `<tr><td>
+      <table role="presentation" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:collapse;">
+        <thead><tr>
+          <th style="${th}">Employé</th><th style="${th}">Dates</th><th style="${th}">Type</th>
+          <th style="${th}text-align:center;">Jours</th><th style="${th}">Soumise le</th><th style="${th}text-align:center;">Action</th>
+        </tr></thead>
+        <tbody>${tableRows}</tbody>
       </table>
-    </div>
+    </td></tr>`;
 
-    <div style="text-align: center; margin: 30px 0;">
-      <a href="${adminUrl}" 
-         style="display: inline-block; background-color: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
-        Review Requests
-      </a>
-    </div>
-
-    <p style="margin-top: 30px; color: #6b7280; font-size: 14px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
-      This is an automated reminder sent every 5 days for pending vacation requests. 
-      Please review and take appropriate action on these requests.
-    </p>
-  </div>
-  
-  <div style="margin-top: 20px; text-align: center; color: #9ca3af; font-size: 12px;">
-    <p>Stars Vacation Management System</p>
-    <p>If you cannot click the button above, copy and paste this link: <a href="${adminUrl}" style="color: #2563eb;">${adminUrl}</a></p>
-  </div>
-</body>
-</html>
-  `;
+  const html = renderSlgEmail({
+    title: subject,
+    eyebrow: 'Rappel · 5 jours',
+    heading: 'Demandes de congés en attente',
+    accent: 'gold',
+    bodyHtml,
+    cta: { label: 'Examiner les demandes', url: adminUrl },
+    preheader: `${count} demande${count !== 1 ? 's' : ''} à valider`,
+  });
 
   const text = `
-PENDING VACATION REQUESTS — REMINDER
+DEMANDES DE CONGÉS EN ATTENTE — RAPPEL
 
-You have ${count} pending vacation request${count !== 1 ? 's' : ''} that ${count !== 1 ? 'require' : 'requires'} your review.
+${count} demande${count !== 1 ? 's' : ''} en attente de votre validation.
 
 ${requests.map((req, idx) => `
 ${idx + 1}. ${req.userName}
-   Dates: ${req.startDate} - ${req.endDate}
-   Type: ${req.type || 'Full day'}
-   Days: ${req.durationDays || 1}
-   Submitted: ${req.submittedDate}
-   Review: ${adminVacationRequestUrl(req.id, 'en')}
+   Dates : ${req.startDate} → ${req.endDate}
+   Type : ${req.type || 'Journée complète'}
+   Jours : ${req.durationDays || 1}
+   Soumise le : ${req.submittedDate}
+   Examiner : ${adminVacationRequestUrl(req.id, 'fr')}
 `).join('\n')}
 
-Review all requests: ${adminUrl}
+Examiner toutes les demandes : ${adminUrl}
 
-This is an automated reminder sent every 5 days for pending vacation requests. 
-Please review and take appropriate action on these requests.
-
----
-Stars Vacation Management System
-  `;
+Rappel automatique envoyé tous les 5 jours pour les demandes de congés en attente.${slgTextFooter()}`;
 
   return { subject, html, text };
 }

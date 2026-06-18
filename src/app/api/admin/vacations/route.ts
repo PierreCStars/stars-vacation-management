@@ -7,6 +7,7 @@ import { normalizeVacationFields } from '@/lib/normalize-vacation-fields';
 import { sendEmailToRecipients } from '@/lib/email-notifications';
 import { getTranslations } from 'next-intl/server';
 import { getVacationTypeLabelFromTranslations } from '@/lib/vacation-types';
+import { renderSlgEmail } from '@/lib/email/slg-theme';
 
 export async function POST(request: NextRequest) {
   try {
@@ -140,38 +141,22 @@ export async function POST(request: NextRequest) {
 
         // Create email content
         const subject = t('subject');
-        const htmlBody = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #059669;">
-              ${t('greeting', { name: userName })}
-            </h2>
-            
-            <p style="font-size: 16px; line-height: 1.6; color: #374151;">
-              ${t('body')}
-            </p>
-            
-            <div style="background-color: #f0fdf4; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #059669;">
-              <h3 style="color: #111827; margin-top: 0;">${t('details')}</h3>
-              <ul style="list-style: none; padding: 0;">
-                <li style="margin: 8px 0;"><strong>${t('type', { type: vacationTypeLabel })}</strong></li>
-                <li style="margin: 8px 0;"><strong>${t('dates', { startDate: formattedStartDate, endDate: formattedEndDate })}</strong></li>
-                <li style="margin: 8px 0;"><strong>${t('duration', { duration: durationDays })}</strong></li>
-                <li style="margin: 8px 0;"><strong>${t('reason', { reason: 'Created by admin' })}</strong></li>
-                <li style="margin: 8px 0;"><strong>${t('createdBy', { createdBy: session.user.name || 'Admin' })}</strong></li>
-              </ul>
-            </div>
-            
-            <p style="font-size: 14px; color: #6b7280;">
-              ${t('footer')}
-            </p>
-            
-            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-              <p style="font-size: 14px; color: #374151;">
-                ${t('signature')}
-              </p>
-            </div>
-          </div>
-        `;
+        const detailLine = (s: string) =>
+          `<tr><td style="padding:5px 0;font-size:14px;color:#0A0A0A;border-bottom:1px solid rgba(10,10,10,0.06);">${s}</td></tr>`;
+        const bodyHtml =
+          `<tr><td style="padding:0 0 16px;">${t('body')}</td></tr>` +
+          detailLine(t('type', { type: vacationTypeLabel })) +
+          detailLine(t('dates', { startDate: formattedStartDate, endDate: formattedEndDate })) +
+          detailLine(t('duration', { duration: durationDays })) +
+          detailLine(t('createdBy', { createdBy: session.user.name || 'Admin' })) +
+          `<tr><td style="padding:16px 0 0;font-size:12px;color:#273341;">${t('footer')}</td></tr>`;
+
+        const htmlBody = renderSlgEmail({
+          title: subject,
+          heading: t('greeting', { name: userName }),
+          accent: 'green',
+          bodyHtml,
+        });
 
         const textBody = `
 ${t('greeting', { name: userName })}

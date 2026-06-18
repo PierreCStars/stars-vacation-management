@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sendAdminNotification } from '@/lib/email-notifications';
-import { generateAdminNotificationEmail } from '@/lib/email-templates';
+import { renderSlgEmail, detailsTable, slgTextFooter } from '@/lib/email/slg-theme';
 
 export const dynamic = "force-dynamic";
 export const runtime = 'nodejs';
@@ -40,36 +40,34 @@ export async function POST() {
       try {
         console.log(`📧 Sending admin notification for request...`);
         
-        // Create a simple notification email
-        const subject = `Pending Vacation Request - ${request.userName || 'Unknown Employee'}`;
-        const html = `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-            <h2 style="color: #2563eb;">Pending Vacation Request</h2>
-            <p>A vacation request is pending for review:</p>
-            <ul>
-              <li><strong>Employee:</strong> ${request.userName || 'Unknown'}</li>
-              <li><strong>Email:</strong> ${request.userEmail || 'N/A'}</li>
-              <li><strong>Company:</strong> ${request.company || 'Unknown'}</li>
-              <li><strong>Total Days:</strong> ${request.totalDays || 'N/A'}</li>
-              <li><strong>Request Count:</strong> ${request.count || 'N/A'}</li>
-            </ul>
-            <p>Please review this request in the admin panel.</p>
-            <p><a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://starsvacationmanagementv2.vercel.app'}/admin/vacation-requests" style="background-color: #2563eb; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Review Requests</a></p>
-          </div>
-        `;
-        const text = `
-Pending Vacation Request
+        // Email charte SLG via le shell partagé
+        const adminUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://starsvacationmanagementv2.vercel.app'}/admin/vacation-requests`;
+        const subject = `Demande de congés en attente — ${request.userName || 'Employé inconnu'}`;
+        const html = renderSlgEmail({
+          title: subject,
+          eyebrow: 'Rappel',
+          heading: 'Une demande attend votre validation',
+          accent: 'gold',
+          bodyHtml:
+            `<tr><td style="padding:0 0 16px;">Une demande de congés est en attente de validation.</td></tr>` +
+            `<tr><td>${detailsTable([
+              { label: 'Employé', value: request.userName || 'Inconnu' },
+              { label: 'Email', value: request.userEmail || '—' },
+              { label: 'Société', value: request.company || 'Inconnu' },
+              { label: 'Total jours', value: `${request.totalDays ?? '—'}` },
+              { label: 'Demandes', value: `${request.count ?? '—'}` },
+            ])}</td></tr>`,
+          cta: { label: 'Examiner les demandes', url: adminUrl },
+        });
+        const text = `Demande de congés en attente — ${request.userName || 'Inconnu'}
 
-A vacation request is pending for review:
+Employé : ${request.userName || 'Inconnu'}
+Email : ${request.userEmail || '—'}
+Société : ${request.company || 'Inconnu'}
+Total jours : ${request.totalDays ?? '—'}
+Demandes : ${request.count ?? '—'}
 
-Employee: ${request.userName || 'Unknown'}
-Email: ${request.userEmail || 'N/A'}
-Company: ${request.company || 'Unknown'}
-Total Days: ${request.totalDays || 'N/A'}
-Request Count: ${request.count || 'N/A'}
-
-Please review this request in the admin panel.
-        `;
+Examiner : ${adminUrl}${slgTextFooter()}`;
         
         // Send admin notification
         const result = await sendAdminNotification(subject, html, text);

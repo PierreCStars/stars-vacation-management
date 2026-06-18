@@ -110,7 +110,7 @@ export async function findPendingRequestsForReminder(): Promise<PendingRequestFo
 /**
  * Generate email content for 5-day pending reminder
  */
-function generateReminderEmail(requests: PendingRequestForReminder[]): { subject: string; html: string; text: string } {
+export function generateReminderEmail(requests: PendingRequestForReminder[]): { subject: string; html: string; text: string } {
   const count = requests.length;
   const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'https://vacation.stars.mc';
   const adminUrl = `${baseUrl}/admin/vacation-requests`;

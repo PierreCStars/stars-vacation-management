@@ -1,8 +1,6 @@
 import { setRequestLocale } from 'next-intl/server';
 import IntlProvider from '../../i18n/intl-provider'; // keep relative path
-import { Topbar } from '../../components/nav/Topbar';
-import { Footer } from '../../components/nav/Footer';
-import ForbiddenDatesNotice from '../../components/ForbiddenDatesNotice';
+import { AppShell } from '../../components/nav/AppShell';
 
 export default async function LocaleLayout({
   children,
@@ -18,20 +16,13 @@ export default async function LocaleLayout({
     const { messages: allMessages } = await import('@/locales');
     messages = allMessages[safeLocale as keyof typeof allMessages];
   } catch (error) {
-    console.warn(`Failed to load messages for locale ${safeLocale}:`, error);
+    console.warn('Failed to load messages for locale %s:', safeLocale, error);
     messages = {};
   }
 
   return (
     <IntlProvider messages={messages} locale={safeLocale}>
-      <div className="min-h-screen flex flex-col bg-cream-50">
-        <Topbar />
-        <main className="flex-1">
-          {children}
-        </main>
-        <Footer />
-        <ForbiddenDatesNotice />
-      </div>
+      <AppShell>{children}</AppShell>
     </IntlProvider>
   );
 }

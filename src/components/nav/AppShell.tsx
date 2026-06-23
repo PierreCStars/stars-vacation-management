@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, type ReactElement } from 'react';
+import { useState, useEffect, type ReactElement } from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useTranslations } from 'next-intl';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { createLocaleUrl } from '@/i18n/routing';
 import { isAdmin } from '@/config/admins';
 import { LanguageSwitcher } from './LanguageSwitcher';
@@ -16,6 +16,8 @@ import ForbiddenDatesNotice from '../ForbiddenDatesNotice';
 
 const PORTAL_URL =
   process.env.NEXT_PUBLIC_PORTAL_URL || 'https://stars-hr-portal-preview.vercel.app';
+
+const COLLAPSE_KEY = 'svm-sidebar-collapsed';
 
 /* Monoline icons (24-grid, 1.5 stroke, currentColor) — aligned with the SLG
    house icon style. Kept inline so the shell has no external icon dependency. */
@@ -68,6 +70,13 @@ function IconPortal({ className }: IconProps) {
     </svg>
   );
 }
+function IconLogout({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" aria-hidden="true" {...stroke}>
+      <path d="M15 4h3a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-3M10 8l-4 4 4 4M6 12h11" />
+    </svg>
+  );
+}
 
 type NavItem = { key: string; path: string; label: string; Icon: (p: IconProps) => ReactElement };
 
@@ -78,6 +87,21 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   const tCommon = useTranslations('common');
   const tVacations = useTranslations('vacations');
   const [drawerOpen, setDrawerOpen] = useState(false);
+  // Desktop-only: collapse the sidebar to an icon rail. Persisted so the choice
+  // survives navigation/reload. Starts expanded on the server + first paint
+  // (avoids hydration mismatch); the stored value is applied in an effect.
+  const [collapsed, setCollapsed] = useState(false);
+  useEffect(() => {
+    try {
+      if (localStorage.getItem(COLLAPSE_KEY) === '1') setCollapsed(true);
+    } catch {}
+  }, []);
+  const toggleCollapsed = () =>
+    setCollapsed((v) => {
+      const next = !v;
+      try { localStorage.setItem(COLLAPSE_KEY, next ? '1' : '0'); } catch {}
+      return next;
+    });
 
   const currentLocale = pathname?.split('/')[1] || 'en';
   // Path without the locale prefix, e.g. "/admin/vacation-requests".
@@ -97,47 +121,56 @@ export function AppShell({ children }: { children: React.ReactNode }) {
     { key: 'analytics', path: '/admin/analytics', label: tNav('analytics'), Icon: IconChart },
   ];
 
-  const linkClass = (active: boolean) =>
+  const linkClass = (active: boolean, rail: boolean) =>
     [
-      'flex min-h-[44px] items-center gap-3 rounded-sm border-b-0 px-3 py-2 text-sm no-underline transition-colors',
+      'flex min-h-[44px] items-center gap-3 rounded-sm border-b-0 py-2 text-sm no-underline transition-colors',
+      rail ? 'justify-center px-0' : 'px-3',
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400',
       active ? 'bg-ink-900 text-cream-50' : 'text-ink-700 hover:bg-ink-900/5',
     ].join(' ');
 
-  const renderNav = (onNavigate?: () => void) => (
-    <nav aria-label={tNav('administration')} className="flex flex-1 flex-col gap-1">
-      <ul className="flex flex-col gap-1">
+  const renderNav = (onNavigate?: () => void, rail = false) => (
+    <nav aria-label={tNav('administration')} className="flex w-full flex-1 flex-col gap-1">
+      <ul className="flex w-full flex-col gap-1">
         {mainItems.map(({ key, path: p, label, Icon }) => (
           <li key={key}>
             <Link
               href={createLocaleUrl(p, currentLocale)}
               aria-current={isActive(p) ? 'page' : undefined}
+              aria-label={label}
+              title={rail ? label : undefined}
               onClick={onNavigate}
-              className={linkClass(isActive(p))}
+              className={linkClass(isActive(p), rail)}
             >
               <Icon className="h-5 w-5 shrink-0" />
-              {label}
+              {!rail && <span className="truncate">{label}</span>}
             </Link>
           </li>
         ))}
       </ul>
 
       {admin && (
-        <div className="mt-5">
-          <p className="px-3 pb-2 text-[11px] uppercase tracking-widest text-ink-700/60">
-            {tNav('administration')}
-          </p>
-          <ul className="flex flex-col gap-1">
+        <div className="mt-5 w-full">
+          {rail ? (
+            <div className="mx-2 mb-2 border-t border-ink-900/10" />
+          ) : (
+            <p className="px-3 pb-2 text-[11px] uppercase tracking-widest text-ink-700/60">
+              {tNav('administration')}
+            </p>
+          )}
+          <ul className="flex w-full flex-col gap-1">
             {adminItems.map(({ key, path: p, label, Icon }) => (
               <li key={key}>
                 <Link
                   href={createLocaleUrl(p, currentLocale)}
                   aria-current={isActive(p) ? 'page' : undefined}
+                  aria-label={label}
+                  title={rail ? label : undefined}
                   onClick={onNavigate}
-                  className={linkClass(isActive(p))}
+                  className={linkClass(isActive(p), rail)}
                 >
                   <Icon className="h-5 w-5 shrink-0" />
-                  {label}
+                  {!rail && <span className="truncate">{label}</span>}
                 </Link>
               </li>
             ))}
@@ -145,49 +178,80 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      <div className="mt-auto pt-5">
+      <div className="mt-auto w-full pt-5">
         <a
           href={`${PORTAL_URL}/dashboard`}
-          className="flex min-h-[44px] items-center gap-3 rounded-sm border-b-0 border-t border-ink-900/10 px-3 pt-4 text-sm text-ink-700 no-underline transition-colors hover:bg-ink-900/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400"
+          aria-label={tNav('portalHome')}
+          title={rail ? tNav('portalHome') : undefined}
+          className={[
+            'flex min-h-[44px] items-center gap-3 rounded-sm border-b-0 border-t border-ink-900/10 py-2 pt-4 text-sm text-ink-700 no-underline transition-colors hover:bg-ink-900/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400',
+            rail ? 'justify-center px-0' : 'px-3',
+          ].join(' ')}
         >
           <IconPortal className="h-5 w-5 shrink-0" />
-          {tNav('portalHome')}
+          {!rail && tNav('portalHome')}
         </a>
       </div>
     </nav>
   );
 
-  const profileBlock = (
-    <div className="mt-4 border-t border-ink-900/10 pt-4">
-      {session?.user ? (
-        <div className="flex items-center gap-3">
-          <Avatar
-            name={session.user.name || session.user.email || 'User'}
-            src={session.user.image}
-            size={36}
-          />
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-medium text-ink-900">
-              {session.user.name || session.user.email}
-            </p>
-            {session.user.name && (
-              <p className="truncate text-xs text-ink-700/70">{session.user.email}</p>
-            )}
-          </div>
+  const renderProfile = (rail = false) => {
+    if (rail) {
+      return (
+        <div className="mt-4 flex w-full flex-col items-center gap-3 border-t border-ink-900/10 pt-4">
+          {session?.user && (
+            <>
+              <Avatar
+                name={session.user.name || session.user.email || 'User'}
+                src={session.user.image}
+                size={36}
+              />
+              <button
+                type="button"
+                onClick={() => signOut({ callbackUrl: '/' })}
+                aria-label={tCommon('logout')}
+                title={tCommon('logout')}
+                className="inline-flex h-10 w-10 items-center justify-center rounded-sm text-ink-700 transition-colors hover:bg-ink-900/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400"
+              >
+                <IconLogout className="h-5 w-5" />
+              </button>
+            </>
+          )}
         </div>
-      ) : (
-        <p className="px-1 text-xs uppercase tracking-widest text-ink-700/60">
-          {tCommon('login')}
-        </p>
-      )}
-      <div className="mt-3 flex items-center gap-2">
-        <LanguageSwitcher />
-        {session?.user && <SignOutButton />}
+      );
+    }
+    return (
+      <div className="mt-4 border-t border-ink-900/10 pt-4">
+        {session?.user ? (
+          <div className="flex items-center gap-3">
+            <Avatar
+              name={session.user.name || session.user.email || 'User'}
+              src={session.user.image}
+              size={36}
+            />
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-sm font-medium text-ink-900">
+                {session.user.name || session.user.email}
+              </p>
+              {session.user.name && (
+                <p className="truncate text-xs text-ink-700/70">{session.user.email}</p>
+              )}
+            </div>
+          </div>
+        ) : (
+          <p className="px-1 text-xs uppercase tracking-widest text-ink-700/60">
+            {tCommon('login')}
+          </p>
+        )}
+        <div className="mt-3 flex items-center gap-2">
+          <LanguageSwitcher />
+          {session?.user && <SignOutButton />}
+        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
-  const brand = (
+  const renderBrand = (showWordmark: boolean) => (
     <a
       href={`${PORTAL_URL}/dashboard`}
       className="flex items-center gap-2 border-b-0 no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400"
@@ -196,24 +260,55 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       {/* SLG brand rule: logo never deformed — real intrinsic ratio (1894×1339),
           sized via h-* w-auto only. */}
       <Image src="/stars-logo.png" alt="Stars" width={1894} height={1339} className="h-8 w-auto" priority />
-      <span className="text-xs font-medium uppercase tracking-[0.25em] text-ink-700/70">
-        {tCommon('appName')}
-      </span>
+      {showWordmark && (
+        <span className="text-xs font-medium uppercase tracking-[0.25em] text-ink-700/70">
+          {tCommon('appName')}
+        </span>
+      )}
     </a>
   );
 
+  const collapseLabel = collapsed ? tNav('expandSidebar') : tNav('collapseSidebar');
+
   return (
     <div className="flex min-h-dvh flex-col bg-cream-50 lg:flex-row">
-      {/* Desktop sidebar */}
-      <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col overflow-y-auto border-r border-ink-900/10 bg-cream-50 px-4 py-6 lg:flex">
-        <div className="px-1 pb-6">{brand}</div>
-        {renderNav()}
-        {profileBlock}
+      {/* Desktop sidebar — collapsible to an icon rail */}
+      <aside
+        className={[
+          'sticky top-0 hidden h-dvh shrink-0 flex-col overflow-y-auto overflow-x-hidden border-r border-ink-900/10 bg-cream-50 py-6 transition-[width] duration-200 ease-out motion-reduce:transition-none lg:flex',
+          collapsed ? 'w-[4.5rem] items-center px-2' : 'w-64 px-4',
+        ].join(' ')}
+      >
+        <div
+          className={[
+            'w-full pb-6',
+            collapsed ? 'flex flex-col items-center gap-3' : 'flex items-center justify-between px-1',
+          ].join(' ')}
+        >
+          {renderBrand(!collapsed)}
+          <button
+            type="button"
+            onClick={toggleCollapsed}
+            aria-label={collapseLabel}
+            title={collapseLabel}
+            className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-sm text-ink-700 transition-colors hover:bg-ink-900/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gold-400"
+          >
+            <svg className="h-5 w-5" viewBox="0 0 24 24" {...stroke}>
+              {collapsed ? (
+                <path d="M13 7l5 5-5 5M6 7l5 5-5 5" />
+              ) : (
+                <path d="M11 7l-5 5 5 5M18 7l-5 5 5 5" />
+              )}
+            </svg>
+          </button>
+        </div>
+        {renderNav(undefined, collapsed)}
+        {renderProfile(collapsed)}
       </aside>
 
       {/* Mobile header */}
       <header className="sticky top-0 z-40 flex h-14 items-center justify-between border-b border-ink-900/10 bg-cream-50 px-4 lg:hidden">
-        {brand}
+        {renderBrand(true)}
         <div className="flex items-center gap-2">
           <LanguageSwitcher />
           <button
@@ -230,7 +325,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         </div>
       </header>
 
-      {/* Mobile drawer */}
+      {/* Mobile drawer (always full labels) */}
       {drawerOpen && (
         <div className="lg:hidden" role="dialog" aria-modal="true">
           <div
@@ -240,7 +335,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           />
           <div className="fixed inset-y-0 left-0 z-50 flex w-72 max-w-[85%] flex-col overflow-y-auto bg-cream-50 px-4 py-6 shadow-xl">
             <div className="flex items-center justify-between px-1 pb-6">
-              {brand}
+              {renderBrand(true)}
               <button
                 type="button"
                 onClick={() => setDrawerOpen(false)}
@@ -253,7 +348,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
               </button>
             </div>
             {renderNav(() => setDrawerOpen(false))}
-            {profileBlock}
+            {renderProfile()}
           </div>
         </div>
       )}

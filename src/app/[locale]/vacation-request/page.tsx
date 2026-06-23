@@ -57,6 +57,7 @@ export default function VacationRequestPage() {
 
   const tVacations = useTranslations('vacations');
   const tCommon = useTranslations('common');
+  const tCalendar = useTranslations('calendar');
 
   const pathname = usePathname();
   const currentLocale = pathname?.split('/')[1] || 'en';
@@ -213,7 +214,7 @@ export default function VacationRequestPage() {
   };
 
   return (
-    <main className="py-10 px-4 sm:px-6 lg:px-8">
+    <div className="py-10 px-4 sm:px-6 lg:px-8">
       <div className="w-full max-w-4xl mx-auto">
         {/* Header */}
         <header className="text-center mb-10">
@@ -489,13 +490,13 @@ export default function VacationRequestPage() {
         {/* Calendar */}
         <section className="card mt-10">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="!text-xl !font-semibold">Vacation Calendar</h2>
+            <h2 className="!text-xl !font-semibold">{tCalendar('teamVacationCalendar')}</h2>
             <span className="hidden sm:block filet-gold !w-12" />
           </div>
           {loading ? (
             <div className="py-12 text-center">
               <div className="inline-block h-8 w-8 rounded-full border-2 border-gold/30 border-t-gold animate-spin mb-3" />
-              <p className="text-sm text-slate-ardoise">Loading vacation calendar…</p>
+              <p className="text-sm text-slate-ardoise">{tCalendar('loadingVacationCalendar')}</p>
             </div>
           ) : (
             <UnifiedVacationCalendar
@@ -508,6 +509,6 @@ export default function VacationRequestPage() {
           )}
         </section>
       </div>
-    </main>
+    </div>
   );
 }

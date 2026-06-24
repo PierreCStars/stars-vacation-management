@@ -22,9 +22,12 @@ export async function GET() {
   try {
     console.log('[REQS] Source=FIRESTORE, projectId=', process.env.FIREBASE_PROJECT_ID);
     
-    // Get user session to determine if admin
+    // Require a session — vacation data must never be publicly readable.
     const session = await getServerSession(authOptions);
-    const userEmail = session?.user?.email || null;
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    const userEmail = session.user.email;
     
     // Firebase is required - no fallbacks
     const { db, error } = getFirebaseAdmin();

@@ -1,6 +1,7 @@
 import nodemailer from "nodemailer";
 import { safeTrim } from "@/lib/strings";
 import { resolveRecipients } from "@/lib/email/recipients";
+import { MAIL_FROM, MAIL_SENDER, MAIL_REPLY_TO } from "@/lib/email/sender";
 
 export function adminRecipients(): string[] {
   const list = (process.env.ADMIN_EMAILS || "")
@@ -43,15 +44,15 @@ export async function sendAdminNotification({
   overrideTo?: string;
 }) {
   const transporter = mailer();
-  // Règle Stars : tous les mails de l'outil affichent rh@stars.mc en expéditeur
-  // (jamais le compte SMTP authentifié, ex. pierre@). Pour que ce From soit
-  // honoré et non réécrit, le compte d'envoi (SMTP_USER) doit être rh@stars.mc
-  // ou disposer de rh@stars.mc comme adresse « Envoyer en tant que » autorisée.
+  // Expéditeur centralisé (info@stars.mc pour l'instant) — voir @/lib/email/sender.
+  // Le compte SMTP authentifié doit être autorisé à envoyer comme cette adresse,
+  // sinon Gmail réécrit le From vers le compte authentifié.
   const to = resolveRecipients(overrideTo ? [overrideTo] : adminRecipients());
 
   await transporter.sendMail({
-    from: '"RH Stars" <rh@stars.mc>',
-    sender: 'rh@stars.mc',
+    from: MAIL_FROM,
+    sender: MAIL_SENDER,
+    replyTo: MAIL_REPLY_TO,
     to,
     subject,
     html,

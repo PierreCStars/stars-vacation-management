@@ -1,4 +1,5 @@
 import * as nodemailer from 'nodemailer';
+import { MAIL_FROM, MAIL_SENDER, MAIL_REPLY_TO } from '@/lib/email/sender';
 
 // Simple email service using Nodemailer
 export async function sendSimpleEmail(to: string[], subject: string, body: string) {
@@ -23,9 +24,9 @@ export async function sendSimpleEmail(to: string[], subject: string, body: strin
 
     // Send email
     const info = await transporter.sendMail({
-      from: '"RH Stars" <rh@stars.mc>',
-      replyTo: 'pierre@stars.mc',
-      sender: 'rh@stars.mc',
+      from: MAIL_FROM,
+      replyTo: MAIL_REPLY_TO,
+      sender: MAIL_SENDER,
       to: to.join(', '),
       subject: subject,
       html: body,
@@ -74,9 +75,9 @@ export async function sendGmailSMTP(to: string[], subject: string, body: string)
     });
 
     const info = await transporter.sendMail({
-      from: '"RH Stars" <rh@stars.mc>',
-      replyTo: 'pierre@stars.mc',
-      sender: 'rh@stars.mc',
+      from: MAIL_FROM,
+      replyTo: MAIL_REPLY_TO,
+      sender: MAIL_SENDER,
       to: to.join(', '),
       subject: subject,
       html: body,
@@ -111,8 +112,8 @@ export async function sendResendEmail(to: string[], subject: string, body: strin
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: '"RH Stars" <rh@stars.mc>',
-        replyTo: 'pierre@stars.mc',
+        from: MAIL_FROM,
+        replyTo: MAIL_REPLY_TO,
         to: to,
         subject: subject,
         html: body,
@@ -159,7 +160,7 @@ export async function sendCustomSMTP(to: string[], subject: string, body: string
     console.log('📧 SMTP Host:', process.env.SMTP_HOST);
     console.log('📧 SMTP Port:', process.env.SMTP_PORT || '587 (default)');
     console.log('📧 SMTP User:', process.env.SMTP_USER);
-    console.log('📧 SMTP From:', process.env.SMTP_FROM || 'rh@stars.mc (default)');
+    console.log('📧 SMTP From:', process.env.SMTP_FROM || `${MAIL_FROM} (default)`);
 
     const transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST,
@@ -172,9 +173,9 @@ export async function sendCustomSMTP(to: string[], subject: string, body: string
     });
 
     const info = await transporter.sendMail({
-      from: process.env.SMTP_FROM || '"RH Stars" <rh@stars.mc>',
-      replyTo: 'pierre@stars.mc',
-      sender: process.env.SMTP_FROM || 'rh@stars.mc',
+      from: process.env.SMTP_FROM || MAIL_FROM,
+      replyTo: MAIL_REPLY_TO,
+      sender: process.env.SMTP_FROM || MAIL_SENDER,
       to: to.join(', '),
       subject,
       html: body,

@@ -10,6 +10,7 @@
  */
 
 import { calculateVacationDuration, sumDurations } from './duration-calculator';
+import { isTestRequest } from './test-requests';
 import { isFirebaseAdminAvailable, firebaseAdmin } from './firebase-admin';
 
 export interface VacationRow {
@@ -166,6 +167,8 @@ export async function getValidatedVacationsForMonth(
           const status = (r.status || "").toLowerCase();
           return approvedStatuses.includes(status);
         });
+        // Never export throwaway test-user requests to the archives (Sheet + monthly summary).
+        all = all.filter(r => !isTestRequest(r));
         console.log(`✅ Fetched ${all.length} approved/validated vacation requests from Firestore`);
       } else {
         console.error('⚠️ Firebase Admin not available:', error);

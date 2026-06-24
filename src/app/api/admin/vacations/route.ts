@@ -85,13 +85,15 @@ export async function POST(request: NextRequest) {
     // Check if this is a test user request
     const isTestUser = email === 'test@stars.mc' || userId === 'test@stars.mc';
 
-    // Normalize status and type to canonical values
+    // Test-user requests stay PENDING so they can be validated/rejected during
+    // QA. Real admin-created vacations are validated on the spot (approved).
     const normalizedFields = normalizeVacationFields({
-      status: 'approved', // Set as approved since admin is validating it
+      status: isTestUser ? 'pending' : 'approved',
       type: vacationType
     });
-    
-    // Prepare vacation request data
+
+    // Prepare vacation request data. NB: use null (never undefined) for empty
+    // fields — the Firestore Admin SDK rejects undefined values.
     const vacationRequest = {
       userId,
       userEmail: email || userId,
@@ -101,20 +103,21 @@ export async function POST(request: NextRequest) {
       reason: isTestUser ? 'Test vacation request (auto-deleted after 24h)' : 'Created by admin',
       company: companyId,
       type: normalizedFields.type || vacationType,
-      status: normalizedFields.status || 'Approved',
+      status: normalizedFields.status || (isTestUser ? 'Pending' : 'Approved'),
       createdAt: new Date(),
       updatedAt: new Date(),
-      reviewedAt: new Date(),
-      reviewedBy: session.user.name || 'Admin',
-      reviewerEmail: session.user.email,
+      // A pending test request has not been reviewed yet.
+      reviewedAt: isTestUser ? null : new Date(),
+      reviewedBy: isTestUser ? null : (session.user.name || 'Admin'),
+      reviewerEmail: isTestUser ? null : session.user.email,
       adminComment: isTestUser ? 'Test request - will be auto-deleted after 24 hours' : 'Created and validated by admin',
       isHalfDay: false,
       halfDayType: null,
       durationDays,
       createdByAdminId: session.user.email, // Track who created it
       createdByAdminName: session.user.name || 'Admin',
-      isTestUser: isTestUser, // Flag to identify test requests
-      testUserCreatedAt: isTestUser ? new Date() : undefined // Track creation time for auto-deletion
+      isTestUser: isTestUser, // Flag to identify test requests (kept out of archives)
+      testUserCreatedAt: isTestUser ? new Date() : null // Track creation time for auto-deletion
     };
 
     // Save to Firestore
@@ -122,9 +125,10 @@ export async function POST(request: NextRequest) {
     const requestId = docRef.id;
     console.log(`✅ Admin-created vacation request saved with ID: ${requestId}`);
 
-    // Send email notification if email is provided
+    // Send email notification if email is provided (never for test users —
+    // a pending test request must not trigger a "validated" confirmation).
     let emailSent = false;
-    if (email) {
+    if (email && !isTestUser) {
       try {
         // Detect locale from request headers or default to English
         const locale = request.headers.get('accept-language')?.includes('fr') ? 'fr' : 

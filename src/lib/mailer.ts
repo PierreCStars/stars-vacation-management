@@ -43,11 +43,15 @@ export async function sendAdminNotification({
   overrideTo?: string;
 }) {
   const transporter = mailer();
-  const from = process.env.SMTP_USER!;
+  // Règle Stars : tous les mails de l'outil affichent rh@stars.mc en expéditeur
+  // (jamais le compte SMTP authentifié, ex. pierre@). Pour que ce From soit
+  // honoré et non réécrit, le compte d'envoi (SMTP_USER) doit être rh@stars.mc
+  // ou disposer de rh@stars.mc comme adresse « Envoyer en tant que » autorisée.
   const to = resolveRecipients(overrideTo ? [overrideTo] : adminRecipients());
 
   await transporter.sendMail({
-    from: `"Stars Vacation" <${from}>`,
+    from: '"RH Stars" <rh@stars.mc>',
+    sender: 'rh@stars.mc',
     to,
     subject,
     html,

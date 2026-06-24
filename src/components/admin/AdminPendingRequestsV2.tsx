@@ -10,6 +10,7 @@ import UnifiedVacationCalendar from '@/components/UnifiedVacationCalendar';
 import { calculateVacationDuration } from '@/lib/duration-calculator';
 import { countUniqueConflicts } from '@/lib/conflict-utils';
 import { canValidateCompany } from '@/config/admins';
+import { isTestRequest } from '@/lib/test-requests';
 
 /**
  * Human-readable delay between submission and review (e.g. "3h", "2d 4h", "<1h").
@@ -334,9 +335,11 @@ export default function AdminPendingRequestsV2() {
     r => isPendingStatus(r.status) && selectedRequests.has(r.id),
   ).length;
 
-  // Filter requests by status
+  // Filter requests by status. Test-user requests stay visible while PENDING
+  // (so they can be validated/rejected during QA) but are kept OUT of the
+  // reviewed list / archives (and thus out of the CSV export derived from it).
   const pendingRequests = requests.filter(req => isPendingStatus(req.status));
-  const reviewedRequests = requests.filter(req => isReviewedStatus(req.status));
+  const reviewedRequests = requests.filter(req => isReviewedStatus(req.status) && !isTestRequest(req));
 
 
   // Sorting function

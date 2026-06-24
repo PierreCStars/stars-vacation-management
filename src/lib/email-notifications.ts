@@ -6,6 +6,7 @@
 import nodemailer from 'nodemailer';
 import { ADMINS } from '@/config/admins';
 import { resolveRecipients } from '@/lib/email/recipients';
+import { MAIL_FROM, MAIL_SENDER, MAIL_REPLY_TO } from '@/lib/email/sender';
 
 export interface EmailConfig {
   subject: string;
@@ -53,7 +54,7 @@ export function getAdminEmails(): string[] {
  * Get sender email from environment
  */
 export function getFromEmail(): string {
-  return process.env.FROM_EMAIL || 'rh@stars.mc';
+  return process.env.FROM_EMAIL || MAIL_SENDER;
 }
 
 /**
@@ -72,8 +73,8 @@ export async function sendViaResend(config: EmailConfig): Promise<EmailResult> {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: '"RH Stars" <rh@stars.mc>',
-        replyTo: 'pierre@stars.mc',
+        from: MAIL_FROM,
+        replyTo: MAIL_REPLY_TO,
         to: config.to,
         subject: config.subject,
         html: config.html,
@@ -124,9 +125,9 @@ export async function sendViaSMTP(config: EmailConfig): Promise<EmailResult> {
     });
 
     const info = await transporter.sendMail({
-      from: '"RH Stars" <rh@stars.mc>',
-      replyTo: 'pierre@stars.mc',
-      sender: 'rh@stars.mc',
+      from: MAIL_FROM,
+      replyTo: MAIL_REPLY_TO,
+      sender: MAIL_SENDER,
       to: config.to.join(', '),
       subject: config.subject,
       html: config.html,
